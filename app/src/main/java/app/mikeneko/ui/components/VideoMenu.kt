@@ -155,7 +155,7 @@ fun VideoMenuSheet(backdrop: Backdrop, onDownload: (String) -> Unit, bottomSpace
                 Column(Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
                     // La vidéo concernée
                     Row(Modifier.padding(horizontal = 18.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Box(Modifier.width(96.dp).height(54.dp).clip(RoundedCornerShape(10.dp)).background(Pelage.Violet)) {
+                        Box(Modifier.width(96.dp).height(54.dp).clip(RoundedCornerShape(10.dp)).background(Pelage.RouxNuit)) {
                             AsyncImage(video.thumbnail, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
                         }
                         Column(Modifier.padding(start = 12.dp)) {

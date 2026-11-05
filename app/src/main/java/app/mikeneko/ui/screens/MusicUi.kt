@@ -363,12 +363,12 @@ fun CollectionRow(title: String, subtitle: String, thumbnail: String?, round: Bo
     }
 }
 
-/** Une pochette (ou une icône sur fond violet quand il n'y en a pas). */
+/** Une pochette (ou une icône rousse sur fond roux sombre quand il n'y en a pas ; plus de violet, 1.19.3). */
 @Composable
 fun Cover(url: String?, size: Dp, corner: Dp, modifier: Modifier = Modifier, icon: ImageVector? = null) {
-    Box(modifier.size(size).clip(RoundedCornerShape(corner)).background(Pelage.Violet), contentAlignment = Alignment.Center) {
+    Box(modifier.size(size).clip(RoundedCornerShape(corner)).background(Pelage.RouxNuit), contentAlignment = Alignment.Center) {
         if (url == null) {
-            Icon(icon ?: MkIcons.Music, null, tint = Pelage.Texte.copy(alpha = 0.7f), modifier = Modifier.size(size * 0.42f))
+            Icon(icon ?: MkIcons.Music, null, tint = Pelage.RouxClair, modifier = Modifier.size(size * 0.42f))
         } else {
             AsyncImage(url, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
         }

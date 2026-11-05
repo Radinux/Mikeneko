@@ -128,6 +128,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.mikeneko.data.VideoItem
+import app.mikeneko.data.sameTrack
 import app.mikeneko.data.YouTubeRepository
 import app.mikeneko.player.PlayerHolder
 import app.mikeneko.player.SettingsPage
@@ -385,8 +386,16 @@ fun MusicDockWindow(
         state.travel = geometry.travel
         var coordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
         // La pilule prend la teinte de la pochette en cours
-        val playingNow by PlayerHolder.nowPlaying.collectAsState()
-        val pillColor by rememberCoverColor(playingNow?.thumbnail, fallback = Color(0xFF100D0B))
+        val playingNow = musicNow()
+        val parkedNow = if (playingNow == null) parkedTrack() else null
+        val pillColor by rememberCoverColor(playingNow?.thumbnail ?: parkedNow?.thumbnail, fallback = Color(0xFF100D0B))
+        // Une vidéo joue et la fenêtre s'ouvre : on remet le morceau qu'elle avait mis de côté (en pause)
+        val context = LocalContext.current
+        LaunchedEffect(state.open) {
+            if (state.open && PlayerHolder.nowPlaying.value?.audioOnly == false && PlayerHolder.parkedMusic.value != null) {
+                PlayerHolder.launchPlayback { PlayerHolder.restoreParkedMusic(context) }
+            }
+        }
         LiquidGlass(
             backdrop,
             Modifier
@@ -551,23 +560,26 @@ private suspend fun PointerInputScope.stretchGesture(state: MusicPlayerState, ge
 private fun MusicDockRow() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val now by PlayerHolder.nowPlaying.collectAsState()
-    val playing by PlayerHolder.isPlaying.collectAsState()
+    // Une vidéo qui joue n'est pas de la musique : on montre le morceau qu'elle a mis de côté (s'il y en a)
+    val now = musicNow()
+    val parked = if (now == null) parkedTrack() else null
+    val playing = PlayerHolder.isPlaying.collectAsState().value && now != null
     val queue by PlayerHolder.queue.collectAsState()
     val queueIndex by PlayerHolder.queueIndex.collectAsState()
-    val loading by PlayerHolder.loading.collectAsState()
+    val loading = PlayerHolder.loading.collectAsState().value && now != null
     val haptic = LocalHapticFeedback.current
     val threshold = with(LocalDensity.current) { 64.dp.toPx() }
-    val canSwipe = queue.size > 1
+    val canSwipe = now != null && queue.size > 1
     /** Décalage horizontal de la pochette + titre pendant un glissé. */
     val swipe = remember { Animatable(0f) }
 
     // Pendant le chargement du morceau suivant, on montre déjà son nom et sa pochette
     val pending = if (loading) queue.getOrNull(queueIndex)?.takeIf { it.url != now?.url } else null
-    val shownTitle = pending?.title ?: now?.title
-    val shownThumbnail = pending?.thumbnail ?: now?.thumbnail
+    val shownTitle = pending?.title ?: now?.title ?: parked?.title
+    val shownThumbnail = pending?.thumbnail ?: now?.thumbnail ?: parked?.thumbnail
     val shownSubtitle = pending?.let { stringResource(R.string.radio_loading_suffix, it.channel) }
         ?: now?.let { if (it.live) stringResource(R.string.radio_live_suffix, it.channel) else it.channel }
+        ?: parked?.channel
     val nextLabel = stringResource(R.string.radio_next)
     val previousLabel = stringResource(R.string.radio_previous)
 
@@ -637,7 +649,7 @@ private fun MusicDockRow() {
                 },
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(Modifier.size(48.dp).clip(RoundedCornerShape(14.dp)).background(Pelage.Violet)) {
+            Box(Modifier.size(48.dp).clip(RoundedCornerShape(14.dp)).background(Pelage.RouxNuit)) {
                 AsyncImage(shownThumbnail, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
             }
             Column(Modifier.weight(1f).padding(horizontal = 10.dp)) {
@@ -655,8 +667,14 @@ private fun MusicDockRow() {
                 )
             }
         }
-        IconTap(if (playing) MkIcons.Pause else MkIcons.Play, stringResource(if (playing) R.string.pause else R.string.play)) { PlayerHolder.togglePlay() }
-        if (queue.size > 1) IconTap(MkIcons.Next, nextLabel) { scope.launch { runCatching { PlayerHolder.next(context) } } }
+        when {
+            now != null -> IconTap(if (playing) MkIcons.Pause else MkIcons.Play, stringResource(if (playing) R.string.pause else R.string.play)) { PlayerHolder.togglePlay() }
+            // Pendant une vidéo : ▶ reprend le morceau mis de côté (la vidéo s'arrête), pas la vidéo
+            parked != null -> IconTap(MkIcons.Play, stringResource(R.string.play)) {
+                PlayerHolder.launchPlayback { PlayerHolder.restoreParkedMusic(context, autoPlay = true) }
+            }
+        }
+        if (now != null && queue.size > 1) IconTap(MkIcons.Next, nextLabel) { scope.launch { runCatching { PlayerHolder.next(context) } } }
     }
 }
 
@@ -690,8 +708,8 @@ private fun PlayerWindowContent(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val now by PlayerHolder.nowPlaying.collectAsState()
-    val playing by PlayerHolder.isPlaying.collectAsState()
+    val now = musicNow()
+    val playing = PlayerHolder.isPlaying.collectAsState().value && now != null
     val favorites = remember { Favorites.get(context) }
     val favoriteList by favorites.items.collectAsState()
     val liked = now?.url?.let { url -> favoriteList.any { it.url == url } } == true
@@ -767,7 +785,7 @@ private fun PlayerWindowContent(
                         .shadow(22.dp, RoundedCornerShape(26.dp))
                         .border(3.dp, Pelage.Creme, RoundedCornerShape(26.dp))
                         .clip(RoundedCornerShape(26.dp))
-                        .background(Pelage.Violet),
+                        .background(Pelage.RouxNuit),
                     contentAlignment = Alignment.Center,
                 ) {
                     if (now?.thumbnail == null) {
@@ -820,7 +838,7 @@ private fun PlayerWindowContent(
                     size = 76.dp,
                     tint = Pelage.Roux.copy(alpha = 0.68f),
                     iconTint = Pelage.Encre,
-                ) { PlayerHolder.togglePlay() }
+                ) { if (now != null) PlayerHolder.togglePlay() } // pas la vidéo qui joue peut-être en ce moment
                 GlassCircleButton(glass, MkIcons.Next, stringResource(R.string.radio_next), size = 58.dp, enabled = canSkip) { skip { PlayerHolder.next(context) } }
                 ModeToggle(
                     if (repeat == Repeat.One) MkIcons.RepeatOne else MkIcons.Repeat,
@@ -950,7 +968,7 @@ private fun DetailsCard(image: String?, round: Boolean, title: String, subtitle:
             image,
             contentDescription = null,
             contentScale = ContentScale.Crop,
-            modifier = Modifier.size(56.dp).clip(if (round) CircleShape else RoundedCornerShape(12.dp)).background(Pelage.Violet),
+            modifier = Modifier.size(56.dp).clip(if (round) CircleShape else RoundedCornerShape(12.dp)).background(Pelage.RouxNuit),
         )
         Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
             Text(title, color = Pelage.Texte, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
@@ -1149,3 +1167,15 @@ private fun QueueSheet(backdrop: Backdrop, visible: Boolean, onClose: () -> Unit
     }
 }
 
+
+/** Le morceau en cours, pour la musique : rien quand c'est une vidéo qui joue (elle a son mini-lecteur). */
+@Composable
+private fun musicNow(): NowPlaying? = PlayerHolder.nowPlaying.collectAsState().value?.takeIf { it.audioOnly }
+
+/** Le morceau qu'une vidéo a mis de côté (montré dans la pilule tant que la vidéo est là). */
+@Composable
+private fun parkedTrack(): VideoItem? {
+    val parked by PlayerHolder.parkedMusic.collectAsState()
+    val queue by PlayerHolder.queue.collectAsState()
+    return parked?.let { p -> queue.firstOrNull { sameTrack(it.url, p.url) } }
+}

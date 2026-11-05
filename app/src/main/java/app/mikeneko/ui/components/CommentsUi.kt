@@ -518,12 +518,12 @@ private fun CommentBar(replyTo: Comment?, onCancelReply: () -> Unit) {
 @Composable
 private fun Avatar(comment: Comment, size: Dp) {
     Box(
-        Modifier.size(size).clip(CircleShape).background(Pelage.Violet),
+        Modifier.size(size).clip(CircleShape).background(Pelage.RouxNuit),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             comment.author.removePrefix("@").take(1).uppercase(),
-            color = Color.White,
+            color = Pelage.RouxClair,
             fontSize = (size.value * 0.42f).sp,
             fontWeight = FontWeight.ExtraBold,
         )

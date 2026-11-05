@@ -488,6 +488,8 @@ object PlayerHolder {
         // Une vidéo déjà commencée (parmi les 10 dernières) reprend où on l'avait laissée
         @Suppress("NAME_SHADOWING")
         val startAtMs = if (startAtMs == 0L && !audioOnly) WatchPositions.get(context, videoIdOf(url)) ?: 0L else startAtMs
+        // Une autre vidéo demandée : celle mise de côté par la musique ne reviendra plus
+        if (!audioOnly) parkedVideo.value = null
         val mine = ++ticket
         // Une autre lecture est demandée : le morceau préparé à l'avance ne doit pas prendre le relais
         dropPreload()
@@ -1034,12 +1036,40 @@ object PlayerHolder {
 
     val parkedMusic = MutableStateFlow<ParkedMusic?>(null)
 
-    /** Remet la musique mise de côté, en pause, là où elle en était (la file n'a pas bougé). */
-    suspend fun restoreParkedMusic(context: Context) {
+    /** Une vidéo mise de côté en allant dans Musique : son adresse et où elle en était. */
+    data class ParkedVideo(val url: String, val positionMs: Long)
+
+    val parkedVideo = MutableStateFlow<ParkedVideo?>(null)
+
+    /**
+     * On entre dans Musique pendant une vidéo : elle se met en pause (son mini-lecteur se cache) et
+     * on retient où elle en était, au cas où un morceau la remplacerait dans le lecteur.
+     */
+    fun parkVideo() {
+        val now = nowPlaying.value ?: return
+        if (now.audioOnly) return
+        pause()
+        parkedVideo.value = ParkedVideo(now.url, if (now.live) 0L else player?.currentPosition ?: 0L)
+    }
+
+    /**
+     * On ressort de Musique : la vidéo est encore dans le lecteur (rien à faire, son mini-lecteur
+     * revient) ; sinon (un morceau l'a remplacée) elle revient en pause, là où elle en était.
+     */
+    suspend fun restoreParkedVideo(context: Context) {
+        val parked = parkedVideo.value ?: return
+        parkedVideo.value = null
+        val now = nowPlaying.value
+        if (now != null && !now.audioOnly && sameTrack(now.url, parked.url)) return
+        play(context, parked.url, audioOnly = false, startAtMs = parked.positionMs, autoPlay = false)
+    }
+
+    /** Remet la musique mise de côté, en pause (ou qui joue : [autoPlay]), là où elle en était (la file n'a pas bougé). */
+    suspend fun restoreParkedMusic(context: Context, autoPlay: Boolean = false) {
         val parked = parkedMusic.value ?: return
         val index = queue.value.indexOfFirst { sameTrack(it.url, parked.url) }
         if (index >= 0) queueIndex.value = index
-        play(context, parked.url, audioOnly = true, startAtMs = if (parked.live) 0L else parked.positionMs, autoPlay = false)
+        play(context, parked.url, audioOnly = true, startAtMs = if (parked.live) 0L else parked.positionMs, autoPlay = autoPlay)
     }
 
     /** La playlist d'où vient la vidéo en cours (vide sinon) : « suivante » en suit l'ordre. */
@@ -1161,6 +1191,7 @@ object PlayerHolder {
     fun bufferedPosition(): Long = player?.bufferedPosition ?: 0L
 
     fun stop() {
+        parkedVideo.value = null
         saveVideoPosition()
         positionOwner = null
         ticket++ // une vidéo encore en chargement ne doit pas démarrer après la fermeture

@@ -20,6 +20,9 @@ import kotlin.math.cos
 import kotlin.math.PI
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.fadeIn
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.animation.core.Animatable
 import androidx.compose.ui.layout.boundsInRoot
@@ -84,6 +87,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.StrokeJoin
@@ -222,6 +226,14 @@ private fun styleCaptions(context: Context, view: SubtitleView) {
 @Composable
 fun MiniPip(modifier: Modifier = Modifier, onExpand: () -> Unit, onClose: () -> Unit) {
     var controls by remember { mutableStateOf(false) }
+    // Les commandes se cachent seules après quelques secondes ; chaque appui relance le minuteur
+    var poke by remember { mutableIntStateOf(0) }
+    LaunchedEffect(controls, poke) {
+        if (controls) {
+            delay(MINI_CONTROLS_MS)
+            controls = false
+        }
+    }
     val playing by PlayerHolder.playRequested.collectAsState() // pas isPlaying : faux pendant un chargement
     var progress by remember { mutableFloatStateOf(0f) }
     val backdrop = rememberBackdrop()
@@ -313,16 +325,25 @@ fun MiniPip(modifier: Modifier = Modifier, onExpand: () -> Unit, onClose: () -> 
                     .semantics { contentDescription = if (controls) hideLabel else showLabel }
                     .clickable { controls = !controls },
             )
-            if (controls) {
-                Box(Modifier.fillMaxSize().background(Color(0x61141210)))
-                GlassCircleButton(backdrop, MkIcons.Expand, stringResource(R.string.expand_video), Modifier.align(Alignment.TopStart).padding(6.dp), size = 44.dp) { leave(onExpand) }
-                GlassCircleButton(backdrop, if (playing) MkIcons.Pause else MkIcons.Play, stringResource(if (playing) R.string.pause else R.string.play), Modifier.align(Alignment.Center), size = 44.dp) {
-                    PlayerHolder.togglePlay()
+            // Les commandes et la barre de temps arrivent et repartent en fondu (comme sur le grand lecteur)
+            androidx.compose.animation.AnimatedVisibility(
+                controls,
+                Modifier.matchParentSize(),
+                enter = fadeIn(tween(340, easing = FastOutSlowInEasing)),
+                exit = fadeOut(tween(480, easing = FastOutSlowInEasing)),
+            ) {
+                Box(Modifier.fillMaxSize()) {
+                    Box(Modifier.fillMaxSize().background(Color(0x61141210)))
+                    GlassCircleButton(backdrop, MkIcons.Expand, stringResource(R.string.expand_video), Modifier.align(Alignment.TopStart).padding(6.dp), size = 44.dp) { leave(onExpand) }
+                    GlassCircleButton(backdrop, if (playing) MkIcons.Pause else MkIcons.Play, stringResource(if (playing) R.string.pause else R.string.play), Modifier.align(Alignment.Center), size = 44.dp) {
+                        PlayerHolder.togglePlay()
+                        poke++
+                    }
+                    GlassCircleButton(backdrop, MkIcons.Close, stringResource(R.string.close_mini_player), Modifier.align(Alignment.TopEnd).padding(6.dp), size = 44.dp) { pop() }
+                    Box(Modifier.align(Alignment.BottomStart).fillMaxWidth().height(4.dp).background(Color.White.copy(alpha = 0.3f))) {
+                        Box(Modifier.fillMaxHeight().fillMaxWidth(progress.coerceIn(0f, 1f)).background(Pelage.Creme))
+                    }
                 }
-                GlassCircleButton(backdrop, MkIcons.Close, stringResource(R.string.close_mini_player), Modifier.align(Alignment.TopEnd).padding(6.dp), size = 44.dp) { pop() }
-            }
-            Box(Modifier.align(Alignment.BottomStart).fillMaxWidth().height(4.dp).background(Color.White.copy(alpha = 0.3f))) {
-                Box(Modifier.fillMaxHeight().fillMaxWidth(progress.coerceIn(0f, 1f)).background(Pelage.Creme))
             }
         }
     }
@@ -525,6 +546,9 @@ private fun DrawScope.drawTrack(progress: Float, segments: List<Pair<Float, Floa
 }
 
 // ---- La tête de chat du mini-lecteur ----
+
+/** Combien de temps les commandes du mini-lecteur restent affichées sans qu'on y touche. */
+private const val MINI_CONTROLS_MS = 3_000L
 
 /** Hauteur des oreilles au-dessus du cadre, épaisseur du cadre, largeur et coins de la vidéo. */
 private val MINI_EAR_HEIGHT = 30.dp

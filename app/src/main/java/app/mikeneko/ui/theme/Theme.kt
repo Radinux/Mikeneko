@@ -29,7 +29,6 @@ object Pelage {
     val Dore = Color(0xFFF2C66D)
     val DoreFonce = Color(0xFF8A5A00)
     val Rose = Color(0xFFF4A7B0)
-    val Violet = Color(0xFF3B3355)
     val GrisChat = Color(0xFF55504D)
     val RouxChat = Color(0xFFF0954A)
     val Contour = Color(0xFF3D3A3A)

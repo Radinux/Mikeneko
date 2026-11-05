@@ -308,13 +308,27 @@ fun MikenekoRoot(
     BackHandler(enabled = channelPlaylist != null && route != Route.Lecteur) { ChannelPlaylist.open.value = null }
 
     // Une vidéo avait mis la musique de côté : au retour dans Musique, elle revient en pause là où
-    // elle en était (pas tant qu'une vidéo est en train de jouer)
+    // elle en était, seulement s'il n'y a plus de vidéo dans le lecteur (sinon la pilule montre le
+    // morceau, et ▶ ou la fenêtre le remettent : pas de rechargement à chaque changement d'onglet)
     val parkedMusic by PlayerHolder.parkedMusic.collectAsState()
     val anyPlaying by PlayerHolder.isPlaying.collectAsState()
-    val videoPlaying = now?.audioOnly == false && anyPlaying
-    LaunchedEffect(route, parkedMusic, videoPlaying) {
-        if (route == Route.Radio && parkedMusic != null && !videoPlaying) {
+    val videoLoaded = now?.audioOnly == false
+    LaunchedEffect(route, parkedMusic, videoLoaded) {
+        if (route == Route.Radio && parkedMusic != null && !videoLoaded) {
             PlayerHolder.launchPlayback { PlayerHolder.restoreParkedMusic(context) }
+        }
+    }
+
+    // Le mini-lecteur vidéo n'est pas dans Musique (1.19.6) : en y entrant, la vidéo se met en pause
+    // et se cache ; en ressortant, elle revient en pause là où elle en était (rechargée seulement si
+    // un morceau l'a remplacée, et pas tant qu'une musique joue : on ne la coupe pas)
+    val parkedVideo by PlayerHolder.parkedVideo.collectAsState()
+    LaunchedEffect(route) {
+        if (route == Route.Radio) PlayerHolder.parkVideo()
+    }
+    LaunchedEffect(route, parkedVideo, anyPlaying) {
+        if (route != Route.Radio && route != Route.Lecteur && parkedVideo != null && !(anyPlaying && now?.audioOnly == true)) {
+            PlayerHolder.launchPlayback { PlayerHolder.restoreParkedVideo(context) }
         }
     }
 
@@ -441,7 +455,7 @@ fun MikenekoRoot(
         }
 
         val pipBottom by animateDpAsState(if (dockVisible && !landscape) 106.dp else 28.dp, label = "pip") // au-dessus du dock (ou de la barre radio)
-        if (now?.audioOnly == false && route != Route.Lecteur) {
+        if (now?.audioOnly == false && route != Route.Lecteur && route != Route.Radio) { // pas dans Musique
             FloatingMiniPip(
                 placement = pipPlacement,
                 bottomMargin = pipBottom,

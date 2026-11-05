@@ -28,7 +28,7 @@ private val cache = object : LinkedHashMap<String, Color>(64, 0.75f, true) {
  * glisse en douceur d'un morceau à l'autre. [fallback] tant qu'elle n'est pas connue.
  */
 @Composable
-fun rememberCoverColor(url: String?, fallback: Color = Pelage.Violet): State<Color> {
+fun rememberCoverColor(url: String?, fallback: Color = Pelage.RouxNuit): State<Color> {
     val context = LocalContext.current
     val target by produceState(cache[url] ?: fallback, url) {
         if (url == null) {
@@ -82,7 +82,7 @@ private fun dominantColor(bitmap: Bitmap): Color {
     } else if (grayWeight > 0f) {
         Triple(gray[0] / grayWeight, gray[1] / grayWeight, gray[2] / grayWeight)
     } else {
-        return Pelage.Violet
+        return Pelage.RouxNuit
     }
     android.graphics.Color.RGBToHSV(r.toInt(), g.toInt(), b.toInt(), hsv)
     hsv[1] = (hsv[1] * 1.1f).coerceIn(0f, 0.85f)

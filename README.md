@@ -3,7 +3,7 @@
 Client YouTube libre pour Android, en Kotlin + Jetpack Compose : sans pubs, avec SponsorBlock,
 Return YouTube Dislike, lecteur de musique, téléchargements yt-dlp, mini-lecteur PiP et dock en liquid glass.
 
-**Version : 1.19.2** (dernier APK prêt à partager : `Mikeneko-1.18.1.apk` à la racine du projet et dans Download sur le téléphone).
+**Version : 1.19.8** (dernier APK prêt à partager : `Mikeneko-1.18.1.apk` à la racine du projet et dans Download sur le téléphone).
 La version est automatique : `app/version.properties` garde la version de la prochaine compilation
 release ; chaque `assembleRelease` / `installRelease` la prend puis prépare la suivante (dernier
 chiffre +1, `versionCode` +1). Nouvelle fonction : `minor` +1 et `patch=0` à la main. Pas de x.20 : là où on arriverait à x.20.0, c'est une version majeure ((x+1).0.0).
@@ -13,7 +13,7 @@ et `FIXES.md` (à faire / à vérifier).
 
 ## Nouveautés
 
-### 1.19.0 → 1.19.2
+### 1.19.0 → 1.19.8
 
 - **Plein écran en tournant le téléphone : seule la vidéo tourne**, plus toute l'interface. Sur
   l'écran du lecteur, Android n'anime plus la rotation ; la vidéo part de sa place en haut du
@@ -24,6 +24,20 @@ et `FIXES.md` (à faire / à vérifier).
   aux couleurs du logo) : un cadre blanc autour de la vidéo, dont les côtés montent en grandes
   oreilles arrondies ; oreille et tache gris foncé à gauche (intérieur plus foncé), oreille et tache
   rousses à droite (intérieur clair), contour sombre. Les oreilles poussent en « boing » quand il atterrit.
+- 1.19.3 → 1.19.4 : **plus de violet** : les pochettes absentes de la musique (tuiles « Your library »,
+  « Downloaded », « New playlist », pilule du lecteur…), la lueur des pages sans pochette, les avatars
+  sans photo des commentaires et les miniatures en attente du menu ⋮ passent au roux sombre
+  (`RouxNuit`, icônes et initiales `RouxClair`), dans le thème calico.
+- 1.19.5 : **une vidéo n'apparaît plus dans la musique.** Lancer une vidéo puis aller dans Musique :
+  la pilule montrait la vidéo comme un morceau (et son ▶ / ⏸ contrôlait la vidéo). Elle montre
+  maintenant le morceau que la vidéo a mis de côté (▶ le reprend, la vidéo s'arrête), ou « Pick some
+  music » ; ouvrir la fenêtre remet ce morceau, en pause.
+- 1.19.6 : **le mini-lecteur vidéo n'est plus dans Musique.** En allant dans Musique, la vidéo se met
+  en pause et son mini-lecteur se cache ; en revenant sur Home, Subscriptions ou Library, il
+  réapparaît, en pause au même endroit. Si un morceau l'a remplacée entre-temps, elle revient
+  (rechargée, en pause) dès que la musique ne joue plus.
+- 1.19.7 → 1.19.8 : mini-lecteur : les boutons se cachent seuls au bout de 3 s (chaque appui relance
+  le minuteur), et la barre de temps n'apparaît plus qu'avec eux ; tout arrive et repart en fondu.
 
 ### 1.18.0 → 1.18.1
 

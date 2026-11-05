@@ -323,7 +323,7 @@ private fun SquareCard(
 @Composable
 private fun LiveCard(station: VideoItem, favorite: Boolean, onClick: () -> Unit) {
     Column(Modifier.width(220.dp).jellyClickable(role = Role.Button, strength = 0.35f, onClick = onClick), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f).clip(RoundedCornerShape(14.dp)).background(Pelage.Violet)) {
+        Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f).clip(RoundedCornerShape(14.dp)).background(Pelage.RouxNuit)) {
             AsyncImage(station.thumbnail, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
             if (station.isLive) Tag(stringResource(R.string.live_badge), Modifier.padding(8.dp), background = Pelage.Roux)
             if (favorite) FavoriteBadge(Modifier.align(Alignment.TopEnd).padding(8.dp))
