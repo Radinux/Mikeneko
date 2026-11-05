@@ -31,6 +31,19 @@ object MkIcons {
     val Fullscreen = stroke("plein_ecran", "M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5")
     val ExitFullscreen = stroke("quitter_plein_ecran", "M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5")
     val ThumbUp = stroke("pouce", "M7 11v9H4v-9z M7 11l4-7c1.3 0 2.3 1.2 2 2.5L12.3 10H18a2 2 0 0 1 2 2.3l-1.1 6A2 2 0 0 1 16.9 20H7")
+
+    /** Le pouce plein (vidéo aimée) : la main remplie et arrondie, la manchette à part avec un fin écart. */
+    val ThumbUpFilled = ImageVector.Builder("pouce_plein", 24.dp, 24.dp, 24f, 24f)
+        .addPath(
+            pathData = addPathNodes("M7 11l4-7c1.3 0 2.3 1.2 2 2.5L12.3 10H18a2 2 0 0 1 2 2.3l-1.1 6A2 2 0 0 1 16.9 20H7z"),
+            fill = SolidColor(Color.White),
+            stroke = SolidColor(Color.White),
+            strokeLineWidth = 2.1f,
+            strokeLineCap = StrokeCap.Round,
+            strokeLineJoin = StrokeJoin.Round,
+        )
+        .addPath(pathData = addPathNodes("M4 9.95h1a1 1 0 0 1 1 1v9.1a1 1 0 0 1-1 1H4a1.05 1.05 0 0 1-1.05-1.05v-9a1.05 1.05 0 0 1 1.05-1.05z"), fill = SolidColor(Color.White))
+        .build()
     val Bubble = stroke("bulle", "M12 6a7 7 0 1 1 0 14a7 7 0 1 1 0-14z M6.5 8.5L7 3l4 3.2M17.5 8.5L17 3l-4 3.2")
     // Flèches circulaires (tracés Lucide, licence ISC) : le « 10 » est posé par-dessus
     val Rewind = stroke("reculer", "M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8 M3 3v5h5")

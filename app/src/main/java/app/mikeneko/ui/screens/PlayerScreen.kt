@@ -474,7 +474,7 @@ fun PlayerContent(onMinimize: () -> Unit, onDownload: (String) -> Unit, onRadio:
                             },
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Icon(MkIcons.ThumbUp, stringResource(R.string.like), tint = Pelage.Encre, modifier = Modifier.size(20.dp))
+                            Icon(if (liked) MkIcons.ThumbUpFilled else MkIcons.ThumbUp, stringResource(R.string.like), tint = Pelage.Encre, modifier = Modifier.size(20.dp))
                             Text(" ${formatCount(info.likes)}", color = Pelage.Encre, fontSize = 14.sp, fontWeight = if (liked) FontWeight.ExtraBold else FontWeight.Bold)
                         }
                         Box(Modifier.padding(horizontal = 12.dp).size(1.dp, 22.dp).background(Color(0xFFD9CFC4)))
