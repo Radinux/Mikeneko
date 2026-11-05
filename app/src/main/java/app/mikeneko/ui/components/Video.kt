@@ -117,11 +117,12 @@ import org.schabi.newpipe.extractor.stream.Frameset
  */
 @OptIn(UnstableApi::class)
 @Composable
-fun VideoSurface(modifier: Modifier = Modifier, zoom: Boolean = false, captionLift: Float = 0f) {
+fun VideoSurface(modifier: Modifier = Modifier, zoom: Boolean = false, captionLift: Float = 0f, lastFrame: Boolean = true) {
     val context = LocalContext.current
     // La vidéo passe d'un écran à l'autre (mini-lecteur → grand lecteur, plein écran…) : le temps
     // qu'elle se rebranche, on montre sa dernière image au lieu d'un carré noir.
-    val placeholder = remember { VideoFrames.snapshot()?.asImageBitmap() }
+    // [lastFrame] = false (Shorts) : chaque page a sa propre vidéo, l'image de la précédente serait fausse
+    val placeholder = remember { if (lastFrame) VideoFrames.snapshot()?.asImageBitmap() else null }
     val framesAtStart = remember { VideoFrames.firstFrames.value }
     val seeksAtStart = remember { VideoFrames.seeks.value }
     val frames by VideoFrames.firstFrames.collectAsState()

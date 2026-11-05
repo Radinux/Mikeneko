@@ -97,6 +97,7 @@ fun SearchResultsContent(state: HomeState, query: String, onOpen: (VideoItem) ->
     var next by remember(query) { mutableStateOf(cached?.next) }
     fun arrange(videos: List<VideoItem>) = sortResults(videos.filter { state.filters.accepts(it) }, state.sort)
     var shown by remember(query) { mutableStateOf(cached?.videos?.let(::arrange)) }
+    SideEffect { Shorts.offer(shown) } // un short ouvert d'ici : on glisse vers les shorts des résultats
     var loadingMore by remember(query) { mutableStateOf(false) }
     var channels by remember(query) { mutableStateOf(cached?.channels.orEmpty()) }
     val list = rememberLazyListState()

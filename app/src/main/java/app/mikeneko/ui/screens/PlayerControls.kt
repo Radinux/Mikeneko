@@ -43,7 +43,6 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.mikeneko.R
-import app.mikeneko.data.SponsorBlock
 import app.mikeneko.player.NowPlaying
 import app.mikeneko.player.PlayerHolder
 import app.mikeneko.settings.AppSettings

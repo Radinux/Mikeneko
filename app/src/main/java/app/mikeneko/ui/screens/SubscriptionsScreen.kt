@@ -222,7 +222,7 @@ fun SubscriptionsContent(onOpen: (VideoItem) -> Unit, onOpenChannel: (ChannelIte
                     )
                 }
                 adaptiveItems(list, rowColumns, key = { it.video.url }, horizontalPadding = 0.dp, spacing = 0.dp) { item, modifier ->
-                    FeedRow(item, watched = item.video.url in watched, modifier) { onOpen(item.video) }
+                    FeedRow(item, watched = item.video.url in watched, modifier) { Shorts.offer(visible.map { it.video }); onOpen(item.video) }
                 }
             }
         }

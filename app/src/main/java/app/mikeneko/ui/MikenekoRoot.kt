@@ -89,6 +89,8 @@ import app.mikeneko.ui.screens.MusicSheetHost
 import app.mikeneko.ui.screens.MusicState
 import app.mikeneko.ui.screens.PlayerContent
 import app.mikeneko.ui.screens.SettingsContent
+import app.mikeneko.ui.screens.ShortsPlayer
+import app.mikeneko.ui.screens.Shorts
 import app.mikeneko.ui.screens.SleepReminder
 import app.mikeneko.ui.screens.SubscriptionsContent
 import app.mikeneko.ui.screens.onUserScroll
@@ -167,9 +169,31 @@ fun MikenekoRoot(
     fun openVideo(url: String) {
         if (route != Route.Lecteur) beforePlayer = route
         route = Route.Lecteur
+        // Un short s'ouvre dans le lecteur Shorts (plein écran, en boucle, glisser pour le suivant)
+        val short = Shorts.start(url)
         scope.launch {
-            runCatching { PlayerHolder.play(context, url, audioOnly = false) }
+            runCatching { PlayerHolder.play(context, url, audioOnly = false, short = short) }
                 .onFailure { toast(context.getString(R.string.error_play_video, it.message.orEmpty())) }
+        }
+    }
+
+    /** Quitter les Shorts : la lecture s'arrête (pas de mini-lecteur pour un short) et on revient d'où on venait. */
+    fun closeShorts() {
+        Shorts.end()
+        Comments.open.value = false
+        PlayerHolder.stop()
+        route = beforePlayer
+    }
+
+    /** Depuis un short : sa chaîne s'ouvre (là où on était : abonnements ou accueil). */
+    fun openChannelFromShorts(channel: ChannelItem) {
+        val back = beforePlayer
+        closeShorts()
+        if (back == Route.Abonnements) {
+            subsChannel = channel
+        } else {
+            home.channel = channel
+            route = Route.Accueil
         }
     }
 
@@ -226,7 +250,7 @@ fun MikenekoRoot(
     // Décidé pendant la composition, dans la même image que la rotation (avec la rotation non animée
     // d'Android sur le lecteur, une image du lecteur portrait étiré en paysage se verrait sinon).
     // Seulement quand l'orientation change : le bouton plein écran, lui, bascule avant la rotation.
-    val videoScreen = route == Route.Lecteur && now?.audioOnly == false
+    val videoScreen = route == Route.Lecteur && now?.audioOnly == false && Shorts.session == null // pas de plein écran pour un short
     val rotationNow = LocalView.current.display?.rotation ?: Surface.ROTATION_0
     val turn = remember { intArrayOf(orientation, rotationNow) }
     var announce by remember { mutableStateOf<Boolean?>(null) }
@@ -307,7 +331,9 @@ fun MikenekoRoot(
     }
 
     BackHandler(enabled = route != Route.Accueil) {
-        if (route == Route.Lecteur) minimizePlayer() else route = Route.Accueil
+        if (route == Route.Lecteur) {
+            if (Shorts.session != null) closeShorts() else minimizePlayer()
+        } else route = Route.Accueil
     }
     // Sur l'accueil : d'abord fermer la recherche / revenir à « Pour toi » / remonter, puis quitter
     BackHandler(enabled = route == Route.Accueil && home.canGoBack) { home.goBack() }
@@ -392,7 +418,9 @@ fun MikenekoRoot(
                     }) }
                     Route.Bibliotheque -> LibraryContent(library, downloadLink, onOpen = { openVideo(it.url) })
                     Route.Reglages -> SettingsContent(onBack = { go(Route.Accueil) })
-                    Route.Lecteur -> PlayerContent(
+                    Route.Lecteur -> if (Shorts.session != null) {
+                        ShortsPlayer(onClose = ::closeShorts, onOpenChannel = ::openChannelFromShorts)
+                    } else PlayerContent(
                         onOpenChannel = ::openChannelFromPlayer,
                         onMinimize = ::minimizePlayer,
                         onDownload = { downloadLink = it; library.page = LibraryPage.Downloads; go(Route.Bibliotheque) },
@@ -421,7 +449,9 @@ fun MikenekoRoot(
                 Route.Musique -> MusicOverlay(state = musicPages, backdrop = backdrop)
                 Route.Abonnements -> subsChannel?.let { ChannelOverlay(it, backdrop, onBack = { subsChannel = null }) }
                 Route.Bibliotheque -> LibraryOverlay(library, backdrop)
-                Route.Lecteur -> {
+                Route.Lecteur -> if (Shorts.session != null) {
+                    CommentsPanel(backdrop)
+                } else {
                     PlaylistDrawer(backdrop, onOpen = { openVideo(it.url) }) // playlist et suggestions, sous les commentaires
                     CommentsPanel(backdrop)
                     PlayerSettingsSheet(backdrop) // au-dessus des commentaires

@@ -316,6 +316,7 @@ fun HomeContent(state: HomeState, onOpen: (VideoItem) -> Unit) {
     val shownVideos = remember(videos, hidden, blocked, feed) {
         videos?.let { list -> if (feed is HomeFeed.Search) list else list.filter(feedback::allows) }
     }
+    SideEffect { Shorts.offer(shownVideos) } // un short ouvert d'ici : on glisse vers les shorts de cette liste
 
     // Nouvelle rubrique : on repart du haut
     val list = rememberLazyListState()

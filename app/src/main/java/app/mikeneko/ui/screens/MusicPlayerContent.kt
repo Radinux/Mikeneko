@@ -1,6 +1,5 @@
 package app.mikeneko.ui.screens
 
-import android.content.Intent
 import android.content.res.Configuration
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -50,7 +49,6 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource

@@ -64,6 +64,9 @@ object PlayerHolder {
      */
     private var positionOwner: String? = null
 
+    /** La vidéo en cours est un short (voir [play]) : en boucle, sans reprise. */
+    private var playingShort = false
+
     /** Retient où on en est dans la vidéo en cours (reprise, même après fermeture de l'appli). */
     private fun saveVideoPosition() {
         val owner = positionOwner ?: return
@@ -77,7 +80,7 @@ object PlayerHolder {
 
     /** La vidéo [now] est maintenant celle du lecteur : sa position sera gardée. */
     private fun ownPosition(now: NowPlaying?) {
-        positionOwner = now?.takeIf { !it.audioOnly && !it.live }?.videoId?.takeIf { it.isNotBlank() }
+        positionOwner = now?.takeIf { !it.audioOnly && !it.live && !playingShort }?.videoId?.takeIf { it.isNotBlank() }
     }
     private var watcher: Job? = null
 
@@ -432,7 +435,10 @@ object PlayerHolder {
         rememberPrevious: Boolean = true,
         startAtMs: Long = 0L,
         autoPlay: Boolean = true,
+        short: Boolean = false,
     ) {
+        // Un short : il tourne en boucle, repart toujours du début et ne prend pas de place dans la reprise
+        playingShort = short && !audioOnly
         // Le morceau déjà en cours (musique), touché à nouveau : il repart du début, sans rien
         // recharger (pas de nouvelle requête à YouTube). En erreur, on recharge vraiment.
         val current = nowPlaying.value
@@ -446,7 +452,7 @@ object PlayerHolder {
         }
         // Une vidéo déjà commencée (parmi les 10 dernières) reprend où on l'avait laissée
         @Suppress("NAME_SHADOWING")
-        val startAtMs = if (startAtMs == 0L && !audioOnly) WatchPositions.get(context, videoIdOf(url)) ?: 0L else startAtMs
+        val startAtMs = if (startAtMs == 0L && !audioOnly && !playingShort) WatchPositions.get(context, videoIdOf(url)) ?: 0L else startAtMs
         // Une autre vidéo demandée : celle mise de côté par la musique ne reviendra plus
         if (!audioOnly) parkedVideo.value = null
         val mine = ++ticket
@@ -502,8 +508,8 @@ object PlayerHolder {
             captionTracks.value = tracks
             caption.value = captionLanguage?.let { pickCaption(tracks, listOf(it)) }
             qualities.value = if (audioOnly || live) emptyList() else MediaSources.qualities(info)
-            loop.value = false
-            p.repeatMode = if (audioOnly) repeatModeFor(live) else Player.REPEAT_MODE_OFF
+            loop.value = playingShort
+            p.repeatMode = if (playingShort) Player.REPEAT_MODE_ONE else if (audioOnly) repeatModeFor(live) else Player.REPEAT_MODE_OFF
 
             val built = MediaSources.build(info, audioOnly, quality.value, caption.value, cache = if (live) null else OfflineCache.cache(context, audioOnly))
             playingQuality.value = built.height
@@ -785,8 +791,8 @@ object PlayerHolder {
         captionTracks.value = emptyList()
         caption.value = null
         qualities.value = emptyList()
-        loop.value = false
-        p.repeatMode = if (audioOnly) repeatModeFor(live = false) else Player.REPEAT_MODE_OFF
+        loop.value = playingShort
+        p.repeatMode = if (playingShort) Player.REPEAT_MODE_ONE else if (audioOnly) repeatModeFor(live = false) else Player.REPEAT_MODE_OFF
         playingQuality.value = entry.height
         setCurrent(p, keepPrevious = audioOnly, startAtMs, leavingInfo, source = OfflineCache.source(context, entry, audioOnly))
         applyVideoSizeLimit(p, live = false)
@@ -1150,6 +1156,7 @@ object PlayerHolder {
     fun bufferedPosition(): Long = player?.bufferedPosition ?: 0L
 
     fun stop() {
+        playingShort = false
         parkedVideo.value = null
         saveVideoPosition()
         positionOwner = null

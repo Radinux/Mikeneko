@@ -354,7 +354,7 @@ fun ChannelContent(channel: ChannelItem, onOpen: (VideoItem) -> Unit) {
             tab == ChannelTabs.SHORTS -> {
                 // Les shorts en grille, en hauteur (deux en portrait, plus en paysage)
                 adaptiveItems(shown, shortColumns, key = { it.url }, spacing = 12.dp) { video, modifier ->
-                    ShortCard(video, modifier) { onOpen(video) }
+                    ShortCard(video, modifier) { Shorts.offer(shown); onOpen(video) }
                 }
             }
             else -> adaptiveItems(shown, cardColumns, key = { it.url }) { video, modifier ->
