@@ -569,7 +569,7 @@ fun MikenekoRoot(
 }
 
 /** Rayon des coins arrondis inversés sous la bande noire de la barre d'état. */
-private val STATUS_BAND_CORNER = 22.dp
+private val STATUS_BAND_CORNER = 34.dp
 
 /**
  * La bande noire derrière la barre d'état, avec des coins arrondis inversés : le noir descend en
