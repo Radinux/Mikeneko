@@ -90,6 +90,33 @@ object Downloads {
 
     private const val UPDATE_EVERY_MS = 24 * 60 * 60_000L
 
+    /**
+     * Refait l'installation de Python et de yt-dlp (fichiers effacés, puis réextraits de l'APK) :
+     * pour une installation abîmée. Le yt-dlp de l'APK reprend, sa mise à jour viendra ensuite.
+     */
+    private fun repair(app: Context) {
+        val base = File(app.noBackupFilesDir, "youtubedl-android")
+        val python = File(base, "packages/python")
+        val ytdlp = File(base, "yt-dlp")
+        python.deleteRecursively()
+        ytdlp.deleteRecursively()
+        app.getSharedPreferences("youtubedl-android", Context.MODE_PRIVATE).edit().remove("pythonLibVersion").apply()
+        app.getSharedPreferences("telechargements", Context.MODE_PRIVATE).edit().remove("maj_ytdlp").apply()
+        YoutubeDL.getInstance().initPython(app, python)
+        YoutubeDL.getInstance().init_ytdlp(app, ytdlp)
+    }
+
+    /**
+     * L'erreur d'un téléchargement : yt-dlp écrit sa vraie raison à la fin (dernière ligne « ERROR: »
+     * ou dernière ligne d'une trace Python), pas au début.
+     */
+    private fun readableError(e: Throwable): String {
+        val lines = (e.message ?: describe(e)).lines().map { it.trim() }.filter { it.isNotEmpty() }
+        return lines.lastOrNull { it.startsWith("ERROR:") }?.removePrefix("ERROR:")?.trim()
+            ?: lines.lastOrNull()
+            ?: describe(e)
+    }
+
     /** Une erreur lisible : son genre et son message, et ceux de sa cause (souvent la vraie raison). */
     private fun describe(e: Throwable): String = generateSequence(e) { it.cause?.takeIf { c -> c !== it } }
         .take(3)
@@ -134,13 +161,23 @@ object Downloads {
                 if (cutSponsors && skip.isNotEmpty()) addOption("--sponsorblock-remove", skip.joinToString(","))
             }
             prepare(context)
-            runCatching {
+            suspend fun attempt() = runCatching {
                 this@Downloads.ready.await()
                 change(task.id) { it.copy(status = Status.EN_COURS) }
                 YoutubeDL.getInstance().execute(request, processId = task.id, callback = { progress, eta, _ ->
                     change(task.id) { it.copy(progress = progress / 100f, eta = eta) }
                 })
-            }.onSuccess {
+            }
+            var result = attempt()
+            // Python plante (trace « Traceback ») : son installation est sans doute abîmée (un ancien
+            // essai interrompu, 2.6.0). On la refait proprement, et on réessaie une fois.
+            if (result.exceptionOrNull()?.message?.contains("Traceback") == true) {
+                Log.e("Mikeneko", "yt-dlp : Python a planté, réinstallation", result.exceptionOrNull())
+                if (runCatching { repair(context.applicationContext) }.onFailure { Log.e("Mikeneko", "yt-dlp : réparation ratée", it) }.isSuccess) {
+                    result = attempt()
+                }
+            }
+            result.onSuccess {
                 // Une ligne par fichier écrit (une seule pour une vidéo, plusieurs pour une playlist)
                 val file = runCatching { report.readLines() }.getOrDefault(emptyList())
                     .lastOrNull { it.isNotBlank() }
@@ -150,7 +187,8 @@ object Downloads {
                 // Un morceau audio : il apparaît tout de suite dans « Téléchargés » de la Musique
                 if (format.audio) runCatching { LocalMusic.refresh(context) }
             }.onFailure { e ->
-                change(task.id) { it.copy(status = Status.ERREUR, error = e.message) }
+                Log.e("Mikeneko", "yt-dlp : téléchargement raté (${task.url})", e)
+                change(task.id) { it.copy(status = Status.ERREUR, error = readableError(e)) }
             }
             report.delete()
         }
