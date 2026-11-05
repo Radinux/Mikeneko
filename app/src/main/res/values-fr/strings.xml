@@ -215,6 +215,15 @@
     <string name="playlist_cover">Pochette</string>
     <string name="playlist_cover_mosaic">Mosaïque</string>
     <string name="playlist_cover_failed">Image illisible</string>
+    <string name="music_for_you">Pour toi</string>
+    <string name="music_your_mixes">Tes mix</string>
+    <string name="mix_of">Mix %1$s</string>
+    <string name="mix_of_text">%1$s et des artistes proches</string>
+    <string name="mix_rediscover">Redécouvertes</string>
+    <string name="mix_rediscover_text">De tes playlists, pas écoutés depuis un moment</string>
+    <string name="mix_keep">Garder</string>
+    <string name="mix_kept_label">Gardé</string>
+    <string name="mix_kept">Playlist « %1$s » créée</string>
     <string name="library_shorts">Tes shorts</string>
     <string name="settings_hide_shorts">Pas de shorts</string>
     <string name="settings_hide_shorts_text">Cache tous les shorts : accueil, recherche, abonnements, suggestions et onglet des chaînes.</string>

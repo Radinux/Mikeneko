@@ -3,7 +3,7 @@
 Client YouTube libre pour Android, en Kotlin + Jetpack Compose : sans pubs, avec SponsorBlock,
 Return YouTube Dislike, lecteur de musique, téléchargements yt-dlp, mini-lecteur PiP et dock en liquid glass.
 
-**Version : 2.5.3** (publiée en release GitHub ; dernier APK partagé à la main : `Mikeneko-2.1.2.apk`).
+**Version : 2.6.0** (publiée en release GitHub ; dernier APK partagé à la main : `Mikeneko-2.1.2.apk`).
 La version est automatique : `app/version.properties` garde la version de la prochaine compilation
 release ; chaque `assembleRelease` / `installRelease` la prend puis prépare la suivante (dernier
 chiffre +1, `versionCode` +1). Nouvelle fonction : `minor` +1 et `patch=0` à la main. Pas de x.20 : là où on arriverait à x.20.0, c'est une version majeure ((x+1).0.0).
@@ -12,6 +12,21 @@ Pour reprendre le développement : `NOTES-TECHNIQUES.md` (comment et pourquoi, p
 et `FIXES.md` (à faire / à vérifier).
 
 ## Nouveautés
+
+### 2.6.0
+
+- **Musique « Pour toi ».** Sur l'accueil Musique, d'après ce que tu écoutes :
+  - **Pour toi** : une étagère de morceaux à découvrir, tirés des mix YouTube Music de tes 3 artistes
+    les plus écoutés récemment, sans ce que tu as déjà écouté ou mis en playlist ;
+  - **Tes mix** : des playlists thématiques fabriquées pour toi, avec une pochette en mosaïque :
+    un « Mix *artiste* » par artiste favori (lui et des artistes proches), et **Redécouvertes** (des
+    morceaux de tes playlists pas écoutés depuis un moment). Un mix s'ouvre en page (lecture,
+    aléatoire) ; **Garder** en fait une vraie playlist.
+  - 3 demandes à YouTube au plus, gardées 6 h ; recalculé quand tes artistes changent.
+- **Téléchargements réparés** : « yt-dlp n'a pas pu être installé » (message vide) dans la version
+  release. La réduction R8 cassait la bibliothèque qui décompresse Python et ffmpeg ; elle est
+  maintenant protégée. L'erreur affiche aussi sa vraie cause, et un nouvel essai est possible sans
+  relancer l'appli.
 
 ### 2.5.0 → 2.5.3
 

@@ -1,5 +1,6 @@
 package app.mikeneko.ui.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.PaddingValues
@@ -35,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import app.mikeneko.R
 import app.mikeneko.data.ChannelItem
+import app.mikeneko.data.GeneratedMix
 import app.mikeneko.data.LocalMusic
 import app.mikeneko.data.Music
 import app.mikeneko.data.MusicCollection
@@ -48,6 +50,7 @@ import app.mikeneko.player.PlaylistDownloads
 import app.mikeneko.ui.components.Capsule
 import app.mikeneko.ui.components.EmptyCat
 import app.mikeneko.ui.components.Loading
+import app.mikeneko.ui.components.PlaylistArt
 import app.mikeneko.ui.components.coverModel
 import app.mikeneko.ui.icons.MkIcons
 import app.mikeneko.ui.theme.Pelage
@@ -70,6 +73,7 @@ fun MusicContent(state: MusicState, onPlayStations: (List<VideoItem>, Int) -> Un
         is MusicPage.MyPlaylist -> MyPlaylistContent(state, page.id)
         MusicPage.Downloads -> DownloadsLibraryContent(state)
         MusicPage.Library -> MusicLibraryContent(state)
+        is MusicPage.Generated -> GeneratedMixContent(state, page.mix)
     }
 }
 
@@ -119,6 +123,47 @@ private fun AlbumContent(state: MusicState, collection: MusicCollection) {
             }
         }
     }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Un mix fabriqué d'après ton écoute (« Tes mix ») : ses morceaux, et « Garder » en playlist
+// ---------------------------------------------------------------------------------------------
+
+@Composable
+private fun GeneratedMixContent(state: MusicState, mix: GeneratedMix) {
+    val context = LocalContext.current
+    val now by PlayerHolder.nowPlaying.collectAsState()
+    val scroll = rememberLazyListState()
+    val play = PageBarEffect(state, scroll, mix.title, playInOrder(context, mix.tracks))
+    val playlists by remember { Playlists.get(context) }.items.collectAsState()
+    val kept = playlists.any { it.name.equals(mix.title, ignoreCase = true) }
+    LazyColumn(Modifier.fillMaxSize(), state = scroll, contentPadding = PaddingValues(bottom = BOTTOM_SPACE)) {
+        item(key = "entete") {
+            PageHeader(mix.title, mix.subtitle + " · " + tracksSummary(mix.tracks), mix.coverModel(), onPlay = playInOrder(context, mix.tracks), play = play) {
+                ShuffleButton(mix.tracks)
+                // Garder : le mix devient une de tes playlists (il change, elle non)
+                Capsule(stringResource(if (kept) R.string.mix_kept_label else R.string.mix_keep), selected = kept, icon = if (kept) MkIcons.Check else MkIcons.Plus) {
+                    if (!kept) {
+                        Playlists.get(context).merge(mix.title, mix.tracks)
+                        Toast.makeText(context, context.getString(R.string.mix_kept, mix.title), Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+        itemsIndexed(mix.tracks, key = { i, it -> "$i:" + it.url }) { index, track ->
+            TrackRow(
+                track,
+                playing = sameTrack(now?.url, track.url),
+                onMore = { MusicSheet.open.value = MusicSheet.Track(track) },
+            ) { playTracks(context, mix.tracks, index) }
+        }
+    }
+}
+
+/** La pochette d'un mix : la mosaïque de ses 4 premières pochettes. */
+internal fun GeneratedMix.coverModel(): Any? {
+    val thumbs = tracks.mapNotNull { it.thumbnail }.distinct()
+    return if (thumbs.size >= 4) PlaylistArt(thumbs.take(4)) else thumbs.firstOrNull()
 }
 
 // ---------------------------------------------------------------------------------------------

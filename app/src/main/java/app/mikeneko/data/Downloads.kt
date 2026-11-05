@@ -1,6 +1,7 @@
 package app.mikeneko.data
 
 import android.content.Context
+import android.util.Log
 import android.os.Environment
 import app.mikeneko.R
 import app.mikeneko.player.MediaSources
@@ -46,8 +47,11 @@ object Downloads {
     private val _tasks = MutableStateFlow<List<Task>>(emptyList())
     val tasks: StateFlow<List<Task>> = _tasks.asStateFlow()
 
-    /** Terminé quand yt-dlp + ffmpeg sont installés ; en erreur si l'installation a échoué. */
-    private val ready = CompletableDeferred<Unit>()
+    /**
+     * Terminé quand yt-dlp + ffmpeg sont installés ; en erreur si l'installation a échoué. Après un
+     * échec, la prochaine demande réessaie (avant 2.6.0, il fallait relancer l'appli).
+     */
+    @Volatile private var ready = CompletableDeferred<Unit>()
 
     private val started = AtomicBoolean(false)
 
@@ -57,7 +61,12 @@ object Downloads {
      * yt-dlp cherche ensuite sa mise à jour au plus une fois par jour.
      */
     fun prepare(context: Context) {
+        if (ready.isCompleted && runCatching { ready.getCompleted() }.isFailure) {
+            ready = CompletableDeferred() // l'essai d'avant a raté : on recommence
+            started.set(false)
+        }
         if (!started.compareAndSet(false, true)) return
+        val ready = ready
         val app = context.applicationContext
         scope.launch {
             runCatching {
@@ -73,12 +82,18 @@ object Downloads {
                         .onSuccess { prefs.edit().putLong("maj_ytdlp", now).apply() }
                 }
             }.onFailure { e ->
-                ready.completeExceptionally(IllegalStateException(AppLocale.string(R.string.ytdlp_install_failed, e.message.orEmpty()), e))
+                Log.e("Mikeneko", "yt-dlp : installation ratée", e)
+                ready.completeExceptionally(IllegalStateException(AppLocale.string(R.string.ytdlp_install_failed, describe(e)), e))
             }
         }
     }
 
     private const val UPDATE_EVERY_MS = 24 * 60 * 60_000L
+
+    /** Une erreur lisible : son genre et son message, et ceux de sa cause (souvent la vraie raison). */
+    private fun describe(e: Throwable): String = generateSequence(e) { it.cause?.takeIf { c -> c !== it } }
+        .take(3)
+        .joinToString(" ← ") { t -> t.javaClass.simpleName + (t.message?.takeIf { it.isNotBlank() }?.let { ": $it" } ?: "") }
 
     fun enqueue(context: Context, url: String, format: Format, cutSponsors: Boolean) {
         val task = Task(UUID.randomUUID().toString(), url, format)
@@ -120,7 +135,7 @@ object Downloads {
             }
             prepare(context)
             runCatching {
-                ready.await()
+                this@Downloads.ready.await()
                 change(task.id) { it.copy(status = Status.EN_COURS) }
                 YoutubeDL.getInstance().execute(request, processId = task.id, callback = { progress, eta, _ ->
                     change(task.id) { it.copy(progress = progress / 100f, eta = eta) }

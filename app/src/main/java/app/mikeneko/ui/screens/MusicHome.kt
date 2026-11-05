@@ -57,6 +57,7 @@ import app.mikeneko.R
 import app.mikeneko.data.Favorites
 import app.mikeneko.data.LocalMusic
 import app.mikeneko.data.Music
+import app.mikeneko.data.MusicForYou
 import app.mikeneko.data.MusicHistory
 import app.mikeneko.data.MusicLibrary
 import app.mikeneko.data.Playlists
@@ -93,6 +94,12 @@ internal fun MusicHome(state: MusicState, onPlayStations: (List<VideoItem>, Int)
         value = Music.cachedLives(ambiance) // autre ambiance : on ne garde pas la liste d'avant
         if (value == null) value = runCatching { Music.lives(ambiance) }.getOrDefault(emptyList())
     }
+    // Les suggestions : d'abord ce qui est déjà prêt, puis (si besoin) 3 demandes à YouTube Music
+    val suggestions by produceState(initialValue = MusicForYou.cached(context), recent.firstOrNull()?.url) {
+        if (recent.isEmpty()) return@produceState
+        MusicForYou.cached(context)?.let { value = it; return@produceState }
+        runCatching { MusicForYou.load(context) }.onSuccess { value = it }
+    }
     val top = WindowInsets.statusBarSpace.asPaddingValues().calculateTopPadding() + 30.dp
     val quickColumns = columnsFor(170.dp).coerceIn(2, 4)
 
@@ -128,6 +135,28 @@ internal fun MusicHome(state: MusicState, onPlayStations: (List<VideoItem>, Int)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         row.forEach { tile -> QuickTileView(tile, Modifier.weight(1f)) }
                         repeat(quickColumns - row.size) { Spacer(Modifier.weight(1f)) }
+                    }
+                }
+            }
+        }
+        // Pour toi (2.6.0) : des morceaux à découvrir, et des mix thématiques d'après ton écoute
+        val forYou = suggestions
+        if (forYou != null && forYou.tracks.isNotEmpty()) {
+            item(key = "pour_toi") {
+                Shelf(stringResource(R.string.music_for_you)) {
+                    itemsIndexed(forYou.tracks, key = { _, it -> "suggere:" + it.url }) { index, track ->
+                        SquareCard(track.thumbnail, track.title, track.channel) { playTracks(context, forYou.tracks, index) }
+                    }
+                }
+            }
+        }
+        if (forYou != null && forYou.mixes.isNotEmpty()) {
+            item(key = "tes_mix") {
+                Shelf(stringResource(R.string.music_your_mixes)) {
+                    items(forYou.mixes, key = { "mix:" + it.id }) { mix ->
+                        SquareCard(mix.coverModel(), mix.title, pluralStringResource(R.plurals.track_count, mix.tracks.size, mix.tracks.size), icon = MkIcons.Music) {
+                            state.open(MusicPage.Generated(mix))
+                        }
                     }
                 }
             }

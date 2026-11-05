@@ -82,6 +82,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.mikeneko.R
+import app.mikeneko.data.GeneratedMix
 import app.mikeneko.data.ChannelItem
 import app.mikeneko.data.LocalMusic
 import app.mikeneko.data.MusicCollection
@@ -113,6 +114,8 @@ sealed interface MusicPage {
     data object Downloads : MusicPage
     /** Ta bibliothèque : playlists, albums et artistes sauvegardés, téléchargés (avec des filtres). */
     data object Library : MusicPage
+    /** Un mix fabriqué d'après ton écoute (« Tes mix », 2.6.0). */
+    data class Generated(val mix: GeneratedMix) : MusicPage
 }
 
 /**

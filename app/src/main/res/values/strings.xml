@@ -216,6 +216,15 @@
     <string name="playlist_cover">Cover</string>
     <string name="playlist_cover_mosaic">Mosaic</string>
     <string name="playlist_cover_failed">Couldn\'t read this image</string>
+    <string name="music_for_you">For you</string>
+    <string name="music_your_mixes">Your mixes</string>
+    <string name="mix_of">%1$s Mix</string>
+    <string name="mix_of_text">%1$s and similar artists</string>
+    <string name="mix_rediscover">Rediscover</string>
+    <string name="mix_rediscover_text">From your playlists, not played lately</string>
+    <string name="mix_keep">Keep</string>
+    <string name="mix_kept_label">Kept</string>
+    <string name="mix_kept">Playlist “%1$s” created</string>
     <string name="library_shorts">Your shorts</string>
     <string name="settings_hide_shorts">No Shorts</string>
     <string name="settings_hide_shorts_text">Hide every short: home, search, subscriptions, suggestions and channel tabs.</string>
