@@ -27,6 +27,20 @@ object MkIcons {
     val Share = stroke("partager", "M12 3v12M7 8l5-5 5 5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5")
     val Check = stroke("ok", "M5 12.5l4.5 4.5L19 7.5", width = 2.6f)
     val Plus = stroke("plus", "M12 5v14M5 12h14")
+    /** Un short : un écran en hauteur avec un triangle de lecture. */
+    val Shorts = stroke("shorts", "M8.5 2.5h7a3 3 0 0 1 3 3v13a3 3 0 0 1-3 3h-7a3 3 0 0 1-3-3v-13a3 3 0 0 1 3-3z M10.5 9.3v5.4l4.3-2.7z")
+    /** Garder (un short) : un signet, plein quand c'est gardé. */
+    val Bookmark = stroke("garder", "M7.5 3.5h9a1.5 1.5 0 0 1 1.5 1.5v15.5l-6-4.2-6 4.2V5a1.5 1.5 0 0 1 1.5-1.5z")
+    val BookmarkFilled = ImageVector.Builder("garde", 24.dp, 24.dp, 24f, 24f)
+        .addPath(
+            pathData = addPathNodes("M7.5 3.5h9a1.5 1.5 0 0 1 1.5 1.5v15.5l-6-4.2-6 4.2V5a1.5 1.5 0 0 1 1.5-1.5z"),
+            fill = SolidColor(Color.White),
+            stroke = SolidColor(Color.White),
+            strokeLineWidth = 2.1f,
+            strokeLineCap = StrokeCap.Round,
+            strokeLineJoin = StrokeJoin.Round,
+        )
+        .build()
     val Captions = stroke("sous_titres", "M6 6h12a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V9a3 3 0 0 1 3-3z M10.5 10.3a2 2 0 1 0 0 3.4M16.5 10.3a2 2 0 1 0 0 3.4")
     val Fullscreen = stroke("plein_ecran", "M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5")
     val ExitFullscreen = stroke("quitter_plein_ecran", "M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5")

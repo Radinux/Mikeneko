@@ -39,6 +39,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.mikeneko.R
+import app.mikeneko.data.looksShort
+import app.mikeneko.settings.AppSettings
 import app.mikeneko.data.VideoItem
 import app.mikeneko.data.YouTubeRepository
 import app.mikeneko.ui.components.Capsule
@@ -238,7 +240,7 @@ data class SearchFilters(
     val active: Int get() = listOf(date != DateFilter.Any, duration != DurationFilter.Any, hideShorts).count { it }
 
     fun accepts(video: VideoItem, now: Long = System.currentTimeMillis()): Boolean {
-        if (hideShorts && video.isShort) return false
+        if ((hideShorts || AppSettings.hideShorts.value) && video.looksShort) return false
         date.maxDays?.let { days ->
             val at = video.uploadedAt ?: return false
             if (now - at > days * 86_400_000L) return false

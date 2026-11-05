@@ -42,6 +42,10 @@ object AppSettings {
     private val _sleepReminder = MutableStateFlow(true)
     val sleepReminder: StateFlow<Boolean> = _sleepReminder.asStateFlow()
 
+    /** Plus aucun short nulle part (accueil, recherche, abonnements, suggestions, onglet des chaînes). */
+    private val _hideShorts = MutableStateFlow(false)
+    val hideShorts: StateFlow<Boolean> = _hideShorts.asStateFlow()
+
     private val _sleepMinutes = MutableStateFlow(60)
     val sleepMinutes: StateFlow<Int> = _sleepMinutes.asStateFlow()
 
@@ -55,6 +59,7 @@ object AppSettings {
         _historyPaused.value = prefs.getBoolean("historique_pause", false)
         _sleepReminder.value = prefs.getBoolean("dodo", true)
         _sleepMinutes.value = prefs.getInt("dodo_minutes", 60)
+        _hideShorts.value = prefs.getBoolean("shorts_masques", false)
     }
 
     /** Lu avant init() par attachBaseContext de l'activité. */
@@ -68,6 +73,7 @@ object AppSettings {
     fun setHistoryPaused(value: Boolean) = save("historique_pause", value) { _historyPaused.value = value }
     fun setSleepReminder(value: Boolean) = save("dodo", value) { _sleepReminder.value = value }
     fun setSleepMinutes(value: Int) = save("dodo_minutes", value) { _sleepMinutes.value = value }
+    fun setHideShorts(value: Boolean) = save("shorts_masques", value) { _hideShorts.value = value }
 
     fun setSkipCategory(category: String, skip: Boolean) {
         val next = if (skip) _skipCategories.value + category else _skipCategories.value - category

@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.mikeneko.R
+import app.mikeneko.settings.AppSettings
 import app.mikeneko.data.ChannelItem
 import app.mikeneko.data.ChannelPage
 import app.mikeneko.data.PlaylistItem
@@ -321,7 +322,8 @@ fun ChannelContent(channel: ChannelItem, onOpen: (VideoItem) -> Unit) {
             }
         }
         // Les onglets (seulement s'il y en a plusieurs)
-        val tabs = page?.tabs.orEmpty().mapNotNull { it.channelTabKind() }
+        // Réglage « Pas de shorts » : pas d'onglet Shorts
+        val tabs = page?.tabs.orEmpty().mapNotNull { it.channelTabKind() }.filter { !(AppSettings.hideShorts.value && it == ChannelTabs.SHORTS) }
         if (tabs.size > 1) {
             item(key = "onglets") {
                 LazyRow(
@@ -526,7 +528,7 @@ private fun ChannelDescription(text: String) {
 
 /** Un short : miniature en hauteur, titre et vues. */
 @Composable
-private fun ShortCard(video: VideoItem, modifier: Modifier = Modifier, onClick: () -> Unit) {
+internal fun ShortCard(video: VideoItem, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Column(modifier.jellyClickable(role = null, strength = 0.35f, onClick = onClick), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         AsyncImage(
             model = video.thumbnail,

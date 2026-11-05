@@ -80,6 +80,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.mikeneko.R
+import app.mikeneko.settings.AppSettings
 import app.mikeneko.data.ChannelItem
 import app.mikeneko.data.Feedback
 import app.mikeneko.data.ForYou
@@ -313,7 +314,8 @@ fun HomeContent(state: HomeState, onOpen: (VideoItem) -> Unit) {
     val hidden by feedback.hidden.collectAsState()
     val blocked by feedback.blocked.collectAsState()
 
-    val shownVideos = remember(videos, hidden, blocked, feed) {
+    val hideShorts by AppSettings.hideShorts.collectAsState()
+    val shownVideos = remember(videos, hidden, blocked, feed, hideShorts) {
         videos?.let { list -> if (feed is HomeFeed.Search) list else list.filter(feedback::allows) }
     }
     SideEffect { Shorts.offer(shownVideos) } // un short ouvert d'ici : on glisse vers les shorts de cette liste

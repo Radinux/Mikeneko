@@ -300,6 +300,9 @@ private fun PlaybackSection() {
         Divider()
         SwitchRow(MkIcons.Next, stringResource(R.string.autoplay), stringResource(R.string.autoplay_text), autoplay) { PlayerHolder.setAutoplay(it) }
         Divider()
+        val hideShorts by AppSettings.hideShorts.collectAsState()
+        SwitchRow(MkIcons.Shorts, stringResource(R.string.settings_hide_shorts), stringResource(R.string.settings_hide_shorts_text), hideShorts) { AppSettings.setHideShorts(it) }
+        Divider()
         SwitchRow(MkIcons.Bubble, stringResource(R.string.settings_auto_pip), stringResource(R.string.settings_auto_pip_text), autoPip) { AppSettings.setAutoPip(it) }
         Divider()
         SwitchRow(MkIcons.Fullscreen, stringResource(R.string.settings_hide_status_bar), stringResource(R.string.settings_hide_status_bar_text), hideStatusBar) {

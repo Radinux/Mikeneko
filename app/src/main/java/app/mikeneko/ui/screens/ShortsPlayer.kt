@@ -303,6 +303,19 @@ private fun ShortActions(video: Backdrop, url: String, title: String, channel: S
         ShortAction(video, MkIcons.Bubble, stringResource(R.string.comments_open), if (comments.count > 0) formatCount(comments.count.toLong()) else null) {
             Comments.open.value = true
         }
+        // Garder : dans « Tes shorts » de la Bibliothèque (à part des vidéos)
+        val savedList by library.shorts.collectAsState()
+        val saved = savedList.any { sameTrack(it.url, url) }
+        ShortAction(
+            video,
+            if (saved) MkIcons.BookmarkFilled else MkIcons.Bookmark,
+            stringResource(if (saved) R.string.short_unsave else R.string.short_save),
+            null,
+            active = saved,
+        ) {
+            val added = library.toggleShort(VideoItem(url, title, channel, thumbnail, channelId = channelUrl?.let(::channelIdFrom), isShort = true))
+            Toast.makeText(context, context.getString(if (added) R.string.short_saved else R.string.short_removed), Toast.LENGTH_SHORT).show()
+        }
         ShortAction(video, MkIcons.Share, stringResource(R.string.share), null) { shareLink(context, title, url) }
     }
 }

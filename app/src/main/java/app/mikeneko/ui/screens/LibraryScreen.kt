@@ -57,6 +57,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.mikeneko.R
+import app.mikeneko.settings.AppSettings
 import app.mikeneko.data.Downloads
 import app.mikeneko.data.Playlist
 import app.mikeneko.data.Playlists
@@ -91,6 +92,7 @@ sealed interface LibraryPage {
     data object History : LibraryPage
     data object Later : LibraryPage
     data object Liked : LibraryPage
+    data object Shorts : LibraryPage
     data class MyPlaylist(val id: String) : LibraryPage
     data object Downloads : LibraryPage
 }
@@ -128,6 +130,7 @@ fun LibraryContent(state: LibraryState, downloadLink: String, onOpen: (VideoItem
         LibraryPage.History -> HistoryPage(onOpen)
         LibraryPage.Later -> LaterPage(onOpen)
         LibraryPage.Liked -> LikedPage(onOpen)
+        LibraryPage.Shorts -> ShortsPage(onOpen)
         is LibraryPage.MyPlaylist -> MyVideoPlaylistPage(page.id, state, onOpen)
     }
 }
@@ -142,6 +145,7 @@ fun LibraryOverlay(state: LibraryState, backdrop: Backdrop) {
         LibraryPage.History -> stringResource(R.string.library_history)
         LibraryPage.Later -> stringResource(R.string.library_later)
         LibraryPage.Liked -> stringResource(R.string.library_liked)
+        LibraryPage.Shorts -> stringResource(R.string.library_shorts)
         LibraryPage.Downloads -> "" // la page a déjà son grand titre
         is LibraryPage.MyPlaylist -> playlists.firstOrNull { it.id == page.id }?.name.orEmpty()
     }
@@ -167,6 +171,8 @@ private fun LibraryHome(state: LibraryState, onOpen: (VideoItem) -> Unit) {
     val library = remember { VideoLibrary.get(context) }
     val later by library.later.collectAsState()
     val liked by library.liked.collectAsState()
+    val shorts by library.shorts.collectAsState()
+    val hideShorts by AppSettings.hideShorts.collectAsState()
     val playlistStore = remember { Playlists.videos(context) }
     val playlists by playlistStore.items.collectAsState()
     val tasks by Downloads.tasks.collectAsState()
@@ -209,6 +215,8 @@ private fun LibraryHome(state: LibraryState, onOpen: (VideoItem) -> Unit) {
             Column(Modifier.padding(horizontal = 20.dp).padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 LibraryTile(MkIcons.Clock, stringResource(R.string.library_later), pluralStringResource(R.plurals.videos_count, later.size, later.size)) { state.page = LibraryPage.Later }
                 LibraryTile(MkIcons.ThumbUp, stringResource(R.string.library_liked), pluralStringResource(R.plurals.videos_count, liked.size, liked.size)) { state.page = LibraryPage.Liked }
+                // Les shorts gardés, à part des vidéos (pas avec le réglage « Pas de shorts »)
+                if (!hideShorts) LibraryTile(MkIcons.Shorts, stringResource(R.string.library_shorts), pluralStringResource(R.plurals.shorts_count, shorts.size, shorts.size)) { state.page = LibraryPage.Shorts }
                 val running = tasks.count { it.status == Downloads.Status.EN_COURS || it.status == Downloads.Status.EN_ATTENTE }
                 LibraryTile(
                     MkIcons.Download,
@@ -459,6 +467,48 @@ private fun LikedPage(onOpen: (VideoItem) -> Unit) {
         header = { PlayButtons(liked, title, onOpen) },
         onRemove = { _, video -> library.removeLiked(video.url) },
     )
+}
+
+/**
+ * « Tes shorts » : les shorts gardés (signet du lecteur Shorts), en grille de miniatures en hauteur.
+ * Un tap ouvre le lecteur Shorts, où l'on glisse dans cette liste ; ✕ retire le short.
+ */
+@Composable
+private fun ShortsPage(onOpen: (VideoItem) -> Unit) {
+    val context = LocalContext.current
+    val library = remember { VideoLibrary.get(context) }
+    val shorts by library.shorts.collectAsState()
+    val columns = columnsFor(150.dp).coerceAtLeast(2) // deux en portrait, plus en paysage
+    LazyColumn(
+        Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 200.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        item(key = "haut") { Spacer(Modifier.statusBarSpacePadding().height(72.dp)) }
+        if (shorts.isEmpty()) {
+            item(key = "vide") { EmptyCat(stringResource(R.string.nothing_found), stringResource(R.string.library_shorts_empty), Modifier.padding(top = 30.dp)) }
+        }
+        adaptiveItems(shorts, columns, key = { it.url }, horizontalPadding = 0.dp, spacing = 12.dp) { video, modifier ->
+            Box(modifier) {
+                ShortCard(video) {
+                    Shorts.offer(shorts)
+                    onOpen(video)
+                }
+                Box(
+                    Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(6.dp)
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(Color.Black.copy(alpha = 0.55f))
+                        .clickable(role = Role.Button, onClickLabel = stringResource(R.string.short_unsave)) { library.removeShort(video.url) },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(MkIcons.Close, stringResource(R.string.short_unsave), tint = Color.White, modifier = Modifier.size(16.dp))
+                }
+            }
+        }
+    }
 }
 
 @Composable

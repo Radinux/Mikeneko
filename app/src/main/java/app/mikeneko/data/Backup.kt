@@ -21,7 +21,7 @@ import org.xmlpull.v1.XmlSerializer
  *   <playlists kind="music"><playlist name="…"><video url="…" title="…" channel="…"/></playlist></playlists>
  *   <playlists kind="videos">…</playlists>
  *   <library><album url="…" title="…" artist="…"/><artist url="…" name="…"/></library>
- *   <favorites>…</favorites> <later>…</later> <liked>…</liked>
+ *   <favorites>…</favorites> <later>…</later> <liked>…</liked> <shorts>…</shorts>
  * </mikeneko>
  * ```
  */
@@ -38,6 +38,7 @@ object MikenekoBackup {
         val favorites: List<VideoItem> = emptyList(),
         val later: List<VideoItem> = emptyList(),
         val liked: List<VideoItem> = emptyList(),
+        val shorts: List<VideoItem> = emptyList(),
     )
 
     /** Ce que l'import a ajouté. */
@@ -96,6 +97,7 @@ object MikenekoBackup {
         xml.videos("favorites", Favorites.get(context).items.value)
         xml.videos("later", videos.later.value)
         xml.videos("liked", videos.liked.value)
+        xml.videos("shorts", videos.shorts.value)
 
         xml.endTag(null, "mikeneko")
         xml.endDocument()
@@ -134,8 +136,9 @@ object MikenekoBackup {
         val favorites = mutableListOf<VideoItem>()
         val later = mutableListOf<VideoItem>()
         val liked = mutableListOf<VideoItem>()
+        val shorts = mutableListOf<VideoItem>()
 
-        var section: String? = null // subscriptions, playlists, library, favorites, later, liked
+        var section: String? = null // subscriptions, playlists, library, favorites, later, liked, shorts
         var playlistKind: String? = null
         var playlistName: String? = null
         var playlistItems = mutableListOf<VideoItem>()
@@ -144,7 +147,7 @@ object MikenekoBackup {
         while (parser.next() != XmlPullParser.END_DOCUMENT) {
             when (parser.eventType) {
                 XmlPullParser.START_TAG -> when (parser.name) {
-                    "subscriptions", "library", "favorites", "later", "liked" -> section = parser.name
+                    "subscriptions", "library", "favorites", "later", "liked", "shorts" -> section = parser.name
                     "playlists" -> { section = "playlists"; playlistKind = a("kind") }
                     "playlist" -> { playlistName = a("name"); playlistItems = mutableListOf() }
                     "channel" -> {
@@ -172,6 +175,7 @@ object MikenekoBackup {
                             section == "favorites" -> favorites += v
                             section == "later" -> later += v
                             section == "liked" -> liked += v
+                            section == "shorts" -> shorts += v
                         }
                     }
                 }
@@ -181,11 +185,11 @@ object MikenekoBackup {
                         if (name != null) (if (playlistKind == "videos") videosLists else music) += name to playlistItems.toList()
                         playlistName = null
                     }
-                    "subscriptions", "playlists", "library", "favorites", "later", "liked" -> section = null
+                    "subscriptions", "playlists", "library", "favorites", "later", "liked", "shorts" -> section = null
                 }
             }
         }
-        return Content(subscriptions, music, videosLists, albums, artists, favorites, later, liked)
+        return Content(subscriptions, music, videosLists, albums, artists, favorites, later, liked, shorts)
     }
 
     /** Ajoute le contenu d'un fichier (sans rien effacer). */
@@ -199,7 +203,7 @@ object MikenekoBackup {
         content.videoPlaylists.forEach { (name, items) -> if (Playlists.videos(context).merge(name, items)) playlists++ }
         val library = MusicLibrary.get(context).addAll(content.albums, content.artists)
         val videos = VideoLibrary.get(context)
-        val added = Favorites.get(context).addAll(content.favorites) + videos.addLater(content.later) + videos.addLiked(content.liked)
+        val added = Favorites.get(context).addAll(content.favorites) + videos.addLater(content.later) + videos.addLiked(content.liked) + videos.addShorts(content.shorts)
         return Added(channels, playlists, library, added)
     }
 }

@@ -25,6 +25,9 @@ data class VideoItem(
     val isShort: Boolean = false,
 )
 
+/** Un short ? (marqué comme tel, ou une adresse /shorts/ : le flux RSS des abonnements ne dit rien d'autre) */
+val VideoItem.looksShort: Boolean get() = isShort || "/shorts/" in url
+
 /** Une playlist (onglet Playlists d'une chaîne). [count] : nombre de vidéos, -1 si inconnu. */
 data class PlaylistItem(
     val url: String,

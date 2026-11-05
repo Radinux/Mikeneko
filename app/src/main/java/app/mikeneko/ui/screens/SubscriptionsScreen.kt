@@ -51,6 +51,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.mikeneko.R
+import app.mikeneko.data.looksShort
+import app.mikeneko.settings.AppSettings
 import app.mikeneko.data.ChannelItem
 import app.mikeneko.data.FeedVideo
 import app.mikeneko.data.Subscription
@@ -111,8 +113,10 @@ fun SubscriptionsContent(onOpen: (VideoItem) -> Unit, onOpenChannel: (ChannelIte
 
     fun toast(text: String) = Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
 
+    val hideShorts by AppSettings.hideShorts.collectAsState()
     val visible = feed.orEmpty().filter { item ->
         (channel == null || item.channelId == channel) &&
+            !(hideShorts && item.video.looksShort) &&
             (!unwatchedOnly || item.video.url !in watched)
     }
     val today = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant()

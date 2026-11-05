@@ -212,6 +212,18 @@
     <string name="library_remove">Retirer</string>
     <string name="library_later_empty">Mets des vidéos de côté depuis leur menu ⋮ ou le lecteur.</string>
     <string name="library_liked_empty">Le pouce du lecteur ajoute la vidéo ici.</string>
+    <string name="library_shorts">Tes shorts</string>
+    <string name="settings_hide_shorts">Pas de shorts</string>
+    <string name="settings_hide_shorts_text">Cache tous les shorts : accueil, recherche, abonnements, suggestions et onglet des chaînes.</string>
+    <string name="library_shorts_empty">Touche le signet dans le lecteur Shorts pour garder un short ici.</string>
+    <string name="short_save">Garder ce short</string>
+    <string name="short_unsave">Retirer de tes shorts</string>
+    <string name="short_saved">Ajouté à tes shorts</string>
+    <string name="short_removed">Retiré de tes shorts</string>
+    <plurals name="shorts_count">
+        <item quantity="one">%d short</item>
+        <item quantity="other">%d shorts</item>
+    </plurals>
     <string name="library_playlist_empty">Cette playlist est vide.</string>
     <string name="library_later_add">À regarder plus tard</string>
     <string name="library_later_remove">Retirer de « À regarder plus tard »</string>

@@ -1,6 +1,7 @@
 package app.mikeneko.data
 
 import android.content.Context
+import app.mikeneko.settings.AppSettings
 import kotlin.math.pow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,6 +28,7 @@ class Feedback private constructor(context: Context) {
     val version: Int get() = _hidden.value.size * 31 + _blocked.value.size + (_hidden.value.firstOrNull()?.at?.toInt() ?: 0)
 
     fun allows(video: VideoItem): Boolean {
+        if (AppSettings.hideShorts.value && video.looksShort) return false // réglage « Pas de shorts »
         if (_hidden.value.any { it.url == video.url }) return false
         val key = video.channelKey() ?: return true
         return _blocked.value.none { it.key == key }

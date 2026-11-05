@@ -3,7 +3,7 @@
 Client YouTube libre pour Android, en Kotlin + Jetpack Compose : sans pubs, avec SponsorBlock,
 Return YouTube Dislike, lecteur de musique, téléchargements yt-dlp, mini-lecteur PiP et dock en liquid glass.
 
-**Version : 2.2.1** (publiée en release GitHub ; dernier APK partagé à la main : `Mikeneko-2.1.2.apk`).
+**Version : 2.3.0** (publiée en release GitHub ; dernier APK partagé à la main : `Mikeneko-2.1.2.apk`).
 La version est automatique : `app/version.properties` garde la version de la prochaine compilation
 release ; chaque `assembleRelease` / `installRelease` la prend puis prépare la suivante (dernier
 chiffre +1, `versionCode` +1). Nouvelle fonction : `minor` +1 et `patch=0` à la main. Pas de x.20 : là où on arriverait à x.20.0, c'est une version majeure ((x+1).0.0).
@@ -12,6 +12,16 @@ Pour reprendre le développement : `NOTES-TECHNIQUES.md` (comment et pourquoi, p
 et `FIXES.md` (à faire / à vérifier).
 
 ## Nouveautés
+
+### 2.3.0
+
+- **Tes shorts.** Un signet dans le lecteur Shorts (au-dessus de « partager ») garde le short dans
+  **Bibliothèque › Tes shorts**, une liste à part des vidéos : une grille de miniatures en hauteur ;
+  un tap ouvre le lecteur Shorts et on glisse dans tes shorts gardés ; ✕ en retire un. La liste est
+  aussi dans la sauvegarde Mikeneko (.xml, section `<shorts>`).
+- **Réglage « Pas de shorts »** (Réglages › Lecture) : plus aucun short nulle part : accueil et
+  « Pour toi », recherche, abonnements, suggestions du lecteur, onglet Shorts des chaînes et tuile
+  « Tes shorts ».
 
 ### 2.2.0 → 2.2.1
 
@@ -504,7 +514,7 @@ de YouTube).
 | File : enchaînement, aléatoire, répéter, glisser pour réordonner ; suivant/précédent dans la notification | `player/PlayerHolder.kt`, `player/PlaybackService.kt` |
 | Playlists perso, musique téléchargée hors ligne, menu ⋮ des morceaux | `data/Playlists.kt`, `data/LocalMusic.kt`, `ui/screens/MusicUi.kt` |
 | Paroles synchronisées (LRCLIB) | `data/Lyrics.kt`, `ui/screens/LyricsSheet.kt` |
-| Bibliothèque : historique, à regarder plus tard, J'aime, playlists vidéo | `ui/screens/LibraryScreen.kt`, `data/VideoLibrary.kt` |
+| Bibliothèque : historique, à regarder plus tard, J'aime, tes shorts, playlists vidéo | `ui/screens/LibraryScreen.kt`, `data/VideoLibrary.kt` |
 | Téléchargements yt-dlp (dans la Bibliothèque) : vidéo, MP3, FLAC, Opus, M4A, sponsors coupés | `data/Downloads.kt`, `ui/screens/DownloadsScreen.kt` |
 | « T'as vu l'heure ? » après 1 h | `ui/screens/SleepReminder.kt` |
 | Réglages : langue, région des contenus, lecture (dont lecture automatique), SponsorBlock, historique, rappel dodo, sauvegarde, mises à jour | `ui/screens/SettingsScreen.kt`, `settings/` |

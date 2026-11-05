@@ -7,8 +7,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import org.json.JSONArray
 
 /**
- * La Bibliothèque sans compte : « À regarder plus tard » et « Vidéos J'aime », gardées sur le
- * téléphone (la plus récente en premier). Les playlists de vidéos sont dans [Playlists.videos].
+ * La Bibliothèque sans compte : « À regarder plus tard », « Vidéos J'aime » et « Tes shorts » (2.3.0,
+ * à part des vidéos), gardées sur le téléphone (la plus récente en premier). Les playlists de vidéos
+ * sont dans [Playlists.videos].
  */
 class VideoLibrary private constructor(context: Context) {
     private val prefs = context.getSharedPreferences("bibliotheque", Context.MODE_PRIVATE)
@@ -19,13 +20,19 @@ class VideoLibrary private constructor(context: Context) {
     private val _liked = MutableStateFlow(load("jaime"))
     val liked: StateFlow<List<VideoItem>> = _liked.asStateFlow()
 
+    /** Les shorts gardés (bouton « Garder » du lecteur Shorts). */
+    private val _shorts = MutableStateFlow(load("shorts").map { it.copy(isShort = true) })
+    val shorts: StateFlow<List<VideoItem>> = _shorts.asStateFlow()
+
     /** Ajoute (en premier) ou retire. Renvoie true si la vidéo est maintenant dans la liste. */
     fun toggleLater(video: VideoItem): Boolean = toggle(_later, "plus_tard", video)
     fun toggleLiked(video: VideoItem): Boolean = toggle(_liked, "jaime", video)
+    fun toggleShort(video: VideoItem): Boolean = toggle(_shorts, "shorts", video.copy(isShort = true))
 
     /** Import : ajoute à la fin ce qui manque. Renvoie le nombre ajouté. */
     fun addLater(list: List<VideoItem>) = addMissing(_later, "plus_tard", list)
     fun addLiked(list: List<VideoItem>) = addMissing(_liked, "jaime", list)
+    fun addShorts(list: List<VideoItem>) = addMissing(_shorts, "shorts", list.map { it.copy(isShort = true) })
 
     private fun addMissing(flow: MutableStateFlow<List<VideoItem>>, key: String, list: List<VideoItem>): Int {
         val fresh = list.filter { v -> flow.value.none { sameTrack(it.url, v.url) } }.distinctBy { it.url }
@@ -38,6 +45,7 @@ class VideoLibrary private constructor(context: Context) {
 
     fun removeLater(url: String) = remove(_later, "plus_tard", url)
     fun removeLiked(url: String) = remove(_liked, "jaime", url)
+    fun removeShort(url: String) = remove(_shorts, "shorts", url)
 
     private fun toggle(flow: MutableStateFlow<List<VideoItem>>, key: String, video: VideoItem): Boolean {
         val there = flow.value.any { sameTrack(it.url, video.url) }

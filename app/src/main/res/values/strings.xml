@@ -213,6 +213,18 @@
     <string name="library_remove">Remove</string>
     <string name="library_later_empty">Save videos from their ⋮ menu or the player.</string>
     <string name="library_liked_empty">The thumb in the player adds the video here.</string>
+    <string name="library_shorts">Your shorts</string>
+    <string name="settings_hide_shorts">No Shorts</string>
+    <string name="settings_hide_shorts_text">Hide every short: home, search, subscriptions, suggestions and channel tabs.</string>
+    <string name="library_shorts_empty">Tap the bookmark in the Shorts player to keep a short here.</string>
+    <string name="short_save">Keep this short</string>
+    <string name="short_unsave">Remove from your shorts</string>
+    <string name="short_saved">Added to your shorts</string>
+    <string name="short_removed">Removed from your shorts</string>
+    <plurals name="shorts_count">
+        <item quantity="one">%d short</item>
+        <item quantity="other">%d shorts</item>
+    </plurals>
     <string name="library_playlist_empty">This playlist is empty.</string>
     <string name="library_later_add">Watch later</string>
     <string name="library_later_remove">Remove from Watch later</string>
