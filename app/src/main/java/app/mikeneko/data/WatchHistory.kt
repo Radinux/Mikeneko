@@ -104,7 +104,7 @@ class WatchHistory private constructor(context: Context) {
 
     private fun VideoItem.toJson() = JSONObject()
         .put("url", url).put("title", title).put("channel", channel).put("thumbnail", thumbnail ?: "")
-        .put("duration", durationSec).put("views", views).put("uploaded", uploaded ?: "").put("channelId", channelId ?: "").put("uploadedAt", uploadedAt ?: 0L)
+        .put("duration", durationSec).put("views", views).put("uploaded", uploaded ?: "").put("channelId", channelId ?: "").put("uploadedAt", uploadedAt ?: 0L).put("short", isShort)
 
     private fun videoFromJson(o: JSONObject) = VideoItem(
         url = o.getString("url"),
@@ -116,6 +116,7 @@ class WatchHistory private constructor(context: Context) {
         uploaded = o.optString("uploaded").ifEmpty { null },
         channelId = o.optString("channelId").ifEmpty { null },
         uploadedAt = o.optLong("uploadedAt", 0L).takeIf { it > 0 },
+        isShort = o.optBoolean("short") || "/shorts/" in o.getString("url"),
     )
 
     companion object {

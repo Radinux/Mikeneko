@@ -27,6 +27,8 @@ object MkIcons {
     val Share = stroke("partager", "M12 3v12M7 8l5-5 5 5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5")
     val Check = stroke("ok", "M5 12.5l4.5 4.5L19 7.5", width = 2.6f)
     val Plus = stroke("plus", "M12 5v14M5 12h14")
+    /** Une photo (pochette perso d'une playlist). */
+    val Image = stroke("image", "M5 4.5h14a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-11a2 2 0 0 1 2-2z M3.5 16.5l5-5 4 4 2.5-2.5 5.5 5.5 M15.5 8.5a1.2 1.2 0 1 0 0 2.4a1.2 1.2 0 1 0 0-2.4z")
     /** Un short : un écran en hauteur avec un triangle de lecture. */
     val Shorts = stroke("shorts", "M8.5 2.5h7a3 3 0 0 1 3 3v13a3 3 0 0 1-3 3h-7a3 3 0 0 1-3-3v-13a3 3 0 0 1 3-3z M10.5 9.3v5.4l4.3-2.7z")
     /** Garder (un short) : un signet, plein quand c'est gardé. */

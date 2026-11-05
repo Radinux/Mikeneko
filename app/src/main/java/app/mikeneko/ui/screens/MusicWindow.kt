@@ -128,7 +128,7 @@ fun MusicDockWindow(
                 Modifier
                     .fillMaxSize()
                     .graphicsLayer { alpha = state.expand.value.coerceIn(0f, 1f) }
-                    .background(Color.Black.copy(alpha = 0.38f))
+                    .background(Color.Black.copy(alpha = 0.22f)) // léger : la page se voit à travers la fenêtre
                     .then(
                         if (state.open) {
                             Modifier.clickable(interactionSource = null, indication = null, onClickLabel = stringResource(R.string.player_minimize)) { state.collapse() }

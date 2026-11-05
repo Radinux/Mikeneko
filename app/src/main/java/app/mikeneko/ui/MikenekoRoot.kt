@@ -11,6 +11,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
@@ -19,6 +20,8 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -38,10 +41,16 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathOperation
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalView
@@ -89,13 +98,14 @@ import app.mikeneko.ui.screens.MusicSheetHost
 import app.mikeneko.ui.screens.MusicState
 import app.mikeneko.ui.screens.PlayerContent
 import app.mikeneko.ui.screens.SettingsContent
-import app.mikeneko.ui.screens.ShortsPlayer
 import app.mikeneko.ui.screens.Shorts
+import app.mikeneko.ui.screens.ShortsPlayer
 import app.mikeneko.ui.screens.SleepReminder
 import app.mikeneko.ui.screens.SubscriptionsContent
 import app.mikeneko.ui.screens.onUserScroll
 import app.mikeneko.ui.screens.rememberMusicPlayerState
 import app.mikeneko.ui.theme.Pelage
+import app.mikeneko.ui.theme.statusBarSpace
 import app.mikeneko.update.AppUpdates
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
@@ -522,6 +532,11 @@ fun MikenekoRoot(
             )
         }
 
+        // Barre d'état affichée (réglage « masquée » coupé) : une bande noire derrière elle, exprès,
+        // pour que l'heure et les icônes se lisent et que rien ne défile dessous (coins arrondis inversés)
+        val hideStatusBar by AppSettings.hideStatusBar.collectAsState()
+        if (!hideStatusBar && Shorts.session == null) StatusBarBand(Modifier.align(Alignment.TopCenter))
+
         // Le morph mini-lecteur ↔ grand lecteur, au-dessus de tout
         VideoMorphLayer()
 
@@ -550,5 +565,26 @@ fun MikenekoRoot(
             )
         }
 
+    }
+}
+
+/** Rayon des coins arrondis inversés sous la bande noire de la barre d'état. */
+private val STATUS_BAND_CORNER = 22.dp
+
+/**
+ * La bande noire derrière la barre d'état, avec des coins arrondis inversés : le noir descend en
+ * quart de cercle sur les deux bords, comme si l'écran de l'appli avait des coins arrondis en haut.
+ */
+@Composable
+private fun StatusBarBand(modifier: Modifier) {
+    val density = LocalDensity.current
+    val bar = WindowInsets.statusBarSpace.getTop(density).toFloat()
+    val corner = with(density) { STATUS_BAND_CORNER.toPx() }
+    Canvas(modifier.fillMaxWidth().height(with(density) { (bar + corner).toDp() })) {
+        val band = Path().apply { addRect(Rect(0f, 0f, size.width, bar + corner)) }
+        val content = Path().apply {
+            addRoundRect(RoundRect(Rect(0f, bar, size.width, bar + 2 * corner), topLeft = CornerRadius(corner), topRight = CornerRadius(corner)))
+        }
+        drawPath(Path.combine(PathOperation.Difference, band, content), Color.Black)
     }
 }

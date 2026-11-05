@@ -240,17 +240,20 @@ object SubscriptionFeed {
             var title = ""
             var published = ""
             var thumb: String? = null
+            var short = false
             var event = parser.eventType
             while (event != XmlPullParser.END_DOCUMENT) {
                 // Xml.newPullParser() gère les espaces de noms : on reconstruit « yt:videoId »
                 val tag = parser.prefix?.let { "$it:${parser.name}" } ?: parser.name
                 when (event) {
                     XmlPullParser.START_TAG -> when (tag) {
-                        "entry" -> { inEntry = true; id = ""; title = ""; published = ""; thumb = null }
+                        "entry" -> { inEntry = true; id = ""; title = ""; published = ""; thumb = null; short = false }
                         "yt:videoId" -> if (inEntry) id = parser.nextText()
                         "title" -> if (inEntry) title = parser.nextText()
                         "published" -> if (inEntry) published = parser.nextText()
                         "media:thumbnail" -> if (inEntry) thumb = parser.getAttributeValue(null, "url")
+                        // Le lien d'un short est en /shorts/ (c'est la seule trace d'un short dans le RSS)
+                        "link" -> if (inEntry && parser.getAttributeValue(null, "href")?.contains("/shorts/") == true) short = true
                     }
                     XmlPullParser.END_TAG -> if (tag == "entry" && id.isNotEmpty()) {
                         inEntry = false
@@ -261,6 +264,7 @@ object SubscriptionFeed {
                                 channel = sub.name,
                                 thumbnail = thumb,
                                 channelId = sub.channelId,
+                                isShort = short,
                             ),
                             published = runCatching { OffsetDateTime.parse(published).toInstant() }.getOrDefault(Instant.EPOCH),
                             channelId = sub.channelId,

@@ -64,6 +64,7 @@ import app.mikeneko.data.VideoItem
 import app.mikeneko.ui.components.Loading
 import app.mikeneko.ui.components.Tag
 import app.mikeneko.ui.components.columnsFor
+import app.mikeneko.ui.components.coverModel
 import app.mikeneko.ui.icons.MkIcons
 import app.mikeneko.ui.theme.Pelage
 import app.mikeneko.ui.theme.jellyClickable
@@ -103,7 +104,7 @@ internal fun MusicHome(state: MusicState, onPlayStations: (List<VideoItem>, Int)
     val quick = buildList {
         add(QuickTile(context.getString(R.string.music_library), null, MkIcons.Library) { state.open(MusicPage.Library) })
         add(QuickTile(context.getString(R.string.music_downloaded), null, MkIcons.Download) { state.open(MusicPage.Downloads) })
-        playlists.take(3).forEach { pl -> add(QuickTile(pl.name, pl.items.firstOrNull()?.thumbnail, MkIcons.Music) { state.open(MusicPage.MyPlaylist(pl.id)) }) }
+        playlists.take(3).forEach { pl -> add(QuickTile(pl.name, pl.coverModel(), MkIcons.Music) { state.open(MusicPage.MyPlaylist(pl.id)) }) }
         recent.take((6 - size).coerceAtLeast(0)).forEach { track -> add(QuickTile(track.title, track.thumbnail, MkIcons.Music) { replay(track) }) }
     }
 
@@ -146,7 +147,7 @@ internal fun MusicHome(state: MusicState, onPlayStations: (List<VideoItem>, Int)
                     SquareCard(null, stringResource(R.string.playlist_new), "", icon = MkIcons.Plus) { MusicSheet.open.value = MusicSheet.NewPlaylist() }
                 }
                 items(playlists, key = { "pl:" + it.id }) { pl ->
-                    SquareCard(pl.items.firstOrNull()?.thumbnail, pl.name, pluralStringResource(R.plurals.track_count, pl.items.size, pl.items.size)) {
+                    SquareCard(pl.coverModel(), pl.name, pluralStringResource(R.plurals.track_count, pl.items.size, pl.items.size)) {
                         state.open(MusicPage.MyPlaylist(pl.id))
                     }
                 }
@@ -203,7 +204,7 @@ private fun greeting(): Int = when (LocalTime.now().hour) {
 }
 
 /** Une tuile de l'accès rapide. */
-private class QuickTile(val title: String, val cover: String?, val icon: ImageVector, val onClick: () -> Unit)
+private class QuickTile(val title: String, val cover: Any?, val icon: ImageVector, val onClick: () -> Unit)
 
 @Composable
 private fun QuickTileView(tile: QuickTile, modifier: Modifier = Modifier) {
@@ -252,7 +253,7 @@ private fun Shelf(title: String, onMore: (() -> Unit)? = null, content: LazyList
 /** Une carte carrée : pochette, titre, sous-titre (morceau, playlist, favori). */
 @Composable
 private fun SquareCard(
-    cover: String?,
+    cover: Any?,
     title: String,
     subtitle: String,
     icon: ImageVector = MkIcons.Music,

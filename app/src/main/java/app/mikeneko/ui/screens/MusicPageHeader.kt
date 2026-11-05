@@ -1,10 +1,18 @@
 package app.mikeneko.ui.screens
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -21,6 +29,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,6 +54,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.mikeneko.R
 import app.mikeneko.data.Music
+import app.mikeneko.data.Playlist
+import app.mikeneko.data.Playlists
 import app.mikeneko.data.VideoItem
 import app.mikeneko.data.sameTrack
 import app.mikeneko.player.PlayerHolder
@@ -53,6 +64,10 @@ import app.mikeneko.ui.components.rememberCoverColor
 import app.mikeneko.ui.icons.MkIcons
 import app.mikeneko.ui.theme.Pelage
 import app.mikeneko.ui.theme.jellyClickable
+import java.io.File
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 // ---------------------------------------------------------------------------------------------
 // En-tête commun : pochette, titre, « Tout lire » et « Aléatoire »
@@ -62,7 +77,7 @@ import app.mikeneko.ui.theme.jellyClickable
 internal fun PageHeader(
     title: String,
     subtitle: String,
-    cover: String?,
+    cover: Any?,
     round: Boolean = false,
     icon: ImageVector = MkIcons.Music,
     /** Le gros bouton lecture rond, à droite (null = pas de bouton). */
@@ -102,7 +117,8 @@ internal fun PageHeader(
         )
         if (subtitle.isNotBlank()) Text(subtitle, Modifier.padding(top = 2.dp), color = Color(0xFFCFC6BD), fontSize = 14.sp, maxLines = 2)
         Row(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(10.dp)) { actions() }
+            // En plusieurs lignes s'il le faut (téléchargement, aléatoire, pochette…) : rien ne s'écrase
+            FlowRow(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) { actions() }
             if (onPlay != null) {
                 Box(
                     Modifier
@@ -217,4 +233,52 @@ internal fun ShuffleButton(tracks: List<VideoItem>) {
             else -> shuffleTracks(context, tracks)
         }
     }
+}
+
+/**
+ * La pochette d'une playlist perso : « Pochette » choisit une photo (gardée dans l'appli, réduite à
+ * 1024 px) ; « Mosaïque » revient aux pochettes des 4 premiers morceaux.
+ */
+@Composable
+internal fun PlaylistCoverButtons(playlist: Playlist) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val store = remember { Playlists.get(context) }
+    val pick = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            val path = withContext(Dispatchers.IO) { runCatching { saveCover(context, playlist.id, uri) }.getOrNull() }
+            if (path == null) {
+                Toast.makeText(context, context.getString(R.string.playlist_cover_failed), Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+            playlist.cover?.let { old -> withContext(Dispatchers.IO) { File(old).delete() } }
+            store.setCover(playlist.id, path)
+        }
+    }
+    Capsule(stringResource(R.string.playlist_cover), selected = playlist.cover != null, icon = MkIcons.Image) {
+        pick.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+    }
+    if (playlist.cover != null) {
+        Capsule(stringResource(R.string.playlist_cover_mosaic), icon = MkIcons.Close) {
+            playlist.cover?.let { File(it).delete() }
+            store.setCover(playlist.id, null)
+        }
+    }
+}
+
+/** Copie la photo choisie dans l'appli, réduite (1024 px au plus), en JPEG. Renvoie son chemin. */
+private fun saveCover(context: Context, id: String, uri: Uri): String {
+    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
+    var sample = 1
+    while (maxOf(bounds.outWidth, bounds.outHeight) / (sample * 2) >= 1024) sample *= 2
+    val bitmap = context.contentResolver.openInputStream(uri)?.use {
+        BitmapFactory.decodeStream(it, null, BitmapFactory.Options().apply { inSampleSize = sample })
+    } ?: error("image illisible")
+    val dir = File(context.filesDir, "pochettes").apply { mkdirs() }
+    // Un nouveau nom à chaque fois : l'image d'avant ne reste pas dans le cache des pochettes
+    val file = File(dir, "$id-${System.currentTimeMillis()}.jpg")
+    file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.JPEG, 90, it) }
+    return file.absolutePath
 }

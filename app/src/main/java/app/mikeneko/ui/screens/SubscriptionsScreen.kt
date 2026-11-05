@@ -51,8 +51,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.mikeneko.R
-import app.mikeneko.data.looksShort
-import app.mikeneko.settings.AppSettings
 import app.mikeneko.data.ChannelItem
 import app.mikeneko.data.FeedVideo
 import app.mikeneko.data.Subscription
@@ -61,6 +59,8 @@ import app.mikeneko.data.SubscriptionFeed
 import app.mikeneko.data.SubscriptionStore
 import app.mikeneko.data.VideoItem
 import app.mikeneko.data.formatAgo
+import app.mikeneko.data.looksShort
+import app.mikeneko.settings.AppSettings
 import app.mikeneko.ui.components.Capsule
 import app.mikeneko.ui.components.EmptyCat
 import app.mikeneko.ui.components.Loading

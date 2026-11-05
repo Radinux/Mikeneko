@@ -7,6 +7,7 @@ import app.mikeneko.player.PlayerHolder
 import app.mikeneko.player.PlaylistDownloads
 import app.mikeneko.settings.AppLocale
 import app.mikeneko.settings.AppSettings
+import app.mikeneko.ui.components.PlaylistArtFetcher
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
@@ -33,7 +34,12 @@ class MikenekoApp : Application(), SingletonImageLoader.Factory {
      */
     override fun newImageLoader(context: PlatformContext): ImageLoader =
         ImageLoader.Builder(context)
-            .components { add(OkHttpNetworkFetcherFactory(callFactory = { NewPipeDownloader.client })) }
+            .components {
+                add(OkHttpNetworkFetcherFactory(callFactory = { NewPipeDownloader.client }))
+                // Les mosaïques des playlists perso (4 pochettes en une)
+                add(PlaylistArtFetcher.Factory())
+                add(PlaylistArtFetcher.Key())
+            }
             .diskCache {
                 DiskCache.Builder()
                     .directory(context.cacheDir.resolve("coil3_disk_cache").toOkioPath())

@@ -8,8 +8,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Une playlist faite à la main (musique ou vidéos). */
-data class Playlist(val id: String, val name: String, val items: List<VideoItem>)
+/** Une playlist faite à la main (musique ou vidéos). [cover] : la photo choisie comme pochette (fichier de l'appli). */
+data class Playlist(val id: String, val name: String, val items: List<VideoItem>, val cover: String? = null)
 
 /**
  * Les playlists perso, gardées sur le téléphone (comme les favoris). Deux carnets séparés : celles
@@ -47,6 +47,9 @@ class Playlists private constructor(context: Context, file: String) {
 
     fun rename(id: String, name: String) = change(id) { it.copy(name = name.trim()) }
 
+    /** La photo choisie comme pochette (null : retour à la mosaïque des pochettes des morceaux). */
+    fun setCover(id: String, path: String?) = change(id) { it.copy(cover = path) }
+
     fun delete(id: String) = update { list -> list.filterNot { it.id == id } }
 
     /** Ajoute à la fin. Renvoie false si le morceau y était déjà. */
@@ -78,7 +81,7 @@ class Playlists private constructor(context: Context, file: String) {
         (0 until array.length()).map { i ->
             val o = array.getJSONObject(i)
             val tracks = o.getJSONArray("items")
-            Playlist(o.getString("id"), o.optString("name"), (0 until tracks.length()).map { trackFromJson(tracks.getJSONObject(it)) })
+            Playlist(o.getString("id"), o.optString("name"), (0 until tracks.length()).map { trackFromJson(tracks.getJSONObject(it)) }, o.optString("cover").ifEmpty { null })
         }
     }.getOrDefault(emptyList())
 
@@ -87,7 +90,7 @@ class Playlists private constructor(context: Context, file: String) {
         _items.value.forEach { p ->
             val tracks = JSONArray()
             p.items.forEach { tracks.put(it.toTrackJson()) }
-            array.put(JSONObject().put("id", p.id).put("name", p.name).put("items", tracks))
+            array.put(JSONObject().put("id", p.id).put("name", p.name).put("items", tracks).put("cover", p.cover ?: ""))
         }
         prefs.edit().putString("liste", array.toString()).apply()
     }
@@ -108,7 +111,7 @@ class Playlists private constructor(context: Context, file: String) {
 
 internal fun VideoItem.toTrackJson(): JSONObject = JSONObject()
     .put("url", url).put("title", title).put("channel", channel)
-    .put("thumbnail", thumbnail ?: "").put("live", isLive).put("duration", durationSec)
+    .put("thumbnail", thumbnail ?: "").put("live", isLive).put("duration", durationSec).put("short", isShort)
 
 internal fun trackFromJson(o: JSONObject) = VideoItem(
     url = o.getString("url"),
@@ -117,4 +120,5 @@ internal fun trackFromJson(o: JSONObject) = VideoItem(
     thumbnail = o.optString("thumbnail").ifEmpty { null },
     isLive = o.optBoolean("live"),
     durationSec = o.optLong("duration", -1),
+    isShort = o.optBoolean("short"),
 )

@@ -80,7 +80,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.mikeneko.R
-import app.mikeneko.settings.AppSettings
 import app.mikeneko.data.ChannelItem
 import app.mikeneko.data.Feedback
 import app.mikeneko.data.ForYou
@@ -88,6 +87,7 @@ import app.mikeneko.data.SearchHistory
 import app.mikeneko.data.VideoItem
 import app.mikeneko.data.YouTubeRepository
 import app.mikeneko.settings.AppLocale
+import app.mikeneko.settings.AppSettings
 import app.mikeneko.ui.components.EmptyCat
 import app.mikeneko.ui.components.GlassChip
 import app.mikeneko.ui.components.GlassCircleButton

@@ -3,6 +3,8 @@ package app.mikeneko.ui.screens
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -10,6 +12,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -33,16 +36,26 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -50,6 +63,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.mikeneko.R
@@ -65,6 +79,7 @@ import app.mikeneko.ui.glass.LiquidGlass
 import app.mikeneko.ui.icons.MkIcons
 import app.mikeneko.ui.theme.Pelage
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /** Où en est la recherche des paroles du morceau en cours. */
 private sealed interface LyricsState {
@@ -83,6 +98,12 @@ fun LyricsSheet(backdrop: Backdrop, visible: Boolean, onClose: () -> Unit) {
     val queue by PlayerHolder.queue.collectAsState()
     val queueIndex by PlayerHolder.queueIndex.collectAsState()
     BackHandler(enabled = visible, onBack = onClose)
+    // Paroles ouvertes : l'écran reste allumé (on les lit sans toucher le téléphone)
+    val view = LocalView.current
+    DisposableEffect(visible) {
+        if (visible) view.keepScreenOn = true
+        onDispose { if (visible) view.keepScreenOn = false }
+    }
 
     // Une requête seulement quand le panneau est ouvert (et une fois par morceau)
     var state by remember { mutableStateOf<LyricsState>(LyricsState.Loading) }
@@ -107,6 +128,46 @@ fun LyricsSheet(backdrop: Backdrop, visible: Boolean, onClose: () -> Unit) {
         state = if (found == null || found.isEmpty) LyricsState.NotFound else LyricsState.Found(found)
     }
 
+    // Tirer le panneau vers le bas le ferme (2.4.0) : par la barre du haut, ou en continuant de tirer
+    // quand les paroles sont déjà en haut. Il suit le doigt, et revient en place si on lâche trop tôt.
+    val density = LocalDensity.current
+    val closeAt = with(density) { 120.dp.toPx() }
+    val scope = rememberCoroutineScope()
+    val drag = remember { Animatable(0f) }
+    LaunchedEffect(visible) { if (visible) drag.snapTo(0f) }
+    fun release(velocity: Float) {
+        scope.launch {
+            if (drag.value > closeAt || (velocity > 1_500f && drag.value > 0f)) onClose()
+            else drag.animateTo(0f, spring(dampingRatio = 0.75f, stiffness = 500f))
+        }
+    }
+    val pullDown = remember {
+        object : NestedScrollConnection {
+            // Le panneau descendu remonte d'abord avant que les paroles ne défilent
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (available.y < 0f && drag.value > 0f) {
+                    val used = maxOf(available.y, -drag.value)
+                    scope.launch { drag.snapTo(drag.value + used) }
+                    return Offset(0f, used)
+                }
+                return Offset.Zero
+            }
+            // Les paroles sont en haut et on tire encore : c'est le panneau qui descend
+            override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
+                if (available.y > 0f && source == NestedScrollSource.UserInput) {
+                    scope.launch { drag.snapTo(drag.value + available.y) }
+                    return Offset(0f, available.y)
+                }
+                return Offset.Zero
+            }
+            override suspend fun onPreFling(available: Velocity): Velocity {
+                if (drag.value <= 0f) return Velocity.Zero
+                release(available.y)
+                return available
+            }
+        }
+    }
+
     Box(Modifier.fillMaxSize()) {
         AnimatedVisibility(visible, enter = fadeIn(tween(200)), exit = fadeOut(tween(200))) {
             Box(
@@ -122,7 +183,9 @@ fun LyricsSheet(backdrop: Backdrop, visible: Boolean, onClose: () -> Unit) {
         ) {
             LiquidGlass(
                 backdrop = backdrop,
-                modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(10.dp).fillMaxHeight(0.78f),
+                modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(10.dp).fillMaxHeight(0.78f)
+                    .graphicsLayer { translationY = drag.value }
+                    .nestedScroll(pullDown),
                 cornerRadius = 30.dp,
                 bezel = 26.dp,
                 refraction = 26.dp,
@@ -130,7 +193,24 @@ fun LyricsSheet(backdrop: Backdrop, visible: Boolean, onClose: () -> Unit) {
                 frost = 30.dp,
             ) {
                 Column(Modifier.fillMaxSize()) {
-                    Row(Modifier.fillMaxWidth().padding(start = 22.dp, end = 8.dp, top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                    // La barre du haut : on l'attrape pour tirer le panneau vers le bas
+                    Box(Modifier.align(Alignment.CenterHorizontally).padding(top = 8.dp).size(40.dp, 4.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.3f)))
+                    Row(
+                        Modifier.fillMaxWidth()
+                            .pointerInput(Unit) {
+                                val tracker = VelocityTracker()
+                                detectVerticalDragGestures(
+                                    onDragStart = { tracker.resetTracking() },
+                                    onDragEnd = { release(tracker.calculateVelocity().y) },
+                                    onDragCancel = { release(0f) },
+                                ) { change, amount ->
+                                    tracker.addPosition(change.uptimeMillis, change.position)
+                                    scope.launch { drag.snapTo((drag.value + amount).coerceAtLeast(0f)) }
+                                }
+                            }
+                            .padding(start = 22.dp, end = 8.dp, top = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
                         Column(Modifier.weight(1f)) {
                             Text(stringResource(R.string.lyrics), Modifier.semantics { heading() }, color = Pelage.Texte, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
                             Text(track?.title.orEmpty(), color = Pelage.Gris, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)

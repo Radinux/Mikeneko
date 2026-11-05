@@ -352,7 +352,7 @@ fun TrackRow(
 
 /** Un album, une playlist ou un artiste en ligne. */
 @Composable
-fun CollectionRow(title: String, subtitle: String, thumbnail: String?, round: Boolean = false, icon: ImageVector? = null, onClick: () -> Unit) {
+fun CollectionRow(title: String, subtitle: String, thumbnail: Any?, round: Boolean = false, icon: ImageVector? = null, onClick: () -> Unit) {
     Row(
         Modifier.fillMaxWidth().clickable(role = Role.Button, onClick = onClick).padding(horizontal = 18.dp, vertical = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -369,7 +369,7 @@ fun CollectionRow(title: String, subtitle: String, thumbnail: String?, round: Bo
 
 /** Une pochette (ou une icône rousse sur fond roux sombre quand il n'y en a pas ; plus de violet, 1.19.3). */
 @Composable
-fun Cover(url: String?, size: Dp, corner: Dp, modifier: Modifier = Modifier, icon: ImageVector? = null) {
+fun Cover(url: Any?, size: Dp, corner: Dp, modifier: Modifier = Modifier, icon: ImageVector? = null) {
     Box(modifier.size(size).clip(RoundedCornerShape(corner)).background(Pelage.RouxNuit), contentAlignment = Alignment.Center) {
         if (url == null) {
             Icon(icon ?: MkIcons.Music, null, tint = Pelage.RouxClair, modifier = Modifier.size(size * 0.42f))

@@ -39,10 +39,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.mikeneko.R
-import app.mikeneko.data.looksShort
-import app.mikeneko.settings.AppSettings
 import app.mikeneko.data.VideoItem
 import app.mikeneko.data.YouTubeRepository
+import app.mikeneko.data.looksShort
+import app.mikeneko.settings.AppSettings
 import app.mikeneko.ui.components.Capsule
 import app.mikeneko.ui.components.EmptyCat
 import app.mikeneko.ui.components.Loading

@@ -27,6 +27,7 @@ import app.mikeneko.data.Music
 import app.mikeneko.data.MusicCollection
 import app.mikeneko.data.MusicKind
 import app.mikeneko.data.Playlists
+import app.mikeneko.data.VideoItem
 import app.mikeneko.data.formatCount
 import app.mikeneko.data.sameTrack
 import app.mikeneko.player.PlayerHolder
@@ -135,3 +136,14 @@ internal fun collectionSubtitle(album: MusicCollection): String = listOfNotNull(
     album.artist.ifBlank { null },
     album.count.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.track_count, it.toInt(), it.toInt()) },
 ).joinToString(" · ")
+
+/** « 24 morceaux · 1 h 32 min » : le nombre de morceaux et leur durée totale (si on la connaît). */
+@Composable
+internal fun tracksSummary(tracks: List<VideoItem>): String {
+    val count = pluralStringResource(R.plurals.track_count, tracks.size, tracks.size)
+    val seconds = tracks.sumOf { it.durationSec.coerceAtLeast(0) }
+    if (seconds <= 0) return count
+    val minutes = (seconds + 30) / 60
+    val total = if (minutes >= 60) "${minutes / 60} h ${"%02d".format(minutes % 60)} min" else "$minutes min"
+    return "$count · $total"
+}

@@ -54,10 +54,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.mikeneko.R
 import app.mikeneko.data.ChannelItem
-import app.mikeneko.data.channelIdFrom
 import app.mikeneko.data.Comments
 import app.mikeneko.data.VideoItem
 import app.mikeneko.data.VideoLibrary
+import app.mikeneko.data.channelIdFrom
 import app.mikeneko.data.formatCount
 import app.mikeneko.data.sameTrack
 import app.mikeneko.player.NowPlaying

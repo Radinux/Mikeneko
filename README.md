@@ -3,7 +3,7 @@
 Client YouTube libre pour Android, en Kotlin + Jetpack Compose : sans pubs, avec SponsorBlock,
 Return YouTube Dislike, lecteur de musique, téléchargements yt-dlp, mini-lecteur PiP et dock en liquid glass.
 
-**Version : 2.3.0** (publiée en release GitHub ; dernier APK partagé à la main : `Mikeneko-2.1.2.apk`).
+**Version : 2.4.0** (publiée en release GitHub ; dernier APK partagé à la main : `Mikeneko-2.1.2.apk`).
 La version est automatique : `app/version.properties` garde la version de la prochaine compilation
 release ; chaque `assembleRelease` / `installRelease` la prend puis prépare la suivante (dernier
 chiffre +1, `versionCode` +1). Nouvelle fonction : `minor` +1 et `patch=0` à la main. Pas de x.20 : là où on arriverait à x.20.0, c'est une version majeure ((x+1).0.0).
@@ -12,6 +12,26 @@ Pour reprendre le développement : `NOTES-TECHNIQUES.md` (comment et pourquoi, p
 et `FIXES.md` (à faire / à vérifier).
 
 ## Nouveautés
+
+### 2.4.0
+
+Ta liste « Mikeneko fixes list » :
+- **Bloqueur de shorts réparé.** Des shorts passaient encore : le « Pour toi » se nourrit de
+  l'historique, qui oubliait qu'une vidéo était un short, et le flux des abonnements ne le disait
+  pas. Maintenant : le lien `/shorts/` du flux RSS, l'info gardée dans l'historique et les listes, et
+  toute vidéo d'une minute au plus comptent comme des shorts.
+- **Playlists musique** : le nombre de morceaux et la **durée totale** sous le titre (« 24 morceaux ·
+  1 h 32 min »), aussi pour les albums et playlists YouTube Music ; plus de numéros devant les
+  morceaux (coupés après 99).
+- **Pochettes de playlists** : « Pochette » choisit une photo du téléphone ; sans photo, une
+  **mosaïque** des pochettes des 4 premiers morceaux (partout : accueil Musique, Ta musique, page de
+  la playlist, playlists vidéo de la Bibliothèque). « Mosaïque » revient à la mosaïque.
+- **Paroles** : on ferme le panneau en le **tirant vers le bas** (par la barre du haut, ou en
+  continuant de tirer quand les paroles sont en haut) ; il suit le doigt et revient s'il est lâché tôt.
+  Et tant que les paroles sont ouvertes, **l'écran ne s'éteint pas**.
+- **Barre d'état affichée** (réglage « masquée » coupé) : une bande noire derrière elle, avec des
+  coins arrondis inversés, pour que rien ne passe sous l'heure et les icônes.
+- **Lecteur musique plus transparent** : le voile de la fenêtre et l'assombrissement derrière sont plus légers.
 
 ### 2.3.0
 

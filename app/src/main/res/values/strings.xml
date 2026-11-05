@@ -213,6 +213,9 @@
     <string name="library_remove">Remove</string>
     <string name="library_later_empty">Save videos from their ⋮ menu or the player.</string>
     <string name="library_liked_empty">The thumb in the player adds the video here.</string>
+    <string name="playlist_cover">Cover</string>
+    <string name="playlist_cover_mosaic">Mosaic</string>
+    <string name="playlist_cover_failed">Couldn\'t read this image</string>
     <string name="library_shorts">Your shorts</string>
     <string name="settings_hide_shorts">No Shorts</string>
     <string name="settings_hide_shorts_text">Hide every short: home, search, subscriptions, suggestions and channel tabs.</string>

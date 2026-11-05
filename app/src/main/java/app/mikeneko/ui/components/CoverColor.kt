@@ -19,8 +19,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /** Les couleurs déjà calculées, par adresse de pochette. */
-private val cache = object : LinkedHashMap<String, Color>(64, 0.75f, true) {
-    override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Color>?) = size > 120
+private val cache = object : LinkedHashMap<Any, Color>(64, 0.75f, true) {
+    override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Any, Color>?) = size > 120
 }
 
 /**
@@ -28,7 +28,7 @@ private val cache = object : LinkedHashMap<String, Color>(64, 0.75f, true) {
  * glisse en douceur d'un morceau à l'autre. [fallback] tant qu'elle n'est pas connue.
  */
 @Composable
-fun rememberCoverColor(url: String?, fallback: Color = Pelage.RouxNuit): State<Color> {
+fun rememberCoverColor(url: Any?, fallback: Color = Pelage.RouxNuit): State<Color> {
     val context = LocalContext.current
     val target by produceState(cache[url] ?: fallback, url) {
         if (url == null) {

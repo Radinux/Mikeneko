@@ -57,7 +57,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.mikeneko.R
-import app.mikeneko.settings.AppSettings
 import app.mikeneko.data.Downloads
 import app.mikeneko.data.Playlist
 import app.mikeneko.data.Playlists
@@ -68,6 +67,7 @@ import app.mikeneko.data.formatAgo
 import app.mikeneko.data.thumbnailFor
 import app.mikeneko.player.PlayerHolder
 import app.mikeneko.player.PlaylistDownloads
+import app.mikeneko.settings.AppSettings
 import app.mikeneko.ui.components.Capsule
 import app.mikeneko.ui.components.CompactVideoRow
 import app.mikeneko.ui.components.EmptyCat
@@ -75,6 +75,7 @@ import app.mikeneko.ui.components.GlassCircleButton
 import app.mikeneko.ui.components.WatchProgressBar
 import app.mikeneko.ui.components.adaptiveItems
 import app.mikeneko.ui.components.columnsFor
+import app.mikeneko.ui.components.coverModel
 import app.mikeneko.ui.glass.Backdrop
 import app.mikeneko.ui.icons.MkIcons
 import app.mikeneko.ui.theme.GlassTextShadow
@@ -316,7 +317,7 @@ private fun PlaylistTile(playlist: Playlist, modifier: Modifier = Modifier, onCl
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.width(140.dp).aspectRatio(16f / 9f).clip(RoundedCornerShape(14.dp)).background(Pelage.Coussin), contentAlignment = Alignment.Center) {
-            val cover = playlist.items.firstOrNull()?.thumbnail
+            val cover = playlist.coverModel()
             if (cover != null) {
                 AsyncImage(cover, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
             } else {

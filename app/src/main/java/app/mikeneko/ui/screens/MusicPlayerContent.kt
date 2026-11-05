@@ -145,7 +145,15 @@ internal fun PlayerWindowContent(
             Modifier
                 .fillMaxSize()
                 .backdropSource(glass)
-                .background(Brush.verticalGradient(0f to coverColor, 0.6f to lerp(coverColor, Pelage.Nuit, 0.6f), 1f to Pelage.Nuit)),
+                // Plus transparent (2.4.0) : le voile laisse voir la page derrière la vitre, assez sombre
+                // en bas pour lire les détails
+                .background(
+                    Brush.verticalGradient(
+                        0f to coverColor.copy(alpha = 0.55f),
+                        0.6f to lerp(coverColor, Pelage.Nuit, 0.6f).copy(alpha = 0.66f),
+                        1f to Pelage.Nuit.copy(alpha = 0.8f),
+                    ),
+                ),
         ) {
             AsyncImage(
                 now?.thumbnail,

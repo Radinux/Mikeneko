@@ -56,7 +56,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.mikeneko.R
-import app.mikeneko.settings.AppSettings
 import app.mikeneko.data.ChannelItem
 import app.mikeneko.data.ChannelPage
 import app.mikeneko.data.PlaylistItem
@@ -68,6 +67,7 @@ import app.mikeneko.data.channelTabKind
 import app.mikeneko.data.formatCount
 import app.mikeneko.data.formatViews
 import app.mikeneko.player.PlayerHolder
+import app.mikeneko.settings.AppSettings
 import app.mikeneko.ui.components.Capsule
 import app.mikeneko.ui.components.EmptyCat
 import app.mikeneko.ui.components.GlassCircleButton

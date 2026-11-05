@@ -48,6 +48,7 @@ import app.mikeneko.player.PlaylistDownloads
 import app.mikeneko.ui.components.Capsule
 import app.mikeneko.ui.components.EmptyCat
 import app.mikeneko.ui.components.Loading
+import app.mikeneko.ui.components.coverModel
 import app.mikeneko.ui.icons.MkIcons
 import app.mikeneko.ui.theme.Pelage
 import app.mikeneko.ui.theme.statusBarSpace
@@ -99,16 +100,19 @@ private fun AlbumContent(state: MusicState, collection: MusicCollection) {
     val play = PageBarEffect(state, scroll, collection.title, playInOrder(context, tracks.orEmpty()))
     LazyColumn(Modifier.fillMaxSize(), state = scroll, contentPadding = PaddingValues(bottom = BOTTOM_SPACE)) {
         item(key = "entete") {
-            PageHeader(collection.title, collectionSubtitle(collection), collection.thumbnail, icon = MkIcons.Album, onPlay = playInOrder(context, tracks.orEmpty()), play = play) {
+            // Une fois les morceaux chargés : leur nombre et la durée totale
+            val subtitle = tracks?.takeIf { it.isNotEmpty() }?.let { listOfNotNull(collection.artist.ifBlank { null }, tracksSummary(it)).joinToString(" · ") }
+                ?: collectionSubtitle(collection)
+            PageHeader(collection.title, subtitle, collection.thumbnail, icon = MkIcons.Album, onPlay = playInOrder(context, tracks.orEmpty()), play = play) {
                 SaveAlbumButton(collection)
                 ShuffleButton(tracks.orEmpty())
             }
         }
         results(tracks) { list ->
             itemsIndexed(list, key = { i, it -> "$i:" + it.url }) { index, track ->
+                // Pas de numéro devant les morceaux : au-delà de 99 il était coupé
                 TrackRow(
                     track,
-                    number = index + 1,
                     playing = sameTrack(now?.url, track.url),
                     onMore = { MusicSheet.open.value = MusicSheet.Track(track) },
                 ) { playTracks(context, list, index) }
@@ -198,13 +202,14 @@ private fun MyPlaylistContent(state: MusicState, id: String) {
         item(key = "entete") {
             PageHeader(
                 playlist.name,
-                pluralStringResource(R.plurals.track_count, playlist.items.size, playlist.items.size),
-                playlist.items.firstOrNull()?.thumbnail,
+                tracksSummary(playlist.items),
+                playlist.coverModel(),
                 onPlay = playInOrder(context, playlist.items),
                 play = play,
             ) {
                 PlaylistDownloadCircle(PlaylistDownloads.music, id, playlist.items)
                 ShuffleButton(playlist.items)
+                PlaylistCoverButtons(playlist)
             }
         }
         if (playlist.items.isEmpty()) {
@@ -362,7 +367,7 @@ private fun MusicLibraryContent(state: MusicState) {
                 }
             }
             items(playlists, key = { "pl:" + it.id }) { pl ->
-                CollectionRow(pl.name, pluralStringResource(R.plurals.track_count, pl.items.size, pl.items.size), pl.items.firstOrNull()?.thumbnail, icon = MkIcons.Music) {
+                CollectionRow(pl.name, pluralStringResource(R.plurals.track_count, pl.items.size, pl.items.size), pl.coverModel(), icon = MkIcons.Music) {
                     state.open(MusicPage.MyPlaylist(pl.id))
                 }
             }
