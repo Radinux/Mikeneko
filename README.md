@@ -3,7 +3,7 @@
 Client YouTube libre pour Android, en Kotlin + Jetpack Compose : sans pubs, avec SponsorBlock,
 Return YouTube Dislike, lecteur de musique, téléchargements yt-dlp, mini-lecteur PiP et dock en liquid glass.
 
-**Version : 2.5.2** (publiée en release GitHub ; dernier APK partagé à la main : `Mikeneko-2.1.2.apk`).
+**Version : 2.5.3** (publiée en release GitHub ; dernier APK partagé à la main : `Mikeneko-2.1.2.apk`).
 La version est automatique : `app/version.properties` garde la version de la prochaine compilation
 release ; chaque `assembleRelease` / `installRelease` la prend puis prépare la suivante (dernier
 chiffre +1, `versionCode` +1). Nouvelle fonction : `minor` +1 et `patch=0` à la main. Pas de x.20 : là où on arriverait à x.20.0, c'est une version majeure ((x+1).0.0).
@@ -13,7 +13,7 @@ et `FIXES.md` (à faire / à vérifier).
 
 ## Nouveautés
 
-### 2.5.0 → 2.5.2
+### 2.5.0 → 2.5.3
 
 - **Spectre de la musique.** Au-dessus de la barre de progression de la fenêtre musique, 40 barres
   arrondies dansent avec les fréquences du morceau (graves à gauche, aigus à droite) : rousses sur
@@ -22,6 +22,10 @@ et `FIXES.md` (à faire / à vérifier).
 - 2.5.1 : la bande noire de la barre d'état a des coins inversés plus arrondis (34 dp).
 - 2.5.2 : le spectre est **fluide** (il saccadait : le son arrive par paquets, environ 4 par seconde ;
   il est maintenant analysé à chaque image de l'écran).
+- 2.5.3 : dans la **pilule musique**, la pochette reste en place (elle change en fondu) et seul le
+  titre suit le doigt : dès qu'on commence à glisser, le **titre du morceau suivant** (ou précédent)
+  arrive à côté, puis se pose. La fenêtre musique s'ouvre et se ferme avec **un seul petit
+  rebond** (elle rebondissait en trop).
 
 ### 2.4.0
 

@@ -64,8 +64,8 @@ class MusicPlayerState(private val scope: CoroutineScope) {
         scope.launch {
             expand.animateTo(
                 if (target) 1f else 0f,
-                // Ressort un peu mou : la vitre dépasse, puis tremblote en se posant (comme de la gelée)
-                if (target) spring(dampingRatio = 0.66f, stiffness = 58f) else spring(dampingRatio = 0.62f, stiffness = 75f),
+                // Un seul petit dépassement, puis la vitre se pose (2.5.3 : avant, elle rebondissait en trop)
+                if (target) spring(dampingRatio = 0.8f, stiffness = 80f) else spring(dampingRatio = 0.86f, stiffness = 110f),
                 initialVelocity = velocity,
             )
         }
