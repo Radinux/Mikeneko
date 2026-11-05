@@ -22,6 +22,9 @@ import app.mikeneko.data.ChannelItem
 import app.mikeneko.ui.screens.onUserScroll
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.runtime.SideEffect
+import app.mikeneko.ui.components.RotationMorph
+import android.view.Surface
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.Animatable
 import android.content.res.Configuration
@@ -91,6 +94,7 @@ import app.mikeneko.ui.screens.SleepReminder
 import app.mikeneko.ui.screens.SubscriptionsContent
 import app.mikeneko.ui.theme.Pelage
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -104,6 +108,8 @@ fun MikenekoRoot(
     links: StateFlow<String?>,
     onLinkHandled: () -> Unit,
     onFullscreenChanged: (enabled: Boolean, fromRotation: Boolean) -> Unit,
+    /** Sur l'écran d'une vidéo : Android ne doit pas animer la rotation (c'est la vidéo seule qui tourne). */
+    onVideoScreen: (Boolean) -> Unit = {},
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -183,8 +189,20 @@ fun MikenekoRoot(
     }
 
     fun toggleFullscreen() {
-        fullscreen = !fullscreen
-        onFullscreenChanged(fullscreen, false)
+        val target = !fullscreen
+        onFullscreenChanged(target, false)
+        // L'écran va tourner (paysage forcé / portrait) : le plein écran s'affiche ou se retire avec
+        // la rotation (voir plus bas), pour ne jamais montrer un écran dans le mauvais sens. Au cas
+        // où l'écran ne tournerait pas, on bascule quand même au bout d'une seconde.
+        fun landscapeNow() = context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        if (target == landscapeNow()) {
+            fullscreen = target
+            return
+        }
+        scope.launch {
+            delay(1_000)
+            if (fullscreen != target && target != landscapeNow()) fullscreen = target
+        }
     }
 
     // Tourner le téléphone sur une vidéo = plein écran ; revenir en portrait = on en sort.
@@ -200,16 +218,36 @@ fun MikenekoRoot(
     } else {
         Modifier
     }
-    LaunchedEffect(orientation, route, now?.videoId) {
-        val landscape = orientation == Configuration.ORIENTATION_LANDSCAPE
-        if (landscape && !fullscreen && route == Route.Lecteur && now?.audioOnly == false) {
+    // Décidé pendant la composition, dans la même image que la rotation (avec la rotation non animée
+    // d'Android sur le lecteur, une image du lecteur portrait étiré en paysage se verrait sinon).
+    // Seulement quand l'orientation change : le bouton plein écran, lui, bascule avant la rotation.
+    val videoScreen = route == Route.Lecteur && now?.audioOnly == false
+    val rotationNow = LocalView.current.display?.rotation ?: Surface.ROTATION_0
+    val turn = remember { intArrayOf(orientation, rotationNow) }
+    var announce by remember { mutableStateOf<Boolean?>(null) }
+    if (turn[0] != orientation) {
+        val landscapeNow = orientation == Configuration.ORIENTATION_LANDSCAPE
+        val wasFullscreen = fullscreen
+        if (landscapeNow && !fullscreen && videoScreen) {
             fullscreen = true
-            onFullscreenChanged(true, true)
-        } else if (!landscape && fullscreen) {
+            announce = true
+        } else if (!landscapeNow && fullscreen) {
             fullscreen = false
-            onFullscreenChanged(false, true)
+            announce = false
+        }
+        // Seule la vidéo tourne (voir RotationMorph)
+        if (videoScreen || wasFullscreen) RotationMorph.start(turn[1] * 90, rotationNow * 90, toFullscreen = fullscreen)
+        turn[0] = orientation
+    }
+    turn[1] = rotationNow
+    SideEffect {
+        announce?.let {
+            announce = null
+            onFullscreenChanged(it, true)
         }
     }
+    LaunchedEffect(RotationMorph.token) { RotationMorph.animate() }
+    LaunchedEffect(videoScreen || fullscreen) { onVideoScreen(videoScreen || fullscreen) }
 
     LaunchedEffect(link) {
         link?.let {

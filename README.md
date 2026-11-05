@@ -3,7 +3,7 @@
 Client YouTube libre pour Android, en Kotlin + Jetpack Compose : sans pubs, avec SponsorBlock,
 Return YouTube Dislike, lecteur de musique, téléchargements yt-dlp, mini-lecteur PiP et dock en liquid glass.
 
-**Version : 1.18.1** (dernier APK prêt à partager : `Mikeneko-1.18.1.apk` à la racine du projet et dans Download sur le téléphone).
+**Version : 1.19.2** (dernier APK prêt à partager : `Mikeneko-1.18.1.apk` à la racine du projet et dans Download sur le téléphone).
 La version est automatique : `app/version.properties` garde la version de la prochaine compilation
 release ; chaque `assembleRelease` / `installRelease` la prend puis prépare la suivante (dernier
 chiffre +1, `versionCode` +1). Nouvelle fonction : `minor` +1 et `patch=0` à la main. Pas de x.20 : là où on arriverait à x.20.0, c'est une version majeure ((x+1).0.0).
@@ -12,6 +12,18 @@ Pour reprendre le développement : `NOTES-TECHNIQUES.md` (comment et pourquoi, p
 et `FIXES.md` (à faire / à vérifier).
 
 ## Nouveautés
+
+### 1.19.0 → 1.19.2
+
+- **Plein écran en tournant le téléphone : seule la vidéo tourne**, plus toute l'interface. Sur
+  l'écran du lecteur, Android n'anime plus la rotation ; la vidéo part de sa place en haut du
+  portrait, couchée, et pivote en grandissant jusqu'à remplir l'écran. Au retour en portrait, elle
+  pivote du plein écran jusqu'à sa place, et la page apparaît derrière en fondu. Le bouton plein écran
+  attend aussi que l'écran ait tourné avant de basculer.
+- 1.19.1 → 1.19.2 : **le mini-lecteur en tête de chat calico** (d'après le dessin de l'utilisateur,
+  aux couleurs du logo) : un cadre blanc autour de la vidéo, dont les côtés montent en grandes
+  oreilles arrondies ; oreille et tache gris foncé à gauche (intérieur plus foncé), oreille et tache
+  rousses à droite (intérieur clair), contour sombre. Les oreilles poussent en « boing » quand il atterrit.
 
 ### 1.18.0 → 1.18.1
 

@@ -102,6 +102,7 @@ class MainActivity : ComponentActivity() {
                     links = links,
                     onLinkHandled = { links.value = null },
                     onFullscreenChanged = ::applyFullscreen,
+                    onVideoScreen = ::setVideoRotation,
                 )
             }
         }
@@ -220,6 +221,19 @@ class MainActivity : ComponentActivity() {
     }
 
     private var fullscreen = false
+
+    /**
+     * Sur l'écran d'une vidéo, Android ne fait pas tourner toute l'interface : la nouvelle orientation
+     * s'affiche d'un coup et c'est la vidéo seule qui pivote (RotationMorph). Ailleurs, la rotation
+     * habituelle d'Android.
+     */
+    private fun setVideoRotation(videoScreen: Boolean) {
+        val wanted = if (videoScreen) WindowManager.LayoutParams.ROTATION_ANIMATION_JUMPCUT else WindowManager.LayoutParams.ROTATION_ANIMATION_ROTATE
+        val attributes = window.attributes
+        if (attributes.rotationAnimation == wanted) return
+        attributes.rotationAnimation = wanted
+        window.attributes = attributes
+    }
 
     /**
      * Barres du téléphone : tout est masqué en plein écran ; sinon, la barre d'état (heure,

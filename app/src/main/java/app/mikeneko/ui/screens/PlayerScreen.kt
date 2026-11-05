@@ -135,6 +135,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.zIndex
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.platform.LocalWindowInfo
+import app.mikeneko.ui.components.RotationMorph
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
@@ -301,13 +305,30 @@ fun PlayerContent(onMinimize: () -> Unit, onDownload: (String) -> Unit, onRadio:
         }
 
         DisposableEffect(Unit) { onDispose { VideoMorph.playerBounds = null } }
+        val screen = LocalWindowInfo.current.containerSize
         Box(
             Modifier
                 .fillMaxWidth()
                 .aspectRatio(16f / 9f)
-                .onGloballyPositioned { VideoMorph.playerBounds = it.boundsInRoot() }
+                .onGloballyPositioned {
+                    VideoMorph.playerBounds = it.boundsInRoot()
+                    RotationMorph.portraitVideo = it.boundsInRoot()
+                }
+                // Retour du plein écran en tournant le téléphone : la vidéo pivote jusqu'ici par-dessus
+                // la page, qui apparaît derrière un voile noir en fondu (RotationMorph)
+                .zIndex(if (RotationMorph.running) 1f else 0f)
+                .drawBehind {
+                    val scrim = RotationMorph.scrim
+                    val placed = RotationMorph.portraitVideo
+                    if (scrim > 0f && placed != null) {
+                        drawRect(Color.Black.copy(alpha = scrim), topLeft = -placed.topLeft, size = Size(screen.width.toFloat(), screen.height.toFloat()))
+                    }
+                }
                 // Pendant le morph depuis le mini-lecteur, c'est la photo qui arrive à cette place
-                .graphicsLayer { alpha = if (VideoMorph.hidesPlayer()) 0f else 1f }
+                .graphicsLayer {
+                    alpha = if (VideoMorph.hidesPlayer()) 0f else 1f
+                    with(RotationMorph) { portraitVideo(screen.height.toFloat()) }
+                }
                 .background(Pelage.Nuit),
         ) {
             // Sous-titres remontés au-dessus des boutons quand ils sont affichés
@@ -565,7 +586,8 @@ fun FullscreenPlayer(onExit: () -> Unit) {
     val wantsToPlay by PlayerHolder.playRequested.collectAsState()
     val progress = rememberPlaybackProgress()
     val video = rememberBackdrop()
-    var visible by remember { mutableStateOf(true) }
+    // Arrivé en tournant le téléphone : les commandes restent cachées pendant que la vidéo pivote
+    var visible by remember { mutableStateOf(!RotationMorph.running) }
     var scrubbing by remember { mutableStateOf<Float?>(null) } // position visée pendant un glissé
     var poke by remember { mutableIntStateOf(0) } // chaque interaction relance le minuteur
 
@@ -608,7 +630,10 @@ fun FullscreenPlayer(onExit: () -> Unit) {
     ) {
         // Sous-titres : remontés au-dessus de la barre de progression quand les commandes sont là
         val captionLift by animateFloatAsState(if (visible) 0.2f else 0f, tween(250), label = "sous-titres")
-        Box(Modifier.fillMaxSize().backdropSource(video)) { VideoSurface(Modifier.fillMaxSize(), captionLift = captionLift) }
+        // Arrivée en tournant le téléphone : la vidéo pivote depuis sa place du portrait (RotationMorph)
+        Box(Modifier.fillMaxSize().graphicsLayer { with(RotationMorph) { fullscreenVideo() } }.backdropSource(video)) {
+            VideoSurface(Modifier.fillMaxSize(), captionLift = captionLift)
+        }
 
         // Toute la surface : un tap montre / cache les commandes, un double tap recule / avance de 10 s
         TapToSeekLayer(

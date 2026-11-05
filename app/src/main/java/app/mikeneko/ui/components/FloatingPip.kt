@@ -41,7 +41,7 @@ import androidx.compose.ui.unit.round
 import kotlinx.coroutines.launch
 
 /** Taille du mini-lecteur, oreilles comprises. */
-val MiniPipSize = DpSize(180.dp, 115.dp)
+val MiniPipSize = DpSize(180.dp, 136.5.dp)
 
 /**
  * Où le mini-lecteur est rangé : côté droit ou gauche, et à quelle hauteur

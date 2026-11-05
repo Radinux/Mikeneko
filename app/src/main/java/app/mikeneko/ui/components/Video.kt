@@ -84,6 +84,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -285,26 +290,16 @@ fun MiniPip(modifier: Modifier = Modifier, onExpand: () -> Unit, onClose: () -> 
         LaunchedEffect(hidden) {
             if (!hidden && ears.value < 1f) ears.animateTo(1f, spring(dampingRatio = 0.32f, stiffness = 240f))
         }
-        CatEars(
-            Modifier.fillMaxWidth().height(24.dp).graphicsLayer {
-                scaleY = ears.value
-                scaleX = 0.6f + 0.4f * ears.value
-                transformOrigin = TransformOrigin(0.5f, 1f)
-            },
-            // Écartées vers les coins, penchées vers l'extérieur et bien arrondies
-            earWidth = 30.dp,
-            inset = 5.dp,
-            tip = -0.06f,
-            round = 0.3f,
-        )
-        val shape = RoundedCornerShape(18.dp)
+        // La tête de chat (dessin de l'utilisateur, 05/11) : un cadre crème autour de la vidéo, dont
+        // la silhouette monte en oreilles aux coins du haut, l'intérieur des oreilles en rose
+        CatHeadFrame(Modifier.matchParentSize(), ears = { ears.value })
+        val shape = RoundedCornerShape(MINI_VIDEO_CORNER)
         Box(
             Modifier
-                .padding(start = 2.dp, top = 14.dp)
-                .size(176.dp, 99.dp)
+                .padding(start = MINI_FRAME, top = MINI_EAR_HEIGHT + MINI_FRAME)
+                .size(MINI_VIDEO_WIDTH, MINI_VIDEO_WIDTH * 9f / 16f)
                 .onGloballyPositioned { VideoMorph.miniBounds = it.boundsInRoot() }
-                .shadow(16.dp, shape)
-                .border(2.5.dp, Pelage.Creme, shape)
+                .border(1.2.dp, Pelage.Contour, shape)
                 .clip(shape)
                 .background(Pelage.Nuit),
         ) {
@@ -527,4 +522,110 @@ private fun DrawScope.drawTrack(progress: Float, segments: List<Pair<Float, Floa
     draft?.let { (start, end) ->
         drawRect(Color.White.copy(alpha = 0.85f), topLeft = Offset(size.width * start, 0f), size = Size(size.width * (end - start).coerceAtLeast(0.004f), size.height))
     }
+}
+
+// ---- La tête de chat du mini-lecteur ----
+
+/** Hauteur des oreilles au-dessus du cadre, épaisseur du cadre, largeur et coins de la vidéo. */
+private val MINI_EAR_HEIGHT = 30.dp
+private val MINI_FRAME = 6.dp
+private val MINI_VIDEO_WIDTH = 168.dp
+private val MINI_VIDEO_CORNER = 18.dp
+/** Largeur d'une oreille à sa base, retrait de sa pointe, et rayon des coins du bas de la tête. */
+private val MINI_EAR_WIDTH = 52.dp
+private val MINI_EAR_TIP_IN = 13.dp
+private val MINI_HEAD_CORNER = MINI_VIDEO_CORNER + MINI_FRAME
+
+/**
+ * Le cadre en tête de chat calico du mini-lecteur, comme le chat du logo ([MiniPipSize] : oreilles
+ * comprises) : tête blanche, oreille et tache gris foncé à gauche (intérieur plus foncé), oreille et
+ * tache rousses à droite (intérieur clair), contour sombre. Les oreilles prolongent les côtés du
+ * cadre. [ears] : 0 = pas d'oreilles (elles poussent en « boing » à l'atterrissage du morph), 1 = entières.
+ */
+@Composable
+private fun CatHeadFrame(modifier: Modifier, ears: () -> Float) {
+    Canvas(modifier) {
+        val e = ears().coerceAtLeast(0f)
+        val head = catHeadPath(this, e)
+        val top = MINI_EAR_HEIGHT.toPx()
+        val earW = MINI_EAR_WIDTH.toPx()
+        // Une ombre douce sous la tête
+        translate(top = 3.dp.toPx()) { drawPath(head, Color.Black.copy(alpha = 0.3f)) }
+        drawPath(head, Pelage.Creme)
+        // Les taches calico, découpées par la tête : grise sur l'oreille et le coin gauche, rousse à droite
+        clipPath(head) {
+            drawOval(
+                Pelage.GrisChat,
+                topLeft = Offset(-earW * 0.55f, -top),
+                size = androidx.compose.ui.geometry.Size(earW * 1.75f, top * 2f + 22.dp.toPx()),
+            )
+            drawOval(
+                Pelage.RouxChat,
+                topLeft = Offset(size.width - earW * 1.15f, -top),
+                size = androidx.compose.ui.geometry.Size(earW * 1.6f, top * 2f + 34.dp.toPx()),
+            )
+        }
+        drawPath(head, Pelage.Contour, style = Stroke(width = 1.8.dp.toPx(), join = StrokeJoin.Round))
+        // L'intérieur des oreilles : un triangle droit qui pointe vers la pointe de l'oreille
+        // (plus foncé dans l'oreille grise, clair dans la rousse, comme le logo)
+        if (e > 0.05f) {
+            val tipY = top - top * e
+            listOf(false, true).forEach { right ->
+                fun x(v: Float) = if (right) size.width - v else v
+                val a = Offset(x(7.dp.toPx()), top + 4.dp.toPx())
+                val t = Offset(x(MINI_EAR_TIP_IN.toPx() + 3.dp.toPx()), tipY + 9.dp.toPx() * e)
+                val c = Offset(x(earW - 17.dp.toPx()), top + 2.dp.toPx())
+                val inner = roundedPolygon(listOf(a, t, c), listOf(3.dp.toPx(), 4.dp.toPx(), 3.dp.toPx()))
+                drawPath(inner, if (right) Pelage.Creme else Pelage.Contour)
+            }
+        }
+    }
+}
+
+/** La silhouette de la tête : grandes oreilles arrondies qui prolongent les côtés, coins du bas arrondis. */
+private fun catHeadPath(scope: DrawScope, ears: Float): Path = with(scope) {
+    val w = size.width
+    val h = size.height
+    val top = MINI_EAR_HEIGHT.toPx()
+    val earW = MINI_EAR_WIDTH.toPx()
+    val tipY = top - top * ears
+    val side = top + 12.dp.toPx()
+    val tipIn = MINI_EAR_TIP_IN.toPx()
+    val points = listOf(
+        Offset(0f, h),
+        Offset(0f, side),
+        Offset(tipIn, tipY),
+        Offset(earW, top),
+        Offset(w - earW, top),
+        Offset(w - tipIn, tipY),
+        Offset(w, side),
+        Offset(w, h),
+    )
+    val corner = MINI_HEAD_CORNER.toPx()
+    val side2 = 12.dp.toPx()
+    val tip = 11.dp.toPx()
+    val dip = 12.dp.toPx()
+    roundedPolygon(points, listOf(corner, side2, tip, dip, dip, tip, side2, corner))
+}
+
+/** Un polygone aux coins arrondis : chaque coin est remplacé par une courbe de rayon (environ) [radii]. */
+private fun roundedPolygon(points: List<Offset>, radii: List<Float>): Path {
+    val path = Path()
+    val n = points.size
+    for (i in 0 until n) {
+        val corner = points[i]
+        val before = points[(i + n - 1) % n]
+        val after = points[(i + 1) % n]
+        val toBefore = before - corner
+        val toAfter = after - corner
+        // Pas plus de la moitié de chaque côté, pour que deux coins voisins ne se chevauchent pas
+        val d1 = minOf(radii[i], toBefore.getDistance() / 2f)
+        val d2 = minOf(radii[i], toAfter.getDistance() / 2f)
+        val start = corner + toBefore * (d1 / toBefore.getDistance().coerceAtLeast(0.001f))
+        val end = corner + toAfter * (d2 / toAfter.getDistance().coerceAtLeast(0.001f))
+        if (i == 0) path.moveTo(start.x, start.y) else path.lineTo(start.x, start.y)
+        path.quadraticTo(corner.x, corner.y, end.x, end.y)
+    }
+    path.close()
+    return path
 }
