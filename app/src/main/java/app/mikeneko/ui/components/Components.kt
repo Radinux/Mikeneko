@@ -1,77 +1,70 @@
 package app.mikeneko.ui.components
 
-import androidx.compose.ui.graphics.rememberGraphicsLayer
-import androidx.compose.ui.graphics.layer.drawLayer
-import androidx.compose.ui.layout.LayoutCoordinates
-import androidx.compose.ui.layout.onPlaced
-import androidx.compose.ui.layout.boundsInRoot
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.TransformOrigin
-import androidx.compose.ui.graphics.drawOutline
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.runtime.getValue
-import app.mikeneko.ui.theme.clay
-import app.mikeneko.ui.theme.jellyClickable
-import app.mikeneko.ui.theme.plopOnSelect
-import androidx.compose.foundation.layout.width
-import app.mikeneko.ui.icons.MkIcons
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.ExperimentalFoundationApi
-import app.mikeneko.data.uploadedLabel
-import app.mikeneko.data.formatViews
-import androidx.compose.ui.res.stringResource
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -80,15 +73,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.mikeneko.R
 import app.mikeneko.data.VideoItem
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.platform.LocalContext
-import app.mikeneko.data.formatCount
+import app.mikeneko.data.WatchPositions
 import app.mikeneko.data.formatDuration
+import app.mikeneko.data.formatViews
+import app.mikeneko.data.uploadedLabel
 import app.mikeneko.ui.glass.Backdrop
 import app.mikeneko.ui.glass.LiquidGlass
+import app.mikeneko.ui.icons.MkIcons
+import app.mikeneko.ui.theme.GlassTextShadow
 import app.mikeneko.ui.theme.Pelage
+import app.mikeneko.ui.theme.clay
+import app.mikeneko.ui.theme.jellyClickable
+import app.mikeneko.ui.theme.plopOnSelect
 import coil3.compose.AsyncImage
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 /** Rond en liquid glass avec une icône blanche. */
 @Composable
@@ -196,7 +195,7 @@ fun VideoThumbnail(video: VideoItem, modifier: Modifier = Modifier, corner: Dp =
 @Composable
 fun WatchProgressBar(url: String, modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val progress by remember { app.mikeneko.data.WatchPositions.progress(context) }.collectAsState()
+    val progress by remember { WatchPositions.progress(context) }.collectAsState()
     val id = remember(url) { app.mikeneko.data.videoIdOf(url) }
     val fraction = id?.let { progress[it] } ?: return
     Box(modifier.fillMaxWidth().height(4.dp).background(Color.White.copy(alpha = 0.35f))) {
@@ -333,30 +332,6 @@ fun EmptyCat(title: String, text: String, modifier: Modifier = Modifier) {
     }
 }
 
-/** Oreilles de chat en sticker : bordure blanche, une grise à gauche, une rousse à droite. */
-@Composable
-/**
- * [tip] : où pointe l'oreille, en part de sa largeur depuis le bord (négatif = penchée vers
- * l'extérieur). [round] : arrondi des coins (voir [drawEar]).
- */
-fun CatEars(
-    modifier: Modifier,
-    left: Color = Pelage.GrisChat,
-    right: Color = Pelage.RouxChat,
-    earWidth: Dp = 28.dp,
-    inset: Dp = 12.dp,
-    tip: Float = 0.18f,
-    round: Float = 0f,
-) {
-    Canvas(modifier) {
-        val w = earWidth.toPx()
-        val i = inset.toPx()
-        val h = size.height
-        drawEar(Offset(i, h), Offset(i + w * tip, 0f), Offset(i + w, h * 0.55f), left, round)
-        drawEar(Offset(size.width - i, h), Offset(size.width - i - w * tip, 0f), Offset(size.width - i - w, h * 0.55f), right, round)
-    }
-}
-
 /**
  * Une oreille de chat (triangle [base] → [tip] → [inner]). [round] (0 à 0,5) arrondit les coins :
  * 0 = pointue, 0,3 = bien ronde et moelleuse.
@@ -415,7 +390,7 @@ fun CompactVideoRow(video: VideoItem, modifier: Modifier = Modifier, onClick: ()
  */
 @Composable
 fun GlassChip(
-    backdrop: app.mikeneko.ui.glass.Backdrop,
+    backdrop: Backdrop,
     text: String,
     modifier: Modifier = Modifier,
     selected: Boolean = false,
@@ -428,7 +403,7 @@ fun GlassChip(
         label = "capsule en verre",
     )
     val content = if (selected) Pelage.Encre else Color.White
-    app.mikeneko.ui.glass.LiquidGlass(
+    LiquidGlass(
         backdrop,
         modifier.plopOnSelect(selected).height(44.dp),
         cornerRadius = 22.dp,
@@ -449,7 +424,7 @@ fun GlassChip(
                 color = content,
                 fontSize = 14.sp,
                 fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Bold,
-                style = androidx.compose.ui.text.TextStyle(shadow = if (selected) null else app.mikeneko.ui.theme.GlassTextShadow),
+                style = TextStyle(shadow = if (selected) null else GlassTextShadow),
             )
         }
     }

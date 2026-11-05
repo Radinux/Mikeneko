@@ -1,15 +1,15 @@
 package app.mikeneko.data
 
-import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.MediaType.Companion.toMediaType
-import app.mikeneko.settings.AppLocale
 import app.mikeneko.R
+import app.mikeneko.settings.AppLocale
+import java.net.URLEncoder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
-import java.net.URLEncoder
 
 /** SponsorBlock : les segments à dégager d'un coup de patte. https://sponsor.ajay.app */
 object SponsorBlock {

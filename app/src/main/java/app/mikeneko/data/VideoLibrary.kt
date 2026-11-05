@@ -19,9 +19,6 @@ class VideoLibrary private constructor(context: Context) {
     private val _liked = MutableStateFlow(load("jaime"))
     val liked: StateFlow<List<VideoItem>> = _liked.asStateFlow()
 
-    fun isLater(url: String) = _later.value.any { sameTrack(it.url, url) }
-    fun isLiked(url: String) = _liked.value.any { sameTrack(it.url, url) }
-
     /** Ajoute (en premier) ou retire. Renvoie true si la vidéo est maintenant dans la liste. */
     fun toggleLater(video: VideoItem): Boolean = toggle(_later, "plus_tard", video)
     fun toggleLiked(video: VideoItem): Boolean = toggle(_liked, "jaime", video)

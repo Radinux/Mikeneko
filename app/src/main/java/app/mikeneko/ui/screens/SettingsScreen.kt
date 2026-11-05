@@ -1,15 +1,15 @@
 package app.mikeneko.ui.screens
 
-import kotlinx.coroutines.launch
-
-import app.mikeneko.ui.theme.statusBarSpacePadding
-import app.mikeneko.data.GoogleAccount
-import androidx.compose.ui.text.style.TextOverflow
-import app.mikeneko.data.Feedback
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import android.content.Intent
+import android.content.res.Resources
+import android.net.Uri
+import android.provider.Settings
+import android.text.format.Formatter
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
@@ -20,17 +20,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -44,6 +42,7 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -62,14 +61,23 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import app.mikeneko.R
 import app.mikeneko.data.Comments
+import app.mikeneko.data.Feedback
 import app.mikeneko.data.ForYou
+import app.mikeneko.data.MikenekoBackup
+import app.mikeneko.data.SubscriptionImport
 import app.mikeneko.data.SubscriptionStore
 import app.mikeneko.data.WatchHistory
+import app.mikeneko.data.WatchPositions
 import app.mikeneko.data.YouTubeRepository
+import app.mikeneko.player.OfflineCache
 import app.mikeneko.player.PlayerHolder
 import app.mikeneko.player.StableVolume
 import app.mikeneko.settings.AppLocale
@@ -78,6 +86,11 @@ import app.mikeneko.ui.components.ambientSupported
 import app.mikeneko.ui.components.sponsorLabel
 import app.mikeneko.ui.icons.MkIcons
 import app.mikeneko.ui.theme.Pelage
+import app.mikeneko.ui.theme.statusBarSpacePadding
+import app.mikeneko.update.AppUpdates
+import java.time.LocalDate
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 private val Secondary = Color(0xFFCFC6BD)
 private val QUALITIES = listOf(2160, 1440, 1080, 720, 480, 360, 240, 144)
@@ -85,7 +98,7 @@ private val SLEEP_DELAYS = listOf(30, 45, 60, 90, 120)
 
 /** Les réglages de l'appli : langue, lecture, SponsorBlock, historique, bien-être, compte, à propos. */
 @Composable
-fun SettingsContent(onBack: () -> Unit, onOpenSubscriptions: () -> Unit) {
+fun SettingsContent(onBack: () -> Unit) {
     val context = LocalContext.current
     LazyColumn(
         Modifier.fillMaxSize(),
@@ -116,7 +129,6 @@ fun SettingsContent(onBack: () -> Unit, onOpenSubscriptions: () -> Unit) {
         item { OfflineSection(context) }
         item { BackupSection(context) }
         item { WellbeingSection() }
-        if (GoogleAccount.ENABLED) item { AccountSection(context, onOpenSubscriptions) }
         item { AboutSection(context) }
     }
 }
@@ -128,29 +140,29 @@ fun SettingsContent(onBack: () -> Unit, onOpenSubscriptions: () -> Unit) {
 private fun BackupSection(context: Context) {
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     fun toast(text: String) = Toast.makeText(context, text, Toast.LENGTH_LONG).show()
-    val export = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.CreateDocument("text/xml")) { uri ->
+    val export = androidx.activity.compose.rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/xml")) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
         scope.launch {
-            val ok = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            val ok = kotlinx.coroutines.withContext(Dispatchers.IO) {
                 runCatching {
                     val version = context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty()
-                    context.contentResolver.openOutputStream(uri)?.use { app.mikeneko.data.MikenekoBackup.export(context, it, version) } ?: error("")
+                    context.contentResolver.openOutputStream(uri)?.use { MikenekoBackup.export(context, it, version) } ?: error("")
                 }.isSuccess
             }
             toast(context.getString(if (ok) R.string.backup_exported else R.string.backup_export_failed))
         }
     }
-    val import = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.OpenDocument()) { uri ->
+    val import = androidx.activity.compose.rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
         scope.launch {
-            val content = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                runCatching { context.contentResolver.openInputStream(uri)?.use { app.mikeneko.data.MikenekoBackup.read(it) } }.getOrNull()
+            val content = kotlinx.coroutines.withContext(Dispatchers.IO) {
+                runCatching { context.contentResolver.openInputStream(uri)?.use { MikenekoBackup.read(it) } }.getOrNull()
             }
             if (content == null) {
                 toast(context.getString(R.string.backup_import_failed))
                 return@launch
             }
-            val added = app.mikeneko.data.MikenekoBackup.import(context, content)
+            val added = MikenekoBackup.import(context, content)
             toast(
                 if (added.total == 0) context.getString(R.string.backup_import_nothing)
                 else context.getString(R.string.backup_imported, added.channels, added.playlists, added.library, added.videos),
@@ -159,13 +171,13 @@ private fun BackupSection(context: Context) {
     }
     // Les abonnements d'autres applis (NewPipe .json, FreeTube .db, Google Takeout .csv) : venu de
     // l'onglet Abonnements en 1.18.0, où la grande carte d'import restait toujours affichée
-    val importSubs = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.OpenDocument()) { uri ->
+    val importSubs = androidx.activity.compose.rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
         scope.launch {
-            val text = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            val text = kotlinx.coroutines.withContext(Dispatchers.IO) {
                 runCatching { context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() } }.getOrNull().orEmpty()
             }
-            val list = app.mikeneko.data.SubscriptionImport.parse(text)
+            val list = SubscriptionImport.parse(text)
             SubscriptionStore.get(context).addAll(list)
             toast(if (list.isEmpty()) context.getString(R.string.subs_import_none) else context.resources.getQuantityString(R.plurals.subs_imported_count, list.size, list.size))
         }
@@ -176,7 +188,7 @@ private fun BackupSection(context: Context) {
         }
         Divider()
         ActionRow(MkIcons.Share, stringResource(R.string.backup_export), stringResource(R.string.backup_export_text), Pelage.Texte) {
-            export.launch("mikeneko-${java.time.LocalDate.now()}.xml")
+            export.launch("mikeneko-${LocalDate.now()}.xml")
         }
         Divider()
         ActionRow(MkIcons.Download, stringResource(R.string.backup_import), stringResource(R.string.backup_import_text), Pelage.Texte) {
@@ -191,12 +203,12 @@ private fun OfflineSection(context: Context) {
     var size by remember { mutableStateOf<Triple<Long, Long, Long>?>(null) }
     var confirm by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
-        size = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-            val cache = app.mikeneko.player.OfflineCache
+        size = kotlinx.coroutines.withContext(Dispatchers.IO) {
+            val cache = OfflineCache
             Triple(
-                cache.size(context, app.mikeneko.player.OfflineCache.Store.Music),
-                cache.size(context, app.mikeneko.player.OfflineCache.Store.Videos),
-                cache.size(context, app.mikeneko.player.OfflineCache.Store.SavedMusic) + cache.size(context, app.mikeneko.player.OfflineCache.Store.SavedVideos),
+                cache.size(context, OfflineCache.Store.Music),
+                cache.size(context, OfflineCache.Store.Videos),
+                cache.size(context, OfflineCache.Store.SavedMusic) + cache.size(context, OfflineCache.Store.SavedVideos),
             )
         }
     }
@@ -207,9 +219,9 @@ private fun OfflineSection(context: Context) {
             title = stringResource(R.string.settings_offline_clear),
             subtitle = stringResource(R.string.settings_offline_text) + "\n" + stringResource(
                 R.string.settings_offline_size,
-                android.text.format.Formatter.formatShortFileSize(context, music),
-                android.text.format.Formatter.formatShortFileSize(context, videos),
-            ) + "\n" + stringResource(R.string.settings_offline_saved, android.text.format.Formatter.formatShortFileSize(context, saved)),
+                Formatter.formatShortFileSize(context, music),
+                Formatter.formatShortFileSize(context, videos),
+            ) + "\n" + stringResource(R.string.settings_offline_saved, Formatter.formatShortFileSize(context, saved)),
             color = Color(0xFFFF8A80),
         ) { confirm = true }
     }
@@ -224,7 +236,7 @@ private fun OfflineSection(context: Context) {
             confirmButton = {
                 TextButton(onClick = {
                     confirm = false
-                    Thread { runCatching { app.mikeneko.player.OfflineCache.clear(context) } }.start()
+                    Thread { runCatching { OfflineCache.clear(context) } }.start()
                     size = size?.copy(first = 0L, second = 0L)
                 }) { Text(stringResource(R.string.settings_offline_confirm), color = Color(0xFFFF8A80), fontWeight = FontWeight.ExtraBold) }
             },
@@ -410,7 +422,7 @@ private fun HistorySection(context: Context) {
             confirmButton = {
                 TextButton(onClick = {
                     WatchHistory.get(context).clear()
-                    app.mikeneko.data.WatchPositions.clear(context)
+                    WatchPositions.clear(context)
                     SubscriptionStore.get(context).clearWatched()
                     ForYou.clearCache()
                     confirm = false
@@ -447,42 +459,6 @@ private fun WellbeingSection() {
 }
 
 @Composable
-private fun AccountSection(context: Context, onOpenSubscriptions: () -> Unit) {
-    val store = remember { SubscriptionStore.get(context) }
-    val connected by store.connected.collectAsState()
-    Section(stringResource(R.string.settings_section_account)) {
-        Row(Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(MkIcons.Account, null, tint = if (connected) Pelage.RouxClair else Color.White, modifier = Modifier.size(22.dp))
-            Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
-                Text(
-                    stringResource(if (connected) R.string.google_connected else R.string.settings_account_disconnected),
-                    color = Pelage.Texte,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    stringResource(if (connected) R.string.settings_account_connected_text else R.string.settings_account_disconnected_text),
-                    color = Secondary,
-                    fontSize = 12.sp,
-                )
-            }
-            Text(
-                stringResource(if (connected) R.string.disconnect else R.string.settings_account_go),
-                Modifier
-                    .clip(CircleShape)
-                    .background(if (connected) Color.Transparent else Pelage.Creme)
-                    .border(1.5.dp, if (connected) Pelage.RouxClair else Pelage.Creme, CircleShape)
-                    .clickable(role = Role.Button) { if (connected) store.setConnected(false) else onOpenSubscriptions() }
-                    .padding(horizontal = 14.dp, vertical = 9.dp),
-                color = if (connected) Pelage.RouxClair else Pelage.Encre,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.ExtraBold,
-            )
-        }
-    }
-}
-
-@Composable
 private fun AboutSection(context: Context) {
     val uri = LocalUriHandler.current
     val version = remember { runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull().orEmpty() }
@@ -514,15 +490,15 @@ private fun AboutSection(context: Context) {
  */
 @Composable
 private fun UpdateRow(context: Context) {
-    val updates = app.mikeneko.update.AppUpdates
+    val updates = AppUpdates
     val state by updates.state.collectAsState()
     val uri = LocalUriHandler.current
     // Revenir des réglages Android (« installer des applis inconnues ») : on relit le droit
     var allowed by remember { mutableStateOf(updates.canInstall(context)) }
-    val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current
-    androidx.compose.runtime.DisposableEffect(lifecycle) {
-        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
-            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) allowed = updates.canInstall(context)
+    val lifecycle = LocalLifecycleOwner.current
+    DisposableEffect(lifecycle) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) allowed = updates.canInstall(context)
         }
         lifecycle.lifecycle.addObserver(observer)
         onDispose { lifecycle.lifecycle.removeObserver(observer) }
@@ -530,32 +506,32 @@ private fun UpdateRow(context: Context) {
     fun allowInstalls() {
         runCatching {
             context.startActivity(
-                android.content.Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, android.net.Uri.parse("package:${context.packageName}")),
+                Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:${context.packageName}")),
             )
         }
     }
 
     val row: Triple<String, String?, (() -> Unit)?> = when (val s = state) {
-        is app.mikeneko.update.AppUpdates.State.Checking -> Triple(stringResource(R.string.update_checking), null, null)
-        is app.mikeneko.update.AppUpdates.State.Downloading ->
+        is AppUpdates.State.Checking -> Triple(stringResource(R.string.update_checking), null, null)
+        is AppUpdates.State.Downloading ->
             Triple(stringResource(R.string.update_downloading, s.release.version, (s.progress * 100).toInt()), null, null)
-        is app.mikeneko.update.AppUpdates.State.Ready ->
+        is AppUpdates.State.Ready ->
             if (allowed) {
                 Triple(stringResource(R.string.update_ready_label, s.release.version), stringResource(R.string.update_install), { updates.install(context, s.file) })
             } else {
                 Triple(stringResource(R.string.update_allow_label, s.release.version), stringResource(R.string.update_allow), ::allowInstalls)
             }
-        is app.mikeneko.update.AppUpdates.State.Installing -> Triple(stringResource(R.string.update_installing), null, null)
-        is app.mikeneko.update.AppUpdates.State.UpToDate -> Triple(stringResource(R.string.update_up_to_date), stringResource(R.string.update_check), { updates.check(context) })
-        is app.mikeneko.update.AppUpdates.State.Failed -> Triple(stringResource(R.string.update_failed, s.message), stringResource(R.string.update_check), { updates.check(context) })
-        app.mikeneko.update.AppUpdates.State.Idle -> Triple(stringResource(R.string.update_idle), stringResource(R.string.update_check), { updates.check(context) })
+        is AppUpdates.State.Installing -> Triple(stringResource(R.string.update_installing), null, null)
+        is AppUpdates.State.UpToDate -> Triple(stringResource(R.string.update_up_to_date), stringResource(R.string.update_check), { updates.check(context) })
+        is AppUpdates.State.Failed -> Triple(stringResource(R.string.update_failed, s.message), stringResource(R.string.update_check), { updates.check(context) })
+        AppUpdates.State.Idle -> Triple(stringResource(R.string.update_idle), stringResource(R.string.update_check), { updates.check(context) })
     }
     val (label, action, onAction) = row
     Column(Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(stringResource(R.string.update_title), color = Pelage.Texte, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
         Text(label, color = Secondary, fontSize = 13.sp)
         // Pas encore le droit d'installer : on le dit tout de suite (la mise à jour se fera sans appui ensuite)
-        if (!allowed && state !is app.mikeneko.update.AppUpdates.State.Ready) {
+        if (!allowed && state !is AppUpdates.State.Ready) {
             Text(
                 stringResource(R.string.update_allow_hint),
                 Modifier.clip(RoundedCornerShape(6.dp)).clickable(role = Role.Button) { allowInstalls() }.padding(vertical = 4.dp),
@@ -565,8 +541,8 @@ private fun UpdateRow(context: Context) {
             )
         }
         // Les boutons passent à la ligne s'ils ne tiennent pas côte à côte (le texte ne se coupe jamais)
-        @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
-        androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        @OptIn(ExperimentalLayoutApi::class)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             if (action != null && onAction != null) {
                 Text(
                     action,
@@ -578,7 +554,7 @@ private fun UpdateRow(context: Context) {
                     softWrap = false,
                 )
             }
-            val page = (state as? app.mikeneko.update.AppUpdates.State.Ready)?.release?.page
+            val page = (state as? AppUpdates.State.Ready)?.release?.page
             if (page != null) {
                 Text(
                     stringResource(R.string.update_notes),
@@ -614,7 +590,7 @@ private fun refreshContent() {
 }
 
 private fun systemRegion(): String =
-    android.content.res.Resources.getSystem().configuration.locales[0].country.ifEmpty { "FR" }
+    Resources.getSystem().configuration.locales[0].country.ifEmpty { "FR" }
 
 private tailrec fun Context.findActivity(): Activity? = when (this) {
     is Activity -> this

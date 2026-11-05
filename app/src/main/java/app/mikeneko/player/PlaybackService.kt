@@ -1,11 +1,10 @@
 package app.mikeneko.player
 
-import app.mikeneko.data.Downloads
-import android.os.Process
-import android.os.Looper
-import android.os.Handler
 import android.app.PendingIntent
 import android.content.Intent
+import android.os.Handler
+import android.os.Looper
+import android.os.Process
 import androidx.annotation.OptIn
 import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.Player
@@ -13,6 +12,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import app.mikeneko.MainActivity
+import app.mikeneko.data.Downloads
 
 /**
  * Garde la musique en vie écran éteint (mode radio) et affiche les contrôles

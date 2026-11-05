@@ -1,7 +1,8 @@
 package app.mikeneko.data
 
-import app.mikeneko.settings.AppSettings
 import android.content.Context
+import app.mikeneko.settings.AppSettings
+import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -13,7 +14,6 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
-import java.io.File
 
 /**
  * L'historique local qui nourrit le « Pour toi » : les vidéos ouvertes, leur chaîne, et les

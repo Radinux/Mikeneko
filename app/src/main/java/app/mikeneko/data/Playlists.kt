@@ -1,12 +1,12 @@
 package app.mikeneko.data
 
 import android.content.Context
+import java.util.UUID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.json.JSONArray
 import org.json.JSONObject
-import java.util.UUID
 
 /** Une playlist faite à la main (musique ou vidéos). */
 data class Playlist(val id: String, val name: String, val items: List<VideoItem>)

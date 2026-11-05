@@ -1,17 +1,16 @@
 package app.mikeneko.data
 
-import app.mikeneko.settings.AppLocale
-import app.mikeneko.R
 import android.content.Context
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.withTimeoutOrNull
-import org.schabi.newpipe.extractor.stream.StreamInfoItem
+import app.mikeneko.R
+import app.mikeneko.settings.AppLocale
 import java.time.Duration
 import java.time.Instant
 import kotlin.math.exp
 import kotlin.random.Random
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Le « Pour toi » local : un petit algorithme qui tourne sur le téléphone, sans compte Google.

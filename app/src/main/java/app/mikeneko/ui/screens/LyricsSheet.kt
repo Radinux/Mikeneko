@@ -27,6 +27,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -209,7 +210,7 @@ private fun SyncedLyrics(lyrics: Lyrics) {
                 )
                 Text(
                     line.text.ifBlank { "♪" },
-                    Modifier.fillMaxWidth().clip(androidx.compose.foundation.shape.RoundedCornerShape(10.dp))
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
                         .clickable(role = Role.Button, onClickLabel = stringResource(R.string.lyrics_seek)) { PlayerHolder.seekTo(line.timeMs) },
                     color = color,
                     fontSize = if (active) 22.sp else 19.sp,

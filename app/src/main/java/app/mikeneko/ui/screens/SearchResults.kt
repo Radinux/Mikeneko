@@ -1,22 +1,22 @@
 package app.mikeneko.ui.screens
 
-import app.mikeneko.ui.components.columnsFor
-import app.mikeneko.ui.components.adaptiveItems
-import app.mikeneko.ui.theme.statusBarSpacePadding
 import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
@@ -27,24 +27,36 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.mikeneko.R
 import app.mikeneko.data.VideoItem
 import app.mikeneko.data.YouTubeRepository
+import app.mikeneko.ui.components.Capsule
 import app.mikeneko.ui.components.EmptyCat
 import app.mikeneko.ui.components.Loading
 import app.mikeneko.ui.components.VideoCard
 import app.mikeneko.ui.components.VideoMenu
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.launch
-import androidx.compose.runtime.snapshotFlow
+import app.mikeneko.ui.components.adaptiveItems
+import app.mikeneko.ui.components.columnsFor
+import app.mikeneko.ui.glass.Backdrop
+import app.mikeneko.ui.glass.LiquidGlass
+import app.mikeneko.ui.icons.MkIcons
+import app.mikeneko.ui.theme.GlassTextShadow
+import app.mikeneko.ui.theme.Rounded
+import app.mikeneko.ui.theme.statusBarSpacePadding
 import kotlin.math.exp
 import kotlin.math.log10
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 
 private const val MAX_CHANNELS = 12
 
@@ -234,17 +246,17 @@ data class SearchFilters(
 
 /** Le panneau des filtres, en verre sous les capsules de tri. */
 @Composable
-fun SearchFiltersPanel(filters: SearchFilters, backdrop: app.mikeneko.ui.glass.Backdrop, onChange: (SearchFilters) -> Unit, modifier: Modifier = Modifier) {
-    app.mikeneko.ui.glass.LiquidGlass(
+fun SearchFiltersPanel(filters: SearchFilters, backdrop: Backdrop, onChange: (SearchFilters) -> Unit, modifier: Modifier = Modifier) {
+    LiquidGlass(
         backdrop = backdrop,
         modifier = modifier.fillMaxWidth(),
         cornerRadius = 24.dp,
         bezel = 14.dp,
         refraction = 12.dp,
-        tint = androidx.compose.ui.graphics.Color(0xB8100D0B),
+        tint = Color(0xB8100D0B),
         frost = 22.dp,
     ) {
-        androidx.compose.foundation.layout.Column(
+        Column(
             Modifier.padding(vertical = 14.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
@@ -254,8 +266,8 @@ fun SearchFiltersPanel(filters: SearchFilters, backdrop: app.mikeneko.ui.glass.B
                 onChange(filters.copy(hideShorts = it))
             }
             if (filters.active > 0) {
-                androidx.compose.foundation.layout.Row(Modifier.padding(horizontal = 16.dp)) {
-                    app.mikeneko.ui.components.Capsule(stringResource(R.string.filters_reset), icon = app.mikeneko.ui.icons.MkIcons.Close) {
+                Row(Modifier.padding(horizontal = 16.dp)) {
+                    Capsule(stringResource(R.string.filters_reset), icon = MkIcons.Close) {
                         onChange(SearchFilters())
                     }
                 }
@@ -266,25 +278,25 @@ fun SearchFiltersPanel(filters: SearchFilters, backdrop: app.mikeneko.ui.glass.B
 
 @Composable
 private fun <T> FilterSection(@StringRes title: Int, options: List<T>, selected: T, label: (T) -> Int, onPick: (T) -> Unit) {
-    androidx.compose.foundation.layout.Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        androidx.compose.material3.Text(
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(
             stringResource(title),
             Modifier.padding(horizontal = 18.dp),
-            style = androidx.compose.ui.text.TextStyle(
-                fontFamily = app.mikeneko.ui.theme.Rounded,
-                color = androidx.compose.ui.graphics.Color.White,
+            style = TextStyle(
+                fontFamily = Rounded,
+                color = Color.White,
                 fontSize = 14.sp,
-                fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold,
-                shadow = app.mikeneko.ui.theme.GlassTextShadow,
+                fontWeight = FontWeight.ExtraBold,
+                shadow = GlassTextShadow,
             ),
         )
-        androidx.compose.foundation.lazy.LazyRow(
+        LazyRow(
             contentPadding = PaddingValues(horizontal = 14.dp, vertical = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             items(options.size) { i ->
                 val option = options[i]
-                app.mikeneko.ui.components.Capsule(stringResource(label(option)), selected = option == selected) { onPick(option) }
+                Capsule(stringResource(label(option)), selected = option == selected) { onPick(option) }
             }
         }
     }

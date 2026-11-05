@@ -1,8 +1,5 @@
 package app.mikeneko.ui.components
 
-import app.mikeneko.settings.AppLocale
-import app.mikeneko.R
-import androidx.compose.ui.res.stringResource
 import android.os.Build
 import android.os.SystemClock
 import android.widget.Toast
@@ -19,7 +16,6 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -60,6 +56,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -67,10 +64,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.mikeneko.R
 import app.mikeneko.player.PlayerHolder
 import app.mikeneko.player.SettingsPage
 import app.mikeneko.player.SleepTimer
 import app.mikeneko.player.StableVolume
+import app.mikeneko.settings.AppLocale
 import app.mikeneko.ui.glass.Backdrop
 import app.mikeneko.ui.glass.LiquidGlass
 import app.mikeneko.ui.icons.MkIcons

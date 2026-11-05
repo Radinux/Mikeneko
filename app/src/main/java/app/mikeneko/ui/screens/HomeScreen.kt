@@ -1,55 +1,19 @@
 package app.mikeneko.ui.screens
 
-import androidx.compose.foundation.layout.offset
-
-import app.mikeneko.ui.components.GlassChip
-
-import app.mikeneko.ui.components.columnsFor
-import app.mikeneko.ui.components.adaptiveItems
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.FocusRequester
-import app.mikeneko.ui.theme.statusBarSpace
-import app.mikeneko.ui.theme.statusBarSpacePadding
-import kotlinx.coroutines.launch
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.awaitEachGesture
-import app.mikeneko.data.SearchHistory
-import app.mikeneko.data.ChannelItem
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.pullToRefresh
-import androidx.compose.foundation.gestures.scrollable
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.material3.pulltorefresh.PullToRefreshState
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.tween
+import android.content.Context
+import android.widget.Toast
+import androidx.annotation.StringRes
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.layout.size
-import kotlinx.coroutines.delay
-import android.widget.Toast
-import androidx.compose.ui.text.TextRange
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
-import androidx.compose.foundation.text.input.TextFieldLineLimits
-import androidx.compose.foundation.text.input.rememberTextFieldState
-import androidx.compose.runtime.snapshotFlow
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.collectAsState
-import app.mikeneko.ui.components.VideoMenu
-import app.mikeneko.data.Feedback
-import app.mikeneko.R
-import androidx.compose.ui.res.stringResource
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -61,56 +25,87 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshState
+import androidx.compose.material3.pulltorefresh.pullToRefresh
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import android.content.Context
-import androidx.annotation.StringRes
-import app.mikeneko.settings.AppLocale
-import androidx.compose.ui.platform.LocalContext
+import app.mikeneko.R
+import app.mikeneko.data.ChannelItem
+import app.mikeneko.data.Feedback
 import app.mikeneko.data.ForYou
+import app.mikeneko.data.SearchHistory
 import app.mikeneko.data.VideoItem
 import app.mikeneko.data.YouTubeRepository
-import app.mikeneko.ui.components.Capsule
+import app.mikeneko.settings.AppLocale
 import app.mikeneko.ui.components.EmptyCat
+import app.mikeneko.ui.components.GlassChip
 import app.mikeneko.ui.components.GlassCircleButton
 import app.mikeneko.ui.components.Loading
 import app.mikeneko.ui.components.Mascot
 import app.mikeneko.ui.components.VideoCard
+import app.mikeneko.ui.components.VideoMenu
+import app.mikeneko.ui.components.adaptiveItems
+import app.mikeneko.ui.components.columnsFor
 import app.mikeneko.ui.glass.Backdrop
 import app.mikeneko.ui.glass.LiquidGlass
 import app.mikeneko.ui.icons.MkIcons
 import app.mikeneko.ui.theme.GlassTextShadow
 import app.mikeneko.ui.theme.Pelage
 import app.mikeneko.ui.theme.Rounded
+import app.mikeneko.ui.theme.statusBarSpace
+import app.mikeneko.ui.theme.statusBarSpacePadding
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class HomeState {
     var category by mutableStateOf("for_you")
@@ -136,7 +131,7 @@ class HomeState {
         internal set
     internal var scrollToTop by mutableStateOf(0)
     /** La liste et son « tirer pour rafraîchir » : les rubriques en verre (au-dessus) leur passent les glissements verticaux. */
-    internal var list by mutableStateOf<androidx.compose.foundation.lazy.LazyListState?>(null)
+    internal var list by mutableStateOf<LazyListState?>(null)
     internal var pull by mutableStateOf<PullToRefreshState?>(null)
     internal var refreshing by mutableStateOf(false)
     internal var onRefresh: () -> Unit = {}
@@ -206,7 +201,7 @@ class HomeState {
 /**
  * Une rubrique de l'accueil : un fil de YouTube ([kiosk]) quand il existe, sinon (ou s'il échoue)
  * une recherche ([query]). Les directs ne vont que dans « En direct » ([lives]).
- * « Pour toi » (ni l'un ni l'autre) = le fil par défaut. La musique est dans l'onglet Radio.
+ * « Pour toi » (ni l'un ni l'autre) = le fil par défaut. La musique est dans l'onglet Musique.
  */
 private class Category(
     val id: String,
@@ -355,7 +350,7 @@ fun HomeContent(state: HomeState, onOpen: (VideoItem) -> Unit) {
         }
     }
     val pull = rememberPullToRefreshState()
-    androidx.compose.runtime.SideEffect {
+    SideEffect {
         state.list = list
         state.pull = pull
         state.refreshing = refreshing
@@ -370,30 +365,30 @@ fun HomeContent(state: HomeState, onOpen: (VideoItem) -> Unit) {
         modifier = Modifier.fillMaxSize(),
         indicator = { CatRefreshIndicator(pull, refreshing, Modifier.align(Alignment.TopCenter)) },
     ) {
-    LazyColumn(
-        Modifier.fillMaxSize(),
-        state = list,
-        contentPadding = PaddingValues(bottom = 200.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp),
-    ) {
-        val items = shownVideos
-        // En haut de la page, sous le header en verre : la place des rubriques en verre (dessinées
-        // au-dessus de la liste, dans HomeOverlay ; elles partent avec le défilement)
-        item(key = "haut") {
-            Column(Modifier.statusBarSpacePadding().padding(top = 62.dp)) { Spacer(Modifier.height(CATEGORIES_HEIGHT)) }
-        }
-        when {
-            items == null -> item { Loading(Modifier.padding(top = 80.dp)) }
-            items.isEmpty() -> item {
-                EmptyCat(stringResource(R.string.nothing_found), stringResource(R.string.nothing_found_text), Modifier.padding(top = 60.dp))
+        LazyColumn(
+            Modifier.fillMaxSize(),
+            state = list,
+            contentPadding = PaddingValues(bottom = 200.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+        ) {
+            val items = shownVideos
+            // En haut de la page, sous le header en verre : la place des rubriques en verre (dessinées
+            // au-dessus de la liste, dans HomeOverlay ; elles partent avec le défilement)
+            item(key = "haut") {
+                Column(Modifier.statusBarSpacePadding().padding(top = 62.dp)) { Spacer(Modifier.height(CATEGORIES_HEIGHT)) }
             }
-            else -> {
-                adaptiveItems(items, cardColumns, key = { it.url }) { video, modifier ->
-                    VideoCard(video, modifier, onMore = { VideoMenu.open(video) }) { onOpen(video) }
+            when {
+                items == null -> item { Loading(Modifier.padding(top = 80.dp)) }
+                items.isEmpty() -> item {
+                    EmptyCat(stringResource(R.string.nothing_found), stringResource(R.string.nothing_found_text), Modifier.padding(top = 60.dp))
+                }
+                else -> {
+                    adaptiveItems(items, cardColumns, key = { it.url }) { video, modifier ->
+                        VideoCard(video, modifier, onMore = { VideoMenu.open(video) }) { onOpen(video) }
+                    }
                 }
             }
         }
-    }
     }
 }
 
@@ -455,147 +450,147 @@ fun HomeOverlay(state: HomeState, backdrop: Backdrop, onSettings: () -> Unit) {
         keyboard?.hide()
     }
     Box(Modifier.fillMaxSize()) {
-    // Les rubriques de l'accueil, en verre sur la liste ; elles montent et s'effacent avec le haut de la liste
-    if (state.submitted == null) HomeCategories(state, backdrop)
-    Column(
-        Modifier.fillMaxWidth().windowInsetsPadding(WindowInsets.statusBarSpace).padding(top = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp), // + 6 dp de marge des rubriques = 12 dp comme avant
-    ) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-            if (state.searching) {
-                LiquidGlass(
-                    backdrop,
-                    Modifier
-                        .weight(1f)
-                        .height(50.dp)
-                        // Toucher le champ rouvre l'historique / les suggestions (même après une recherche)
-                        .pointerInput(Unit) {
-                            awaitEachGesture {
-                                awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
-                                state.suggesting = true
-                                state.filtersOpen = false
+        // Les rubriques de l'accueil, en verre sur la liste ; elles montent et s'effacent avec le haut de la liste
+        if (state.submitted == null) HomeCategories(state, backdrop)
+        Column(
+            Modifier.fillMaxWidth().windowInsetsPadding(WindowInsets.statusBarSpace).padding(top = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp), // + 6 dp de marge des rubriques = 12 dp comme avant
+        ) {
+            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                if (state.searching) {
+                    LiquidGlass(
+                        backdrop,
+                        Modifier
+                            .weight(1f)
+                            .height(50.dp)
+                            // Toucher le champ rouvre l'historique / les suggestions (même après une recherche)
+                            .pointerInput(Unit) {
+                                awaitEachGesture {
+                                    awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                                    state.suggesting = true
+                                    state.filtersOpen = false
+                                }
+                            },
+                        cornerRadius = 25.dp,
+                        bezel = 16.dp,
+                        refraction = 16.dp,
+                    ) {
+                        // Champ à état : on peut le faire défiler au doigt, et après la recherche il
+                        // réaffiche le début du texte (au lieu de rester bloqué sur la fin)
+                        val field = rememberTextFieldState(state.query)
+                        val scroll = rememberScrollState()
+                        val scope = rememberCoroutineScope()
+                        // Champ → état. Dans l'autre sens, seulement si la recherche a été changée d'ailleurs
+                        // (sinon une lettre tapée entre deux synchronisations est effacée : « tarte » → « trte »)
+                        var fromField by remember { mutableStateOf(state.query) }
+                        LaunchedEffect(field) {
+                            snapshotFlow { field.text.toString() }.collect {
+                                if (it != state.query) state.suggesting = true // on tape : les suggestions reviennent
+                                fromField = it
+                                state.query = it
                             }
-                        },
-                    cornerRadius = 25.dp,
-                    bezel = 16.dp,
-                    refraction = 16.dp,
-                ) {
-                    // Champ à état : on peut le faire défiler au doigt, et après la recherche il
-                    // réaffiche le début du texte (au lieu de rester bloqué sur la fin)
-                    val field = rememberTextFieldState(state.query)
-                    val scroll = rememberScrollState()
-                    val scope = rememberCoroutineScope()
-                    // Champ → état. Dans l'autre sens, seulement si la recherche a été changée d'ailleurs
-                    // (sinon une lettre tapée entre deux synchronisations est effacée : « tarte » → « trte »)
-                    var fromField by remember { mutableStateOf(state.query) }
-                    LaunchedEffect(field) {
-                        snapshotFlow { field.text.toString() }.collect {
-                            if (it != state.query) state.suggesting = true // on tape : les suggestions reviennent
-                            fromField = it
-                            state.query = it
+                        }
+                        LaunchedEffect(state.query) {
+                            if (state.query != fromField && field.text.toString() != state.query) field.setTextAndPlaceCursorAtEnd(state.query)
+                        }
+                        // À l'ouverture de la recherche : le clavier tout de suite
+                        LaunchedEffect(Unit) {
+                            if (state.submitted == null) {
+                                runCatching { focus.requestFocus() }
+                                keyboard?.show()
+                            }
+                        }
+                        // Après une recherche, le champ réaffiche le début du texte
+                        LaunchedEffect(state.submitted) {
+                            if (state.submitted != null) {
+                                field.edit { selection = TextRange(0) }
+                                scroll.animateScrollTo(0)
+                            }
+                        }
+                        BasicTextField(
+                            state = field,
+                            lineLimits = TextFieldLineLimits.SingleLine,
+                            scrollState = scroll,
+                            textStyle = TextStyle(color = Color.White, fontSize = 16.sp, fontFamily = Rounded, fontWeight = FontWeight.Bold, shadow = GlassTextShadow),
+                            cursorBrush = SolidColor(Pelage.RouxClair),
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                            onKeyboardAction = { submit(field.text.toString()) },
+                            modifier = Modifier.align(Alignment.CenterStart).fillMaxWidth().padding(horizontal = 18.dp).focusRequester(focus),
+                            decorator = { inner ->
+                                if (state.query.isEmpty()) Text(stringResource(R.string.search_hint), color = Color.White.copy(alpha = 0.7f), fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                                inner()
+                            },
+                        )
+                    }
+                } else {
+                    LiquidGlass(backdrop, Modifier.height(50.dp), cornerRadius = 25.dp, bezel = 16.dp, refraction = 16.dp) {
+                        Row(Modifier.fillMaxHeight().padding(start = 9.dp, end = 18.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Mascot(size = 36.dp)
+                            Spacer(Modifier.width(7.dp))
+                            Text("Mikeneko", style = TextStyle(fontFamily = Rounded, color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.ExtraBold, shadow = GlassTextShadow))
                         }
                     }
-                    LaunchedEffect(state.query) {
-                        if (state.query != fromField && field.text.toString() != state.query) field.setTextAndPlaceCursorAtEnd(state.query)
-                    }
-                    // À l'ouverture de la recherche : le clavier tout de suite
-                    LaunchedEffect(Unit) {
-                        if (state.submitted == null) {
+                    Spacer(Modifier.weight(1f))
+                }
+                Spacer(Modifier.width(10.dp))
+                val clearLabel = stringResource(if (state.query.isEmpty() && state.submitted == null) R.string.search_close else R.string.search_clear)
+                GlassCircleButton(backdrop, if (state.searching) MkIcons.Close else MkIcons.Search, if (state.searching) clearLabel else stringResource(R.string.search)) {
+                    when {
+                        !state.searching -> {
+                            state.searching = true
+                            state.suggesting = true // à l'ouverture : l'historique des recherches
+                        }
+                        // Champ déjà vide, rien de cherché : il n'y a plus rien à effacer, on ferme
+                        state.query.isEmpty() && state.submitted == null -> state.goBack()
+                        else -> {
+                            // ✕ efface le champ sans fermer : retour à la barre de recherche, clavier ouvert
+                            // (les résultats restent dessous : le retour y ramène)
+                            state.query = ""
+                            state.suggesting = true
+                            state.filtersOpen = false
                             runCatching { focus.requestFocus() }
                             keyboard?.show()
                         }
                     }
-                    // Après une recherche, le champ réaffiche le début du texte
-                    LaunchedEffect(state.submitted) {
-                        if (state.submitted != null) {
-                            field.edit { selection = TextRange(0) }
-                            scroll.animateScrollTo(0)
-                        }
-                    }
-                    BasicTextField(
-                        state = field,
-                        lineLimits = TextFieldLineLimits.SingleLine,
-                        scrollState = scroll,
-                        textStyle = TextStyle(color = Color.White, fontSize = 16.sp, fontFamily = Rounded, fontWeight = FontWeight.Bold, shadow = GlassTextShadow),
-                        cursorBrush = SolidColor(Pelage.RouxClair),
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                        onKeyboardAction = { submit(field.text.toString()) },
-                        modifier = Modifier.align(Alignment.CenterStart).fillMaxWidth().padding(horizontal = 18.dp).focusRequester(focus),
-                        decorator = { inner ->
-                            if (state.query.isEmpty()) Text(stringResource(R.string.search_hint), color = Color.White.copy(alpha = 0.7f), fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                            inner()
-                        },
-                    )
                 }
-            } else {
-                LiquidGlass(backdrop, Modifier.height(50.dp), cornerRadius = 25.dp, bezel = 16.dp, refraction = 16.dp) {
-                    Row(Modifier.fillMaxHeight().padding(start = 9.dp, end = 18.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Mascot(size = 36.dp)
-                        Spacer(Modifier.width(7.dp))
-                        Text("Mikeneko", style = TextStyle(fontFamily = Rounded, color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.ExtraBold, shadow = GlassTextShadow))
-                    }
-                }
-                Spacer(Modifier.weight(1f))
-            }
-            Spacer(Modifier.width(10.dp))
-            val clearLabel = stringResource(if (state.query.isEmpty() && state.submitted == null) R.string.search_close else R.string.search_clear)
-            GlassCircleButton(backdrop, if (state.searching) MkIcons.Close else MkIcons.Search, if (state.searching) clearLabel else stringResource(R.string.search)) {
-                when {
-                    !state.searching -> {
-                        state.searching = true
-                        state.suggesting = true // à l'ouverture : l'historique des recherches
-                    }
-                    // Champ déjà vide, rien de cherché : il n'y a plus rien à effacer, on ferme
-                    state.query.isEmpty() && state.submitted == null -> state.goBack()
-                    else -> {
-                        // ✕ efface le champ sans fermer : retour à la barre de recherche, clavier ouvert
-                        // (les résultats restent dessous : le retour y ramène)
-                        state.query = ""
-                        state.suggesting = true
-                        state.filtersOpen = false
-                        runCatching { focus.requestFocus() }
-                        keyboard?.show()
-                    }
+                if (!state.searching) {
+                    Spacer(Modifier.width(10.dp))
+                    GlassCircleButton(backdrop, MkIcons.Settings, stringResource(R.string.settings), onClick = onSettings)
                 }
             }
-            if (!state.searching) {
-                Spacer(Modifier.width(10.dp))
-                GlassCircleButton(backdrop, MkIcons.Settings, stringResource(R.string.settings), onClick = onSettings)
-            }
-        }
-        AnimatedSearchSuggestions(
+            AnimatedSearchSuggestions(
                 visible = state.searching && state.suggesting,
                 query = state.query,
                 backdrop = backdrop,
                 onPick = ::submit,
                 onFill = { state.query = it }, // complète le champ, sans chercher
                 modifier = Modifier.padding(horizontal = 16.dp),
-            )
-        if (state.searching && state.submitted != null && !state.suggesting) {
-            // Sous les résultats : l'ordre (meilleurs, récentes, plus vues)
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                // D'abord les filtres (orange quand il y en a d'actifs, avec leur nombre)
-                item(key = "filtres") {
-                    val active = state.filters.active
-                    GlassChip(
-                        backdrop,
-                        if (active > 0) stringResource(R.string.filters_count, active) else stringResource(R.string.filters),
-                        selected = active > 0 || state.filtersOpen,
-                        icon = MkIcons.Settings,
-                    ) { state.filtersOpen = !state.filtersOpen }
+                )
+            if (state.searching && state.submitted != null && !state.suggesting) {
+                // Sous les résultats : l'ordre (meilleurs, récentes, plus vues)
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    // D'abord les filtres (orange quand il y en a d'actifs, avec leur nombre)
+                    item(key = "filtres") {
+                        val active = state.filters.active
+                        GlassChip(
+                            backdrop,
+                            if (active > 0) stringResource(R.string.filters_count, active) else stringResource(R.string.filters),
+                            selected = active > 0 || state.filtersOpen,
+                            icon = MkIcons.Settings,
+                        ) { state.filtersOpen = !state.filtersOpen }
+                    }
+                    items(SearchSort.entries, key = { it.name }) { sort ->
+                        GlassChip(backdrop, stringResource(sort.label), selected = state.sort == sort) { state.sort = sort }
+                    }
                 }
-                items(SearchSort.entries, key = { it.name }) { sort ->
-                    GlassChip(backdrop, stringResource(sort.label), selected = state.sort == sort) { state.sort = sort }
+                if (state.filtersOpen) {
+                    SearchFiltersPanel(state.filters, backdrop, onChange = { state.filters = it }, Modifier.padding(horizontal = 16.dp))
                 }
-            }
-            if (state.filtersOpen) {
-                SearchFiltersPanel(state.filters, backdrop, onChange = { state.filters = it }, Modifier.padding(horizontal = 16.dp))
             }
         }
-    }
     }
 }
 
@@ -609,7 +604,7 @@ private val CATEGORIES_HEIGHT = 56.dp
 @Composable
 private fun HomeCategories(state: HomeState, backdrop: Backdrop) {
     val shift = state.categoriesShift
-    val density = androidx.compose.ui.platform.LocalDensity.current
+    val density = LocalDensity.current
     val gone = with(density) { CATEGORIES_HEIGHT.toPx() }
     val list = state.list
     val pull = state.pull
@@ -620,7 +615,7 @@ private fun HomeCategories(state: HomeState, backdrop: Backdrop) {
             .windowInsetsPadding(WindowInsets.statusBarSpace)
             .padding(top = 62.dp)
             // au placement : le verre suit (borné : MAX = la liste est descendue)
-            .offset { androidx.compose.ui.unit.IntOffset(0, -state.categoriesShift.coerceAtMost(4 * gone.toInt())) }
+            .offset { IntOffset(0, -state.categoriesShift.coerceAtMost(4 * gone.toInt())) }
             .graphicsLayer { alpha = (1f - state.categoriesShift / gone).coerceIn(0f, 1f) }
             // Glisser verticalement sur une capsule fait défiler la liste dessous (et tire pour
             // rafraîchir en haut), comme si on la touchait elle ; le défilement de côté reste aux capsules

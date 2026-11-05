@@ -1,15 +1,13 @@
 package app.mikeneko.ui.components
 
-import app.mikeneko.ui.theme.jellyClickable
-import app.mikeneko.ui.theme.clay
 import android.widget.Toast
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -39,16 +37,19 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.mikeneko.R
 import app.mikeneko.data.Segment
 import app.mikeneko.data.SponsorBlock
-import app.mikeneko.data.formatDuration
+import app.mikeneko.data.formatClock
 import app.mikeneko.player.PlayerHolder
 import app.mikeneko.settings.AppSettings
 import app.mikeneko.ui.icons.MkIcons
 import app.mikeneko.ui.theme.Pelage
+import app.mikeneko.ui.theme.clay
+import app.mikeneko.ui.theme.jellyClickable
 import kotlinx.coroutines.launch
 
 private val Secondary = Color(0xFFCFC6BD)
@@ -198,12 +199,12 @@ private fun TimeRow(label: String, value: Long?, setLabel: String, onSet: () -> 
         Text(label, Modifier.width(56.dp), color = Pelage.Texte, fontSize = 14.sp, fontWeight = FontWeight.Bold)
         Nudge("−1 s", stringResource(R.string.mark_earlier), enabled = value != null) { onNudge(-1_000) }
         Text(
-            value?.let { formatDuration(it / 1000).ifEmpty { "0:00" } + ".%d".format((it % 1000) / 100) } ?: "—",
+            value?.let { formatClock(it) + ".%d".format((it % 1000) / 100) } ?: "—",
             Modifier.width(78.dp),
             color = if (value != null) Pelage.Dore else Secondary,
             fontSize = 15.sp,
             fontWeight = FontWeight.ExtraBold,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            textAlign = TextAlign.Center,
         )
         Nudge("+1 s", stringResource(R.string.mark_later), enabled = value != null) { onNudge(1_000) }
         Spacer(Modifier.weight(1f))

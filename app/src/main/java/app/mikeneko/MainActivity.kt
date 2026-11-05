@@ -1,27 +1,20 @@
 package app.mikeneko
 
-import app.mikeneko.data.Downloads
-import android.os.Process
-import android.os.Looper
-import android.os.Handler
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.Job
-import app.mikeneko.ui.components.VideoMenu
-import app.mikeneko.ui.screens.MusicSheet
-import android.provider.Settings
-import android.view.WindowManager
-import android.view.OrientationEventListener
-import app.mikeneko.settings.AppSettings
-import app.mikeneko.settings.AppLocale
-import android.content.Context
 import android.app.PictureInPictureParams
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.os.Process
+import android.provider.Settings
 import android.util.Rational
+import android.view.OrientationEventListener
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -35,13 +28,22 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import app.mikeneko.data.Downloads
 import app.mikeneko.data.youtubeLinkIn
 import app.mikeneko.player.PlaybackService
 import app.mikeneko.player.PlayerHolder
+import app.mikeneko.player.PlaylistDownloads
+import app.mikeneko.settings.AppLocale
+import app.mikeneko.settings.AppSettings
 import app.mikeneko.ui.MikenekoRoot
+import app.mikeneko.ui.components.VideoMenu
 import app.mikeneko.ui.fixedSpeedRecomposer
+import app.mikeneko.ui.screens.MusicSheet
 import app.mikeneko.ui.theme.MikenekoTheme
+import app.mikeneko.update.AppUpdates
 import com.google.common.util.concurrent.ListenableFuture
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -121,7 +123,7 @@ class MainActivity : ComponentActivity() {
 
     private fun busy() = PlayerHolder.isPlaying.value ||
         Downloads.tasks.value.any { it.status == Downloads.Status.EN_COURS || it.status == Downloads.Status.EN_ATTENTE } ||
-        app.mikeneko.player.PlaylistDownloads.busy
+        PlaylistDownloads.busy
 
     /** En arrière-plan : toutes les minutes, on regarde si l'appli travaille encore ; 15 min sans rien → on vide. */
     private fun watchIdle() {
@@ -178,7 +180,7 @@ class MainActivity : ComponentActivity() {
             // Une mise à jour téléchargée s'installe maintenant (elle ferme l'appli), sauf si une musique
             // joue en fond (les vidéos viennent d'être mises en pause juste au-dessus)
             val musicPlaying = PlayerHolder.nowPlaying.value?.audioOnly == true && PlayerHolder.isPlaying.value
-            app.mikeneko.update.AppUpdates.installIfReady(this, playing = musicPlaying)
+            AppUpdates.installIfReady(this, playing = musicPlaying)
         }
         controller?.let { MediaController.releaseFuture(it) }
         controller = null

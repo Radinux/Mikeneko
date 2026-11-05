@@ -2,6 +2,7 @@ package app.mikeneko.settings
 
 import android.content.Context
 import android.content.SharedPreferences
+import java.util.UUID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -79,7 +80,7 @@ object AppSettings {
      * (c'est la version privée ; SponsorBlock n'en publie qu'un hachage).
      */
     fun sponsorBlockUserId(): String =
-        prefs.getString("sponsorblock_id", null) ?: (java.util.UUID.randomUUID().toString() + java.util.UUID.randomUUID().toString())
+        prefs.getString("sponsorblock_id", null) ?: (UUID.randomUUID().toString() + UUID.randomUUID().toString())
             .replace("-", "")
             .also { prefs.edit().putString("sponsorblock_id", it).apply() }
 

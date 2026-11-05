@@ -3,7 +3,7 @@
 Client YouTube libre pour Android, en Kotlin + Jetpack Compose : sans pubs, avec SponsorBlock,
 Return YouTube Dislike, lecteur de musique, téléchargements yt-dlp, mini-lecteur PiP et dock en liquid glass.
 
-**Version : 2.1.2** (dernier APK prêt à partager : `Mikeneko-2.1.0.apk` à la racine du projet, dans Download sur le téléphone et en release GitHub).
+**Version : 2.1.7** (publiée en release GitHub ; dernier APK partagé à la main : `Mikeneko-2.1.2.apk`).
 La version est automatique : `app/version.properties` garde la version de la prochaine compilation
 release ; chaque `assembleRelease` / `installRelease` la prend puis prépare la suivante (dernier
 chiffre +1, `versionCode` +1). Nouvelle fonction : `minor` +1 et `patch=0` à la main. Pas de x.20 : là où on arriverait à x.20.0, c'est une version majeure ((x+1).0.0).
@@ -12,6 +12,25 @@ Pour reprendre le développement : `NOTES-TECHNIQUES.md` (comment et pourquoi, p
 et `FIXES.md` (à faire / à vérifier).
 
 ## Nouveautés
+
+### 2.1.3 → 2.1.7
+
+- **Grand nettoyage du code, sans rien changer à l'écran.**
+  - La connexion Google, éteinte depuis longtemps, est retirée avec les **Play Services** : l'APK
+    ne dépend plus d'aucun service Google. Les commentaires restent lisibles (lecture seule).
+    L'ancien code reste dans l'historique git (`data/GoogleAccount.kt` au commit `066b0c2`).
+  - Les gros fichiers sont découpés : le lecteur (`PlayerScreen`, `FullscreenPlayer`,
+    `PlayerControls`), la fenêtre musique (`MusicWindow`, `MusicDock`, `MusicPlayerContent`,
+    `MusicQueue`, `MusicPlayerState`), les pages musique (`MusicPages`, `MusicHome`, `MusicSearch`,
+    `MusicPageHeader`) ; `VideoFrames` et `PlayerTypes` sortent de `PlayerHolder`.
+  - Les anciens noms « Radio » de l'onglet Musique deviennent « Music » (`MusicScreen.kt`,
+    `MusicState`, `MusicPage`, `Route.Musique`). Le bouton « Radio » d'une vidéo garde son nom.
+  - Code, textes et icônes inutilisés retirés ; doublons fusionnés (format du temps `formatClock`,
+    partage `shareLink`, `lerp`) ; imports rangés ; indentation recalée.
+- 2.1.4 : en portrait, les boutons du centre de la vidéo (précédent / lecture / suivant) se
+  centrent au-dessus de la barre du bas : « suivant » collait le bouton des réglages. Beaucoup trop
+  haut ; 2.1.6 : ils restent au milieu et remontent seulement de ce qu'il faut (2.1.5 non installée).
+- 2.1.7 : la même que la 2.1.6, publiée en release GitHub pour arriver par la mise à jour automatique.
 
 ### 2.1.0 → 2.1.2
 
@@ -224,7 +243,7 @@ et `FIXES.md` (à faire / à vérifier).
 
 ### 1.11.0
 
-- **Ta bibliothèque musique** (`RadioPage.Library`, dans `ui/screens/MusicPages.kt`) : une page avec des
+- **Ta bibliothèque musique** (`MusicPage.Library`, dans `ui/screens/MusicPages.kt`) : une page avec des
   filtres en capsules (Tout / Playlists / Albums / Artistes / Téléchargés). Tout : nouvelle playlist,
   Téléchargés, tes playlists, puis les albums et artistes sauvegardés ; Téléchargés : les morceaux
   directement (avec Aléatoire). Le filtre choisi reste quand on revient d'un album.
@@ -447,22 +466,21 @@ de YouTube).
 | Accueil (kiosque NewPipe, recherche avec suggestions et filtres, rubriques) + header flottant en verre | `ui/screens/HomeScreen.kt`, `ui/screens/SearchResults.kt` |
 | Abonnements séparés de l'accueil, par ordre chronologique, filtre par chaîne, « Pas vues » ; secours si le RSS de YouTube tombe | `ui/screens/SubscriptionsScreen.kt`, `data/Subscriptions.kt` |
 | Pages de chaîne : bannière, onglets Vidéos / Shorts / En direct / Playlists, pages de playlist | `ui/screens/ChannelScreen.kt` |
-| Connexion Google (OAuth officiel + YouTube Data API) | `data/GoogleAccount.kt` |
 | Import sans compte : NewPipe (.json), FreeTube (.db), Google Takeout (.csv) | `data/Subscriptions.kt` |
-| Lecteur vidéo : boutons en verre sur la vidéo, SponsorBlock auto (« coup de patte »), dislikes, chapitres, chaîne + « S'abonner », lecture automatique | `ui/screens/PlayerScreen.kt`, `player/` |
+| Lecteur vidéo : boutons en verre sur la vidéo, SponsorBlock auto (« coup de patte »), dislikes, chapitres, chaîne + « S'abonner », lecture automatique | `ui/screens/PlayerScreen.kt`, `FullscreenPlayer.kt`, `PlayerControls.kt`, `player/` |
 | Tiroir de playlist dans le lecteur (tirer vers le haut) | `ui/components/PlaylistDrawer.kt` |
 | « Marquer un passage » : envoyer sponsors, intros, génériques… à SponsorBlock (anonyme) | `ui/components/SegmentMarker.kt`, `data/CommunityApis.kt` |
-| Commentaires (lecture sans compte, réponses, liens et horodatages) + barre pour commenter avec le compte Google | `data/Comments.kt`, `ui/components/CommentsUi.kt` |
+| Commentaires (lecture seule, sans compte : réponses, liens et horodatages) | `data/Comments.kt`, `ui/components/CommentsUi.kt` |
 | Mini-lecteur PiP dans l'app (vidéo + oreilles de chat) et vrai PiP système en quittant l'app | `ui/components/Video.kt`, `MainActivity.kt` |
-| Musique (ex-Radio) : le dock musique (onglet Musique seulement) s'étire en fenêtre de verre liquide (tirer vers le haut / tap), son écran éteint ; une vidéo met la musique de côté | `ui/screens/MusicWindow.kt`, `ui/screens/RadioScreen.kt`, `player/PlaybackService.kt` |
-| Musique : recherche YouTube Music (morceaux, albums, artistes, playlists), Mix auto, ambiances | `data/Music.kt`, `ui/screens/MusicPages.kt` |
+| Musique (ex-Radio) : le dock musique (onglet Musique seulement) s'étire en fenêtre de verre liquide (tirer vers le haut / tap), son écran éteint ; une vidéo met la musique de côté | `ui/screens/MusicWindow.kt` (+ `MusicDock`, `MusicPlayerContent`, `MusicQueue`, `MusicPlayerState`), `ui/screens/MusicScreen.kt`, `player/PlaybackService.kt` |
+| Musique : recherche YouTube Music (morceaux, albums, artistes, playlists), Mix auto, ambiances | `data/Music.kt`, `ui/screens/MusicPages.kt` (+ `MusicHome`, `MusicSearch`, `MusicPageHeader`) |
 | File : enchaînement, aléatoire, répéter, glisser pour réordonner ; suivant/précédent dans la notification | `player/PlayerHolder.kt`, `player/PlaybackService.kt` |
 | Playlists perso, musique téléchargée hors ligne, menu ⋮ des morceaux | `data/Playlists.kt`, `data/LocalMusic.kt`, `ui/screens/MusicUi.kt` |
 | Paroles synchronisées (LRCLIB) | `data/Lyrics.kt`, `ui/screens/LyricsSheet.kt` |
 | Bibliothèque : historique, à regarder plus tard, J'aime, playlists vidéo | `ui/screens/LibraryScreen.kt`, `data/VideoLibrary.kt` |
 | Téléchargements yt-dlp (dans la Bibliothèque) : vidéo, MP3, FLAC, Opus, M4A, sponsors coupés | `data/Downloads.kt`, `ui/screens/DownloadsScreen.kt` |
 | « T'as vu l'heure ? » après 1 h | `ui/screens/SleepReminder.kt` |
-| Réglages : langue, région des contenus, lecture (dont lecture automatique), SponsorBlock, historique, rappel dodo, compte | `ui/screens/SettingsScreen.kt`, `settings/` |
+| Réglages : langue, région des contenus, lecture (dont lecture automatique), SponsorBlock, historique, rappel dodo, sauvegarde, mises à jour | `ui/screens/SettingsScreen.kt`, `settings/` |
 | Cycle de vie : retirer l'appli des récentes ou 15 min d'inactivité en arrière-plan la vident | `player/PlaybackService.kt`, `MainActivity.kt` |
 | « Pour toi » : algorithme local (historique + suggestions YouTube + abonnements) | `data/ForYou.kt`, `data/WatchHistory.kt` |
 | Partager un lien YouTube vers Mikeneko / ouvrir les liens YouTube | `AndroidManifest.xml` |
@@ -507,39 +525,13 @@ Pour ajouter une langue (par exemple l'espagnol) :
 Les recherches des rubriques de l'accueil (`query_*`) sont aussi des textes traduits : ce sont
 elles qui donnent des vidéos dans la bonne langue.
 
-## Connexion avec le compte Google
+## Pas de compte Google
 
-La connexion passe par la voie officielle : l'API Identity des Play Services demande l'autorisation
-`youtube.readonly` (lire tes abonnements) et, au moment de commenter, `youtube.force-ssl`
-(publier commentaires et réponses), via la YouTube Data API v3. Il faut une fois déclarer l'app chez Google :
-
-1. Va sur <https://console.cloud.google.com> et crée un projet (par exemple « Mikeneko »).
-2. **API et services › Bibliothèque** : active **YouTube Data API v3**.
-3. **Écran de consentement OAuth** : type *Externe*, laisse-le en mode **Test**, et ajoute ton
-   adresse Gmail dans les **utilisateurs test**. Ajoute les scopes `.../auth/youtube.readonly`
-   et `.../auth/youtube.force-ssl` (sans ce dernier, lire marche mais publier un commentaire est refusé).
-4. **Identifiants › Créer des identifiants › ID client OAuth** : type **Android**,
-   nom de package `app.mikeneko`, et l'empreinte **SHA-1** de ta clé de debug :
-   ```sh
-   ./gradlew signingReport
-   ```
-   (prends la ligne `SHA1` de la variante `debug`).
-5. C'est tout : il n'y a pas de clé à copier dans le code. Google reconnaît l'app grâce au
-   nom de package + SHA-1.
-
-À savoir :
-- En mode Test, Google redemande la connexion **tous les 7 jours** environ.
-- Le quota gratuit (10 000 unités/jour) est très large : une page de 50 abonnements coûte 1 unité,
-  un commentaire publié 50 unités (environ 200 commentaires par jour).
-- **Lire** les commentaires ne demande pas de compte (ça passe par NewPipeExtractor). Seule la barre
-  pour **écrire** a besoin du compte Google connecté.
-- Pour distribuer l'app à d'autres personnes, Google exige une vérification du projet (le scope
-  YouTube est « sensible »).
-- L'API officielle ne donne plus accès à « À regarder plus tard », c'est pour ça que l'app ne le
-  propose pas.
-- La lecture des vidéos ne passe **pas** par ton compte : elle passe par NewPipeExtractor. Le compte
-  ne sert qu'à récupérer tes abonnements. Utiliser un client tiers sans pubs reste contraire aux
-  conditions d'utilisation de YouTube : c'est rare, mais Google pourrait réagir sur un compte connecté.
+La connexion Google (OAuth + YouTube Data API) a été retirée au grand nettoyage (2.1.3), avec les
+Play Services : elle n'avait jamais pu être activée sans déclarer l'app dans la Google Cloud Console.
+Les abonnements s'importent depuis NewPipe, FreeTube ou Google Takeout (Réglages › Sauvegarde) ;
+les commentaires se lisent sans compte. Pour la ressortir : `data/GoogleAccount.kt` et la
+procédure de la console sont dans l'historique git (commit `066b0c2`).
 
 ## Structure
 
@@ -555,15 +547,13 @@ app/src/main/java/app/mikeneko/
     ├── glass/              liquid glass (AGSL)
     ├── components/         dock, capsules, cartes vidéo, menu ⋮, tiroir de playlist, mini-PiP
     ├── icons/              icônes de la maquette
-    ├── screens/            Accueil, Abonnements, Chaînes, Musique (RadioScreen, MusicWindow…), Bibliothèque, Lecteur, Dodo
+    ├── screens/            Accueil, Abonnements, Chaînes, Musique (MusicScreen, MusicWindow…), Bibliothèque, Lecteur, Dodo
     └── theme/              palette « pelage » + police M PLUS Rounded 1c
 ```
 
 ## Prochaines étapes possibles
 
 - Couleurs du lecteur tirées de la miniature (`androidx.palette`).
-- Plus tard, avec le compte Google réactivé (`GoogleAccount.ENABLED`) : synchroniser la Bibliothèque
-  (playlists et vidéos aimées) avec le compte via l'API (`playlists.list`, `videos.list?myRating=like`).
 
 ## Crédits
 

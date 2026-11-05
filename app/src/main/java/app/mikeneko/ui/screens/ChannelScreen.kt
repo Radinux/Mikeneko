@@ -1,26 +1,6 @@
 package app.mikeneko.ui.screens
 
-import app.mikeneko.ui.components.columnsFor
-import app.mikeneko.ui.components.adaptiveItems
-import app.mikeneko.ui.components.Tag
-import androidx.compose.ui.res.pluralStringResource
-import app.mikeneko.player.PlayerHolder
-import kotlinx.coroutines.flow.MutableStateFlow
-import androidx.compose.runtime.DisposableEffect
-import app.mikeneko.data.PlaylistItem
-import androidx.compose.ui.layout.layout
-import app.mikeneko.data.formatViews
-import app.mikeneko.ui.theme.jellyClickable
-import androidx.compose.material3.Icon
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.layout.aspectRatio
-import app.mikeneko.data.channelTabKind
-import org.schabi.newpipe.extractor.channel.tabs.ChannelTabs
-import org.schabi.newpipe.extractor.Page
-import androidx.compose.runtime.mutableStateMapOf
-import app.mikeneko.ui.theme.statusBarSpace
-import app.mikeneko.ui.theme.statusBarSpacePadding
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -31,13 +11,12 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -45,12 +24,16 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -60,36 +43,52 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.mikeneko.R
 import app.mikeneko.data.ChannelItem
 import app.mikeneko.data.ChannelPage
+import app.mikeneko.data.PlaylistItem
 import app.mikeneko.data.Subscription
 import app.mikeneko.data.SubscriptionStore
 import app.mikeneko.data.VideoItem
 import app.mikeneko.data.YouTubeRepository
+import app.mikeneko.data.channelTabKind
 import app.mikeneko.data.formatCount
+import app.mikeneko.data.formatViews
+import app.mikeneko.player.PlayerHolder
 import app.mikeneko.ui.components.Capsule
 import app.mikeneko.ui.components.EmptyCat
 import app.mikeneko.ui.components.GlassCircleButton
 import app.mikeneko.ui.components.Loading
+import app.mikeneko.ui.components.Tag
 import app.mikeneko.ui.components.VideoCard
 import app.mikeneko.ui.components.VideoMenu
+import app.mikeneko.ui.components.adaptiveItems
+import app.mikeneko.ui.components.columnsFor
 import app.mikeneko.ui.glass.Backdrop
 import app.mikeneko.ui.icons.MkIcons
 import app.mikeneko.ui.theme.GlassTextShadow
 import app.mikeneko.ui.theme.Pelage
 import app.mikeneko.ui.theme.Rounded
+import app.mikeneko.ui.theme.jellyClickable
+import app.mikeneko.ui.theme.statusBarSpace
+import app.mikeneko.ui.theme.statusBarSpacePadding
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.MutableStateFlow
+import org.schabi.newpipe.extractor.Page
+import org.schabi.newpipe.extractor.channel.tabs.ChannelTabs
 
 /** « 1,2 M abonnés », ou rien si YouTube ne le dit pas. */
 @Composable
@@ -112,7 +111,7 @@ fun ChannelsRow(channels: List<ChannelItem>, onOpen: (ChannelItem) -> Unit) {
                 Column(
                     Modifier
                         .width(114.dp)
-                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(18.dp))
+                        .clip(RoundedCornerShape(18.dp))
                         .clickable(role = Role.Button) { onOpen(channel) }
                         .padding(6.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -139,7 +138,7 @@ fun ChannelsRow(channels: List<ChannelItem>, onOpen: (ChannelItem) -> Unit) {
 }
 
 @Composable
-private fun Avatar(url: String?, size: androidx.compose.ui.unit.Dp) {
+private fun Avatar(url: String?, size: Dp) {
     AsyncImage(
         model = url,
         contentDescription = null,
@@ -179,7 +178,7 @@ fun ChannelContent(channel: ChannelItem, onOpen: (VideoItem) -> Unit) {
         } else {
             tabVideos[ChannelTabs.VIDEOS] = loaded.videos
             // Une chaîne suivie sans image (importée) : elle reçoit celle-ci au passage
-            app.mikeneko.data.SubscriptionStore.get(context).setAvatar(loaded.id, loaded.avatar)
+            SubscriptionStore.get(context).setAvatar(loaded.id, loaded.avatar)
             loaded.next?.let { tabNext[ChannelTabs.VIDEOS] = it }
             // Une chaîne sans onglet Vidéos (que des shorts…) : on ouvre son premier onglet
             if (loaded.tabs.none { it.channelTabKind() == ChannelTabs.VIDEOS }) {
@@ -367,7 +366,7 @@ fun ChannelContent(channel: ChannelItem, onOpen: (VideoItem) -> Unit) {
 }
 
 /** Remonte l'élément de [by] sur ce qui est au-dessus (l'avatar sur la bannière), sans laisser de trou dessous. */
-private fun Modifier.overlapAbove(by: androidx.compose.ui.unit.Dp) = layout { measurable, constraints ->
+private fun Modifier.overlapAbove(by: Dp) = layout { measurable, constraints ->
     val placeable = measurable.measure(constraints)
     val shift = by.roundToPx()
     layout(placeable.width, (placeable.height - shift).coerceAtLeast(0)) { placeable.place(0, -shift) }

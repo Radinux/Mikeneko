@@ -1,7 +1,7 @@
 package app.mikeneko.data
 
-import androidx.core.text.HtmlCompat
 import androidx.annotation.StringRes
+import androidx.core.text.HtmlCompat
 import app.mikeneko.R
 import app.mikeneko.data.YouTubeRepository.localized
 import org.schabi.newpipe.extractor.Page
@@ -21,7 +21,7 @@ data class MusicCollection(
     val count: Long = -1,
 )
 
-/** Une ambiance de la Radio : une capsule, et la recherche de lives qui va avec. */
+/** Une ambiance de la Musique : une capsule, et la recherche de lives qui va avec. */
 data class Ambiance(val id: String, @StringRes val label: Int, val query: String)
 
 /** Ce qu'on cherche dans la recherche musique (un onglet chacun). */

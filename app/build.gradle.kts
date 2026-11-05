@@ -136,8 +136,6 @@ dependencies {
     implementation(libs.okhttp)
 
     implementation(libs.kotlinx.coroutines.android)
-    implementation(libs.kotlinx.coroutines.play.services)
-    implementation(libs.play.services.auth)
 
     coreLibraryDesugaring(libs.desugar.jdk.libs.nio)
 }

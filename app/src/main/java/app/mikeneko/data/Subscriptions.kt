@@ -2,23 +2,23 @@ package app.mikeneko.data
 
 import android.content.Context
 import android.util.Xml
+import java.time.Instant
+import java.time.OffsetDateTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.withContext
 import okhttp3.Request
 import org.json.JSONArray
 import org.json.JSONObject
 import org.xmlpull.v1.XmlPullParser
-import java.time.Instant
-import java.time.OffsetDateTime
 
 /** Abonnements gardés sur le téléphone (SharedPreferences), synchronisables avec Google. */
 class SubscriptionStore private constructor(context: Context) {
@@ -26,9 +26,6 @@ class SubscriptionStore private constructor(context: Context) {
 
     private val _items = MutableStateFlow(load())
     val items: StateFlow<List<Subscription>> = _items.asStateFlow()
-
-    private val _connected = MutableStateFlow(prefs.getBoolean("google", false))
-    val connected: StateFlow<Boolean> = _connected.asStateFlow()
 
     private val _watched = MutableStateFlow(prefs.getStringSet("vues", emptySet())!!.toSet())
     /** Les vidéos déjà ouvertes, observable pour que « Nouveau » / « Pas vues » se mettent à jour. */
@@ -56,11 +53,6 @@ class SubscriptionStore private constructor(context: Context) {
         val left = _items.value.filterNot { it.channelId == channelId }
         _items.value = left
         save(left)
-    }
-
-    fun setConnected(value: Boolean) {
-        _connected.value = value
-        prefs.edit().putBoolean("google", value).apply()
     }
 
 

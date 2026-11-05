@@ -1,26 +1,11 @@
 package app.mikeneko.ui.screens
 
-import app.mikeneko.ui.components.columnsFor
-import app.mikeneko.ui.components.adaptiveItems
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.combinedClickable
-import app.mikeneko.data.ChannelItem
-import kotlinx.coroutines.delay
-import androidx.compose.runtime.LaunchedEffect
-import app.mikeneko.ui.theme.statusBarSpace
-import app.mikeneko.ui.theme.jellyClickable
-import app.mikeneko.ui.theme.clay
-import app.mikeneko.R
-import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringResource
 import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.IntentSenderRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,22 +20,21 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,35 +43,38 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.mikeneko.R
+import app.mikeneko.data.ChannelItem
 import app.mikeneko.data.FeedVideo
-import app.mikeneko.data.GoogleAccount
 import app.mikeneko.data.Subscription
+import app.mikeneko.data.SubscriptionAvatars
 import app.mikeneko.data.SubscriptionFeed
-import app.mikeneko.data.SubscriptionImport
 import app.mikeneko.data.SubscriptionStore
 import app.mikeneko.data.VideoItem
 import app.mikeneko.data.formatAgo
 import app.mikeneko.ui.components.Capsule
 import app.mikeneko.ui.components.EmptyCat
 import app.mikeneko.ui.components.Loading
-import app.mikeneko.ui.components.Mascot
 import app.mikeneko.ui.components.VideoThumbnail
+import app.mikeneko.ui.components.adaptiveItems
+import app.mikeneko.ui.components.columnsFor
 import app.mikeneko.ui.components.drawEar
 import app.mikeneko.ui.icons.MkIcons
 import app.mikeneko.ui.theme.Pelage
+import app.mikeneko.ui.theme.statusBarSpace
 import coil3.compose.AsyncImage
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import kotlinx.coroutines.delay
 
 /**
  * Abonnements : uniquement les chaînes suivies, par ordre chronologique,
@@ -99,14 +86,12 @@ fun SubscriptionsContent(onOpen: (VideoItem) -> Unit, onOpenChannel: (ChannelIte
     val context = LocalContext.current
     val store = remember { SubscriptionStore.get(context) }
     val subs by store.items.collectAsState()
-    val connected = store.connected.collectAsState().value && GoogleAccount.ENABLED
-    val scope = rememberCoroutineScope()
     var unwatchedOnly by remember { mutableStateOf(false) }
     var channel by remember { mutableStateOf<String?>(null) }
 
     val watched by store.watched.collectAsState()
     // Les chaînes sans image (importées) : leurs avatars arrivent un par un, doucement
-    LaunchedEffect(store) { app.mikeneko.data.SubscriptionAvatars.fill(store) }
+    LaunchedEffect(store) { SubscriptionAvatars.fill(store) }
 
     // L'onglet Abonnements touché : toutes les chaînes, tous les filtres retirés, en haut de la liste
     val listState = rememberLazyListState()
@@ -125,49 +110,6 @@ fun SubscriptionsContent(onOpen: (VideoItem) -> Unit, onOpenChannel: (ChannelIte
     }
 
     fun toast(text: String) = Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
-
-    suspend fun importFromGoogle(token: String) {
-        runCatching { GoogleAccount.fetchSubscriptions(token) }
-            .onSuccess { list ->
-                store.addAll(list)
-                store.setConnected(true)
-                toast(context.resources.getQuantityString(R.plurals.subs_synced_count, list.size, list.size))
-            }
-            .onFailure { toast(context.getString(R.string.subs_sync_failed, it.message.orEmpty())) }
-    }
-
-    val consent = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
-        runCatching { GoogleAccount.resultFromIntent(context, result.data) }
-            .onSuccess { auth -> auth.accessToken?.let { token -> scope.launch { importFromGoogle(token) } } }
-            .onFailure { toast(context.getString(R.string.login_cancelled)) }
-    }
-
-    fun connectGoogle() {
-        scope.launch {
-            runCatching { GoogleAccount.authorize(context) }
-                .onSuccess { auth ->
-                    val pending = auth.pendingIntent
-                    if (auth.hasResolution() && pending != null) {
-                        consent.launch(IntentSenderRequest.Builder(pending.intentSender).build())
-                    } else {
-                        auth.accessToken?.let { importFromGoogle(it) }
-                    }
-                }
-                .onFailure { toast(context.getString(R.string.google_refused)) }
-        }
-    }
-
-    val importFile = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri == null) return@rememberLauncherForActivityResult
-        scope.launch {
-            val text = withContext(Dispatchers.IO) {
-                context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }.orEmpty()
-            }
-            val list = SubscriptionImport.parse(text)
-            store.addAll(list)
-            toast(if (list.isEmpty()) context.getString(R.string.subs_import_none) else context.resources.getQuantityString(R.plurals.subs_imported_count, list.size, list.size))
-        }
-    }
 
     val visible = feed.orEmpty().filter { item ->
         (channel == null || item.channelId == channel) &&
@@ -198,46 +140,11 @@ fun SubscriptionsContent(onOpen: (VideoItem) -> Unit, onOpenChannel: (ChannelIte
                         fontSize = 14.sp,
                     )
                 }
-                if (GoogleAccount.ENABLED) Box(
-                    Modifier
-                        .size(44.dp)
-                        .clip(CircleShape)
-                        .background(if (connected) Pelage.Roux else Pelage.Creme)
-                        .clickable(role = Role.Button, onClickLabel = stringResource(if (connected) R.string.google_connected else R.string.google_sign_in)) {
-                            if (connected) store.setConnected(false) else connectGoogle()
-                        },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(MkIcons.Account, stringResource(if (connected) R.string.google_connected else R.string.google_sign_in), tint = Pelage.Encre, modifier = Modifier.size(22.dp))
-                }
             }
         }
 
-        // L'import de fichiers est dans Réglages › Sauvegarde (1.18.0). Ici : la carte Google si le
-        // compte est activé, sinon rien (seulement un mot quand il n'y a encore aucune chaîne, plus bas)
-        if (GoogleAccount.ENABLED) item {
-            if (!connected) {
-                AccountCard(
-                    onGoogle = ::connectGoogle,
-                    onImport = { importFile.launch(arrayOf("application/json", "text/*", "application/xml", "application/octet-stream")) },
-                )
-            } else {
-                Row(
-                    Modifier.padding(horizontal = 20.dp).fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Pelage.Coussin).padding(start = 14.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(MkIcons.Check, null, tint = Pelage.RouxClair, modifier = Modifier.size(20.dp))
-                    Text(stringResource(R.string.subs_synced), Modifier.weight(1f).padding(start = 10.dp), color = Pelage.Texte, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                    Text(
-                        stringResource(R.string.disconnect),
-                        Modifier.clip(CircleShape).clickable(role = Role.Button) { store.setConnected(false) }.padding(horizontal = 12.dp, vertical = 10.dp),
-                        color = Pelage.RouxClair,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
-            }
-        }
+        // L'import de fichiers est dans Réglages › Sauvegarde (1.18.0) : ici, seulement un mot quand
+        // il n'y a encore aucune chaîne (plus bas)
 
         if (subs.isNotEmpty()) {
             item {
@@ -317,54 +224,6 @@ fun SubscriptionsContent(onOpen: (VideoItem) -> Unit, onOpenChannel: (ChannelIte
                 adaptiveItems(list, rowColumns, key = { it.video.url }, horizontalPadding = 0.dp, spacing = 0.dp) { item, modifier ->
                     FeedRow(item, watched = item.video.url in watched, modifier) { onOpen(item.video) }
                 }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun AccountCard(onGoogle: () -> Unit, onImport: () -> Unit) {
-    Column(
-        Modifier
-            .padding(horizontal = 20.dp)
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(22.dp))
-            .background(Pelage.Coussin)
-            .border(1.5.dp, Pelage.Bord, RoundedCornerShape(22.dp))
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        val google = GoogleAccount.ENABLED
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Mascot(size = 48.dp)
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(stringResource(if (google) R.string.subs_card_title else R.string.subs_card_import_title), color = Pelage.Texte, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
-                Text(stringResource(if (google) R.string.subs_card_text else R.string.subs_card_import_text), color = Pelage.Gris, fontSize = 13.sp)
-            }
-        }
-        if (google) Row(
-            Modifier.fillMaxWidth().jellyClickable(onClick = onGoogle).height(48.dp).clay(Pelage.Creme),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center,
-        ) {
-            Icon(MkIcons.Account, null, tint = Pelage.Encre, modifier = Modifier.size(20.dp))
-            Text(stringResource(R.string.google_sign_in), Modifier.padding(start = 8.dp), color = Pelage.Encre, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
-        }
-        if (google) Text(stringResource(R.string.subs_import_without_account), Modifier.fillMaxWidth(), color = Pelage.Gris, fontSize = 12.sp, fontWeight = FontWeight.Bold, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-        FlowRow(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-            verticalArrangement = Arrangement.spacedBy(10.dp), // de l'air quand une capsule passe à la ligne
-        ) {
-            listOf("NewPipe", "FreeTube", "Google Takeout", "Mikeneko .xml").forEach { label ->
-                Text(
-                    label,
-                    Modifier.jellyClickable(onClick = onImport).clay(Pelage.Bord).padding(horizontal = 14.dp, vertical = 11.dp),
-                    color = Pelage.Texte,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                )
             }
         }
     }

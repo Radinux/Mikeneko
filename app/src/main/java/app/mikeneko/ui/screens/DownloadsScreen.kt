@@ -1,11 +1,5 @@
 package app.mikeneko.ui.screens
 
-import androidx.compose.ui.unit.Dp
-import app.mikeneko.ui.theme.statusBarSpace
-import app.mikeneko.ui.theme.jellyClickable
-import app.mikeneko.ui.theme.clay
-import app.mikeneko.R
-import androidx.compose.ui.res.stringResource
 import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -23,10 +17,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Checkbox
@@ -46,19 +38,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
+import app.mikeneko.R
 import app.mikeneko.data.Downloads
 import app.mikeneko.data.youtubeLinkIn
 import app.mikeneko.ui.components.EmptyCat
 import app.mikeneko.ui.icons.MkIcons
 import app.mikeneko.ui.theme.Pelage
 import app.mikeneko.ui.theme.Rounded
+import app.mikeneko.ui.theme.clay
+import app.mikeneko.ui.theme.jellyClickable
+import app.mikeneko.ui.theme.statusBarSpace
 
 @Composable
 fun DownloadsContent(prefilledLink: String, top: Dp = 24.dp) {

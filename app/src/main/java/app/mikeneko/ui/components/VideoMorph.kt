@@ -1,19 +1,7 @@
 package app.mikeneko.ui.components
 
-import kotlin.math.sin
-import kotlin.math.abs
-import kotlin.math.PI
-import androidx.compose.ui.graphics.drawscope.withTransform
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.geometry.Offset
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.coroutineScope
-import androidx.compose.runtime.snapshotFlow
-import androidx.compose.animation.core.spring
-import app.mikeneko.ui.theme.Pelage
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -21,23 +9,35 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.RoundRect
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
-import app.mikeneko.player.PlayerHolder
-import kotlinx.coroutines.withTimeoutOrNull
+import app.mikeneko.player.VideoFrames
+import app.mikeneko.ui.theme.Pelage
+import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.roundToInt
+import kotlin.math.sin
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Le « morph » entre le mini-lecteur et le grand lecteur, façon dessin animé : une photo de la
@@ -61,7 +61,7 @@ object VideoMorph {
         private set
 
     /** Lance l'animation depuis [from] (null = pas d'animation, on passe directement). */
-    fun start(from: Rect?, toMini: Boolean) = startWith(PlayerHolder.snapshot()?.asImageBitmap(), from, toMini)
+    fun start(from: Rect?, toMini: Boolean) = startWith(VideoFrames.snapshot()?.asImageBitmap(), from, toMini)
 
     /** Pareil avec une autre image : la miniature d'une carte qui s'envole vers le lecteur. */
     fun startWith(image: ImageBitmap?, from: Rect?, toMini: Boolean = false) {

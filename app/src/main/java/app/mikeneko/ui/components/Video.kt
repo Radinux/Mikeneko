@@ -1,115 +1,114 @@
 package app.mikeneko.ui.components
 
-import app.mikeneko.data.formatDuration
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.material3.Text
-import androidx.compose.foundation.layout.Column
-import coil3.toBitmap
-import coil3.request.SuccessResult
-import coil3.request.ImageRequest
-import coil3.SingletonImageLoader
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.Constraints
-import androidx.compose.ui.layout.layout
-import org.schabi.newpipe.extractor.stream.Frameset
-import kotlin.math.sin
-import kotlin.math.cos
-import kotlin.math.PI
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.fadeIn
-import androidx.compose.ui.graphics.TransformOrigin
-import androidx.compose.animation.core.Animatable
-import androidx.compose.ui.layout.boundsInRoot
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.runtime.DisposableEffect
-import kotlinx.coroutines.launch
-import androidx.compose.runtime.withFrameNanos
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.foundation.Image
-import android.view.TextureView
-import androidx.compose.ui.res.stringResource
 import android.content.Context
 import android.view.LayoutInflater
+import android.view.TextureView
 import android.view.View
 import android.view.ViewGroup
 import android.view.accessibility.CaptioningManager
-import androidx.core.content.res.ResourcesCompat
-import androidx.media3.ui.CaptionStyleCompat
-import androidx.media3.ui.SubtitleView
+import androidx.annotation.OptIn
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.offset
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.unit.IntOffset
-import app.mikeneko.ui.glass.LiquidGlass
-import kotlin.math.roundToInt
-import androidx.annotation.OptIn
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.semantics.ProgressBarRangeInfo
-import androidx.compose.ui.semantics.progressBarRangeInfo
-import androidx.compose.ui.semantics.setProgress
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.ui.graphics.drawscope.clipPath
-import androidx.compose.ui.graphics.drawscope.translate
-import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.setProgress
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.res.ResourcesCompat
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.AspectRatioFrameLayout
+import androidx.media3.ui.CaptionStyleCompat
 import androidx.media3.ui.PlayerView
+import androidx.media3.ui.SubtitleView
 import app.mikeneko.R
+import app.mikeneko.data.formatClock
 import app.mikeneko.player.PlayerHolder
+import app.mikeneko.player.VideoFrames
+import app.mikeneko.ui.glass.LiquidGlass
 import app.mikeneko.ui.glass.backdropSource
 import app.mikeneko.ui.glass.rememberBackdrop
 import app.mikeneko.ui.icons.MkIcons
 import app.mikeneko.ui.theme.Pelage
+import coil3.SingletonImageLoader
+import coil3.request.ImageRequest
+import coil3.request.SuccessResult
+import coil3.toBitmap
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.roundToInt
+import kotlin.math.sin
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import org.schabi.newpipe.extractor.stream.Frameset
 
 /**
  * La vidéo du lecteur partagé (TextureView, pour que le verre puisse la réfracter).
@@ -122,11 +121,11 @@ fun VideoSurface(modifier: Modifier = Modifier, zoom: Boolean = false, captionLi
     val context = LocalContext.current
     // La vidéo passe d'un écran à l'autre (mini-lecteur → grand lecteur, plein écran…) : le temps
     // qu'elle se rebranche, on montre sa dernière image au lieu d'un carré noir.
-    val placeholder = remember { PlayerHolder.snapshot()?.asImageBitmap() }
-    val framesAtStart = remember { PlayerHolder.firstFrames.value }
-    val seeksAtStart = remember { PlayerHolder.seeks.value }
-    val frames by PlayerHolder.firstFrames.collectAsState()
-    val seeks by PlayerHolder.seeks.collectAsState()
+    val placeholder = remember { VideoFrames.snapshot()?.asImageBitmap() }
+    val framesAtStart = remember { VideoFrames.firstFrames.value }
+    val seeksAtStart = remember { VideoFrames.seeks.value }
+    val frames by VideoFrames.firstFrames.collectAsState()
+    val seeks by VideoFrames.seeks.collectAsState()
     val wantsToPlay by PlayerHolder.playRequested.collectAsState()
     var covering by remember { mutableStateOf(placeholder != null) }
     LaunchedEffect(frames, wantsToPlay, seeks) {
@@ -157,14 +156,14 @@ fun VideoSurface(modifier: Modifier = Modifier, zoom: Boolean = false, captionLi
             },
             update = { view ->
                 view.player = PlayerHolder.get(context)
-                PlayerHolder.attachTexture(view.videoSurfaceView as? TextureView)
+                VideoFrames.attachTexture(view.videoSurfaceView as? TextureView)
                 view.subtitleView?.let { captions ->
                     captions.tag = captionLift
                     liftCaptions(captions)
                 }
             },
             onRelease = { view ->
-                PlayerHolder.detachTexture(view.videoSurfaceView as? TextureView)
+                VideoFrames.detachTexture(view.videoSurfaceView as? TextureView)
                 view.player = null
             },
         )
@@ -242,7 +241,7 @@ fun MiniPip(modifier: Modifier = Modifier, onExpand: () -> Unit, onClose: () -> 
     val scope = rememberCoroutineScope()
     // Photo de la vidéo posée par-dessus juste avant d'agrandir / fermer : sinon la surface
     // vidéo du mini-lecteur, qui perd sa source, ressort en partie noire le temps du changement.
-    var frozen by remember { mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null) }
+    var frozen by remember { mutableStateOf<ImageBitmap?>(null) }
     var leaving by remember { mutableStateOf(false) }
     // Fermeture : 0 → 1, la bulle se gonfle puis éclate en gouttelettes
     val popping = remember { Animatable(0f) }
@@ -252,7 +251,7 @@ fun MiniPip(modifier: Modifier = Modifier, onExpand: () -> Unit, onClose: () -> 
         if (leaving) return
         leaving = true
         controls = false
-        frozen = PlayerHolder.snapshot()?.asImageBitmap()
+        frozen = VideoFrames.snapshot()?.asImageBitmap()
         PlayerHolder.pause()
         scope.launch {
             popping.animateTo(1f, tween(POP_MS, easing = LinearEasing))
@@ -263,7 +262,7 @@ fun MiniPip(modifier: Modifier = Modifier, onExpand: () -> Unit, onClose: () -> 
     fun leave(action: () -> Unit) {
         if (leaving) return
         leaving = true
-        frozen = PlayerHolder.snapshot()?.asImageBitmap()
+        frozen = VideoFrames.snapshot()?.asImageBitmap()
         scope.launch {
             // Deux images : la photo est vraiment à l'écran avant que la vidéo change de surface
             withFrameNanos { }
@@ -284,87 +283,87 @@ fun MiniPip(modifier: Modifier = Modifier, onExpand: () -> Unit, onClose: () -> 
 
     // Pendant le morph vers le mini-lecteur, c'est la photo qui arrive : on le cache dessous
     Box(modifier.size(MiniPipSize).graphicsLayer { alpha = if (VideoMorph.hidesMini()) 0f else 1f }) {
-    // Le corps du mini-lecteur : il se gonfle puis disparaît quand la bulle éclate
-    Box(
-        Modifier.matchParentSize().graphicsLayer {
-            val p = popping.value
-            val inflate = (p / POP_INFLATE).coerceIn(0f, 1f)
-            val burst = ((p - POP_INFLATE) / (POP_BURST_END - POP_INFLATE)).coerceIn(0f, 1f)
-            val grown = 1f + 0.16f * inflate * inflate
-            scaleX = grown * (1f - burst)
-            scaleY = (grown - 0.05f * inflate) * (1f - burst)
-            alpha = 1f - burst
-        },
-    ) {
-        // Les oreilles poussent en « boing » quand le mini-lecteur atterrit (après le morph)
-        val hidden = VideoMorph.hidesMini()
-        val ears = remember { Animatable(if (hidden) 0f else 1f) }
-        LaunchedEffect(hidden) {
-            if (!hidden && ears.value < 1f) ears.animateTo(1f, spring(dampingRatio = 0.32f, stiffness = 240f))
-        }
-        // La tête de chat (dessin de l'utilisateur, 05/11) : un cadre crème autour de la vidéo, dont
-        // la silhouette monte en oreilles aux coins du haut, l'intérieur des oreilles en rose
-        CatHeadFrame(Modifier.matchParentSize(), ears = { ears.value })
-        val shape = RoundedCornerShape(MINI_VIDEO_CORNER)
+        // Le corps du mini-lecteur : il se gonfle puis disparaît quand la bulle éclate
         Box(
-            Modifier
-                .padding(start = MINI_FRAME, top = MINI_EAR_HEIGHT + MINI_FRAME)
-                .size(MINI_VIDEO_WIDTH, MINI_VIDEO_WIDTH * 9f / 16f)
-                .onGloballyPositioned { VideoMorph.miniBounds = it.boundsInRoot() }
-                .border(1.2.dp, Pelage.Contour, shape)
-                .clip(shape)
-                .background(Pelage.Nuit),
+            Modifier.matchParentSize().graphicsLayer {
+                val p = popping.value
+                val inflate = (p / POP_INFLATE).coerceIn(0f, 1f)
+                val burst = ((p - POP_INFLATE) / (POP_BURST_END - POP_INFLATE)).coerceIn(0f, 1f)
+                val grown = 1f + 0.16f * inflate * inflate
+                scaleX = grown * (1f - burst)
+                scaleY = (grown - 0.05f * inflate) * (1f - burst)
+                alpha = 1f - burst
+            },
         ) {
-            Box(Modifier.fillMaxSize().backdropSource(backdrop)) {
-                VideoSurface(Modifier.fillMaxSize(), zoom = true)
-                frozen?.let { Image(it, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize()) }
+            // Les oreilles poussent en « boing » quand le mini-lecteur atterrit (après le morph)
+            val hidden = VideoMorph.hidesMini()
+            val ears = remember { Animatable(if (hidden) 0f else 1f) }
+            LaunchedEffect(hidden) {
+                if (!hidden && ears.value < 1f) ears.animateTo(1f, spring(dampingRatio = 0.32f, stiffness = 240f))
             }
+            // La tête de chat (dessin de l'utilisateur, 05/11) : un cadre crème autour de la vidéo, dont
+            // la silhouette monte en oreilles aux coins du haut, l'intérieur des oreilles en rose
+            CatHeadFrame(Modifier.matchParentSize(), ears = { ears.value })
+            val shape = RoundedCornerShape(MINI_VIDEO_CORNER)
             Box(
                 Modifier
-                    .fillMaxSize()
-                    .semantics { contentDescription = if (controls) hideLabel else showLabel }
-                    .clickable { controls = !controls },
-            )
-            // Les commandes et la barre de temps arrivent et repartent en fondu (comme sur le grand lecteur)
-            androidx.compose.animation.AnimatedVisibility(
-                controls,
-                Modifier.matchParentSize(),
-                enter = fadeIn(tween(340, easing = FastOutSlowInEasing)),
-                exit = fadeOut(tween(480, easing = FastOutSlowInEasing)),
+                    .padding(start = MINI_FRAME, top = MINI_EAR_HEIGHT + MINI_FRAME)
+                    .size(MINI_VIDEO_WIDTH, MINI_VIDEO_WIDTH * 9f / 16f)
+                    .onGloballyPositioned { VideoMorph.miniBounds = it.boundsInRoot() }
+                    .border(1.2.dp, Pelage.Contour, shape)
+                    .clip(shape)
+                    .background(Pelage.Nuit),
             ) {
-                Box(Modifier.fillMaxSize()) {
-                    Box(Modifier.fillMaxSize().background(Color(0x61141210)))
-                    GlassCircleButton(backdrop, MkIcons.Expand, stringResource(R.string.expand_video), Modifier.align(Alignment.TopStart).padding(6.dp), size = 44.dp) { leave(onExpand) }
-                    GlassCircleButton(backdrop, if (playing) MkIcons.Pause else MkIcons.Play, stringResource(if (playing) R.string.pause else R.string.play), Modifier.align(Alignment.Center), size = 44.dp) {
-                        PlayerHolder.togglePlay()
-                        poke++
-                    }
-                    GlassCircleButton(backdrop, MkIcons.Close, stringResource(R.string.close_mini_player), Modifier.align(Alignment.TopEnd).padding(6.dp), size = 44.dp) { pop() }
-                    Box(Modifier.align(Alignment.BottomStart).fillMaxWidth().height(4.dp).background(Color.White.copy(alpha = 0.3f))) {
-                        Box(Modifier.fillMaxHeight().fillMaxWidth(progress.coerceIn(0f, 1f)).background(Pelage.Creme))
+                Box(Modifier.fillMaxSize().backdropSource(backdrop)) {
+                    VideoSurface(Modifier.fillMaxSize(), zoom = true)
+                    frozen?.let { Image(it, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize()) }
+                }
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .semantics { contentDescription = if (controls) hideLabel else showLabel }
+                        .clickable { controls = !controls },
+                )
+                // Les commandes et la barre de temps arrivent et repartent en fondu (comme sur le grand lecteur)
+                androidx.compose.animation.AnimatedVisibility(
+                    controls,
+                    Modifier.matchParentSize(),
+                    enter = fadeIn(tween(340, easing = FastOutSlowInEasing)),
+                    exit = fadeOut(tween(480, easing = FastOutSlowInEasing)),
+                ) {
+                    Box(Modifier.fillMaxSize()) {
+                        Box(Modifier.fillMaxSize().background(Color(0x61141210)))
+                        GlassCircleButton(backdrop, MkIcons.Expand, stringResource(R.string.expand_video), Modifier.align(Alignment.TopStart).padding(6.dp), size = 44.dp) { leave(onExpand) }
+                        GlassCircleButton(backdrop, if (playing) MkIcons.Pause else MkIcons.Play, stringResource(if (playing) R.string.pause else R.string.play), Modifier.align(Alignment.Center), size = 44.dp) {
+                            PlayerHolder.togglePlay()
+                            poke++
+                        }
+                        GlassCircleButton(backdrop, MkIcons.Close, stringResource(R.string.close_mini_player), Modifier.align(Alignment.TopEnd).padding(6.dp), size = 44.dp) { pop() }
+                        Box(Modifier.align(Alignment.BottomStart).fillMaxWidth().height(4.dp).background(Color.White.copy(alpha = 0.3f))) {
+                            Box(Modifier.fillMaxHeight().fillMaxWidth(progress.coerceIn(0f, 1f)).background(Pelage.Creme))
+                        }
                     }
                 }
             }
         }
-    }
-        // Les gouttelettes de l'éclatement (dessinées autour, hors du cadre)
-        Canvas(Modifier.matchParentSize()) {
-            val p = popping.value
-            if (p <= POP_INFLATE) return@Canvas
-            val d = ((p - POP_INFLATE) / (1f - POP_INFLATE)).coerceIn(0f, 1f)
-            val travel = 1f - (1f - d) * (1f - d) // part vite, ralentit
-            val center = Offset(size.width / 2f, size.height * 0.56f)
-            val reach = size.width * 0.75f
-            for (i in 0 until POP_DROPS) {
-                val angle = (i / POP_DROPS.toFloat()) * 2f * PI.toFloat() + 0.3f
-                val far = reach * (0.7f + 0.3f * ((i * 37) % 10) / 10f) // pas toutes à la même distance
-                val dropCenter = center + Offset(cos(angle), sin(angle) * 0.75f) * (far * travel)
-                val radius = 9.dp.toPx() * (1f - d) * (if (i % 2 == 0) 1f else 0.7f)
-                if (radius > 0f) {
-                    drawCircle(if (i % 3 == 0) Pelage.Roux else Pelage.Creme, radius, dropCenter, alpha = 1f - d * d)
+            // Les gouttelettes de l'éclatement (dessinées autour, hors du cadre)
+            Canvas(Modifier.matchParentSize()) {
+                val p = popping.value
+                if (p <= POP_INFLATE) return@Canvas
+                val d = ((p - POP_INFLATE) / (1f - POP_INFLATE)).coerceIn(0f, 1f)
+                val travel = 1f - (1f - d) * (1f - d) // part vite, ralentit
+                val center = Offset(size.width / 2f, size.height * 0.56f)
+                val reach = size.width * 0.75f
+                for (i in 0 until POP_DROPS) {
+                    val angle = (i / POP_DROPS.toFloat()) * 2f * PI.toFloat() + 0.3f
+                    val far = reach * (0.7f + 0.3f * ((i * 37) % 10) / 10f) // pas toutes à la même distance
+                    val dropCenter = center + Offset(cos(angle), sin(angle) * 0.75f) * (far * travel)
+                    val radius = 9.dp.toPx() * (1f - d) * (if (i % 2 == 0) 1f else 0.7f)
+                    if (radius > 0f) {
+                        drawCircle(if (i % 3 == 0) Pelage.Roux else Pelage.Creme, radius, dropCenter, alpha = 1f - d * d)
+                    }
                 }
             }
-        }
     }
 }
 
@@ -522,7 +521,7 @@ fun SeekPreview(frames: Frameset?, positionMs: Long) {
             }
         }
         Text(
-            formatDuration(positionMs / 1000).ifEmpty { "0:00" },
+            formatClock(positionMs),
             Modifier.padding(top = 4.dp).clip(RoundedCornerShape(8.dp)).background(Color.Black.copy(alpha = 0.6f)).padding(horizontal = 8.dp, vertical = 2.dp),
             color = Color.White,
             fontSize = 13.sp,
@@ -581,12 +580,12 @@ private fun CatHeadFrame(modifier: Modifier, ears: () -> Float) {
             drawOval(
                 Pelage.GrisChat,
                 topLeft = Offset(-earW * 0.55f, -top),
-                size = androidx.compose.ui.geometry.Size(earW * 1.75f, top * 2f + 22.dp.toPx()),
+                size = Size(earW * 1.75f, top * 2f + 22.dp.toPx()),
             )
             drawOval(
                 Pelage.RouxChat,
                 topLeft = Offset(size.width - earW * 1.15f, -top),
-                size = androidx.compose.ui.geometry.Size(earW * 1.6f, top * 2f + 34.dp.toPx()),
+                size = Size(earW * 1.6f, top * 2f + 34.dp.toPx()),
             )
         }
         drawPath(head, Pelage.Contour, style = Stroke(width = 1.8.dp.toPx(), join = StrokeJoin.Round))

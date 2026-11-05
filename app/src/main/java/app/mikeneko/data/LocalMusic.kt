@@ -4,16 +4,16 @@ import android.content.Context
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Environment
+import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
-import java.io.File
 
 /**
  * La musique téléchargée avec yt-dlp (dossier Musique/Mikeneko de l'appli), jouable hors ligne
- * depuis la Radio. Chaque fichier devient un [VideoItem] dont l'adresse est `file://…`.
+ * depuis la Musique. Chaque fichier devient un [VideoItem] dont l'adresse est `file://…`.
  */
 object LocalMusic {
     private val AUDIO = setOf("mp3", "flac", "opus", "m4a", "ogg", "oga", "aac", "wav", "webm")

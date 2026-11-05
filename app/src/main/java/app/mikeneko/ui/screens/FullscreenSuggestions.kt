@@ -10,30 +10,30 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.util.VelocityTracker
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
@@ -112,8 +112,8 @@ fun SuggestionsSheet(state: SuggestionsState, backdrop: Backdrop, videos: List<V
     if (!shown) return
     // La même marge des deux côtés : celle de l'encoche de la caméra (d'un seul côté) s'applique aux deux,
     // pour que le panneau reste centré sous la vidéo
-    val density = androidx.compose.ui.platform.LocalDensity.current
-    val direction = androidx.compose.ui.platform.LocalLayoutDirection.current
+    val density = LocalDensity.current
+    val direction = LocalLayoutDirection.current
     val safe = WindowInsets.safeDrawing
     val side = with(density) { maxOf(safe.getLeft(density, direction), safe.getRight(density, direction)).toDp() }
     Box(Modifier.fillMaxSize()) {
@@ -122,7 +122,7 @@ fun SuggestionsSheet(state: SuggestionsState, backdrop: Backdrop, videos: List<V
 
         Box(
             Modifier
-                .align(androidx.compose.ui.Alignment.BottomCenter)
+                .align(Alignment.BottomCenter)
                 .fillMaxWidth()
                 .height(SuggestionsHeight)
                 .graphicsLayer {

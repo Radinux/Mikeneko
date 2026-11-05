@@ -1,14 +1,14 @@
 package app.mikeneko.data
 
-import app.mikeneko.settings.AppLocale
 import app.mikeneko.R
+import app.mikeneko.settings.AppLocale
+import java.util.concurrent.TimeUnit
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.schabi.newpipe.extractor.downloader.Downloader
 import org.schabi.newpipe.extractor.downloader.Request
 import org.schabi.newpipe.extractor.downloader.Response
 import org.schabi.newpipe.extractor.exceptions.ReCaptchaException
-import java.util.concurrent.TimeUnit
 
 /** Pont entre NewPipeExtractor et OkHttp (même principe que dans NewPipe). */
 class NewPipeDownloader private constructor(private val http: OkHttpClient) : Downloader() {

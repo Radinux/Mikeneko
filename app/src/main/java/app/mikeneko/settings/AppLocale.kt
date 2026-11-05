@@ -3,12 +3,13 @@ package app.mikeneko.settings
 import android.content.Context
 import android.content.res.Configuration
 import android.content.res.Resources
+import androidx.annotation.ArrayRes
 import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
+import java.util.Locale
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.localization.ContentCountry
 import org.schabi.newpipe.extractor.localization.Localization
-import java.util.Locale
 
 /**
  * La langue de l'appli. « Système » suit le téléphone (français si le téléphone est en
@@ -67,7 +68,7 @@ object AppLocale {
 
     fun string(@StringRes id: Int, vararg args: Any): String = context().getString(id, *args)
 
-    fun stringArray(@androidx.annotation.ArrayRes id: Int): List<String> = context().resources.getStringArray(id).toList()
+    fun stringArray(@ArrayRes id: Int): List<String> = context().resources.getStringArray(id).toList()
 
     fun plural(@PluralsRes id: Int, count: Int, vararg args: Any): String =
         context().resources.getQuantityString(id, count, *args.ifEmpty { arrayOf(count) })

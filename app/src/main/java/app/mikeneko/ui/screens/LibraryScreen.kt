@@ -1,12 +1,9 @@
 package app.mikeneko.ui.screens
 
-import app.mikeneko.ui.components.columnsFor
-import app.mikeneko.ui.components.adaptiveItems
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,7 +22,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -69,10 +66,14 @@ import app.mikeneko.data.WatchHistory
 import app.mikeneko.data.formatAgo
 import app.mikeneko.data.thumbnailFor
 import app.mikeneko.player.PlayerHolder
+import app.mikeneko.player.PlaylistDownloads
 import app.mikeneko.ui.components.Capsule
 import app.mikeneko.ui.components.CompactVideoRow
 import app.mikeneko.ui.components.EmptyCat
 import app.mikeneko.ui.components.GlassCircleButton
+import app.mikeneko.ui.components.WatchProgressBar
+import app.mikeneko.ui.components.adaptiveItems
+import app.mikeneko.ui.components.columnsFor
 import app.mikeneko.ui.glass.Backdrop
 import app.mikeneko.ui.icons.MkIcons
 import app.mikeneko.ui.theme.GlassTextShadow
@@ -267,7 +268,7 @@ private fun SmallVideoCard(video: VideoItem, onClick: () -> Unit) {
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.matchParentSize(),
             )
-            app.mikeneko.ui.components.WatchProgressBar(video.url, Modifier.align(Alignment.BottomCenter))
+            WatchProgressBar(video.url, Modifier.align(Alignment.BottomCenter))
         }
         Text(video.title, color = Pelage.Texte, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis, lineHeight = 17.sp)
         Text(video.channel, color = Pelage.Gris, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -487,7 +488,7 @@ private fun MyVideoPlaylistPage(id: String, state: LibraryState, onOpen: (VideoI
                         PlayAllButton { openFromList(playlist.items, playlist.name, playlist.items.first(), onOpen) }
                         ShuffleVideosButton(playlist.items, playlist.name, onOpen)
                     }
-                    PlaylistDownloadCapsule(app.mikeneko.player.PlaylistDownloads.videos, id, playlist.items)
+                    PlaylistDownloadCapsule(PlaylistDownloads.videos, id, playlist.items)
                     Capsule(stringResource(R.string.playlist_rename)) { renaming = !renaming }
                     // Supprimer : un premier tap demande confirmation (4 s)
                     Capsule(

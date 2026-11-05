@@ -1,56 +1,48 @@
 package app.mikeneko.ui.components
 
-import androidx.compose.foundation.layout.width
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.ui.graphics.graphicsLayer
-import app.mikeneko.ui.theme.clay
-import app.mikeneko.ui.theme.jellyClickable
-import app.mikeneko.ui.theme.plopOnSelect
-import kotlin.math.abs
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.foundation.text.TextAutoSize
-import androidx.compose.foundation.text.BasicText
-import app.mikeneko.R
-import androidx.compose.ui.res.stringResource
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.mikeneko.R
 import app.mikeneko.ui.Route
 import app.mikeneko.ui.glass.Backdrop
 import app.mikeneko.ui.glass.LiquidGlass
@@ -58,9 +50,13 @@ import app.mikeneko.ui.icons.MkIcons
 import app.mikeneko.ui.theme.GlassTextShadow
 import app.mikeneko.ui.theme.Pelage
 import app.mikeneko.ui.theme.Rounded
+import app.mikeneko.ui.theme.clay
+import app.mikeneko.ui.theme.jellyClickable
+import app.mikeneko.ui.theme.plopOnSelect
+import kotlin.math.abs
 
 /** Les onglets du dock, dans l'ordre. */
-private val TABS = listOf(Route.Accueil, Route.Abonnements, Route.Radio, Route.Bibliotheque)
+private val TABS = listOf(Route.Accueil, Route.Abonnements, Route.Musique, Route.Bibliotheque)
 
 /** Largeur du dock en colonne (paysage). */
 val DOCK_RAIL_WIDTH = 78.dp
@@ -126,7 +122,7 @@ fun FloatingDock(
 private fun DockItems(current: Route, itemModifier: Modifier, onSelect: (Route) -> Unit) {
     DockItem(stringResource(R.string.tab_home), MkIcons.Home, current == Route.Accueil, itemModifier) { onSelect(Route.Accueil) }
     DockItem(stringResource(R.string.tab_subscriptions), MkIcons.Subscriptions, current == Route.Abonnements, itemModifier) { onSelect(Route.Abonnements) }
-    DockItem(stringResource(R.string.tab_radio), MkIcons.Radio, current == Route.Radio, itemModifier) { onSelect(Route.Radio) }
+    DockItem(stringResource(R.string.tab_radio), MkIcons.Radio, current == Route.Musique, itemModifier) { onSelect(Route.Musique) }
     DockItem(stringResource(R.string.tab_library), MkIcons.Library, current == Route.Bibliotheque, itemModifier) { onSelect(Route.Bibliotheque) }
 }
 

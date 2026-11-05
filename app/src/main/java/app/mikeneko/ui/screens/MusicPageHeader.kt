@@ -1,0 +1,220 @@
+package app.mikeneko.ui.screens
+
+import android.content.Context
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import app.mikeneko.R
+import app.mikeneko.data.Music
+import app.mikeneko.data.VideoItem
+import app.mikeneko.data.sameTrack
+import app.mikeneko.player.PlayerHolder
+import app.mikeneko.ui.components.Capsule
+import app.mikeneko.ui.components.rememberCoverColor
+import app.mikeneko.ui.icons.MkIcons
+import app.mikeneko.ui.theme.Pelage
+import app.mikeneko.ui.theme.jellyClickable
+
+// ---------------------------------------------------------------------------------------------
+// En-tête commun : pochette, titre, « Tout lire » et « Aléatoire »
+// ---------------------------------------------------------------------------------------------
+
+@Composable
+internal fun PageHeader(
+    title: String,
+    subtitle: String,
+    cover: String?,
+    round: Boolean = false,
+    icon: ImageVector = MkIcons.Music,
+    /** Le gros bouton lecture rond, à droite (null = pas de bouton). */
+    onPlay: (() -> Unit)? = null,
+    /** Le bouton lecture vient se ranger dans la barre du haut en défilant (voir [PlayAnchor]). */
+    play: PlayAnchor? = null,
+    actions: @Composable () -> Unit = {},
+) {
+    val density = LocalDensity.current
+    var headerCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
+    // Un halo de la couleur de la pochette derrière l'en-tête, qui s'efface vers la page
+    val glow by rememberCoverColor(cover)
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .onPlaced { headerCoords = it }
+            // Le halo part du haut de l'écran (derrière la barre et le bouton retour), sans coupure
+            .background(Brush.verticalGradient(0f to glow.copy(alpha = 0.85f), 0.55f to glow.copy(alpha = 0.4f), 1f to Color.Transparent))
+            .padding(top = pageTop() + 12.dp)
+            .padding(horizontal = 20.dp),
+    ) {
+        Cover(
+            cover,
+            220.dp,
+            if (round) 110.dp else 14.dp,
+            Modifier.align(Alignment.CenterHorizontally).shadow(18.dp, if (round) CircleShape else RoundedCornerShape(14.dp)),
+            icon = icon,
+        )
+        Text(
+            title,
+            Modifier.padding(top = 18.dp),
+            color = Pelage.Texte,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.ExtraBold,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+        if (subtitle.isNotBlank()) Text(subtitle, Modifier.padding(top = 2.dp), color = Color(0xFFCFC6BD), fontSize = 14.sp, maxLines = 2)
+        Row(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(10.dp)) { actions() }
+            if (onPlay != null) {
+                Box(
+                    Modifier
+                        .then(
+                            if (play == null) {
+                                Modifier
+                            } else {
+                                Modifier
+                                    .onGloballyPositioned { c ->
+                                        val header = headerCoords?.takeIf { it.isAttached } ?: return@onGloballyPositioned
+                                        val inHeader = header.localPositionOf(c, Offset.Zero)
+                                        val root = c.positionInRoot()
+                                        play.inHeader = inHeader
+                                        play.left = root.x
+                                        play.headerTop.value?.let { top -> play.listTop = root.y - top - inHeader.y }
+                                    }
+                                    // Parti vers la barre : c'est le bouton de MusicOverlay qui est dessiné
+                                    .graphicsLayer { alpha = if ((play.spot(density)?.t ?: 0f) > 0f) 0f else 1f }
+                            },
+                        )
+                        .size(PLAY_BIG).shadow(10.dp, CircleShape).clip(CircleShape).background(Pelage.Roux).jellyClickable(role = Role.Button, onClickLabel = stringResource(R.string.play_all), onClick = onPlay),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(MkIcons.Play, stringResource(R.string.play_all), tint = Pelage.Encre, modifier = Modifier.size(28.dp))
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Donne à la barre du haut le titre et le bouton lecture de la page ; ils y apparaissent quand le
+ * titre de l'en-tête passe sous la barre (comme sur Spotify).
+ */
+@Composable
+internal fun PageBarEffect(state: MusicState, list: LazyListState, title: String, onPlay: (() -> Unit)?): PlayAnchor {
+    val owner = remember { Any() }
+    // Le fondu suit le doigt : il commence quand le bas de l'en-tête (son bouton lecture) arrive à
+    // [FADE_LEAD] de la barre, et se fait sur [FADE] de défilement (le bouton de l'en-tête passe dessous)
+    val density = LocalDensity.current
+    val bar = with(density) { pageTop().toPx() }
+    val fade = with(density) { FADE.toPx() }
+    val lead = with(density) { FADE_LEAD.toPx() }
+    val passed = remember(list, bar, fade, lead) {
+        androidx.compose.runtime.derivedStateOf {
+            val header = list.layoutInfo.visibleItemsInfo.firstOrNull { it.index == 0 }
+            when {
+                list.firstVisibleItemIndex > 0 -> 1f
+                header == null -> 0f
+                else -> ((list.firstVisibleItemScrollOffset - (header.size - bar - lead)) / fade).coerceIn(0f, 1f)
+            }
+        }
+    }
+    // Le haut de l'en-tête dans la liste, pour le bouton lecture qui vient se ranger dans la barre
+    val headerTop = remember(list) {
+        androidx.compose.runtime.derivedStateOf { list.layoutInfo.visibleItemsInfo.firstOrNull { it.index == 0 }?.offset?.toFloat() }
+    }
+    val anchor = remember(headerTop, passed) { PlayAnchor(headerTop, passed) { state.barPill } }
+    SideEffect {
+        state.bar = PageBar(title, onPlay, owner, passed, anchor)
+    }
+    DisposableEffect(owner) {
+        onDispose {
+            if (state.bar?.owner === owner) state.bar = null
+        }
+    }
+    return anchor
+}
+
+/** Une page sans grand en-tête (bibliothèque) : son titre est tout de suite dans la barre du haut. */
+@Composable
+internal fun FixedPageBar(state: MusicState, title: String) {
+    val owner = remember { Any() }
+    val shown = remember { androidx.compose.runtime.mutableFloatStateOf(1f) }
+    SideEffect { state.bar = PageBar(title, null, owner, shown) }
+    DisposableEffect(owner) {
+        onDispose { if (state.bar?.owner === owner) state.bar = null }
+    }
+}
+
+/** La distance de défilement sur laquelle le titre et le bouton lecture arrivent dans la barre. */
+private val FADE = 90.dp
+
+/** À quelle distance de la barre le bas de l'en-tête doit arriver pour que le fondu commence. */
+private val FADE_LEAD = 20.dp
+
+/** Lire dans l'ordre (le gros bouton rond de l'en-tête). */
+internal fun playInOrder(context: Context, tracks: List<VideoItem>): (() -> Unit)? =
+    if (tracks.isEmpty()) null else ({
+        PlayerHolder.setShuffle(false)
+        playTracks(context, tracks, 0)
+    })
+
+/**
+ * À côté du bouton lecture : l'aléatoire, un interrupteur. Allumé (orange) quand cette liste joue en
+ * aléatoire. Éteint : l'appui mélange la liste en cours si c'est elle qui joue (le morceau continue),
+ * sinon il la lance en aléatoire. Allumé : l'appui coupe l'aléatoire (l'ordre revient, le morceau continue).
+ */
+@Composable
+internal fun ShuffleButton(tracks: List<VideoItem>) {
+    val context = LocalContext.current
+    if (tracks.isEmpty()) return
+    val shuffle by PlayerHolder.shuffle.collectAsState()
+    val queue by PlayerHolder.queue.collectAsState()
+    // Cette liste est celle qui joue : tous ses morceaux sont dans la file (qui peut en avoir plus)
+    val playingThis = remember(queue, tracks) { tracks.all { track -> queue.any { sameTrack(it.url, track.url) } } }
+    val on = shuffle && playingThis
+    Capsule(stringResource(R.string.shuffle), selected = on, icon = MkIcons.Shuffle) {
+        when {
+            on -> PlayerHolder.setShuffle(false)
+            playingThis -> PlayerHolder.setShuffle(true)
+            else -> shuffleTracks(context, tracks)
+        }
+    }
+}

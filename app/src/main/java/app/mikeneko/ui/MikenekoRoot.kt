@@ -1,57 +1,33 @@
 package app.mikeneko.ui
 
-import app.mikeneko.ui.components.DOCK_RAIL_SPACE
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.ui.platform.LocalLayoutDirection
-import app.mikeneko.ui.screens.LibraryPage
-import app.mikeneko.ui.screens.LibraryOverlay
-import app.mikeneko.ui.screens.LibraryContent
-import app.mikeneko.ui.screens.LibraryState
-import app.mikeneko.ui.components.PlaylistDrawer
-import app.mikeneko.ui.screens.ChannelPlaylist
-import app.mikeneko.ui.screens.ChannelOverlay
-import app.mikeneko.ui.screens.ChannelContent
-import app.mikeneko.data.ChannelItem
-import app.mikeneko.ui.screens.onUserScroll
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.runtime.SideEffect
-import androidx.compose.foundation.layout.statusBarsPadding
-import app.mikeneko.ui.components.RotationMorph
-import android.view.Surface
-import androidx.compose.ui.platform.LocalView
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.Animatable
-import android.content.res.Configuration
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.graphics.graphicsLayer
-import app.mikeneko.ui.components.VideoMorphLayer
-import app.mikeneko.ui.components.VideoMorph
-import app.mikeneko.ui.components.VideoMenuSheet
-import app.mikeneko.ui.components.VideoMenu
-import app.mikeneko.ui.screens.SettingsContent
-import app.mikeneko.settings.AppSettings
-import app.mikeneko.R
 import android.Manifest
+import android.content.res.Configuration
 import android.os.Build
+import android.view.Surface
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -63,39 +39,64 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
+import app.mikeneko.R
+import app.mikeneko.data.ChannelItem
+import app.mikeneko.data.Comments
+import app.mikeneko.data.VideoItem
 import app.mikeneko.player.PlayerHolder
+import app.mikeneko.settings.AppSettings
+import app.mikeneko.ui.components.CommentsPanel
+import app.mikeneko.ui.components.DOCK_RAIL_SPACE
 import app.mikeneko.ui.components.FloatingDock
 import app.mikeneko.ui.components.FloatingMiniPip
 import app.mikeneko.ui.components.PlayerSettingsSheet
-import app.mikeneko.ui.components.CommentsPanel
-import app.mikeneko.data.Comments
-import app.mikeneko.data.VideoItem
-import app.mikeneko.ui.components.rememberPipPlacement
+import app.mikeneko.ui.components.PlaylistDrawer
+import app.mikeneko.ui.components.RotationMorph
+import app.mikeneko.ui.components.UpdatePill
+import app.mikeneko.ui.components.VideoMenu
+import app.mikeneko.ui.components.VideoMenuSheet
+import app.mikeneko.ui.components.VideoMorph
+import app.mikeneko.ui.components.VideoMorphLayer
 import app.mikeneko.ui.components.VideoSurface
+import app.mikeneko.ui.components.rememberPipPlacement
 import app.mikeneko.ui.glass.backdropSource
 import app.mikeneko.ui.glass.rememberBackdrop
-import app.mikeneko.ui.screens.DownloadsContent
+import app.mikeneko.ui.screens.ChannelContent
+import app.mikeneko.ui.screens.ChannelOverlay
+import app.mikeneko.ui.screens.ChannelPlaylist
 import app.mikeneko.ui.screens.FullscreenPlayer
 import app.mikeneko.ui.screens.HomeContent
 import app.mikeneko.ui.screens.HomeOverlay
 import app.mikeneko.ui.screens.HomeState
-import app.mikeneko.ui.screens.PlayerContent
-import app.mikeneko.ui.screens.RadioContent
-import app.mikeneko.ui.screens.RadioOverlay
-import app.mikeneko.ui.screens.RadioState
+import app.mikeneko.ui.screens.LibraryContent
+import app.mikeneko.ui.screens.LibraryOverlay
+import app.mikeneko.ui.screens.LibraryPage
+import app.mikeneko.ui.screens.LibraryState
+import app.mikeneko.ui.screens.MusicContent
+import app.mikeneko.ui.screens.MusicDockWindow
+import app.mikeneko.ui.screens.MusicOverlay
+import app.mikeneko.ui.screens.MusicPage
+import app.mikeneko.ui.screens.MusicPlayerSheets
 import app.mikeneko.ui.screens.MusicSheet
 import app.mikeneko.ui.screens.MusicSheetHost
-import app.mikeneko.ui.screens.RadioPage
-import app.mikeneko.ui.screens.MusicDockWindow
-import app.mikeneko.ui.screens.MusicPlayerSheets
-import app.mikeneko.ui.screens.rememberMusicPlayerState
+import app.mikeneko.ui.screens.MusicState
+import app.mikeneko.ui.screens.PlayerContent
+import app.mikeneko.ui.screens.SettingsContent
 import app.mikeneko.ui.screens.SleepReminder
 import app.mikeneko.ui.screens.SubscriptionsContent
+import app.mikeneko.ui.screens.onUserScroll
+import app.mikeneko.ui.screens.rememberMusicPlayerState
 import app.mikeneko.ui.theme.Pelage
-import kotlinx.coroutines.flow.StateFlow
+import app.mikeneko.update.AppUpdates
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 /**
@@ -128,7 +129,7 @@ fun MikenekoRoot(
     /** Le dock musique et sa fenêtre en verre (ouverte en tirant le dock vers le haut). */
     val music = rememberMusicPlayerState()
     val home = remember { HomeState() }
-    val radio = remember { RadioState(context) }
+    val musicPages = remember { MusicState(context) }
     val pipPlacement = rememberPipPlacement() // le mini-lecteur garde sa place d'un écran à l'autre
     val backdrop = rememberBackdrop()
     val now by PlayerHolder.nowPlaying.collectAsState()
@@ -154,9 +155,9 @@ fun MikenekoRoot(
             }
             Route.Bibliotheque -> library.page = null
             // Musique : retour à son accueil (pages d'artiste / d'album / de playlist et recherche fermées)
-            Route.Radio -> {
-                radio.pages.clear()
-                if (radio.searching) radio.closeSearch()
+            Route.Musique -> {
+                musicPages.pages.clear()
+                if (musicPages.searching) musicPages.closeSearch()
             }
             else -> Unit
         }
@@ -280,7 +281,7 @@ fun MikenekoRoot(
     // Mises à jour depuis GitHub : une vérification par jour au lancement ; une nouvelle version se
     // télécharge en fond et s'installe toute seule quand on quitte l'appli (voir AppUpdates)
     // (quand elle est téléchargée, une pilule « Mettre à jour » apparaît en haut : UpdatePill, plus bas)
-    LaunchedEffect(Unit) { app.mikeneko.update.AppUpdates.checkIfDue(context) }
+    LaunchedEffect(Unit) { AppUpdates.checkIfDue(context) }
 
     val notifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
     LaunchedEffect(Unit) {
@@ -310,8 +311,8 @@ fun MikenekoRoot(
     }
     // Sur l'accueil : d'abord fermer la recherche / revenir à « Pour toi » / remonter, puis quitter
     BackHandler(enabled = route == Route.Accueil && home.canGoBack) { home.goBack() }
-    // Sur la Radio : d'abord fermer la page ouverte (album, playlist…) ou la recherche
-    BackHandler(enabled = route == Route.Radio && radio.canGoBack) { radio.goBack() }
+    // Sur la Musique : d'abord fermer la page ouverte (album, playlist…) ou la recherche
+    BackHandler(enabled = route == Route.Musique && musicPages.canGoBack) { musicPages.goBack() }
     // Sur les abonnements : d'abord refermer la page de chaîne ouverte
     BackHandler(enabled = route == Route.Abonnements && subsChannel != null) { subsChannel = null }
     // Dans la Bibliothèque : d'abord revenir à son accueil
@@ -327,7 +328,7 @@ fun MikenekoRoot(
     val anyPlaying by PlayerHolder.isPlaying.collectAsState()
     val videoLoaded = now?.audioOnly == false
     LaunchedEffect(route, parkedMusic, videoLoaded) {
-        if (route == Route.Radio && parkedMusic != null && !videoLoaded) {
+        if (route == Route.Musique && parkedMusic != null && !videoLoaded) {
             PlayerHolder.launchPlayback { PlayerHolder.restoreParkedMusic(context) }
         }
     }
@@ -337,10 +338,10 @@ fun MikenekoRoot(
     // un morceau l'a remplacée, et pas tant qu'une musique joue : on ne la coupe pas)
     val parkedVideo by PlayerHolder.parkedVideo.collectAsState()
     LaunchedEffect(route) {
-        if (route == Route.Radio) PlayerHolder.parkVideo()
+        if (route == Route.Musique) PlayerHolder.parkVideo()
     }
     LaunchedEffect(route, parkedVideo, anyPlaying) {
-        if (route != Route.Radio && route != Route.Lecteur && parkedVideo != null && !(anyPlaying && now?.audioOnly == true)) {
+        if (route != Route.Musique && route != Route.Lecteur && parkedVideo != null && !(anyPlaying && now?.audioOnly == true)) {
             PlayerHolder.launchPlayback { PlayerHolder.restoreParkedVideo(context) }
         }
     }
@@ -374,66 +375,66 @@ fun MikenekoRoot(
                 .backdropSource(backdrop)
                 .background(Pelage.Nuit),
         ) {
-          Box(Modifier.fillMaxSize().then(contentInset).then(enterLayer)) {
-            when (route) {
-                // Faire défiler la page range les suggestions de recherche et le clavier
-                Route.Accueil -> Box(Modifier.fillMaxSize().onUserScroll({ home.suggesting }) { home.dismissSuggestions(); keyboard?.hide() }) {
-                    HomeContent(home, onOpen = { openVideo(it.url) })
-                }
-                // Une chaîne ouverte depuis les abonnements (par-dessus la liste)
-                Route.Abonnements -> subsChannel?.let { ChannelContent(it, onOpen = { video -> openVideo(video.url) }) }
-                    ?: SubscriptionsContent(onOpen = { openVideo(it.url) }, onOpenChannel = { subsChannel = it }, onOpenSettings = { go(Route.Reglages) }, reset = subsReset)
-                Route.Radio -> Box(Modifier.fillMaxSize().onUserScroll({ radio.suggesting }) { radio.dismissSuggestions(); keyboard?.hide() }) { RadioContent(radio, onPlayStations = { list, index ->
-                    PlayerHolder.launchPlayback(onError = { toast(context.getString(R.string.error_play_radio, it.message.orEmpty())) }) {
-                        PlayerHolder.playQueue(context, list, index)
+            Box(Modifier.fillMaxSize().then(contentInset).then(enterLayer)) {
+                when (route) {
+                    // Faire défiler la page range les suggestions de recherche et le clavier
+                    Route.Accueil -> Box(Modifier.fillMaxSize().onUserScroll({ home.suggesting }) { home.dismissSuggestions(); keyboard?.hide() }) {
+                        HomeContent(home, onOpen = { openVideo(it.url) })
                     }
-                    music.expand() // une station touchée : la fenêtre s'ouvre
-                }) }
-                Route.Bibliotheque -> LibraryContent(library, downloadLink, onOpen = { openVideo(it.url) })
-                Route.Reglages -> SettingsContent(onBack = { go(Route.Accueil) }, onOpenSubscriptions = { go(Route.Abonnements) })
-                Route.Lecteur -> PlayerContent(
-                    onOpenChannel = ::openChannelFromPlayer,
-                    onMinimize = ::minimizePlayer,
-                    onDownload = { downloadLink = it; library.page = LibraryPage.Downloads; go(Route.Bibliotheque) },
-                    onRadio = {
-                        // La radio de cette vidéo seule : pas de « suivant » vers d'anciennes stations
-                        // (un morceau, pas un direct : son mix enchaîne ensuite)
-                        now?.let {
-                            val item = VideoItem(it.url, it.title, it.channel, it.thumbnail, isLive = it.live)
-                            PlayerHolder.launchPlayback(onError = { e -> toast(context.getString(R.string.error_play_radio, e.message.orEmpty())) }) {
-                                PlayerHolder.playQueue(context, listOf(item), 0, mix = !item.isLive)
-                            }
+                    // Une chaîne ouverte depuis les abonnements (par-dessus la liste)
+                    Route.Abonnements -> subsChannel?.let { ChannelContent(it, onOpen = { video -> openVideo(video.url) }) }
+                        ?: SubscriptionsContent(onOpen = { openVideo(it.url) }, onOpenChannel = { subsChannel = it }, onOpenSettings = { go(Route.Reglages) }, reset = subsReset)
+                    Route.Musique -> Box(Modifier.fillMaxSize().onUserScroll({ musicPages.suggesting }) { musicPages.dismissSuggestions(); keyboard?.hide() }) { MusicContent(musicPages, onPlayStations = { list, index ->
+                        PlayerHolder.launchPlayback(onError = { toast(context.getString(R.string.error_play_radio, it.message.orEmpty())) }) {
+                            PlayerHolder.playQueue(context, list, index)
                         }
-                        go(Route.Radio)
-                    },
-                    onFullscreen = ::toggleFullscreen,
-                    onOpen = { openVideo(it.url) },
-                )
+                        music.expand() // une station touchée : la fenêtre s'ouvre
+                    }) }
+                    Route.Bibliotheque -> LibraryContent(library, downloadLink, onOpen = { openVideo(it.url) })
+                    Route.Reglages -> SettingsContent(onBack = { go(Route.Accueil) })
+                    Route.Lecteur -> PlayerContent(
+                        onOpenChannel = ::openChannelFromPlayer,
+                        onMinimize = ::minimizePlayer,
+                        onDownload = { downloadLink = it; library.page = LibraryPage.Downloads; go(Route.Bibliotheque) },
+                        onRadio = {
+                            // La radio de cette vidéo seule : pas de « suivant » vers d'anciennes stations
+                            // (un morceau, pas un direct : son mix enchaîne ensuite)
+                            now?.let {
+                                val item = VideoItem(it.url, it.title, it.channel, it.thumbnail, isLive = it.live)
+                                PlayerHolder.launchPlayback(onError = { e -> toast(context.getString(R.string.error_play_radio, e.message.orEmpty())) }) {
+                                    PlayerHolder.playQueue(context, listOf(item), 0, mix = !item.isLive)
+                                }
+                            }
+                            go(Route.Musique)
+                        },
+                        onFullscreen = ::toggleFullscreen,
+                        onOpen = { openVideo(it.url) },
+                    )
+                }
             }
-          }
         }
 
         // Le header en verre arrive avec son écran
         Box(Modifier.fillMaxSize().then(contentInset).then(enterLayer)) {
-        when (route) {
-            Route.Accueil -> HomeOverlay(home, backdrop, onSettings = { go(Route.Reglages) })
-            Route.Radio -> RadioOverlay(state = radio, backdrop = backdrop)
-            Route.Abonnements -> subsChannel?.let { ChannelOverlay(it, backdrop, onBack = { subsChannel = null }) }
-            Route.Bibliotheque -> LibraryOverlay(library, backdrop)
-            Route.Lecteur -> {
-                PlaylistDrawer(backdrop, onOpen = { openVideo(it.url) }) // playlist et suggestions, sous les commentaires
-                CommentsPanel(backdrop)
-                PlayerSettingsSheet(backdrop) // au-dessus des commentaires
+            when (route) {
+                Route.Accueil -> HomeOverlay(home, backdrop, onSettings = { go(Route.Reglages) })
+                Route.Musique -> MusicOverlay(state = musicPages, backdrop = backdrop)
+                Route.Abonnements -> subsChannel?.let { ChannelOverlay(it, backdrop, onBack = { subsChannel = null }) }
+                Route.Bibliotheque -> LibraryOverlay(library, backdrop)
+                Route.Lecteur -> {
+                    PlaylistDrawer(backdrop, onOpen = { openVideo(it.url) }) // playlist et suggestions, sous les commentaires
+                    CommentsPanel(backdrop)
+                    PlayerSettingsSheet(backdrop) // au-dessus des commentaires
+                }
+                else -> Unit
             }
-            else -> Unit
-        }
         }
 
-        // Le dock musique : toujours sur la page Musique, et sur les autres onglets quand de la musique
-        // joue. On le tire vers le haut (ou on le touche) : il s'étire en fenêtre, sans changer d'onglet
+        // Le dock musique ne vit que dans l'onglet Musique (la musique continue ailleurs, sans lui).
+        // On le tire vers le haut (ou on le touche) : il s'étire en fenêtre, sans changer d'onglet
+        val showMusic = route == Route.Musique
+        // Le dock principal : partout sauf sur le lecteur et les réglages
         val showDock = route != Route.Lecteur && route != Route.Reglages
-        // Le dock musique ne vit que dans l'onglet Musique (la musique continue ailleurs, sans lui)
-        val showMusic = showDock && route == Route.Radio
         LaunchedEffect(showMusic) { if (!showMusic) music.collapse() }
         if (showMusic) {
             MusicDockWindow(
@@ -441,8 +442,8 @@ fun MikenekoRoot(
                 backdrop,
                 onDownload = { downloadLink = it; library.page = LibraryPage.Downloads; go(Route.Bibliotheque) },
                 // Depuis le lecteur : la page de l'artiste / de l'album s'ouvre dans Musique, la fenêtre se rabat
-                onOpenArtist = { radio.pages.add(RadioPage.Artist(it)); music.collapse() },
-                onOpenAlbum = { radio.pages.add(RadioPage.Album(it)); music.collapse() },
+                onOpenArtist = { musicPages.pages.add(MusicPage.Artist(it)); music.collapse() },
+                onOpenAlbum = { musicPages.pages.add(MusicPage.Album(it)); music.collapse() },
             )
         }
 
@@ -467,8 +468,8 @@ fun MikenekoRoot(
             }
         }
 
-        val pipBottom by animateDpAsState(if (dockVisible && !landscape) 106.dp else 28.dp, label = "pip") // au-dessus du dock (ou de la barre radio)
-        if (now?.audioOnly == false && route != Route.Lecteur && route != Route.Radio) { // pas dans Musique
+        val pipBottom by animateDpAsState(if (dockVisible && !landscape) 106.dp else 28.dp, label = "pip") // au-dessus du dock
+        if (now?.audioOnly == false && route != Route.Lecteur && route != Route.Musique) { // pas dans Musique
             FloatingMiniPip(
                 placement = pipPlacement,
                 bottomMargin = pipBottom,
@@ -486,7 +487,7 @@ fun MikenekoRoot(
 
         // Une mise à jour téléchargée : « Mettre à jour » tout de suite (pas sur l'écran du lecteur)
         if (route != Route.Lecteur) {
-            app.mikeneko.ui.components.UpdatePill(
+            UpdatePill(
                 backdrop,
                 Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 8.dp, start = 16.dp, end = 16.dp),
             )
@@ -495,13 +496,13 @@ fun MikenekoRoot(
         // Les panneaux de la musique (file, paroles, minuteur) et le menu ⋮ des morceaux :
         // après le dock, pour passer au-dessus
         if (showMusic) MusicPlayerSheets(music, backdrop)
-        if (route == Route.Radio || music.open) {
-            MusicSheetHost(backdrop, onPlaylistDeleted = { id -> radio.pages.removeAll { it == RadioPage.MyPlaylist(id) } })
+        if (route == Route.Musique || music.open) {
+            MusicSheetHost(backdrop, onPlaylistDeleted = { id -> musicPages.pages.removeAll { it == MusicPage.MyPlaylist(id) } })
         }
 
         // Menu ⋮ des vidéos (accueil, chaînes, Bibliothèque, lecteur) et sa barre « Annuler » : après le
         // mini-lecteur, pour passer au-dessus (sinon il peut cacher le bouton « Annuler »)
-        if (route != Route.Radio && route != Route.Reglages) {
+        if (route != Route.Musique && route != Route.Reglages) {
             VideoMenuSheet(
                 backdrop,
                 onDownload = { downloadLink = it; library.page = LibraryPage.Downloads; go(Route.Bibliotheque) },

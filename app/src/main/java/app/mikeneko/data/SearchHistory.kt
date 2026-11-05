@@ -44,7 +44,7 @@ class SearchHistory private constructor(context: Context, file: String) {
         fun get(context: Context): SearchHistory =
             instance ?: synchronized(this) { instance ?: SearchHistory(context.applicationContext, "recherches").also { instance = it } }
 
-        /** Les recherches de musique (Radio), à part : elles ne se mélangent pas à celles des vidéos. */
+        /** Les recherches de musique (Musique), à part : elles ne se mélangent pas à celles des vidéos. */
         fun music(context: Context): SearchHistory =
             music ?: synchronized(this) { music ?: SearchHistory(context.applicationContext, "recherches_musique").also { music = it } }
     }

@@ -1,12 +1,12 @@
 package app.mikeneko.data
 
 import android.content.Context
+import kotlin.math.pow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.json.JSONArray
 import org.json.JSONObject
-import kotlin.math.pow
 
 /**
  * Ce que tu dis à l'algo : « pas intéressé » (une vidéo) et « ne pas recommander la chaîne ».

@@ -14,6 +14,7 @@ import app.mikeneko.data.VideoItem
 import app.mikeneko.data.YouTubeRepository
 import app.mikeneko.data.videoIdOf
 import app.mikeneko.player.OfflineCache.Store
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -23,7 +24,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Les playlists perso téléchargées (bouton ⤓ de la playlist, comme sur Spotify) : leurs morceaux ou

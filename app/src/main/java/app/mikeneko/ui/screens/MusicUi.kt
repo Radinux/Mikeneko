@@ -1,23 +1,19 @@
 package app.mikeneko.ui.screens
 
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.foundation.Canvas
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.rememberInfiniteTransition
 import android.content.Context
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -28,8 +24,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -48,6 +44,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -60,6 +58,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -68,12 +70,14 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -98,17 +102,17 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 
 // ---------------------------------------------------------------------------------------------
-// État de la Radio : recherche et pages ouvertes (album, artiste, playlist, téléchargements)
+// État de la Musique : recherche et pages ouvertes (album, artiste, playlist, téléchargements)
 // ---------------------------------------------------------------------------------------------
 
-/** Une page ouverte par-dessus l'accueil de la Radio. */
-sealed interface RadioPage {
-    data class Album(val collection: MusicCollection) : RadioPage
-    data class Artist(val artist: ChannelItem) : RadioPage
-    data class MyPlaylist(val id: String) : RadioPage
-    data object Downloads : RadioPage
+/** Une page ouverte par-dessus l'accueil de la Musique. */
+sealed interface MusicPage {
+    data class Album(val collection: MusicCollection) : MusicPage
+    data class Artist(val artist: ChannelItem) : MusicPage
+    data class MyPlaylist(val id: String) : MusicPage
+    data object Downloads : MusicPage
     /** Ta bibliothèque : playlists, albums et artistes sauvegardés, téléchargés (avec des filtres). */
-    data object Library : RadioPage
+    data object Library : MusicPage
 }
 
 /**
@@ -119,7 +123,7 @@ class PageBar(
     val title: String,
     val onPlay: (() -> Unit)?,
     val owner: Any,
-    private val passed: androidx.compose.runtime.State<Float>,
+    private val passed: State<Float>,
     /** Le gros bouton lecture de l'en-tête, qui vient se ranger dans la pilule (null = pas de bouton). */
     val play: PlayAnchor? = null,
 ) {
@@ -141,16 +145,16 @@ class PlaySpot(val center: Offset, val t: Float)
  * Un seul bouton lecture : celui de l'en-tête monte avec la page, puis glisse et rétrécit jusqu'à sa
  * place dans la pilule de la barre du haut, où il reste accroché. Tant que [PlaySpot.t] vaut 0, c'est le
  * bouton de l'en-tête qui est dessiné (il suit la liste au pixel près) ; au-delà, c'est celui de
- * [RadioOverlay], au-dessus de tout. Tout est calculé depuis la liste (pas d'`onGloballyPositioned`
+ * [MusicOverlay], au-dessus de tout. Tout est calculé depuis la liste (pas d'`onGloballyPositioned`
  * pendant le défilement), donc sans une image de retard. Positions en px, dans l'écran (root).
  */
-@androidx.compose.runtime.Stable
+@Stable
 class PlayAnchor(
     /** Le haut de l'en-tête dans la liste (null : il est sorti de la liste, tout en haut). */
-    val headerTop: androidx.compose.runtime.State<Float?>,
-    private val passed: androidx.compose.runtime.State<Float>,
+    val headerTop: State<Float?>,
+    private val passed: State<Float>,
     /** La pilule de la barre du haut, sans son animation (null tant qu'elle n'est pas posée). */
-    private val pill: () -> androidx.compose.ui.geometry.Rect?,
+    private val pill: () -> Rect?,
 ) {
     /** Le coin haut-gauche du bouton dans l'en-tête (fixe). */
     var inHeader by mutableStateOf<Offset?>(null)
@@ -158,10 +162,10 @@ class PlayAnchor(
     var left by mutableFloatStateOf(0f)
     var listTop by mutableFloatStateOf(0f)
 
-    fun spot(density: androidx.compose.ui.unit.Density): PlaySpot? = with(density) {
+    fun spot(density: Density): PlaySpot? = with(density) {
         val inHeader = inHeader ?: return null
         val pill = pill() ?: return null
-        // La place dans la pilule, avec l'animation d'arrivée de la pilule (voir RadioHeader)
+        // La place dans la pilule, avec l'animation d'arrivée de la pilule (voir MusicHeader)
         val p = passed.value
         val scale = 0.9f + 0.1f * p
         val c = pill.center
@@ -182,8 +186,8 @@ class PlayAnchor(
 /** Les filtres de la bibliothèque musique. */
 enum class LibraryFilter { All, Playlists, Albums, Artists, Downloaded }
 
-/** Gardé par MikenekoRoot : on retrouve la Radio comme on l'a laissée en changeant d'onglet. */
-class RadioState(context: Context) {
+/** Gardé par MikenekoRoot : on retrouve la Musique comme on l'a laissée en changeant d'onglet. */
+class MusicState(context: Context) {
     private val prefs = context.getSharedPreferences("radio", Context.MODE_PRIVATE)
 
     /** L'ambiance choisie pour les lives (gardée entre les lancements). */
@@ -198,13 +202,13 @@ class RadioState(context: Context) {
     /** Le titre et le bouton lecture de la page ouverte, pour la barre du haut. */
     var bar by mutableStateOf<PageBar?>(null)
     /** La pilule de la barre du haut à l'écran, sans son animation : la place du bouton lecture. */
-    var barPill by mutableStateOf<androidx.compose.ui.geometry.Rect?>(null)
+    var barPill by mutableStateOf<Rect?>(null)
     /** Où en est l'en-tête de la page sous la barre (0 → 1, voir [PageBar.progress]). */
     val barProgress: Float get() = if (page == null) 0f else bar?.progress ?: 0f
     /** Le filtre choisi dans la bibliothèque (gardé en revenant d'un album). */
     var libraryFilter by mutableStateOf(LibraryFilter.All)
-    val pages = mutableStateListOf<RadioPage>()
-    val page: RadioPage? get() = pages.lastOrNull()
+    val pages = mutableStateListOf<MusicPage>()
+    val page: MusicPage? get() = pages.lastOrNull()
 
     val canGoBack: Boolean get() = pages.isNotEmpty() || searching
 
@@ -213,7 +217,7 @@ class RadioState(context: Context) {
         prefs.edit().putString("ambiance", id).apply()
     }
 
-    fun open(page: RadioPage) {
+    fun open(page: MusicPage) {
         pages += page
     }
 
@@ -256,7 +260,7 @@ class RadioState(context: Context) {
     }
 }
 
-/** Lancer la musique depuis une page de la Radio, avec un message si ça rate. */
+/** Lancer la musique depuis une page de la Musique, avec un message si ça rate. */
 internal fun playTracks(context: Context, items: List<VideoItem>, start: Int, mix: Boolean = false) {
     PlayerHolder.launchPlayback(onError = { failed(context) }) { PlayerHolder.playQueue(context, items, start, mix) }
 }
@@ -460,7 +464,7 @@ sealed interface MusicSheet {
 
 /**
  * Le panneau qui monte du bas pour [MusicSheet] : à poser par-dessus l'écran qui a un [backdrop]
- * (la Radio, ou le grand lecteur).
+ * (la Musique, ou le grand lecteur).
  */
 @Composable
 fun MusicSheetHost(backdrop: Backdrop, onPlaylistDeleted: (String) -> Unit = {}) {

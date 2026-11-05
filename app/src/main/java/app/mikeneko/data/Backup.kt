@@ -2,10 +2,12 @@ package app.mikeneko.data
 
 import android.content.Context
 import android.util.Xml
-import org.xmlpull.v1.XmlPullParser
 import java.io.InputStream
 import java.io.OutputStream
 import java.io.StringReader
+import java.time.LocalDate
+import org.xmlpull.v1.XmlPullParser
+import org.xmlpull.v1.XmlSerializer
 
 /**
  * Le fichier de sauvegarde de Mikeneko, en XML : tout ce qu'on a fait soi-même dans l'appli
@@ -54,7 +56,7 @@ object MikenekoBackup {
         xml.startTag(null, "mikeneko")
         xml.attribute(null, "version", VERSION)
         xml.attribute(null, "app", appVersion)
-        xml.attribute(null, "date", java.time.LocalDate.now().toString())
+        xml.attribute(null, "date", LocalDate.now().toString())
 
         xml.startTag(null, "subscriptions")
         SubscriptionStore.get(context).items.value.forEach { s ->
@@ -100,12 +102,12 @@ object MikenekoBackup {
         out.flush()
     }
 
-    private fun org.xmlpull.v1.XmlSerializer.attr(name: String, value: String?): org.xmlpull.v1.XmlSerializer {
+    private fun XmlSerializer.attr(name: String, value: String?): XmlSerializer {
         if (!value.isNullOrEmpty()) attribute(null, name, value)
         return this
     }
 
-    private fun org.xmlpull.v1.XmlSerializer.video(v: VideoItem) {
+    private fun XmlSerializer.video(v: VideoItem) {
         startTag(null, "video")
         attr("url", v.url).attr("title", v.title).attr("channel", v.channel).attr("thumbnail", v.thumbnail)
         if (v.durationSec > 0) attribute(null, "duration", v.durationSec.toString())
@@ -113,7 +115,7 @@ object MikenekoBackup {
         endTag(null, "video")
     }
 
-    private fun org.xmlpull.v1.XmlSerializer.videos(tag: String, list: List<VideoItem>) {
+    private fun XmlSerializer.videos(tag: String, list: List<VideoItem>) {
         startTag(null, tag)
         list.forEach { video(it) }
         endTag(null, tag)

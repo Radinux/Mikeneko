@@ -10,6 +10,7 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.awaitTouchSlopOrCancellation
 import androidx.compose.foundation.gestures.drag
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -24,13 +25,15 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -59,16 +62,18 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.mikeneko.R
+import app.mikeneko.data.VideoItem
 import app.mikeneko.data.sameTrack
 import app.mikeneko.player.PlayerHolder
 import app.mikeneko.ui.glass.Backdrop
 import app.mikeneko.ui.glass.LiquidGlass
 import app.mikeneko.ui.icons.MkIcons
+import app.mikeneko.ui.theme.GlassTextShadow
 import app.mikeneko.ui.theme.Pelage
 import app.mikeneko.ui.theme.statusBarSpace
-import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import kotlinx.coroutines.launch
 
 /** Hauteur de la barre du tiroir quand il est fermé. */
 val PLAYLIST_DRAWER_BAR = 64.dp
@@ -83,7 +88,7 @@ private enum class DrawerTab { Playlist, UpNext }
  * la vidéo. Une vidéo seule n'a pas de tiroir : ses suggestions sont dans la page (1.17.1).
  */
 @Composable
-fun PlaylistDrawer(backdrop: Backdrop, onOpen: (app.mikeneko.data.VideoItem) -> Unit) {
+fun PlaylistDrawer(backdrop: Backdrop, onOpen: (VideoItem) -> Unit) {
     val now by PlayerHolder.nowPlaying.collectAsState()
     val videos by PlayerHolder.videoPlaylist.collectAsState()
     val title by PlayerHolder.videoPlaylistTitle.collectAsState()
@@ -149,118 +154,118 @@ fun PlaylistDrawer(backdrop: Backdrop, onOpen: (app.mikeneko.data.VideoItem) -> 
             // et l'ombre du texte gardent les titres lisibles
             tint = Color(0x9E120F0D),
         ) {
-          // Sans dépoli, une ombre sous tous les textes du tiroir (titres des vidéos compris)
-          androidx.compose.runtime.CompositionLocalProvider(
-              androidx.compose.material3.LocalTextStyle provides androidx.compose.material3.LocalTextStyle.current.copy(shadow = app.mikeneko.ui.theme.GlassTextShadow),
-          ) {
-            Column(Modifier.fillMaxSize()) {
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .height(PLAYLIST_DRAWER_BAR)
-                        .onPlaced { coordinates = it }
-                        .pointerInput(travel) {
-                            // Tirer la barre : positions prises à l'écran (la barre bouge sous le doigt)
-                            awaitEachGesture {
-                                val down = awaitFirstDown(requireUnconsumed = false)
-                                var vertical = false
-                                val start = awaitTouchSlopOrCancellation(down.id) { change, over ->
-                                    if (abs(over.y) > abs(over.x)) {
-                                        vertical = true
-                                        change.consume()
-                                    }
-                                }
-                                if (start == null || !vertical) return@awaitEachGesture
-                                fun screenY(position: Offset) = coordinates?.localToRoot(position)?.y ?: position.y
-                                scope.launch { open.stop() }
-                                val tracker = VelocityTracker()
-                                var last = screenY(start.position)
-                                var p = open.value
-                                tracker.addPosition(start.uptimeMillis, Offset(0f, last))
-                                drag(start.id) { change ->
-                                    val y = screenY(change.position)
-                                    p = (p - (y - last) / travel).coerceIn(0f, 1f)
-                                    last = y
-                                    scope.launch { open.snapTo(p) }
-                                    tracker.addPosition(change.uptimeMillis, Offset(0f, y))
-                                    change.consume()
-                                }
-                                val vy = tracker.calculateVelocity().y
-                                settle(if (abs(vy) > 800f) vy < 0f else p > 0.5f, velocity = -vy / travel)
-                            }
-                        }
-                        .clickable(role = Role.Button, onClickLabel = stringResource(if (expanded) R.string.playlist_drawer_close else R.string.playlist_drawer_open)) { settle(!expanded) }
-                        .padding(horizontal = 18.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(if (tab == DrawerTab.Playlist) MkIcons.Queue else MkIcons.Next, null, tint = Pelage.RouxClair, modifier = Modifier.size(22.dp))
-                    Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
-                        if (tab == DrawerTab.Playlist) {
-                            Text(title ?: stringResource(R.string.channel_tab_playlists), color = Pelage.Texte, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            Text("${index + 1} / ${videos.size}", color = Color(0xFFCFC6BD), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                        } else {
-                            Text(stringResource(R.string.up_next), color = Pelage.Texte, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1)
-                            Text(related.first().title, color = Color(0xFFCFC6BD), fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        }
-                    }
-                    // La flèche vers le haut (tirer pour ouvrir), vers le bas une fois ouvert
-                    Icon(
-                        MkIcons.ChevronDown,
-                        null,
-                        tint = Color.White,
-                        modifier = Modifier.size(22.dp).graphicsLayer { rotationZ = 180f - 180f * open.value.coerceIn(0f, 1f) },
-                    )
-                }
-                // Les deux onglets, quand la vidéo vient d'une playlist et a des suggestions
-                if (inPlaylist && related.isNotEmpty()) {
+            // Sans dépoli, une ombre sous tous les textes du tiroir (titres des vidéos compris)
+            CompositionLocalProvider(
+                LocalTextStyle provides LocalTextStyle.current.copy(shadow = GlassTextShadow),
+            ) {
+                Column(Modifier.fillMaxSize()) {
                     Row(
                         Modifier
                             .fillMaxWidth()
-                            .graphicsLayer { alpha = (open.value * 1.6f).coerceIn(0f, 1f) }
-                            .padding(start = 14.dp, end = 14.dp, bottom = 8.dp),
-                        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
+                            .height(PLAYLIST_DRAWER_BAR)
+                            .onPlaced { coordinates = it }
+                            .pointerInput(travel) {
+                                // Tirer la barre : positions prises à l'écran (la barre bouge sous le doigt)
+                                awaitEachGesture {
+                                    val down = awaitFirstDown(requireUnconsumed = false)
+                                    var vertical = false
+                                    val start = awaitTouchSlopOrCancellation(down.id) { change, over ->
+                                        if (abs(over.y) > abs(over.x)) {
+                                            vertical = true
+                                            change.consume()
+                                        }
+                                    }
+                                    if (start == null || !vertical) return@awaitEachGesture
+                                    fun screenY(position: Offset) = coordinates?.localToRoot(position)?.y ?: position.y
+                                    scope.launch { open.stop() }
+                                    val tracker = VelocityTracker()
+                                    var last = screenY(start.position)
+                                    var p = open.value
+                                    tracker.addPosition(start.uptimeMillis, Offset(0f, last))
+                                    drag(start.id) { change ->
+                                        val y = screenY(change.position)
+                                        p = (p - (y - last) / travel).coerceIn(0f, 1f)
+                                        last = y
+                                        scope.launch { open.snapTo(p) }
+                                        tracker.addPosition(change.uptimeMillis, Offset(0f, y))
+                                        change.consume()
+                                    }
+                                    val vy = tracker.calculateVelocity().y
+                                    settle(if (abs(vy) > 800f) vy < 0f else p > 0.5f, velocity = -vy / travel)
+                                }
+                            }
+                            .clickable(role = Role.Button, onClickLabel = stringResource(if (expanded) R.string.playlist_drawer_close else R.string.playlist_drawer_open)) { settle(!expanded) }
+                            .padding(horizontal = 18.dp),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        DrawerTabChip(stringResource(R.string.playlist_tab), tab == DrawerTab.Playlist) { chosen = DrawerTab.Playlist }
-                        DrawerTabChip(stringResource(R.string.up_next), tab == DrawerTab.UpNext) { chosen = DrawerTab.UpNext }
-                    }
-                }
-                if (tab == DrawerTab.UpNext) {
-                    LazyColumn(
-                        Modifier.weight(1f).fillMaxWidth().graphicsLayer { alpha = (open.value * 1.6f).coerceIn(0f, 1f) },
-                        state = upNext,
-                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 12.dp),
-                    ) {
-                        items(related.size, key = { related[it].url }) { i ->
-                            CompactVideoRow(related[i]) {
-                                settle(false) // la nouvelle vidéo se voit tout de suite
-                                onOpen(related[i])
+                        Icon(if (tab == DrawerTab.Playlist) MkIcons.Queue else MkIcons.Next, null, tint = Pelage.RouxClair, modifier = Modifier.size(22.dp))
+                        Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
+                            if (tab == DrawerTab.Playlist) {
+                                Text(title ?: stringResource(R.string.channel_tab_playlists), color = Pelage.Texte, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text("${index + 1} / ${videos.size}", color = Color(0xFFCFC6BD), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            } else {
+                                Text(stringResource(R.string.up_next), color = Pelage.Texte, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1)
+                                Text(related.first().title, color = Color(0xFFCFC6BD), fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             }
                         }
+                        // La flèche vers le haut (tirer pour ouvrir), vers le bas une fois ouvert
+                        Icon(
+                            MkIcons.ChevronDown,
+                            null,
+                            tint = Color.White,
+                            modifier = Modifier.size(22.dp).graphicsLayer { rotationZ = 180f - 180f * open.value.coerceIn(0f, 1f) },
+                        )
                     }
-                } else LazyColumn(
-                    Modifier.weight(1f).fillMaxWidth().graphicsLayer { alpha = (open.value * 1.6f).coerceIn(0f, 1f) },
-                    state = list,
-                    contentPadding = PaddingValues(start = 10.dp, end = 10.dp, bottom = 12.dp),
-                ) {
-                    itemsIndexed(videos, key = { _, video -> video.url }) { i, video ->
-                        Box(
+                    // Les deux onglets, quand la vidéo vient d'une playlist et a des suggestions
+                    if (inPlaylist && related.isNotEmpty()) {
+                        Row(
                             Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(if (i == index) Pelage.Roux.copy(alpha = 0.22f) else Color.Transparent)
-                                .padding(horizontal = 6.dp, vertical = 2.dp),
+                                .graphicsLayer { alpha = (open.value * 1.6f).coerceIn(0f, 1f) }
+                                .padding(start = 14.dp, end = 14.dp, bottom = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            CompactVideoRow(video) {
-                                if (i == index) return@CompactVideoRow
-                                PlayerHolder.launchPlayback(onError = {
-                                    Toast.makeText(context, context.getString(R.string.error_play_video, it.message.orEmpty()), Toast.LENGTH_SHORT).show()
-                                }) { PlayerHolder.play(context, video.url, audioOnly = false) }
+                            DrawerTabChip(stringResource(R.string.playlist_tab), tab == DrawerTab.Playlist) { chosen = DrawerTab.Playlist }
+                            DrawerTabChip(stringResource(R.string.up_next), tab == DrawerTab.UpNext) { chosen = DrawerTab.UpNext }
+                        }
+                    }
+                    if (tab == DrawerTab.UpNext) {
+                        LazyColumn(
+                            Modifier.weight(1f).fillMaxWidth().graphicsLayer { alpha = (open.value * 1.6f).coerceIn(0f, 1f) },
+                            state = upNext,
+                            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 12.dp),
+                        ) {
+                            items(related.size, key = { related[it].url }) { i ->
+                                CompactVideoRow(related[i]) {
+                                    settle(false) // la nouvelle vidéo se voit tout de suite
+                                    onOpen(related[i])
+                                }
+                            }
+                        }
+                    } else LazyColumn(
+                        Modifier.weight(1f).fillMaxWidth().graphicsLayer { alpha = (open.value * 1.6f).coerceIn(0f, 1f) },
+                        state = list,
+                        contentPadding = PaddingValues(start = 10.dp, end = 10.dp, bottom = 12.dp),
+                    ) {
+                        itemsIndexed(videos, key = { _, video -> video.url }) { i, video ->
+                            Box(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(if (i == index) Pelage.Roux.copy(alpha = 0.22f) else Color.Transparent)
+                                    .padding(horizontal = 6.dp, vertical = 2.dp),
+                            ) {
+                                CompactVideoRow(video) {
+                                    if (i == index) return@CompactVideoRow
+                                    PlayerHolder.launchPlayback(onError = {
+                                        Toast.makeText(context, context.getString(R.string.error_play_video, it.message.orEmpty()), Toast.LENGTH_SHORT).show()
+                                    }) { PlayerHolder.play(context, video.url, audioOnly = false) }
+                                }
                             }
                         }
                     }
                 }
             }
-          }
         }
     }
 }

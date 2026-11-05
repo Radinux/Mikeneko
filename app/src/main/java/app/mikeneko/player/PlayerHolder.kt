@@ -1,96 +1,55 @@
 package app.mikeneko.player
 
-import app.mikeneko.data.cleanArtist
-import app.mikeneko.data.MusicHistory
-import org.schabi.newpipe.extractor.stream.Frameset
-import androidx.media3.exoplayer.source.MediaSource
-import kotlinx.coroutines.flow.combine
-import app.mikeneko.data.toVideo
-import app.mikeneko.data.Feedback
-import org.schabi.newpipe.extractor.stream.StreamInfoItem
-import org.schabi.newpipe.extractor.stream.Description
-import app.mikeneko.settings.AppSettings
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.SystemClock
+import androidx.core.net.toUri
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
+import androidx.media3.common.Player
 import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
-import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.MediaSource
 import app.mikeneko.data.Chapter
+import app.mikeneko.data.Feedback
+import app.mikeneko.data.LocalMusic
+import app.mikeneko.data.Music
+import app.mikeneko.data.MusicHistory
 import app.mikeneko.data.ReturnDislike
 import app.mikeneko.data.Segment
 import app.mikeneko.data.SponsorBlock
 import app.mikeneko.data.SubscriptionStore
-import app.mikeneko.data.channelIdFrom
 import app.mikeneko.data.VideoItem
 import app.mikeneko.data.WatchHistory
-import app.mikeneko.data.YouTubeRepository
-import app.mikeneko.data.LocalMusic
-import app.mikeneko.data.Music
-import app.mikeneko.data.sameTrack
-import app.mikeneko.data.videoIdOf
 import app.mikeneko.data.WatchPositions
-import androidx.core.net.toUri
-import androidx.media3.common.MediaMetadata
-import org.schabi.newpipe.extractor.Page
+import app.mikeneko.data.YouTubeRepository
+import app.mikeneko.data.channelIdFrom
+import app.mikeneko.data.cleanArtist
+import app.mikeneko.data.sameTrack
+import app.mikeneko.data.toVideo
+import app.mikeneko.data.videoIdOf
+import app.mikeneko.settings.AppSettings
+import java.util.Locale
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import org.schabi.newpipe.extractor.Page
+import org.schabi.newpipe.extractor.stream.Description
 import org.schabi.newpipe.extractor.stream.StreamInfo
-import java.util.Locale
-
-data class NowPlaying(
-    val url: String,
-    val videoId: String,
-    val title: String,
-    val channel: String,
-    val thumbnail: String?,
-    val audioOnly: Boolean,
-    val live: Boolean,
-    val views: Long,
-    val likes: Long,
-    val dislikes: Long? = null,
-    val chapters: List<Chapter> = emptyList(),
-    val segments: List<Segment> = emptyList(),
-    /** Description de la vidéo (HTML chez YouTube, avec liens et horodatages). */
-    val description: String = "",
-    val descriptionHtml: Boolean = false,
-    /** Date de mise en ligne (ms), si YouTube la donne. */
-    val uploadedAt: Long? = null,
-    /** Vidéos proposées à la suite (« À suivre »), sans directs ni ce qu'on a écarté. */
-    val related: List<VideoItem> = emptyList(),
-    /** La chaîne de la vidéo : adresse, avatar, abonnés (-1 si inconnu). */
-    val channelUrl: String? = null,
-    val channelAvatar: String? = null,
-    val channelSubscribers: Long = -1,
-    /** Les planches d'aperçu de YouTube (petites images à intervalles réguliers), pour la barre de lecture. */
-    val previewFrames: Frameset? = null,
-)
-
-/** Les pages du menu de réglages du lecteur (null = menu fermé). */
-enum class SettingsPage { Menu, Qualite, Vitesse, SousTitres, Minuteur }
-
-/** Minuteur de veille : arrêter la lecture après un délai, ou à la fin de la vidéo. */
-sealed interface SleepTimer {
-    data object Off : SleepTimer
-    data class At(val elapsedRealtime: Long, val minutes: Int) : SleepTimer
-    data object EndOfVideo : SleepTimer
-}
-
-/** Répéter dans la Radio : rien, toute la file, ou le morceau en cours. */
-enum class Repeat { Off, All, One }
+import org.schabi.newpipe.extractor.stream.StreamInfoItem
 
 /** Un seul ExoPlayer pour toute l'app : vidéo, mini-lecteur PiP et mode radio. */
 object PlayerHolder {
@@ -245,7 +204,7 @@ object PlayerHolder {
             appContext = context.applicationContext
             created.addListener(object : Player.Listener {
                 override fun onRenderedFirstFrame() {
-                    firstFrames.value++
+                    VideoFrames.firstFrames.value++
                 }
 
                 override fun onIsPlayingChanged(playing: Boolean) {
@@ -254,14 +213,14 @@ object PlayerHolder {
                 }
 
                 override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
-                    if (playWhenReady) pausedFrame = null
+                    if (playWhenReady) VideoFrames.forgetPausedFrame()
                     updatePlayRequested(created)
                 }
 
                 override fun onPositionDiscontinuity(oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int) {
                     if (reason == Player.DISCONTINUITY_REASON_SEEK || reason == Player.DISCONTINUITY_REASON_SEEK_ADJUSTMENT) {
-                        pausedFrame = null
-                        seeks.value++
+                        VideoFrames.forgetPausedFrame()
+                        VideoFrames.seeks.value++
                     }
                 }
 
@@ -345,14 +304,14 @@ object PlayerHolder {
     fun launchPlayback(onError: (Throwable) -> Unit = {}, block: suspend () -> Unit): Job = scope.launch {
         try {
             block()
-        } catch (e: kotlinx.coroutines.CancellationException) {
+        } catch (e: CancellationException) {
             throw e
         } catch (e: Throwable) {
             onError(e)
         }
     }
 
-    /** Lance la file [items] à partir de [start] (en audio seul, pour la Radio). */
+    /** Lance la file [items] à partir de [start] (en audio seul, pour la Musique). */
     suspend fun playQueue(context: Context, items: List<VideoItem>, start: Int, mix: Boolean = false) {
         if (items.isEmpty()) return
         setQueue(items, start.coerceIn(items.indices), mix)
@@ -521,7 +480,7 @@ object PlayerHolder {
             val info = try {
                 YouTubeRepository.stream(url)
             } catch (e: Exception) {
-                if (e is kotlinx.coroutines.CancellationException) throw e
+                if (e is CancellationException) throw e
                 // Pas de réseau, ou YouTube refuse : la vidéo, si elle est entière hors ligne
                 val entry = if (!audioOnly && mine == ticket) OfflineCache.playable(context, url, audioOnly = false) else null
                 if (entry == null) throw e
@@ -721,7 +680,7 @@ object PlayerHolder {
         val cur = p.currentMediaItemIndex
         if (p.mediaItemCount > cur + 2) p.removeMediaItems(cur + 2, p.mediaItemCount)
         if (cur > 0) p.removeMediaItems(0, cur)
-        pausedFrame = null
+        VideoFrames.forgetPausedFrame()
         val index = queue.value.indexOfFirst { sameTrack(it.url, back.url) }
         if (index >= 0) queueIndex.value = index
         info = back.info
@@ -771,7 +730,7 @@ object PlayerHolder {
         if (cur > 1) p.removeMediaItems(0, cur - 1)
         val leaving = nowPlaying.value
         kept = leaving?.takeIf { it.audioOnly && !it.live && p.currentMediaItemIndex > 0 }?.let { Kept(it.url, info, it) }
-        pausedFrame = null
+        VideoFrames.forgetPausedFrame()
         queueIndex.value = next.index
         val info = next.info
         if (info == null) {
@@ -1197,7 +1156,7 @@ object PlayerHolder {
         ticket++ // une vidéo encore en chargement ne doit pas démarrer après la fermeture
         dropPreload()
         kept = null
-        pausedFrame = null
+        VideoFrames.forgetPausedFrame()
         loading.value = false
         info = null
         qualities.value = emptyList()
@@ -1242,75 +1201,8 @@ object PlayerHolder {
         setSleepTimer(null)
     }
 
-    // ---- Image de transition entre deux écrans vidéo ----
-
-    private var texture: java.lang.ref.WeakReference<android.view.TextureView>? = null
-
-    /** Compté à chaque fois que la vidéo affiche sa première image sur un nouvel écran. */
-    val firstFrames = MutableStateFlow(0)
-
-    /** Compté à chaque saut dans la vidéo (barre, double tap, chapitre…). */
-    val seeks = MutableStateFlow(0)
-
-    /**
-     * En pause, un nouvel écran vidéo affiche l'image *suivante* (ExoPlayer n'a plus l'image en
-     * cours à redessiner). La première photo prise pendant la pause est donc la seule exacte : on la
-     * garde, et chaque écran suivant la montre par-dessus sa vidéo jusqu'à la reprise ou un saut.
-     */
-    private var pausedFrame: android.graphics.Bitmap? = null
-
-    /** L'écran vidéo actuellement branché sur le lecteur. */
-    fun attachTexture(view: android.view.TextureView?) {
-        if (view != null) texture = java.lang.ref.WeakReference(view)
-    }
-
-    /**
-     * Un écran vidéo disparaît : on garde sa dernière image, car le suivant peut se construire
-     * juste après (le mini-lecteur, par exemple) et n'aurait plus rien à photographier.
-     */
-    fun detachTexture(view: android.view.TextureView?) {
-        if (view == null) return
-        if (nowPlaying.value?.audioOnly == false) {
-            // En pause, la surface peut montrer l'image suivante : c'est la photo de la pause qui compte
-            (pausedFrame.takeIf { !playRequested.value } ?: capture(view))?.let { lastFrame = it to android.os.SystemClock.uptimeMillis() }
-        }
-        if (texture?.get() === view) texture = null
-    }
-
-    private var lastFrame: Pair<android.graphics.Bitmap, Long>? = null
-
-    /** La dernière image affichée, pour la montrer dans le nouvel écran le temps qu'il se branche. */
-    fun snapshot(): android.graphics.Bitmap? {
-        val paused = !playRequested.value
-        if (paused) pausedFrame?.let { return it }
-        val shot = texture?.get()?.let(::capture)
-            // L'écran précédent vient de disparaître (moins d'une seconde) : sa dernière image
-            ?: lastFrame?.takeIf { android.os.SystemClock.uptimeMillis() - it.second < 1_000 }?.first
-        if (paused) pausedFrame = shot
-        return shot
-    }
-
-    private fun capture(view: android.view.TextureView): android.graphics.Bitmap? {
-        if (!view.isAvailable || view.width <= 0 || view.height <= 0) return null
-        val bitmap = runCatching { view.bitmap }.getOrNull() ?: return null
-        return cropToVideo(bitmap)
-    }
-
-    /** Retire les bandes noires éventuelles : on garde la zone centrale au format de la vidéo. */
-    private fun cropToVideo(bitmap: android.graphics.Bitmap): android.graphics.Bitmap {
-        val size = player?.videoSize ?: return bitmap
-        if (size.width <= 0 || size.height <= 0) return bitmap
-        val videoRatio = size.width * size.pixelWidthHeightRatio / size.height
-        val ratio = bitmap.width.toFloat() / bitmap.height
-        if (kotlin.math.abs(ratio - videoRatio) / videoRatio < 0.02f) return bitmap
-        return if (ratio > videoRatio) {
-            val w = (bitmap.height * videoRatio).toInt().coerceIn(1, bitmap.width)
-            android.graphics.Bitmap.createBitmap(bitmap, (bitmap.width - w) / 2, 0, w, bitmap.height)
-        } else {
-            val h = (bitmap.width / videoRatio).toInt().coerceIn(1, bitmap.height)
-            android.graphics.Bitmap.createBitmap(bitmap, 0, (bitmap.height - h) / 2, bitmap.width, h)
-        }
-    }
+    /** La taille de la vidéo en cours (pour [VideoFrames], qui recadre ses photos). */
+    internal fun videoSize(): VideoSize? = player?.videoSize
 
     // ---- Réglages ----
 

@@ -1,12 +1,12 @@
 package app.mikeneko.data
 
+import kotlin.math.abs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import org.json.JSONArray
 import org.json.JSONObject
-import kotlin.math.abs
 
 /** Une ligne de paroles synchronisées : le moment où elle commence. */
 data class LyricLine(val timeMs: Long, val text: String)

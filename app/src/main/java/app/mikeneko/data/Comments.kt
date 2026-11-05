@@ -1,7 +1,7 @@
 package app.mikeneko.data
 
-import app.mikeneko.settings.AppLocale
 import app.mikeneko.R
+import app.mikeneko.settings.AppLocale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
@@ -138,18 +138,6 @@ object Comments {
     fun moreReplies(comment: Comment) {
         val page = state.value.replies[comment.id]?.next ?: return
         loadReplies(comment.id, page)
-    }
-
-    /** Ajoute un commentaire tout juste publié (en haut, ou au début du fil de [parentId]). */
-    fun addMine(comment: Comment, parentId: String?) {
-        if (parentId == null) {
-            state.update { it.copy(items = listOf(comment) + it.items, count = if (it.count >= 0) it.count + 1 else it.count) }
-        } else {
-            setReplies(parentId) { it.copy(open = true, items = it.items + comment) }
-            state.update { s ->
-                s.copy(items = s.items.map { c -> if (c.id == parentId) c.copy(replyCount = c.replyCount + 1) else c })
-            }
-        }
     }
 
     private fun loadReplies(id: String, page: Page) {

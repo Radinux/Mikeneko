@@ -1,16 +1,6 @@
 package app.mikeneko.ui.components
 
-import app.mikeneko.ui.theme.statusBarSpace
-import app.mikeneko.ui.theme.jellyClickable
-import app.mikeneko.ui.theme.clay
-import app.mikeneko.R
-import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringResource
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.IntentSenderRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -29,22 +19,17 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.union
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -53,19 +38,17 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -81,10 +64,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.mikeneko.R
 import app.mikeneko.data.Comment
 import app.mikeneko.data.Comments
-import app.mikeneko.data.GoogleAccount
-import app.mikeneko.data.SubscriptionStore
 import app.mikeneko.data.formatCount
 import app.mikeneko.player.PlayerHolder
 import app.mikeneko.ui.glass.Backdrop
@@ -92,10 +74,10 @@ import app.mikeneko.ui.glass.LiquidGlass
 import app.mikeneko.ui.icons.MkIcons
 import app.mikeneko.ui.theme.Pelage
 import app.mikeneko.ui.theme.Rounded
+import app.mikeneko.ui.theme.statusBarSpace
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.launch
 
 private val Secondary = Color(0xFFCFC6BD)
 
@@ -141,16 +123,14 @@ fun CommentsPreview(modifier: Modifier = Modifier) {
 }
 
 /**
- * Le panneau des commentaires, en verre, sous la vidéo (qui continue de jouer au-dessus).
- * En bas, la barre pour commenter : elle ne marche qu'avec le compte Google connecté.
+ * Le panneau des commentaires, en verre, sous la vidéo (qui continue de jouer au-dessus). Lecture seule.
  */
 @Composable
 fun CommentsPanel(backdrop: Backdrop) {
     val open by Comments.open.collectAsState()
-    var replyTo by remember { mutableStateOf<Comment?>(null) }
 
     BackHandler(enabled = open) {
-        if (replyTo != null) replyTo = null else Comments.open.value = false
+        Comments.open.value = false
     }
 
     BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -179,9 +159,7 @@ fun CommentsPanel(backdrop: Backdrop) {
             ) {
                 Column(Modifier.fillMaxSize()) {
                     PanelHeader()
-                    CommentList(Modifier.weight(1f), onReply = { replyTo = it })
-                    // Écrire passe par le compte Google : la barre n'apparaît que si la connexion est activée
-                    if (GoogleAccount.ENABLED) CommentBar(replyTo = replyTo, onCancelReply = { replyTo = null })
+                    CommentList(Modifier.weight(1f))
                 }
             }
         }
@@ -208,7 +186,7 @@ private fun PanelHeader() {
 }
 
 @Composable
-private fun CommentList(modifier: Modifier, onReply: (Comment) -> Unit) {
+private fun CommentList(modifier: Modifier) {
     val state by Comments.state.collectAsState()
     val list = rememberLazyListState()
 
@@ -240,13 +218,13 @@ private fun CommentList(modifier: Modifier, onReply: (Comment) -> Unit) {
             else -> {
                 items(state.items, key = { it.id }) { comment ->
                     val thread = state.replies[comment.id]
-                    CommentRow(comment, onReply = { onReply(comment) })
+                    CommentRow(comment)
                     if (comment.replyCount > 0 || thread?.items?.isNotEmpty() == true) {
                         RepliesToggle(comment, thread?.open == true)
                     }
                     if (thread?.open == true) {
                         thread.items.forEach { reply ->
-                            CommentRow(reply, indent = 46.dp, onReply = { onReply(comment) })
+                            CommentRow(reply, indent = 46.dp)
                         }
                         when {
                             thread.loading -> Loading(Modifier.fillMaxWidth().padding(8.dp))
@@ -261,7 +239,7 @@ private fun CommentList(modifier: Modifier, onReply: (Comment) -> Unit) {
 }
 
 @Composable
-private fun CommentRow(comment: Comment, indent: Dp = 0.dp, onReply: () -> Unit) {
+private fun CommentRow(comment: Comment, indent: Dp = 0.dp) {
     var expanded by remember(comment.id) { mutableStateOf(false) }
     var overflows by remember(comment.id) { mutableStateOf(false) }
     Row(
@@ -311,13 +289,6 @@ private fun CommentRow(comment: Comment, indent: Dp = 0.dp, onReply: () -> Unit)
                     if (comment.likes > 0) Text(" ${formatCount(comment.likes.toLong())}", color = Secondary, fontSize = 12.sp)
                 }
                 if (comment.hearted) Icon(MkIcons.HeartFilled, stringResource(R.string.hearted), tint = Pelage.Rose, modifier = Modifier.size(15.dp))
-                if (GoogleAccount.ENABLED) Text(
-                    stringResource(R.string.reply),
-                    Modifier.clip(CircleShape).clickable(role = Role.Button, onClick = onReply).padding(horizontal = 6.dp, vertical = 6.dp),
-                    color = Secondary,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                )
             }
         }
     }
@@ -334,183 +305,6 @@ private fun RepliesToggle(comment: Comment, open: Boolean) {
         Modifier.padding(start = 60.dp),
         color = Pelage.RouxClair,
     ) { Comments.toggleReplies(comment) }
-}
-
-/**
- * La barre pour commenter. Sans compte Google connecté, elle propose de le connecter
- * (YouTube n'accepte les commentaires que d'un compte).
- */
-@Composable
-private fun CommentBar(replyTo: Comment?, onCancelReply: () -> Unit) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val keyboard = LocalSoftwareKeyboardController.current
-    val store = remember { SubscriptionStore.get(context) }
-    val connected by store.connected.collectAsState()
-    val now by PlayerHolder.nowPlaying.collectAsState()
-    var text by remember { mutableStateOf("") }
-    var sending by remember { mutableStateOf(false) }
-    // Ce qu'il faut faire une fois que Google a donné le jeton (après l'écran d'accord)
-    var pending by remember { mutableStateOf<(suspend (String) -> Unit)?>(null) }
-
-    fun toast(message: String) = Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-
-    val consent = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
-        val action = pending
-        pending = null
-        runCatching { GoogleAccount.resultFromIntent(context, result.data) }
-            .onSuccess { auth -> auth.accessToken?.let { token -> action?.let { scope.launch { it(token) } } } ?: toast(context.getString(R.string.login_cancelled)) }
-            .onFailure { toast(context.getString(R.string.login_cancelled)) }
-    }
-
-    /**
-     * Obtient un jeton avec le droit de commenter, puis lance [action]. Si Google doit d'abord
-     * afficher son écran d'accord, [action] attend le retour de cet écran.
-     */
-    fun withWriteToken(action: suspend (String) -> Unit) {
-        scope.launch {
-            runCatching { GoogleAccount.authorize(context, write = true) }
-                .onSuccess { auth ->
-                    val intent = auth.pendingIntent
-                    when {
-                        auth.hasResolution() && intent != null -> {
-                            pending = action
-                            consent.launch(IntentSenderRequest.Builder(intent.intentSender).build())
-                        }
-                        auth.accessToken != null -> action(auth.accessToken!!)
-                        else -> toast(context.getString(R.string.google_no_access))
-                    }
-                }
-                .onFailure { toast(context.getString(R.string.google_refused)) }
-        }
-    }
-
-    fun connect() = withWriteToken { token ->
-        store.setConnected(true)
-        toast(context.getString(R.string.google_connected))
-        // Tant qu'à faire, on récupère aussi les abonnements
-        runCatching { GoogleAccount.fetchSubscriptions(token) }.onSuccess { store.addAll(it) }
-    }
-
-    fun send() {
-        val message = text.trim()
-        val videoId = now?.videoId ?: return
-        if (message.isEmpty() || sending) return
-        val parent = replyTo
-        withWriteToken { token ->
-            sending = true
-            runCatching {
-                if (parent != null) GoogleAccount.postReply(token, parent.id, message)
-                else GoogleAccount.postComment(token, videoId, message)
-            }.onSuccess { posted ->
-                Comments.addMine(posted, parent?.id)
-                text = ""
-                onCancelReply()
-                keyboard?.hide()
-                toast(context.getString(if (parent != null) R.string.reply_posted else R.string.comment_posted))
-            }.onFailure { toast(it.message ?: context.getString(R.string.post_failed)) }
-            sending = false
-        }
-    }
-
-    // Réponse : on commence par mentionner l'auteur, comme sur YouTube
-    LaunchedEffect(replyTo) {
-        val target = replyTo ?: return@LaunchedEffect
-        val mention = target.author.let { if (it.startsWith("@")) it else "@$it" }
-        if (!text.startsWith(mention)) text = "$mention $text"
-    }
-
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .background(Color.Black.copy(alpha = 0.18f))
-            .padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        if (!connected) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(MkIcons.Account, null, tint = Secondary, modifier = Modifier.padding(start = 4.dp).size(20.dp))
-                Text(
-                    stringResource(R.string.comment_need_google),
-                    Modifier.weight(1f).padding(horizontal = 10.dp),
-                    color = Secondary,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    stringResource(R.string.sign_in),
-                    Modifier.jellyClickable { connect() }.clay(Pelage.Creme).padding(horizontal = 14.dp, vertical = 10.dp),
-                    color = Pelage.Encre,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                )
-            }
-            return@Column
-        }
-
-        if (replyTo != null) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    stringResource(R.string.reply_to, replyTo.author),
-                    Modifier.weight(1f).padding(start = 6.dp),
-                    color = Pelage.RouxClair,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Box(Modifier.size(32.dp).clip(CircleShape).clickable(role = Role.Button, onClick = onCancelReply), contentAlignment = Alignment.Center) {
-                    Icon(MkIcons.Close, stringResource(R.string.reply_cancel), tint = Secondary, modifier = Modifier.size(16.dp))
-                }
-            }
-        }
-
-        Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Box(
-                Modifier
-                    .weight(1f)
-                    .heightIn(min = 46.dp)
-                    .clip(RoundedCornerShape(23.dp))
-                    .background(Color.White.copy(alpha = 0.1f))
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                contentAlignment = Alignment.CenterStart,
-            ) {
-                BasicTextField(
-                    value = text,
-                    onValueChange = { text = it.take(10_000) }, // limite de YouTube
-                    maxLines = 5,
-                    textStyle = TextStyle(fontFamily = Rounded, color = Pelage.Texte, fontSize = 15.sp),
-                    cursorBrush = SolidColor(Pelage.RouxClair),
-                    modifier = Modifier.fillMaxWidth(),
-                    decorationBox = { field ->
-                        if (text.isEmpty()) {
-                            Text(
-                                stringResource(if (replyTo != null) R.string.reply_hint else R.string.comment_hint),
-                                color = Secondary.copy(alpha = 0.8f),
-                                fontSize = 15.sp,
-                            )
-                        }
-                        field()
-                    },
-                )
-            }
-            val canSend = text.isNotBlank() && !sending
-            Box(
-                Modifier
-                    .size(46.dp)
-                    .clip(CircleShape)
-                    .background(if (canSend) Pelage.Roux else Color.White.copy(alpha = 0.1f))
-                    .clickable(enabled = canSend, role = Role.Button, onClickLabel = stringResource(R.string.publish)) { send() },
-                contentAlignment = Alignment.Center,
-            ) {
-                if (sending) {
-                    Loading(Modifier.size(22.dp))
-                } else {
-                    Icon(MkIcons.Send, stringResource(R.string.publish), tint = if (canSend) Pelage.Encre else Secondary, modifier = Modifier.size(20.dp))
-                }
-            }
-        }
-    }
 }
 
 // ---------------------------------------------------------------- petits morceaux

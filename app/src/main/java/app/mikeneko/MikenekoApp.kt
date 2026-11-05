@@ -1,18 +1,18 @@
 package app.mikeneko
 
-import okio.Path.Companion.toOkioPath
-import coil3.network.okhttp.OkHttpNetworkFetcherFactory
-import coil3.disk.DiskCache
-import coil3.SingletonImageLoader
-import coil3.PlatformContext
-import coil3.ImageLoader
 import android.app.Application
 import app.mikeneko.data.NewPipeDownloader
-import app.mikeneko.player.PlayerHolder
 import app.mikeneko.player.OfflineCache
+import app.mikeneko.player.PlayerHolder
 import app.mikeneko.player.PlaylistDownloads
 import app.mikeneko.settings.AppLocale
 import app.mikeneko.settings.AppSettings
+import coil3.ImageLoader
+import coil3.PlatformContext
+import coil3.SingletonImageLoader
+import coil3.disk.DiskCache
+import coil3.network.okhttp.OkHttpNetworkFetcherFactory
+import okio.Path.Companion.toOkioPath
 import org.schabi.newpipe.extractor.NewPipe
 
 class MikenekoApp : Application(), SingletonImageLoader.Factory {

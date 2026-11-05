@@ -1,7 +1,9 @@
 package app.mikeneko.player
 
-import app.mikeneko.settings.AppLocale
-import app.mikeneko.R
+import android.content.res.Resources
+import android.media.MediaCodecInfo
+import android.media.MediaCodecList
+import android.os.Build
 import androidx.annotation.OptIn
 import androidx.core.net.toUri
 import androidx.media3.common.C
@@ -16,7 +18,10 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.MergingMediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
+import app.mikeneko.R
 import app.mikeneko.data.NewPipeDownloader
+import app.mikeneko.settings.AppLocale
+import java.util.concurrent.ConcurrentHashMap
 import org.schabi.newpipe.extractor.MediaFormat
 import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.AudioTrackType
@@ -44,7 +49,7 @@ object MediaSources {
      * Full HD, 1440p sur un écran QHD), sans jamais descendre sous 720p ni dépasser 1440p.
      */
     val autoMaxHeight: Int by lazy {
-        val metrics = android.content.res.Resources.getSystem().displayMetrics
+        val metrics = Resources.getSystem().displayMetrics
         minOf(metrics.widthPixels, metrics.heightPixels).coerceIn(720, 1440)
     }
 
@@ -304,13 +309,13 @@ object MediaSources {
 
 /** Ce que les décodeurs vidéo du téléphone savent faire (résultats gardés en mémoire). */
 private object Decoders {
-    private val cache = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
+    private val cache = ConcurrentHashMap<String, Boolean>()
 
     fun supports(mime: String, width: Int, height: Int, fps: Int, needHardware: Boolean): Boolean =
         cache.getOrPut("$mime:$width:$height:$fps:$needHardware") { check(mime, width, height, fps, needHardware) }
 
     private fun check(mime: String, width: Int, height: Int, fps: Int, needHardware: Boolean): Boolean = runCatching {
-        android.media.MediaCodecList(android.media.MediaCodecList.REGULAR_CODECS).codecInfos.any { info ->
+        MediaCodecList(MediaCodecList.REGULAR_CODECS).codecInfos.any { info ->
             if (info.isEncoder || info.supportedTypes.none { it.equals(mime, ignoreCase = true) }) return@any false
             if (needHardware && !isHardware(info)) return@any false
             val video = info.getCapabilitiesForType(mime).videoCapabilities ?: return@any false
@@ -322,7 +327,7 @@ private object Decoders {
         }
     }.getOrDefault(false)
 
-    private fun isHardware(info: android.media.MediaCodecInfo): Boolean =
-        if (android.os.Build.VERSION.SDK_INT >= 29) info.isHardwareAccelerated
+    private fun isHardware(info: MediaCodecInfo): Boolean =
+        if (Build.VERSION.SDK_INT >= 29) info.isHardwareAccelerated
         else !info.name.startsWith("OMX.google.") && !info.name.startsWith("c2.android.")
 }

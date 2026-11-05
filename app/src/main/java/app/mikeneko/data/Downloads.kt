@@ -1,16 +1,18 @@
 package app.mikeneko.data
 
-import java.util.concurrent.atomic.AtomicBoolean
-import app.mikeneko.player.MediaSources
-import app.mikeneko.player.PlayerHolder
-import app.mikeneko.settings.AppSettings
-import app.mikeneko.settings.AppLocale
-import app.mikeneko.R
 import android.content.Context
 import android.os.Environment
+import app.mikeneko.R
+import app.mikeneko.player.MediaSources
+import app.mikeneko.player.PlayerHolder
+import app.mikeneko.settings.AppLocale
+import app.mikeneko.settings.AppSettings
 import com.yausername.ffmpeg.FFmpeg
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
+import java.io.File
+import java.util.UUID
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,8 +22,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.io.File
-import java.util.UUID
 
 /** Gestionnaire de téléchargements basé sur yt-dlp (youtubedl-android). */
 object Downloads {
@@ -132,7 +132,7 @@ object Downloads {
                     ?.let(::File)
                     ?.takeIf { it.exists() }
                 change(task.id) { it.copy(status = Status.TERMINE, progress = 1f, file = file) }
-                // Un morceau audio : il apparaît tout de suite dans « Téléchargés » de la Radio
+                // Un morceau audio : il apparaît tout de suite dans « Téléchargés » de la Musique
                 if (format.audio) runCatching { LocalMusic.refresh(context) }
             }.onFailure { e ->
                 change(task.id) { it.copy(status = Status.ERREUR, error = e.message) }

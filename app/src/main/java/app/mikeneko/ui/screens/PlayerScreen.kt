@@ -1,124 +1,39 @@
 package app.mikeneko.ui.screens
 
-import app.mikeneko.ui.components.SeekPreview
-import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateDpAsState
-import app.mikeneko.ui.components.VideoMenu
-import app.mikeneko.data.VideoLibrary
-import app.mikeneko.data.sameTrack
-import app.mikeneko.ui.components.PLAYLIST_DRAWER_BAR
-import app.mikeneko.ui.components.Capsule
-import androidx.compose.foundation.border
-import androidx.compose.ui.layout.ContentScale
-import coil3.compose.AsyncImage
-import app.mikeneko.data.channelIdFrom
-import app.mikeneko.data.Subscription
-import app.mikeneko.data.SubscriptionStore
-import app.mikeneko.data.ChannelItem
-import app.mikeneko.ui.theme.statusBarSpace
-import app.mikeneko.ui.theme.statusBarSpacePadding
-import app.mikeneko.ui.theme.jellyClickable
-import app.mikeneko.ui.theme.clay
-import java.time.format.FormatStyle
-import java.time.format.DateTimeFormatter
-import java.time.ZoneId
-import java.time.Instant
-import app.mikeneko.settings.AppLocale
-import app.mikeneko.data.formatAgo
-import app.mikeneko.data.VideoItem
-import app.mikeneko.ui.components.TapToSeekLayer
-import app.mikeneko.ui.components.linkedText
-import app.mikeneko.ui.components.CompactVideoRow
-import app.mikeneko.ui.components.VideoMorph
-import androidx.compose.ui.layout.boundsInRoot
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.runtime.DisposableEffect
-import app.mikeneko.ui.components.SegmentMarker
-import app.mikeneko.ui.components.SegmentDraft
-import app.mikeneko.settings.AppSettings
-import app.mikeneko.data.formatViews
-import app.mikeneko.R
-import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.foundation.background
+import android.content.res.Configuration
 import android.widget.Toast
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.width
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.BlurEffect
-import androidx.compose.ui.graphics.CompositingStrategy
-import androidx.compose.ui.graphics.TileMode
-import androidx.compose.ui.graphics.drawscope.scale
-import androidx.compose.ui.graphics.drawscope.translate
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.layer.drawLayer
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.runtime.rememberCoroutineScope
-import kotlinx.coroutines.launch
-import android.content.Context
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.runtime.derivedStateOf
-import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
-import androidx.compose.ui.input.pointer.util.VelocityTracker
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.unit.IntOffset
-import app.mikeneko.player.SettingsPage
-import app.mikeneko.data.Comments
-import app.mikeneko.ui.components.CommentsPreview
-import app.mikeneko.ui.components.PlayerSettingsSheet
-import app.mikeneko.ui.components.ambientSupported
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.ui.unit.Dp
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.runtime.Stable
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.style.TextOverflow
-import app.mikeneko.player.NowPlaying
-import app.mikeneko.ui.components.Tag
-import app.mikeneko.ui.glass.Backdrop
-import app.mikeneko.ui.glass.LiquidGlass
-import app.mikeneko.ui.theme.GlassTextShadow
-import app.mikeneko.ui.theme.Rounded
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -127,50 +42,114 @@ import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.layout.fillMaxHeight
-import android.content.res.Configuration
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.zIndex
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.platform.LocalWindowInfo
-import app.mikeneko.ui.components.RotationMorph
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.BlurEffect
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.util.VelocityTracker
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
+import app.mikeneko.R
+import app.mikeneko.data.ChannelItem
+import app.mikeneko.data.Comments
 import app.mikeneko.data.SponsorBlock
+import app.mikeneko.data.Subscription
+import app.mikeneko.data.SubscriptionStore
+import app.mikeneko.data.VideoItem
+import app.mikeneko.data.VideoLibrary
+import app.mikeneko.data.channelIdFrom
+import app.mikeneko.data.formatAgo
+import app.mikeneko.data.formatClock
 import app.mikeneko.data.formatCount
-import app.mikeneko.data.formatDuration
+import app.mikeneko.data.formatViews
+import app.mikeneko.data.sameTrack
+import app.mikeneko.player.NowPlaying
 import app.mikeneko.player.PlayerHolder
+import app.mikeneko.player.SettingsPage
+import app.mikeneko.settings.AppLocale
+import app.mikeneko.ui.components.Capsule
+import app.mikeneko.ui.components.CommentsPreview
+import app.mikeneko.ui.components.CompactVideoRow
 import app.mikeneko.ui.components.GlassCircleButton
 import app.mikeneko.ui.components.Loading
+import app.mikeneko.ui.components.PLAYLIST_DRAWER_BAR
 import app.mikeneko.ui.components.ProgressWithSegments
+import app.mikeneko.ui.components.RotationMorph
+import app.mikeneko.ui.components.SeekPreview
+import app.mikeneko.ui.components.SegmentDraft
+import app.mikeneko.ui.components.SegmentMarker
+import app.mikeneko.ui.components.TapToSeekLayer
+import app.mikeneko.ui.components.VideoMenu
+import app.mikeneko.ui.components.VideoMorph
 import app.mikeneko.ui.components.VideoSurface
+import app.mikeneko.ui.components.ambientSupported
+import app.mikeneko.ui.components.linkedText
+import app.mikeneko.ui.glass.Backdrop
 import app.mikeneko.ui.glass.backdropSource
 import app.mikeneko.ui.glass.rememberBackdrop
 import app.mikeneko.ui.icons.MkIcons
+import app.mikeneko.ui.theme.GlassTextShadow
 import app.mikeneko.ui.theme.Pelage
+import app.mikeneko.ui.theme.Rounded
+import app.mikeneko.ui.theme.clay
+import app.mikeneko.ui.theme.jellyClickable
+import app.mikeneko.ui.theme.statusBarSpace
+import app.mikeneko.ui.theme.statusBarSpacePadding
+import coil3.compose.AsyncImage
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
-/** Le lecteur vidéo : boutons en verre posés sur la vidéo, SponsorBlock, dislikes, chapitres. */
-
-/** Les commandes sur la vidéo apparaissent et s'effacent en douceur (adouci, plus lent à partir). */
-private val ControlsFadeIn = fadeIn(tween(340, easing = FastOutSlowInEasing))
-private val ControlsFadeOut = fadeOut(tween(480, easing = FastOutSlowInEasing))
+// Le lecteur vidéo : boutons en verre posés sur la vidéo, SponsorBlock, dislikes, chapitres.
 
 /** Sous le titre : l'avatar et le nom de la chaîne (vers sa page), et « S'abonner » juste à droite. */
 @Composable
@@ -294,23 +273,23 @@ fun PlayerContent(onMinimize: () -> Unit, onDownload: (String) -> Unit, onRadio:
                 scaleY = shrink
             },
     ) {
-    // Mode ambiant : la vidéo floutée et agrandie déborde derrière le lecteur
-    if (ambient && ambientSupported && now?.audioOnly == false) {
-        AmbientGlow(video, Modifier.offset { IntOffset(0, if (landscape) 0 else -scroll.value) })
-    }
+        // Mode ambiant : la vidéo floutée et agrandie déborde derrière le lecteur
+        if (ambient && ambientSupported && now?.audioOnly == false) {
+            AmbientGlow(video, Modifier.offset { IntOffset(0, if (landscape) 0 else -scroll.value) })
+        }
 
-    // En paysage (2.0.0) : la vidéo et ses commandes à gauche, tout le reste à droite, qui défile.
-    // Sortir du plein écran en tenant le téléphone en paysage mène ici (plus de retour forcé en portrait).
-    val header: @Composable () -> Unit = {
+        // En paysage (2.0.0) : la vidéo et ses commandes à gauche, tout le reste à droite, qui défile.
+        // Sortir du plein écran en tenant le téléphone en paysage mène ici (plus de retour forcé en portrait).
+        val header: @Composable () -> Unit = {
             Row(Modifier.fillMaxWidth().then(pullToMinimize).padding(horizontal = 8.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(44.dp).clip(CircleShape).clickable(role = Role.Button, onClick = onMinimize), contentAlignment = Alignment.Center) {
                     Icon(MkIcons.ChevronDown, stringResource(R.string.player_minimize), tint = Pelage.Texte, modifier = Modifier.size(26.dp))
                 }
-                Text(stringResource(R.string.now_playing), Modifier.weight(1f), color = Color(0xFFCFC6BD), fontSize = 14.sp, fontWeight = FontWeight.Bold, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                Text(stringResource(R.string.now_playing), Modifier.weight(1f), color = Color(0xFFCFC6BD), fontSize = 14.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
                 Box(Modifier.size(44.dp))
             }
-    }
-    val videoArea: @Composable (Modifier, androidx.compose.ui.graphics.Shape) -> Unit = { area, shape ->
+        }
+        val videoArea: @Composable (Modifier, Shape) -> Unit = { area, shape ->
             DisposableEffect(Unit) { onDispose { VideoMorph.playerBounds = null } }
             val screen = LocalWindowInfo.current.containerSize
             Box(
@@ -382,23 +361,36 @@ fun PlayerContent(onMinimize: () -> Unit, onDownload: (String) -> Unit, onRadio:
                     exit = ControlsFadeOut,
                 ) {
                     Box(Modifier.fillMaxSize()) {
-                        TransportControls(
-                            video, wantsToPlay, waiting = loading || buffering, hasNext = now?.related?.isNotEmpty() == true,
-                            playSize = 64.dp, skipSize = 46.dp, spacing = 26.dp, modifier = Modifier.align(Alignment.Center),
-                        ) { poke++ }
+                        // Les boutons du centre restent au milieu de la vidéo, et remontent seulement de ce
+                        // qu'il faut pour ne pas toucher la rangée du bas : en portrait (vidéo de ~200 dp de
+                        // haut), « suivant » collait le bouton des réglages
+                        val density = LocalDensity.current
+                        var videoHeight by remember { mutableStateOf(0.dp) }
+                        var bottomBar by remember { mutableStateOf(0.dp) }
+                        val playSize = 64.dp
+                        val lift = (videoHeight / 2 + playSize / 2 + 6.dp - (videoHeight - bottomBar)).coerceAtLeast(0.dp)
+                        Box(
+                            Modifier.fillMaxSize().onSizeChanged { videoHeight = with(density) { it.height.toDp() } }.offset(y = -lift),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            TransportControls(
+                                video, wantsToPlay, waiting = loading || buffering, hasNext = now?.related?.isNotEmpty() == true,
+                                playSize = playSize, skipSize = 46.dp, spacing = 26.dp,
+                            ) { poke++ }
+                        }
                         AutoplaySwitch(Modifier.align(Alignment.TopEnd).padding(12.dp)) { poke++ }
-                    // En paysage, pas de ligne « Now playing » au-dessus : la flèche pour réduire est ici
-                    if (landscape) {
-                        GlassCircleButton(video, MkIcons.ChevronDown, stringResource(R.string.player_minimize), Modifier.align(Alignment.TopStart).padding(12.dp), size = 44.dp, onClick = onMinimize)
-                    }
+                        // En paysage, pas de ligne « Now playing » au-dessus : la flèche pour réduire est ici
+                        if (landscape) {
+                            GlassCircleButton(video, MkIcons.ChevronDown, stringResource(R.string.player_minimize), Modifier.align(Alignment.TopStart).padding(12.dp), size = 44.dp, onClick = onMinimize)
+                        }
                         // En bas de la vidéo (2.0.1, comme YouTube) : le temps à gauche, les boutons à droite,
                         // et dessous la barre de progression (sponsors, aperçu au glissé)
                         val shown = now
-                        Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(start = 14.dp, end = 10.dp, bottom = 2.dp)) {
+                        Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().onSizeChanged { bottomBar = with(density) { it.height.toDp() } }.padding(start = 14.dp, end = 10.dp, bottom = 2.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 if (shown != null && !shown.live) {
                                     Text(
-                                        "${formatDuration(progress.shownPosition(scrubbing) / 1000).ifEmpty { "0:00" }} / ${formatDuration(progress.duration / 1000).ifEmpty { "0:00" }}",
+                                        "${formatClock(progress.shownPosition(scrubbing))} / ${formatClock(progress.duration)}",
                                         style = TextStyle(fontFamily = Rounded, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold, shadow = GlassTextShadow),
                                     )
                                 }
@@ -427,8 +419,8 @@ fun PlayerContent(onMinimize: () -> Unit, onDownload: (String) -> Unit, onRadio:
                     }
                 }
             }
-    }
-    val details: @Composable () -> Unit = details@{
+        }
+        val details: @Composable () -> Unit = details@{
             val info = now ?: return@details
             val segments = sponsorFractions(info, progress.duration)
 
@@ -514,7 +506,7 @@ fun PlayerContent(onMinimize: () -> Unit, onDownload: (String) -> Unit, onRadio:
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
                             Text(
-                                formatDuration(chapter.startMs / 1000).ifEmpty { "0:00" },
+                                formatClock(chapter.startMs),
                                 Modifier.clip(RoundedCornerShape(8.dp)).background(Pelage.Creme).padding(horizontal = 8.dp, vertical = 4.dp),
                                 color = if (sponsor) Pelage.DoreFonce else Pelage.Encre,
                                 fontSize = 12.sp,
@@ -548,25 +540,25 @@ fun PlayerContent(onMinimize: () -> Unit, onDownload: (String) -> Unit, onRadio:
                 val playlist by PlayerHolder.videoPlaylist.collectAsState()
                 if (playlist.any { sameTrack(it.url, info.url) }) Spacer(Modifier.height(PLAYLIST_DRAWER_BAR + 12.dp))
             }
-    }
-    if (landscape) {
-        Row(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))) {
-            // Pas de ligne « Now playing » en paysage (elle prenait trop de place) : la vidéo seule, centrée
-            // sur toute la hauteur de l'écran (la marge de la barre d'état n'est que pour la colonne d'infos).
-            // Glisser la vidéo vers le bas la réduit en mini-lecteur, comme la ligne « Now playing » en portrait.
-            // Au-dessus de la colonne d'infos pendant le zoom du retour du plein écran
-            Column(Modifier.weight(0.6f).fillMaxHeight().zIndex(if (RotationMorph.running) 1f else 0f), verticalArrangement = Arrangement.Center) {
-                videoArea(Modifier.fillMaxWidth().padding(start = 8.dp, end = 4.dp).then(pullToMinimize), RoundedCornerShape(16.dp))
+        }
+        if (landscape) {
+            Row(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))) {
+                // Pas de ligne « Now playing » en paysage (elle prenait trop de place) : la vidéo seule, centrée
+                // sur toute la hauteur de l'écran (la marge de la barre d'état n'est que pour la colonne d'infos).
+                // Glisser la vidéo vers le bas la réduit en mini-lecteur, comme la ligne « Now playing » en portrait.
+                // Au-dessus de la colonne d'infos pendant le zoom du retour du plein écran
+                Column(Modifier.weight(0.6f).fillMaxHeight().zIndex(if (RotationMorph.running) 1f else 0f), verticalArrangement = Arrangement.Center) {
+                    videoArea(Modifier.fillMaxWidth().padding(start = 8.dp, end = 4.dp).then(pullToMinimize), RoundedCornerShape(16.dp))
+                }
+                Column(Modifier.weight(0.4f).fillMaxHeight().verticalScroll(scroll).statusBarSpacePadding().padding(bottom = 48.dp)) { details() }
             }
-            Column(Modifier.weight(0.4f).fillMaxHeight().verticalScroll(scroll).statusBarSpacePadding().padding(bottom = 48.dp)) { details() }
+        } else {
+            Column(Modifier.fillMaxSize().verticalScroll(scroll).statusBarSpacePadding().padding(bottom = 48.dp)) {
+                header()
+                videoArea(Modifier.fillMaxWidth(), RectangleShape)
+                details()
+            }
         }
-    } else {
-        Column(Modifier.fillMaxSize().verticalScroll(scroll).statusBarSpacePadding().padding(bottom = 48.dp)) {
-            header()
-            videoArea(Modifier.fillMaxWidth(), androidx.compose.ui.graphics.RectangleShape)
-            details()
-        }
-    }
     }
 }
 
@@ -580,394 +572,6 @@ private fun WhiteAction(icon: ImageVector, label: String, onClick: () -> Unit) {
         Icon(icon, null, tint = Pelage.Encre, modifier = Modifier.size(20.dp))
         Text(label, color = Pelage.Encre, fontSize = 14.sp, fontWeight = FontWeight.Bold)
     }
-}
-
-/** Position / durée du lecteur partagé, rafraîchies 4 fois par seconde. */
-@Stable
-class PlaybackProgress {
-    var position by mutableLongStateOf(0L)
-    var duration by mutableLongStateOf(0L)
-    var buffered by mutableLongStateOf(0L)
-
-    /** Ce qui est déjà chargé, en fraction de la durée. */
-    val bufferedFraction: Float
-        get() = if (duration > 0) (buffered.toFloat() / duration).coerceIn(0f, 1f) else 0f
-
-    val fraction: Float
-        get() = if (duration > 0) (position.toFloat() / duration).coerceIn(0f, 1f) else 0f
-
-    /** Le temps à afficher : celui visé pendant un glissé, sinon la position réelle. */
-    fun shownPosition(scrub: Float?): Long = scrub?.let { (it * duration).toLong() } ?: position
-
-    fun seekTo(fraction: Float) {
-        val target = (fraction * duration).toLong()
-        PlayerHolder.seekTo(target)
-        position = target
-    }
-}
-
-@Composable
-fun rememberPlaybackProgress(): PlaybackProgress {
-    // Partir de la vraie position (sinon « 0:00 » s'affiche une image en ouvrant le lecteur)
-    val progress = remember {
-        PlaybackProgress().apply {
-            val (p, d) = PlayerHolder.progress()
-            position = p
-            duration = d
-        }
-    }
-    LaunchedEffect(progress) {
-        while (true) {
-            val (position, duration) = PlayerHolder.progress()
-            progress.position = position
-            progress.duration = duration
-            progress.buffered = PlayerHolder.bufferedPosition()
-            delay(250)
-        }
-    }
-    return progress
-}
-
-/** Les segments sautés automatiquement, en fractions de la durée (pour la barre de progression). */
-private fun sponsorFractions(info: NowPlaying, duration: Long): List<Pair<Float, Float>> =
-    if (duration <= 0) emptyList()
-    else info.segments
-        .filter { it.category in AppSettings.skipCategories.value }
-        .map { it.startMs.toFloat() / duration to it.endMs.toFloat() / duration }
-
-/**
- * Le plein écran, version classique : titre en haut, reculer / lecture / avancer au centre,
- * barre de progression et temps en bas. Un tap affiche ou masque les commandes ; elles se
- * masquent seules après quelques secondes de lecture (jamais en pause ni pendant un glissé).
- */
-@Composable
-fun FullscreenPlayer(onExit: () -> Unit) {
-    val now by PlayerHolder.nowPlaying.collectAsState()
-    val playing by PlayerHolder.isPlaying.collectAsState()
-    val loading by PlayerHolder.loading.collectAsState()
-    val buffering by PlayerHolder.buffering.collectAsState()
-    val wantsToPlay by PlayerHolder.playRequested.collectAsState()
-    val progress = rememberPlaybackProgress()
-    val video = rememberBackdrop()
-    // Arrivé en tournant le téléphone : les commandes restent cachées pendant que la vidéo pivote
-    var visible by remember { mutableStateOf(!RotationMorph.running) }
-    var scrubbing by remember { mutableStateOf<Float?>(null) } // position visée pendant un glissé
-    var poke by remember { mutableIntStateOf(0) } // chaque interaction relance le minuteur
-
-    val settings by PlayerHolder.settingsPage.collectAsState()
-    val caption by PlayerHolder.caption.collectAsState()
-    val context = LocalContext.current
-
-    LaunchedEffect(visible, playing, scrubbing, poke, settings) {
-        if (visible && playing && scrubbing == null && settings == null) {
-            delay(3_500)
-            visible = false
-        }
-    }
-
-    fun act(block: () -> Unit) {
-        block()
-        poke++
-    }
-
-    val info = now
-    val live = info?.live == true
-    val waiting = loading || buffering
-
-    // « À suivre » : glisser vers le haut sur la vidéo sort le panneau des suggestions
-    val suggestions = rememberSuggestionsState()
-    val suggestionsScope = rememberCoroutineScope()
-    val suggestionsShown by remember { derivedStateOf { suggestions.shown } }
-    val related = info?.related.orEmpty()
-    val density = LocalDensity.current
-    val sheetPx = with(density) { SuggestionsHeight.toPx() }
-    val fastPx = with(density) { 700.dp.toPx() }
-    LaunchedEffect(suggestionsShown) { if (suggestionsShown) visible = false }
-    BackHandler(enabled = suggestionsShown) { suggestionsScope.launch { suggestions.close() } }
-
-    Box(
-        Modifier
-            .fillMaxSize()
-            .background(Color.Black)
-            .suggestionsDrag(suggestions, enabled = settings == null && related.isNotEmpty(), heightPx = sheetPx, fastPx = fastPx, scope = suggestionsScope),
-    ) {
-        // Sous-titres : remontés au-dessus de la barre de progression quand les commandes sont là
-        val captionLift by animateFloatAsState(if (visible) 0.2f else 0f, tween(250), label = "sous-titres")
-        // Arrivée en tournant le téléphone : la vidéo pivote depuis sa place du portrait (RotationMorph)
-        Box(Modifier.fillMaxSize().graphicsLayer { with(RotationMorph) { fullscreenVideo() } }.backdropSource(video)) {
-            VideoSurface(Modifier.fillMaxSize(), captionLift = captionLift)
-        }
-
-        // Toute la surface : un tap montre / cache les commandes, un double tap recule / avance de 10 s
-        TapToSeekLayer(
-            controlsShown = visible,
-            canSeek = info != null && !live,
-            onToggleControls = { act { visible = !visible } },
-            onSeek = { poke++ },
-        )
-
-        AnimatedVisibility(waiting && !visible, Modifier.align(Alignment.Center), enter = ControlsFadeIn, exit = ControlsFadeOut) {
-            Loading()
-        }
-
-        AnimatedVisibility(
-            visible = visible,
-            modifier = Modifier.fillMaxSize(),
-            enter = ControlsFadeIn,
-            exit = ControlsFadeOut,
-        ) {
-            Box(Modifier.fillMaxSize()) {
-                // Voiles sombres pour lire le texte sur n'importe quelle vidéo
-                Box(
-                    Modifier.align(Alignment.TopCenter).fillMaxWidth().height(120.dp)
-                        .background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.6f), Color.Transparent))),
-                )
-                Box(
-                    Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(150.dp)
-                        .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f)))),
-                )
-
-                // Haut : titre et chaîne, sous-titres et réglages
-                Row(
-                    Modifier
-                        .align(Alignment.TopStart)
-                        .fillMaxWidth()
-                        .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top))
-                        .padding(horizontal = 24.dp, vertical = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        info?.title.orEmpty(),
-                        style = TextStyle(fontFamily = Rounded, color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, shadow = GlassTextShadow),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(
-                        info?.channel.orEmpty(),
-                        style = TextStyle(fontFamily = Rounded, color = Color(0xFFE3DAD2), fontSize = 13.sp, shadow = GlassTextShadow),
-                        maxLines = 1,
-                    )
-                }
-                if (!live) {
-                    AutoplaySwitch { act { } }
-                    Spacer(Modifier.width(12.dp))
-                    CaptionsButton(video, caption != null) {
-                        act { if (!PlayerHolder.toggleCaptions()) Toast.makeText(context, context.getString(R.string.no_captions), Toast.LENGTH_SHORT).show() }
-                    }
-                    Spacer(Modifier.width(10.dp))
-                }
-                GlassCircleButton(video, MkIcons.Gear, stringResource(R.string.video_settings), size = 44.dp) { act { PlayerHolder.settingsPage.value = SettingsPage.Menu } }
-                }
-
-                // Centre : vidéo précédente, lecture/pause, vidéo suivante
-                // (reculer / avancer de 10 s se fait au double tap sur la vidéo)
-                TransportControls(
-                    video, wantsToPlay, waiting, hasNext = info?.related?.isNotEmpty() == true,
-                    playSize = 76.dp, skipSize = 58.dp, spacing = 40.dp, modifier = Modifier.align(Alignment.Center),
-                ) { poke++ }
-
-                // Bas : barre de progression, temps, sortie du plein écran
-                Column(
-                    Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
-                        .padding(start = 24.dp, end = 24.dp, bottom = 12.dp),
-                ) {
-                    if (!live && info != null) {
-                        ProgressWithSegments(
-                            progress = progress.fraction,
-                            segments = sponsorFractions(info, progress.duration),
-                            buffered = progress.bufferedFraction,
-                            preview = { f -> SeekPreview(info.previewFrames, (f * progress.duration).toLong()) },
-                            onSeek = { f -> act { progress.seekTo(f) } },
-                            onScrub = { scrubbing = it; poke++ },
-                        )
-                    }
-                    // Le temps à gauche, la sortie à droite, « Up next » au milieu de l'écran (sous les
-                    // commandes), et pas au milieu de la place qui reste entre les deux
-                    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        if (live) {
-                            Tag(stringResource(R.string.live_badge), Modifier.align(Alignment.CenterStart), background = Pelage.Roux)
-                        } else {
-                            Text(
-                                "${formatDuration(progress.shownPosition(scrubbing) / 1000).ifEmpty { "0:00" }} / ${formatDuration(progress.duration / 1000).ifEmpty { "0:00" }}",
-                                Modifier.align(Alignment.CenterStart),
-                                style = TextStyle(fontFamily = Rounded, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold, shadow = GlassTextShadow),
-                            )
-                        }
-                        if (related.isNotEmpty()) {
-                            // Les marges de l'encoche ne sont pas les mêmes des deux côtés : on recentre sur l'écran
-                            val sides = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
-                            val density = LocalDensity.current
-                            val layoutDirection = LocalLayoutDirection.current
-                            val shift = (sides.getRight(density, layoutDirection) - sides.getLeft(density, layoutDirection)) / 2
-                            Box(Modifier.offset { IntOffset(shift, 0) }) {
-                                UpNextHint(video) { suggestionsScope.launch { suggestions.open() } }
-                            }
-                        }
-                        GlassCircleButton(video, MkIcons.ExitFullscreen, stringResource(R.string.exit_fullscreen), size = 46.dp, modifier = Modifier.align(Alignment.CenterEnd), onClick = onExit)
-                    }
-                }
-            }
-        }
-
-        SuggestionsSheet(
-            suggestions,
-            video,
-            related,
-            onPick = { picked ->
-                suggestionsScope.launch { suggestions.close() }
-                suggestionsScope.launch {
-                    runCatching { PlayerHolder.play(context, picked.url, audioOnly = false) }
-                        .onFailure { Toast.makeText(context, context.getString(R.string.error_play_video, it.message.orEmpty()), Toast.LENGTH_SHORT).show() }
-                }
-            },
-            onDismiss = { suggestionsScope.launch { suggestions.close() } },
-        )
-
-        PlayerSettingsSheet(video)
-    }
-}
-
-/** Petite capsule « À suivre ⌃ » en bas du plein écran : ouvre le panneau (comme le glissé vers le haut). */
-@Composable
-private fun UpNextHint(backdrop: Backdrop, onClick: () -> Unit) {
-    LiquidGlass(
-        backdrop = backdrop,
-        modifier = Modifier.height(36.dp),
-        cornerRadius = 18.dp,
-        bezel = 10.dp,
-        refraction = 10.dp,
-        tint = Color(0x40100D0B),
-        onClick = onClick,
-    ) {
-        Row(Modifier.align(Alignment.Center).padding(horizontal = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(MkIcons.ChevronDown, null, tint = Color.White, modifier = Modifier.size(18.dp).rotate(180f))
-            Spacer(Modifier.width(6.dp))
-            Text(
-                stringResource(R.string.up_next),
-                style = TextStyle(fontFamily = Rounded, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold, shadow = GlassTextShadow),
-            )
-        }
-    }
-}
-
-/**
- * Le centre des commandes posées sur la vidéo : vidéo précédente, lecture / pause, vidéo suivante.
- * Suivante = la première suggestion ; précédente = la vidéo regardée juste avant.
- * [onInteract] est appelé à chaque appui (pour relancer le minuteur qui masque les commandes).
- */
-@Composable
-private fun TransportControls(
-    backdrop: Backdrop,
-    wantsToPlay: Boolean,
-    waiting: Boolean,
-    hasNext: Boolean,
-    playSize: Dp,
-    skipSize: Dp,
-    spacing: Dp,
-    modifier: Modifier = Modifier,
-    onInteract: () -> Unit,
-) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val history by PlayerHolder.videoHistory.collectAsState()
-
-    fun switchVideo(load: suspend (Context) -> Unit) {
-        onInteract()
-        scope.launch {
-            runCatching { load(context) }
-                .onFailure { Toast.makeText(context, context.getString(R.string.error_play_video, it.message.orEmpty()), Toast.LENGTH_SHORT).show() }
-        }
-    }
-
-    Row(modifier, horizontalArrangement = Arrangement.spacedBy(spacing), verticalAlignment = Alignment.CenterVertically) {
-        GlassCircleButton(backdrop, MkIcons.Previous, stringResource(R.string.video_previous), size = skipSize, enabled = history.isNotEmpty()) {
-            switchVideo { PlayerHolder.previousVideo(it) }
-        }
-        PlayPauseButton(backdrop, wantsToPlay, waiting, size = playSize) {
-            PlayerHolder.togglePlay()
-            onInteract()
-        }
-        GlassCircleButton(backdrop, MkIcons.Next, stringResource(R.string.video_next), size = skipSize, enabled = hasNext) {
-            switchVideo { PlayerHolder.nextVideo(it) }
-        }
-    }
-}
-
-/**
- * Lecture / pause. L'icône suit ce qui est demandé ([wantsToPlay]), même pendant un chargement
- * (changement de vidéo, saut) : le bouton reste là, entouré d'un anneau qui tourne.
- */
-@Composable
-private fun PlayPauseButton(backdrop: Backdrop, wantsToPlay: Boolean, waiting: Boolean, size: Dp, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    Box(modifier.size(size + 14.dp), contentAlignment = Alignment.Center) {
-        GlassCircleButton(
-            backdrop,
-            if (wantsToPlay) MkIcons.Pause else MkIcons.Play,
-            stringResource(if (wantsToPlay) R.string.pause else R.string.play),
-            size = size,
-            onClick = onClick,
-        )
-        androidx.compose.animation.AnimatedVisibility(waiting, enter = fadeIn(tween(150)), exit = fadeOut(tween(250))) {
-            CircularProgressIndicator(
-                Modifier.size(size + 14.dp),
-                color = Pelage.Roux,
-                strokeWidth = 3.dp,
-                trackColor = Color.White.copy(alpha = 0.15f),
-            )
-        }
-    }
-}
-
-/**
- * L'interrupteur « Lecture automatique » sur la vidéo (comme celui de YouTube) : une pilule avec un
- * rond qui glisse, orange et ▶ quand c'est activé, sombre et ⏸ sinon. [onTouched] : garder les
- * commandes affichées.
- */
-@Composable
-private fun AutoplaySwitch(modifier: Modifier = Modifier, onTouched: () -> Unit) {
-    val context = LocalContext.current
-    val on by PlayerHolder.autoplay.collectAsState()
-    val knob by animateDpAsState(if (on) 22.dp else 0.dp, spring(dampingRatio = 0.6f, stiffness = 500f), label = "lecture auto")
-    val track by animateColorAsState(if (on) Pelage.Roux.copy(alpha = 0.9f) else Color.Black.copy(alpha = 0.45f), label = "piste")
-    Box(
-        modifier
-            .size(50.dp, 28.dp)
-            .clip(CircleShape)
-            .background(track)
-            .border(1.5.dp, Color.White.copy(alpha = 0.35f), CircleShape)
-            .clickable(role = Role.Switch, onClickLabel = stringResource(R.string.autoplay)) {
-                PlayerHolder.setAutoplay(!on)
-                Toast.makeText(context, context.getString(if (!on) R.string.autoplay_on else R.string.autoplay_off), Toast.LENGTH_SHORT).show()
-                onTouched()
-            }
-            .semantics { stateDescription = context.getString(if (on) R.string.autoplay_on else R.string.autoplay_off) }
-            .padding(3.dp),
-    ) {
-        Box(
-            Modifier.offset(x = knob).size(22.dp).clip(CircleShape).background(Color.White),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(if (on) MkIcons.Play else MkIcons.Pause, null, tint = Pelage.Encre, modifier = Modifier.size(13.dp))
-        }
-    }
-}
-
-/** Bouton CC : orange quand les sous-titres sont affichés. */
-@Composable
-private fun CaptionsButton(backdrop: Backdrop, on: Boolean, onClick: () -> Unit) {
-    GlassCircleButton(
-        backdrop,
-        MkIcons.Captions,
-        stringResource(if (on) R.string.captions_hide else R.string.captions_show),
-        size = 44.dp,
-        tint = if (on) Pelage.Roux.copy(alpha = 0.7f) else Color(0x40100D0B),
-        iconTint = if (on) Pelage.Encre else Color.White,
-        onClick = onClick,
-    )
 }
 
 /**

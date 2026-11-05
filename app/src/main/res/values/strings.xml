@@ -2,16 +2,8 @@
 <resources>
     <string name="app_name" translatable="false">Mikeneko</string>
     <string name="add">Add</string>
-    <string name="all_channels">Show all channels</string>
     <string name="ambient_mode">Ambient mode</string>
     <string name="ambient_mode_text">A glow in the video\'s colors</string>
-    <string name="api_comments_disabled">Comments are turned off on this video</string>
-    <string name="api_expired">Google session expired, try again</string>
-    <string name="api_forbidden">YouTube refused this comment</string>
-    <string name="api_http">YouTube answered %1$d</string>
-    <string name="api_quota">YouTube quota used up for today, try again tomorrow</string>
-    <string name="api_rejected">Comment rejected by YouTube</string>
-    <string name="api_scope">Google didn\'t allow commenting (add the youtube.force-ssl scope, see README)</string>
     <string name="artwork">Artwork</string>
     <string name="back">Back</string>
     <string name="block_channel">Don\'t recommend “%1$s”</string>
@@ -36,9 +28,6 @@
     <string name="channel_blocked">“%1$s” won\'t be recommended</string>
     <string name="chapters">Chapters</string>
     <string name="close_mini_player">Close mini player</string>
-    <string name="comment_hint">Add a comment…</string>
-    <string name="comment_need_google">Sign in with Google to comment</string>
-    <string name="comment_posted">Comment posted</string>
     <string name="comments">Comments</string>
     <string name="comments_be_first">No comments yet. Be the first!</string>
     <string name="comments_close">Close comments</string>
@@ -57,7 +46,6 @@
     <string name="count_thousands">%1$sK</string>
     <string name="description_less">Less</string>
     <string name="description_more">More</string>
-    <string name="disconnect">Sign out</string>
     <string name="dislike_ryd">Dislikes (Return YouTube Dislike)</string>
     <string name="download">Download</string>
     <string name="download_done">%1$s · done</string>
@@ -85,25 +73,17 @@
     <string name="favorite_added">Added to your favorites</string>
     <string name="favorite_remove">Remove from favorites</string>
     <string name="favorite_removed">Removed from your favorites</string>
-    <string name="filter_all">All</string>
-    <string name="filter_unwatched">Unwatched</string>
     <string name="format_video">Video</string>
     <string name="forward_10">Forward 10 seconds</string>
     <string name="seek_forward_amount">+%1$ds</string>
     <string name="seek_back_amount">−%1$ds</string>
     <string name="fullscreen">Fullscreen</string>
-    <string name="google_connected">Google account connected</string>
-    <string name="google_no_access">Google didn\'t grant access</string>
-    <string name="google_refused">Google refused the sign-in (is the OAuth client set up? see README)</string>
-    <string name="google_sign_in">Sign in with Google</string>
     <string name="group_earlier">Earlier</string>
     <string name="group_today">Today</string>
     <string name="group_week">This week</string>
     <string name="hearted">Liked by the creator</string>
-    <string name="just_now">just now</string>
     <string name="like">Like</string>
     <string name="live_badge">LIVE</string>
-    <string name="login_cancelled">Sign-in cancelled</string>
     <string name="loop">Loop</string>
     <string name="mark_category">What is it?</string>
     <string name="mark_close">Close marking</string>
@@ -136,7 +116,6 @@
     <string name="now_playing">Now playing</string>
     <string name="off">Off</string>
     <string name="off_plural">Off</string>
-    <string name="only_channel">Only %1$s</string>
     <string name="open">Open</string>
     <string name="pause">Pause</string>
     <string name="pinned"> Pinned</string>
@@ -148,8 +127,6 @@
     <string name="playback_speed">Playback speed</string>
     <string name="player_minimize">Minimize player</string>
     <string name="playing_now">Playing</string>
-    <string name="post_failed">Couldn\'t post</string>
-    <string name="publish">Post</string>
     <string name="published_on">Published on %1$s</string>
     <string name="quality">Quality</string>
     <string name="quality_auto">Auto</string>
@@ -172,7 +149,6 @@
     <string name="radio">Music</string>
     <string name="radio_favorite_badge">Favorite</string>
     <string name="radio_favorites">Your favorites</string>
-    <string name="radio_live">Live</string>
     <string name="radio_live_suffix">%1$s · live</string>
     <string name="radio_loading_suffix">%1$s · loading…</string>
     <string name="radio_mode">MUSIC</string>
@@ -180,14 +156,11 @@
     <string name="video_next">Next video</string>
     <string name="video_previous">Previous video</string>
     <string name="radio_none">No radio</string>
-    <string name="radio_none_text">No live streams found for now.</string>
     <string name="radio_pick">Pick some music</string>
     <string name="radio_previous">Previous</string>
     <string name="radio_screen_off">Keeps playing with the screen off</string>
     <string name="radio_station_failed">Can\'t start this station</string>
-    <string name="radio_subtitle">Mikeneko picks what\'s next, purring</string>
     <string name="radio_tap">Tap a track</string>
-    <string name="radio_title">Music</string>
     <string name="read_more">Read more</string>
     <string name="reason_surprise">A little surprise 🎲</string>
     <string name="reason_thread">One thing led to another, from “%1$s”</string>
@@ -195,11 +168,6 @@
     <string name="reason_watched">Because you watched “%1$s”</string>
     <string name="replies_hide">Hide replies</string>
     <string name="replies_more">More replies</string>
-    <string name="reply">Reply</string>
-    <string name="reply_cancel">Cancel reply</string>
-    <string name="reply_hint">Write your reply…</string>
-    <string name="reply_posted">Reply posted</string>
-    <string name="reply_to">Replying to %1$s</string>
     <string name="retry">Retry</string>
     <string name="rewind_10">Rewind 10 seconds</string>
     <string name="sb_err_duplicate">This segment is already marked</string>
@@ -288,18 +256,12 @@
     <string name="shorts_hide">Hide</string>
     <string name="settings_hide_status_bar">Hide the phone\'s status bar</string>
     <string name="settings_hide_status_bar_text">Time, battery and notifications. Swipe down from the top to see them for a moment.</string>
-    <string name="unsubscribe">Unsubscribe</string>
     <string name="unsubscribe_confirm">Sure? Tap again</string>
-    <string name="unsubscribed">Unsubscribed from %1$s</string>
     <string name="search_hint">Search…</string>
     <string name="seek_to">Seek to</string>
     <string name="selected">Selected</string>
     <string name="settings">Settings</string>
     <string name="settings_about_text">Free YouTube client, no ads. Free software under the GPL-3.0 license.</string>
-    <string name="settings_account_connected_text">Subscriptions synced, commenting enabled</string>
-    <string name="settings_account_disconnected">Not signed in</string>
-    <string name="settings_account_disconnected_text">Everything works without an account, except posting comments</string>
-    <string name="settings_account_go">Connect</string>
     <string name="settings_auto_pip">Automatic picture-in-picture</string>
     <string name="settings_auto_pip_text">The video keeps playing in a window when you leave the app</string>
     <string name="settings_blocked_channels">Blocked channels</string>
@@ -325,7 +287,6 @@
     <string name="settings_region_auto">Automatic (%1$s)</string>
     <string name="settings_region_text">Live streams, trends and search results from this country</string>
     <string name="settings_section_about">About</string>
-    <string name="settings_section_account">Google account</string>
     <string name="settings_section_foryou">For you and history</string>
     <string name="settings_section_language">Language</string>
     <string name="settings_section_playback">Playback</string>
@@ -338,7 +299,6 @@
     <string name="settings_sponsorblock_text">Segments flagged by the SponsorBlock community (also cut from downloads)</string>
     <string name="settings_version">Version %1$s</string>
     <string name="share">Share</string>
-    <string name="sign_in">Sign in</string>
     <string name="sleep_goodnight">Good night, Mikeneko</string>
     <string name="sleep_snooze">%1$d more minutes</string>
     <string name="sleep_stops_in">Playback will stop in %1$s</string>
@@ -353,25 +313,17 @@
     <string name="stable_volume">Stable volume</string>
     <string name="stable_volume_refused">Your phone doesn\'t allow the stable volume effect</string>
     <string name="stable_volume_text">Evens out parts that are too loud or too quiet (videos only)</string>
-    <string name="subs_card_import_text">Export them from Google Takeout (takeout.google.com › YouTube), NewPipe or FreeTube, then pick the file.</string>
-    <string name="subs_card_import_title">Import your subscriptions</string>
-    <string name="subs_card_text">Sign in with Google to sync your subscriptions, playlists and likes.</string>
-    <string name="subs_card_title">Bring your subscriptions</string>
     <string name="subs_empty">Nothing here</string>
     <string name="subs_empty_text">Mikeneko is napping while waiting for new videos.</string>
     <string name="subs_import_none">No subscriptions found in this file</string>
-    <string name="subs_import_without_account">or import them without an account</string>
     <string name="subs_none">No channels yet</string>
     <string name="subs_none_text">Import your subscriptions from NewPipe, FreeTube or Google Takeout in Settings › Backup.</string>
     <string name="subs_go_import">Import</string>
     <string name="settings_import_subs">Import subscriptions</string>
     <string name="settings_import_subs_text">From NewPipe, FreeTube or Google Takeout (takeout.google.com › YouTube). Nothing is erased.</string>
-    <string name="subs_sync_failed">Couldn\'t sync: %1$s</string>
-    <string name="subs_synced">Synced with your Google account</string>
     <string name="subs_title">Subscriptions</string>
     <string name="subtitles">Subtitles</string>
     <string name="subtitles_none_video">None for this video</string>
-    <string name="tab_downloads">Downloads</string>
     <string name="tab_home">Home</string>
     <string name="tab_radio">Music</string>
     <string name="tab_subscriptions">Subscriptions</string>
@@ -421,10 +373,6 @@
     <plurals name="subs_imported_count">
         <item quantity="one">%1$d subscription imported</item>
         <item quantity="other">%1$d subscriptions imported</item>
-    </plurals>
-    <plurals name="subs_synced_count">
-        <item quantity="one">%1$d subscription synced</item>
-        <item quantity="other">%1$d subscriptions synced</item>
     </plurals>
     <!-- Radio: real music player -->
     <string name="ambiance_lofi">Lofi</string>
@@ -499,7 +447,6 @@
     <string name="music_library_no_artists">No saved artists</string>
     <string name="music_library_no_artists_text">Tap Save on an artist page to keep them here.</string>
     <string name="music_library_hint">Save albums and artists from their page: they\'ll show up here.</string>
-    <string name="music_your_playlists">Your playlists</string>
     <string name="music_moods">Moods</string>
     <string name="radio_live_in">Live · %1$s</string>
     <string name="music_downloaded">Downloaded</string>
@@ -562,4 +509,10 @@
         <item quantity="one">%1$d track</item>
         <item quantity="other">%1$d tracks</item>
     </plurals>
+    <string name="all_channels">Show all channels</string>
+    <string name="filter_all">All</string>
+    <string name="filter_unwatched">Unwatched</string>
+    <string name="only_channel">Only %1$s</string>
+    <string name="unsubscribe">Unsubscribe</string>
+    <string name="unsubscribed">Unsubscribed from %1$s</string>
 </resources>

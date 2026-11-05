@@ -1,6 +1,7 @@
 package app.mikeneko.ui.glass
 
 import android.graphics.RuntimeShader
+import android.graphics.Shader
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.Animatable
@@ -8,16 +9,15 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.PressInteraction
-import androidx.compose.runtime.LaunchedEffect
-import kotlinx.coroutines.flow.collectLatest
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,6 +44,7 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.collectLatest
 
 /**
  * Le « derrière » que le verre réfracte : on enregistre le contenu d'un écran
@@ -133,7 +134,7 @@ fun LiquidGlass(
                             val glass = shader.effect(size.width, size.height, cornerRadius.toPx(), bezel.toPx(), refraction.toPx(), magnification)
                             val effect = if (frost > 0.dp) {
                                 // D'abord le flou, puis la réfraction des bords par-dessus
-                                val blur = android.graphics.RenderEffect.createBlurEffect(frost.toPx(), frost.toPx(), android.graphics.Shader.TileMode.CLAMP)
+                                val blur = android.graphics.RenderEffect.createBlurEffect(frost.toPx(), frost.toPx(), Shader.TileMode.CLAMP)
                                 android.graphics.RenderEffect.createChainEffect(glass, blur)
                             } else {
                                 glass
