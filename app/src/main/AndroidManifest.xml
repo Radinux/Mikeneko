@@ -10,6 +10,8 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <!-- Volume stable : effet audio (DynamicsProcessing) sur la session du lecteur -->
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <!-- Mises à jour depuis GitHub : Mikeneko installe sa nouvelle version (sans appui sur Android 12+) -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <application
         android:name=".MikenekoApp"
@@ -64,6 +66,11 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/fichiers" />
         </provider>
+
+        <!-- La réponse d'Android quand une mise à jour s'installe -->
+        <receiver
+            android:name=".update.UpdateReceiver"
+            android:exported="false" />
 
         <service
             android:name=".player.PlaybackService"

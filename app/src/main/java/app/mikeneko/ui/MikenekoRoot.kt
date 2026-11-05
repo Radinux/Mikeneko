@@ -276,6 +276,18 @@ fun MikenekoRoot(
         PlayerHolder.skipped.collect { toast(context.getString(R.string.sponsor_skipped)) }
     }
 
+    // Mises à jour depuis GitHub : une vérification par jour au lancement ; une nouvelle version se
+    // télécharge en fond et s'installe toute seule quand on quitte l'appli (voir AppUpdates)
+    LaunchedEffect(Unit) {
+        app.mikeneko.update.AppUpdates.checkIfDue(context)
+        app.mikeneko.update.AppUpdates.state.collect { update ->
+            if (update is app.mikeneko.update.AppUpdates.State.Ready) {
+                val key = if (app.mikeneko.update.AppUpdates.canInstall(context)) R.string.update_ready else R.string.update_ready_allow
+                toast(context.getString(key, update.release.version))
+            }
+        }
+    }
+
     val notifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
     LaunchedEffect(Unit) {
         if (Build.VERSION.SDK_INT >= 33) notifications.launch(Manifest.permission.POST_NOTIFICATIONS)

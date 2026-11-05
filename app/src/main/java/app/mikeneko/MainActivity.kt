@@ -175,6 +175,10 @@ class MainActivity : ComponentActivity() {
         if (!isChangingConfigurations) {
             PlayerHolder.pauseVideoInBackground()
             watchIdle()
+            // Une mise à jour téléchargée s'installe maintenant (elle ferme l'appli), sauf si une musique
+            // joue en fond (les vidéos viennent d'être mises en pause juste au-dessus)
+            val musicPlaying = PlayerHolder.nowPlaying.value?.audioOnly == true && PlayerHolder.isPlaying.value
+            app.mikeneko.update.AppUpdates.installIfReady(this, playing = musicPlaying)
         }
         controller?.let { MediaController.releaseFuture(it) }
         controller = null

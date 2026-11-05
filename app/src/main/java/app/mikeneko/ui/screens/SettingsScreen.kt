@@ -492,6 +492,7 @@ private fun AboutSection(context: Context) {
             Column(Modifier.padding(start = 14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text("Mikeneko · " + stringResource(R.string.settings_version, version), color = Pelage.Texte, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                 Text(stringResource(R.string.settings_about_text), color = Secondary, fontSize = 13.sp)
+                UpdateRow(context)
                 Text(stringResource(R.string.settings_credits), Modifier.padding(top = 8.dp), color = Pelage.Texte, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
                 CREDITS.forEach { (name, url) ->
                     Text(
@@ -502,6 +503,86 @@ private fun AboutSection(context: Context) {
                         fontWeight = FontWeight.Bold,
                     )
                 }
+            }
+        }
+    }
+}
+
+/**
+ * Les mises à jour depuis GitHub (voir AppUpdates) : l'état et un bouton (vérifier, autoriser
+ * l'installation, installer maintenant).
+ */
+@Composable
+private fun UpdateRow(context: Context) {
+    val updates = app.mikeneko.update.AppUpdates
+    val state by updates.state.collectAsState()
+    val uri = LocalUriHandler.current
+    // Revenir des réglages Android (« installer des applis inconnues ») : on relit le droit
+    var allowed by remember { mutableStateOf(updates.canInstall(context)) }
+    val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    androidx.compose.runtime.DisposableEffect(lifecycle) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) allowed = updates.canInstall(context)
+        }
+        lifecycle.lifecycle.addObserver(observer)
+        onDispose { lifecycle.lifecycle.removeObserver(observer) }
+    }
+    fun allowInstalls() {
+        runCatching {
+            context.startActivity(
+                android.content.Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, android.net.Uri.parse("package:${context.packageName}")),
+            )
+        }
+    }
+
+    val row: Triple<String, String?, (() -> Unit)?> = when (val s = state) {
+        is app.mikeneko.update.AppUpdates.State.Checking -> Triple(stringResource(R.string.update_checking), null, null)
+        is app.mikeneko.update.AppUpdates.State.Downloading ->
+            Triple(stringResource(R.string.update_downloading, s.release.version, (s.progress * 100).toInt()), null, null)
+        is app.mikeneko.update.AppUpdates.State.Ready ->
+            if (allowed) {
+                Triple(stringResource(R.string.update_ready_label, s.release.version), stringResource(R.string.update_install), { updates.install(context, s.file) })
+            } else {
+                Triple(stringResource(R.string.update_allow_label, s.release.version), stringResource(R.string.update_allow), ::allowInstalls)
+            }
+        is app.mikeneko.update.AppUpdates.State.Installing -> Triple(stringResource(R.string.update_installing), null, null)
+        is app.mikeneko.update.AppUpdates.State.UpToDate -> Triple(stringResource(R.string.update_up_to_date), stringResource(R.string.update_check), { updates.check(context) })
+        is app.mikeneko.update.AppUpdates.State.Failed -> Triple(stringResource(R.string.update_failed, s.message), stringResource(R.string.update_check), { updates.check(context) })
+        app.mikeneko.update.AppUpdates.State.Idle -> Triple(stringResource(R.string.update_idle), stringResource(R.string.update_check), { updates.check(context) })
+    }
+    val (label, action, onAction) = row
+    Column(Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(stringResource(R.string.update_title), color = Pelage.Texte, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
+        Text(label, color = Secondary, fontSize = 13.sp)
+        // Pas encore le droit d'installer : on le dit tout de suite (la mise à jour se fera sans appui ensuite)
+        if (!allowed && state !is app.mikeneko.update.AppUpdates.State.Ready) {
+            Text(
+                stringResource(R.string.update_allow_hint),
+                Modifier.clip(RoundedCornerShape(6.dp)).clickable(role = Role.Button) { allowInstalls() }.padding(vertical = 4.dp),
+                color = Pelage.RouxClair,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (action != null && onAction != null) {
+                Text(
+                    action,
+                    Modifier.clip(CircleShape).background(Pelage.Creme).clickable(role = Role.Button) { onAction() }.padding(horizontal = 14.dp, vertical = 9.dp),
+                    color = Pelage.Encre,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                )
+            }
+            val page = (state as? app.mikeneko.update.AppUpdates.State.Ready)?.release?.page
+            if (page != null) {
+                Text(
+                    stringResource(R.string.update_notes),
+                    Modifier.clip(CircleShape).border(1.5.dp, Pelage.RouxClair, CircleShape).clickable(role = Role.Button) { runCatching { uri.openUri(page) } }.padding(horizontal = 14.dp, vertical = 9.dp),
+                    color = Pelage.RouxClair,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                )
             }
         }
     }
