@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,18 +48,37 @@ import app.mikeneko.ui.theme.GlassTextShadow
 import app.mikeneko.ui.theme.Pelage
 import app.mikeneko.ui.theme.Rounded
 import app.mikeneko.update.AppUpdates
+import kotlinx.coroutines.delay
+
+/** Combien de temps la pilule reste affichée avant de partir toute seule. */
+private const val PILL_SHOWN_MS = 6_000L
+
+/**
+ * La version dont la pilule a été fermée (✕ ou temps écoulé) : gardée pour toute la session, sinon
+ * elle reviendrait à chaque retour du lecteur (où elle n'est pas posée).
+ */
+private val dismissedVersion = mutableStateOf<String?>(null)
 
 /**
  * Une mise à jour est téléchargée : une pilule en verre en haut de l'écran, « Mise à jour prête /
  * Mikeneko X » et « Installer » (installe tout de suite ; ou ouvre le réglage Android s'il faut encore autoriser
  * les installations). ✕ : plus tard (elle s'installera quand on quitte l'appli). Demandé le 05/11.
+ * Elle s'en va toute seule après [PILL_SHOWN_MS] (2.1.12 : elle cachait le haut de l'écran) ; la mise
+ * à jour reste dans Réglages › À propos, et s'installe quand on quitte l'appli.
  */
 @Composable
 fun UpdatePill(backdrop: Backdrop, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val state by AppUpdates.state.collectAsState()
     val ready = state as? AppUpdates.State.Ready
-    var dismissed by remember { mutableStateOf<String?>(null) }
+    var dismissed by dismissedVersion
+    val version = ready?.release?.version
+    LaunchedEffect(version) {
+        if (version != null && dismissed != version) {
+            delay(PILL_SHOWN_MS)
+            dismissed = version
+        }
+    }
     // La dernière version prête, gardée pour que la pilule reste remplie pendant qu'elle s'en va
     var shown by remember { mutableStateOf<AppUpdates.State.Ready?>(null) }
     if (ready != null) shown = ready
