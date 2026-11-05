@@ -560,7 +560,30 @@ object PlayerHolder {
         // Les plus nettes jusqu'à 320 px de large (au-delà, des planches lourdes pour une vignette)
         previewFrames = info.previewFrames.filter { it.frameWidth in 1..320 }.maxByOrNull { it.frameWidth }
             ?: info.previewFrames.minByOrNull { it.frameWidth },
+        isShort = !audioOnly && !live && isShort(info),
     )
+
+    /**
+     * Un short ? YouTube le dit (`isShortFormContent`), mais pas toujours selon le client utilisé :
+     * sinon, une vidéo en hauteur de 3 min au plus en est un aussi.
+     */
+    private fun isShort(info: StreamInfo): Boolean {
+        if (runCatching { info.isShortFormContent }.getOrDefault(false)) return true
+        if (info.duration !in 1..180) return false
+        val stream = (info.videoStreams + info.videoOnlyStreams).maxByOrNull { it.height } ?: return false
+        return stream.width in 1 until stream.height
+    }
+
+    /**
+     * La vidéo en cours s'avère être un short (reconnu une fois chargée) : elle passe en boucle et
+     * ne compte plus dans la reprise des vidéos, comme si elle avait été ouverte avec `short = true`.
+     */
+    fun becomeShort() {
+        if (playingShort || nowPlaying.value?.isShort != true) return
+        playingShort = true
+        positionOwner = null
+        setLoop(true)
+    }
 
     /** SponsorBlock et dislikes de la vidéo en cours (ignorés si une autre lecture a commencé entre-temps). */
     private suspend fun loadExtras(info: StreamInfo, mine: Int) {

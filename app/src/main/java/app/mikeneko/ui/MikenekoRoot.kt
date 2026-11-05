@@ -177,6 +177,16 @@ fun MikenekoRoot(
         }
     }
 
+    // Une vidéo ouverte dans le lecteur s'avère être un short une fois chargée (sa liste ne le disait
+    // pas : abonnements, « Pour toi »…) : on passe dans le lecteur Shorts
+    LaunchedEffect(now?.url, now?.isShort) {
+        val playing = now ?: return@LaunchedEffect
+        if (route == Route.Lecteur && playing.isShort && !fullscreen) {
+            Shorts.adopt(playing)
+            PlayerHolder.becomeShort()
+        }
+    }
+
     /** Quitter les Shorts : la lecture s'arrête (pas de mini-lecteur pour un short) et on revient d'où on venait. */
     fun closeShorts() {
         Shorts.end()

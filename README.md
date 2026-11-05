@@ -3,7 +3,7 @@
 Client YouTube libre pour Android, en Kotlin + Jetpack Compose : sans pubs, avec SponsorBlock,
 Return YouTube Dislike, lecteur de musique, téléchargements yt-dlp, mini-lecteur PiP et dock en liquid glass.
 
-**Version : 2.2.0** (publiée en release GitHub ; dernier APK partagé à la main : `Mikeneko-2.1.2.apk`).
+**Version : 2.2.1** (publiée en release GitHub ; dernier APK partagé à la main : `Mikeneko-2.1.2.apk`).
 La version est automatique : `app/version.properties` garde la version de la prochaine compilation
 release ; chaque `assembleRelease` / `installRelease` la prend puis prépare la suivante (dernier
 chiffre +1, `versionCode` +1). Nouvelle fonction : `minor` +1 et `patch=0` à la main. Pas de x.20 : là où on arriverait à x.20.0, c'est une version majeure ((x+1).0.0).
@@ -13,7 +13,7 @@ et `FIXES.md` (à faire / à vérifier).
 
 ## Nouveautés
 
-### 2.2.0
+### 2.2.0 → 2.2.1
 
 - **Lecteur Shorts.** Un short (onglet Shorts d'une chaîne, recherche, accueil, abonnements, lien
   `/shorts/`) s'ouvre en **plein écran, en hauteur**, et tourne en boucle. Glisser vers le haut / le
@@ -22,6 +22,9 @@ et `FIXES.md` (à faire / à vérifier).
   titre en bas, et à droite J'aime (pouce plein quand aimé), commentaires et partager ; un fin trait
   roux montre la progression. Retour (ou ⌄) : la lecture s'arrête et on revient d'où on venait. Pas
   de plein écran en tournant le téléphone, et un short ne prend pas de place dans la reprise des vidéos.
+- 2.2.1 : un short ouvert depuis les abonnements ou « Pour toi » s'ouvrait encore dans le lecteur
+  normal (ces listes ne savent pas que c'est un short) : il est maintenant reconnu une fois chargé
+  (YouTube le dit, ou vidéo en hauteur de 3 min au plus) et passe dans le lecteur Shorts.
 
 ### 2.1.8 → 2.1.12
 

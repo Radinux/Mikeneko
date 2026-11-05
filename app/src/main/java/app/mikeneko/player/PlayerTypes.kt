@@ -34,6 +34,8 @@ data class NowPlaying(
     val channelSubscribers: Long = -1,
     /** Les planches d'aperçu de YouTube (petites images à intervalles réguliers), pour la barre de lecture. */
     val previewFrames: Frameset? = null,
+    /** Un short (YouTube le dit, ou vidéo en hauteur de 3 min au plus) : il s'ouvre dans le lecteur Shorts. */
+    val isShort: Boolean = false,
 )
 
 /** Les pages du menu de réglages du lecteur (null = menu fermé). */

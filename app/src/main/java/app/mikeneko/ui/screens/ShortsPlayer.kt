@@ -60,6 +60,7 @@ import app.mikeneko.data.VideoItem
 import app.mikeneko.data.VideoLibrary
 import app.mikeneko.data.formatCount
 import app.mikeneko.data.sameTrack
+import app.mikeneko.player.NowPlaying
 import app.mikeneko.player.PlayerHolder
 import app.mikeneko.ui.components.GlassCircleButton
 import app.mikeneko.ui.components.Loading
@@ -123,6 +124,22 @@ object Shorts {
             Session(mutableStateListOf(VideoItem(url, "", "", null, isShort = true)), 0)
         }
         return true
+    }
+
+    /**
+     * La vidéo ouverte dans le lecteur normal s'avère être un short (sa liste ne le savait pas : flux
+     * des abonnements, « Pour toi »…) : la session commence avec elle, et les shorts connus de sa liste.
+     */
+    fun adopt(now: NowPlaying) {
+        if (session != null) return
+        val list = recent.firstOrNull { l -> l.any { sameTrack(it.url, now.url) } }.orEmpty()
+        val shorts = list.filter { it.isShort || sameTrack(it.url, now.url) }
+        val index = shorts.indexOfFirst { sameTrack(it.url, now.url) }
+        session = if (index >= 0) {
+            Session(mutableStateListOf<VideoItem>().apply { addAll(shorts) }, index)
+        } else {
+            Session(mutableStateListOf(VideoItem(now.url, now.title, now.channel, now.thumbnail, isShort = true)), 0)
+        }
     }
 
     fun end() {
