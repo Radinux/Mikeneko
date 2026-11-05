@@ -475,8 +475,9 @@
     <string name="update_allow">Autoriser</string>
     <string name="update_allow_hint">Autoriser Mikeneko à installer ses mises à jour (une fois, plus aucun appui ensuite)</string>
     <string name="update_notes">Nouveautés</string>
-    <string name="update_ready">Mikeneko %1$s téléchargée : elle s\'installe quand tu quittes l\'appli</string>
-    <string name="update_ready_allow">Mikeneko %1$s téléchargée : autorise les mises à jour dans Réglages › À propos</string>
+    <string name="update_pill">Mikeneko %1$s est prête</string>
+    <string name="update_now">Mettre à jour</string>
+    <string name="update_later">Plus tard</string>
     <string name="settings_section_backup">Sauvegarde</string>
     <string name="backup_export">Exporter dans un fichier</string>
     <string name="backup_export_text">Abonnements, playlists musique et vidéo, albums et artistes sauvegardés, radios favorites, À regarder plus tard et vidéos aimées, dans un fichier .xml.</string>

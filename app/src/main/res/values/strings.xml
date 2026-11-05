@@ -477,8 +477,9 @@
     <string name="update_allow">Allow</string>
     <string name="update_allow_hint">Allow Mikeneko to install its updates (once, no tap needed after that)</string>
     <string name="update_notes">What\'s new</string>
-    <string name="update_ready">Mikeneko %1$s downloaded: it installs when you leave the app</string>
-    <string name="update_ready_allow">Mikeneko %1$s downloaded: allow updates in Settings › About</string>
+    <string name="update_pill">Mikeneko %1$s is ready</string>
+    <string name="update_now">Update</string>
+    <string name="update_later">Later</string>
     <string name="backup_export">Export to a file</string>
     <string name="backup_export_text">Subscriptions, music and video playlists, saved albums and artists, favorite radios, Watch later and liked videos, in one .xml file.</string>
     <string name="backup_import">Import a file</string>

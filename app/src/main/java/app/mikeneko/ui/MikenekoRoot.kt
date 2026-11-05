@@ -22,6 +22,7 @@ import app.mikeneko.data.ChannelItem
 import app.mikeneko.ui.screens.onUserScroll
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.runtime.SideEffect
+import androidx.compose.foundation.layout.statusBarsPadding
 import app.mikeneko.ui.components.RotationMorph
 import android.view.Surface
 import androidx.compose.ui.platform.LocalView
@@ -278,15 +279,8 @@ fun MikenekoRoot(
 
     // Mises à jour depuis GitHub : une vérification par jour au lancement ; une nouvelle version se
     // télécharge en fond et s'installe toute seule quand on quitte l'appli (voir AppUpdates)
-    LaunchedEffect(Unit) {
-        app.mikeneko.update.AppUpdates.checkIfDue(context)
-        app.mikeneko.update.AppUpdates.state.collect { update ->
-            if (update is app.mikeneko.update.AppUpdates.State.Ready) {
-                val key = if (app.mikeneko.update.AppUpdates.canInstall(context)) R.string.update_ready else R.string.update_ready_allow
-                toast(context.getString(key, update.release.version))
-            }
-        }
-    }
+    // (quand elle est téléchargée, une pilule « Mettre à jour » apparaît en haut : UpdatePill, plus bas)
+    LaunchedEffect(Unit) { app.mikeneko.update.AppUpdates.checkIfDue(context) }
 
     val notifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
     LaunchedEffect(Unit) {
@@ -489,6 +483,14 @@ fun MikenekoRoot(
 
         // Le morph mini-lecteur ↔ grand lecteur, au-dessus de tout
         VideoMorphLayer()
+
+        // Une mise à jour téléchargée : « Mettre à jour » tout de suite (pas sur l'écran du lecteur)
+        if (route != Route.Lecteur) {
+            app.mikeneko.ui.components.UpdatePill(
+                backdrop,
+                Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 8.dp, start = 16.dp, end = 16.dp),
+            )
+        }
 
         // Les panneaux de la musique (file, paroles, minuteur) et le menu ⋮ des morceaux :
         // après le dock, pour passer au-dessus

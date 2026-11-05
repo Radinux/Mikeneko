@@ -564,7 +564,9 @@ private fun UpdateRow(context: Context) {
                 fontWeight = FontWeight.Bold,
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        // Les boutons passent à la ligne s'ils ne tiennent pas côte à côte (le texte ne se coupe jamais)
+        @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+        androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             if (action != null && onAction != null) {
                 Text(
                     action,
@@ -572,6 +574,8 @@ private fun UpdateRow(context: Context) {
                     color = Pelage.Encre,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.ExtraBold,
+                    maxLines = 1,
+                    softWrap = false,
                 )
             }
             val page = (state as? app.mikeneko.update.AppUpdates.State.Ready)?.release?.page
@@ -582,6 +586,8 @@ private fun UpdateRow(context: Context) {
                     color = Pelage.RouxClair,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.ExtraBold,
+                    maxLines = 1,
+                    softWrap = false,
                 )
             }
         }
