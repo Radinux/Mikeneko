@@ -1,0 +1,9 @@
+Mikeneko — client YouTube libre pour Android
+Copyright (C) 2026 Kirby
+
+Ce programme est un logiciel libre : vous pouvez le redistribuer et/ou le modifier
+selon les termes de la GNU General Public License telle que publiée par la Free
+Software Foundation, version 3 de la licence, ou (à votre choix) toute version
+ultérieure. Il utilise NewPipeExtractor, lui-même sous GPL-3.0.
+
+Texte complet : https://www.gnu.org/licenses/gpl-3.0.html

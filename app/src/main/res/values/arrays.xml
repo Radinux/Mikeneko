@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Thèmes variés pour les « surprises » du Pour toi (recherches YouTube) -->
+    <string-array name="surprise_topics">
+        <item>astronomy documentary</item>
+        <item>street food tour</item>
+        <item>woodworking project</item>
+        <item>history explained</item>
+        <item>architecture tour</item>
+        <item>deep sea creatures</item>
+        <item>origami tutorial</item>
+        <item>skateboarding</item>
+        <item>jazz live session</item>
+        <item>short animated film</item>
+        <item>chemistry experiment</item>
+        <item>restoration video</item>
+        <item>mountain hiking</item>
+        <item>philosophy explained</item>
+        <item>urban exploration</item>
+        <item>magic trick revealed</item>
+        <item>drawing timelapse</item>
+        <item>survival skills</item>
+        <item>geography facts</item>
+        <item>bread baking</item>
+        <item>retro gaming history</item>
+        <item>wildlife documentary</item>
+        <item>pottery wheel</item>
+        <item>travel to Japan</item>
+        <item>physics explained</item>
+        <item>model trains</item>
+        <item>speedrun explained</item>
+        <item>language learning</item>
+        <item>stand up comedy</item>
+        <item>home gardening</item>
+    </string-array>
+</resources>

@@ -1,0 +1,23 @@
+*.iml
+.gradle/
+/local.properties
+/.idea/
+.DS_Store
+/build/
+/app/build/
+/captures/
+.externalNativeBuild/
+.cxx/
+.kotlin/
+
+# APK / AAB prêts à partager (gros binaires, pas dans le dépôt)
+*.apk
+*.aab
+
+# Clés de signature : elles vivent dans ~/.config/mikeneko, jamais ici
+*.jks
+*.keystore
+signing.properties
+
+# Réglages Claude Code propres à cette machine
+.claude/settings.local.json

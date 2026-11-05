@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Icône à thème (Android 13+) : silhouette de la tête avec les yeux découpés -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:scaleX="0.54"
+        android:scaleY="0.54"
+        android:translateX="21.6"
+        android:translateY="25.4">
+        <path
+            android:fillColor="#FFFFFF"
+            android:fillType="evenOdd"
+            android:pathData="M16,66 C16,52 18,44 20,40 L22,14 Q23,8 29,11 L48,26 C55,24 65,24 72,26 L91,11 Q97,8 98,14 L100,40 C102,44 104,52 104,66 C104,88 86,100 60,100 C34,100 16,88 16,66 Z M37,64 a5,6.5 0 1,0 10,0 a5,6.5 0 1,0 -10,0 Z M73,64 a5,6.5 0 1,0 10,0 a5,6.5 0 1,0 -10,0 Z" />
+    </group>
+</vector>

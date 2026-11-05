@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Icône adaptative : la tête de Mikeneko centrée dans la zone sûre de 66 dp -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:scaleX="0.54"
+        android:scaleY="0.54"
+        android:translateX="21.6"
+        android:translateY="25.4">
+        <path
+            android:fillColor="#FFFFFF"
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="10"
+            android:strokeLineJoin="round"
+            android:pathData="M16,66 C16,52 18,44 20,40 L22,14 Q23,8 29,11 L48,26 C55,24 65,24 72,26 L91,11 Q97,8 98,14 L100,40 C102,44 104,52 104,66 C104,88 86,100 60,100 C34,100 16,88 16,66 Z" />
+        <group>
+            <clip-path android:pathData="M16,66 C16,52 18,44 20,40 L22,14 Q23,8 29,11 L48,26 C55,24 65,24 72,26 L91,11 Q97,8 98,14 L100,40 C102,44 104,52 104,66 C104,88 86,100 60,100 C34,100 16,88 16,66 Z" />
+            <path
+                android:fillColor="#55504D"
+                android:pathData="M8,4 L54,4 C56,28 50,44 36,50 C24,54 14,50 8,46 Z" />
+        </group>
+        <path
+            android:fillColor="#3E3936"
+            android:pathData="M27,20 L29,33 L40,27 Z" />
+        <path
+            android:fillColor="#E07A2E"
+            android:pathData="M85,19 L85,31 L95,25 Z" />
+        <path
+            android:strokeColor="#3D3A3A"
+            android:strokeWidth="3"
+            android:strokeLineJoin="round"
+            android:pathData="M16,66 C16,52 18,44 20,40 L22,14 Q23,8 29,11 L48,26 C55,24 65,24 72,26 L91,11 Q97,8 98,14 L100,40 C102,44 104,52 104,66 C104,88 86,100 60,100 C34,100 16,88 16,66 Z" />
+        <path
+            android:fillColor="#2B2827"
+            android:pathData="M37,64 a5,6.5 0 1,0 10,0 a5,6.5 0 1,0 -10,0 Z M73,64 a5,6.5 0 1,0 10,0 a5,6.5 0 1,0 -10,0 Z" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M41.9,61.5 a1.9,1.9 0 1,0 3.8,0 a1.9,1.9 0 1,0 -3.8,0 Z M77.9,61.5 a1.9,1.9 0 1,0 3.8,0 a1.9,1.9 0 1,0 -3.8,0 Z" />
+        <path
+            android:fillColor="#F4A7B0"
+            android:pathData="M24,75 a6,3.5 0 1,0 12,0 a6,3.5 0 1,0 -12,0 Z M84,75 a6,3.5 0 1,0 12,0 a6,3.5 0 1,0 -12,0 Z" />
+        <path
+            android:strokeColor="#3D3A3A"
+            android:strokeWidth="2.4"
+            android:strokeLineCap="round"
+            android:pathData="M53,73 q3.5,4 7,0 q3.5,4 7,0" />
+    </group>
+</vector>

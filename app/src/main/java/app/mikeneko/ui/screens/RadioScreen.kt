@@ -1,0 +1,395 @@
+package app.mikeneko.ui.screens
+
+import androidx.compose.foundation.gestures.detectTapGestures
+
+import app.mikeneko.ui.theme.statusBarSpace
+import app.mikeneko.ui.theme.statusBarSpacePadding
+import app.mikeneko.R
+import androidx.compose.ui.res.stringResource
+import android.graphics.ColorMatrixColorFilter
+import android.graphics.Shader
+import android.os.Build
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import android.content.Intent
+import android.widget.Toast
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import app.mikeneko.data.Favorites
+import androidx.activity.compose.BackHandler
+import androidx.annotation.RequiresApi
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.lerp
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RenderEffect
+import androidx.compose.ui.graphics.asComposeRenderEffect
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import app.mikeneko.ui.theme.jellyClickable
+import kotlin.math.roundToInt
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import app.mikeneko.data.VideoItem
+import app.mikeneko.data.MusicKind
+import app.mikeneko.data.YouTubeRepository
+import app.mikeneko.player.PlayerHolder
+import app.mikeneko.player.SettingsPage
+import app.mikeneko.player.SleepTimer
+import app.mikeneko.ui.components.PlayerSettingsSheet
+import app.mikeneko.ui.components.EmptyCat
+import app.mikeneko.ui.components.GlassCircleButton
+import app.mikeneko.ui.components.Loading
+import app.mikeneko.ui.components.Tag
+import app.mikeneko.ui.glass.Backdrop
+import app.mikeneko.ui.glass.LiquidGlass
+import app.mikeneko.ui.glass.backdropSource
+import app.mikeneko.ui.glass.rememberBackdrop
+import app.mikeneko.ui.icons.MkIcons
+import app.mikeneko.ui.theme.GlassTextShadow
+import app.mikeneko.ui.theme.Pelage
+import app.mikeneko.ui.theme.Rounded
+import coil3.compose.AsyncImage
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.zIndex
+import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.flow.first
+import androidx.compose.ui.layout.layout
+import kotlinx.coroutines.Job
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.ui.input.pointer.util.VelocityTracker
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.ui.input.pointer.PointerEventPass
+import app.mikeneko.data.SearchHistory
+import app.mikeneko.data.LocalMusic
+import app.mikeneko.player.Repeat
+import app.mikeneko.ui.components.ProgressWithSegments
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+/**
+ * Ce qui est en verre par-dessus la page Musique : la barre du haut (loupe de la recherche musique,
+ * ou retour quand une page est ouverte). Le dock musique et sa fenêtre sont dans [MusicDockWindow].
+ */
+@Composable
+fun RadioOverlay(state: RadioState, backdrop: Backdrop) {
+    Box(Modifier.fillMaxSize()) {
+        RadioHeader(state, backdrop)
+        TravellingPlayButton(state)
+    }
+}
+
+/**
+ * Le bouton lecture d'une page (album, playlist…) quand il a quitté l'en-tête : il glisse et rétrécit
+ * jusqu'à sa place dans la pilule de la barre du haut, et y reste (voir [PlayAnchor]).
+ */
+@Composable
+private fun TravellingPlayButton(state: RadioState) {
+    val bar = state.bar ?: return
+    val anchor = bar.play ?: return
+    val onPlay = bar.onPlay ?: return
+    if (state.page == null) return
+    var origin by remember { mutableStateOf(Offset.Zero) }
+    Box(Modifier.fillMaxSize().onGloballyPositioned { origin = it.positionInRoot() }) {
+        Box(
+            Modifier
+                .layout { measurable, _ ->
+                    val big = PLAY_BIG.roundToPx()
+                    val placeable = measurable.measure(Constraints.fixed(big, big))
+                    layout(big, big) {
+                        // Posé seulement une fois parti de l'en-tête (sinon il arrêterait les taps dessous)
+                        val spot = anchor.spot(this@layout)
+                        if (spot != null && spot.t > 0f) {
+                            placeable.place((spot.center.x - origin.x - big / 2f).roundToInt(), (spot.center.y - origin.y - big / 2f).roundToInt())
+                        }
+                    }
+                }
+                .graphicsLayer {
+                    val t = anchor.spot(this)?.t ?: 0f
+                    val scale = 1f + (PLAY_SMALL / PLAY_BIG - 1f) * t
+                    scaleX = scale
+                    scaleY = scale
+                    shadowElevation = (1f - t) * 10.dp.toPx()
+                    shape = CircleShape
+                    clip = true
+                }
+                .background(Pelage.Roux)
+                .jellyClickable(role = Role.Button, onClickLabel = stringResource(R.string.play_all), onClick = onPlay),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(MkIcons.Play, stringResource(R.string.play_all), tint = Pelage.Encre, modifier = Modifier.size(28.dp))
+        }
+    }
+}
+
+/** La barre du haut de la Radio, en verre : loupe, champ de recherche, ou retour. */
+@Composable
+private fun RadioHeader(state: RadioState, backdrop: Backdrop) {
+    val page = state.page
+    val context = LocalContext.current
+    val keyboard = LocalSoftwareKeyboardController.current
+    val focus = remember { FocusRequester() }
+    /** Lance la recherche (clavier, suggestion ou historique) et la garde dans l'historique musique. */
+    fun submit(text: String) {
+        val clean = text.trim()
+        state.query = clean
+        state.submitted = clean.ifEmpty { null }
+        state.suggesting = false
+        if (clean.isNotEmpty()) SearchHistory.music(context).add(clean)
+        keyboard?.hide()
+    }
+    Column(Modifier.fillMaxWidth().statusBarSpacePadding().padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        when {
+            page != null -> {
+                GlassCircleButton(backdrop, MkIcons.ChevronLeft, stringResource(R.string.back)) { state.goBack() }
+                val bar = state.bar
+                // Une pilule en verre avec le titre de la page et le bouton lecture : elle arrive à mesure
+                // que l'en-tête passe sous la barre (la liste se déforme dessous en défilant)
+                Box(Modifier.weight(1f).padding(horizontal = 10.dp).onGloballyPositioned { state.barPill = it.boundsInRoot() }) {
+                    if (bar != null) {
+                        val active by remember { androidx.compose.runtime.derivedStateOf { state.barProgress > 0.5f } }
+                        LiquidGlass(
+                            backdrop,
+                            Modifier
+                                .fillMaxWidth()
+                                .height(50.dp)
+                                // Visible, elle arrête les taps (sinon ils traversent jusqu'au morceau dessous)
+                                .then(if (active) Modifier.pointerInput(Unit) { detectTapGestures { } } else Modifier)
+                                .graphicsLayer {
+                                    val p = state.barProgress
+                                    alpha = p
+                                    translationY = (1f - p) * 14.dp.toPx()
+                                    scaleX = 0.9f + 0.1f * p
+                                    scaleY = 0.9f + 0.1f * p
+                                },
+                            cornerRadius = 25.dp,
+                            bezel = 16.dp,
+                            refraction = 16.dp,
+                        ) {
+                            Row(
+                                Modifier.fillMaxSize().padding(start = 18.dp, end = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    bar.title,
+                                    Modifier.weight(1f),
+                                    color = Color.White,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    style = TextStyle(shadow = GlassTextShadow),
+                                )
+                                // La place du bouton lecture : c'est celui de l'en-tête qui vient s'y ranger
+                                // (dessiné par TravellingPlayButton, au-dessus de la pilule)
+                                if (bar.onPlay != null) Spacer(Modifier.padding(start = 8.dp).size(PLAY_SMALL))
+                            }
+                        }
+                    }
+                }
+                if (page is RadioPage.MyPlaylist) {
+                    GlassCircleButton(backdrop, MkIcons.More, stringResource(R.string.more_options)) {
+                        MusicSheet.open.value = MusicSheet.PlaylistOptions(page.id)
+                    }
+                }
+            }
+            state.searching -> {
+                MusicSearchField(state, backdrop, focus, Modifier.weight(1f), onSubmit = ::submit)
+                Spacer(Modifier.width(10.dp))
+                val empty = state.query.isEmpty() && state.submitted == null
+                GlassCircleButton(backdrop, MkIcons.Close, stringResource(if (empty) R.string.search_close else R.string.search_clear)) {
+                    if (empty) {
+                        state.closeSearch() // plus rien à effacer : on ferme
+                    } else {
+                        // ✕ efface le champ sans fermer, clavier ouvert (les résultats restent dessous)
+                        state.query = ""
+                        state.suggesting = true
+                        runCatching { focus.requestFocus() }
+                        keyboard?.show()
+                    }
+                }
+            }
+            else -> {
+                Spacer(Modifier.weight(1f))
+                GlassCircleButton(backdrop, MkIcons.Search, stringResource(R.string.music_search)) { state.openSearch() }
+            }
+        }
+    }
+    // Les filtres en verre, posés sur la liste : bibliothèque, ou genre de résultat dans la recherche
+    if (page == RadioPage.Library) {
+        GlassChipsRow(backdrop, LibraryFilter.entries, state.libraryFilter, { libraryFilterLabel(it) }) { state.libraryFilter = it }
+    } else if (page == null && state.searching && !state.suggesting) {
+        GlassChipsRow(backdrop, MusicKind.entries, state.kind, { musicKindLabel(it) }) { state.kind = it }
+    }
+    AnimatedSearchSuggestions(
+            visible = page == null && state.searching && state.suggesting,
+            query = state.query,
+            backdrop = backdrop,
+            onPick = ::submit,
+            onFill = { state.query = it }, // complète le champ, sans chercher
+            modifier = Modifier.padding(horizontal = 16.dp),
+            music = true,
+        )
+    }
+}
+
+@Composable
+private fun MusicSearchField(state: RadioState, backdrop: Backdrop, focus: FocusRequester, modifier: Modifier, onSubmit: (String) -> Unit) {
+    val keyboard = LocalSoftwareKeyboardController.current
+    // À l'ouverture (pas en revenant d'un album) : le clavier pour taper tout de suite
+    LaunchedEffect(Unit) {
+        if (state.submitted == null) {
+            runCatching { focus.requestFocus() }
+            keyboard?.show()
+        }
+    }
+    fun submit() = onSubmit(state.query)
+    // Texte + curseur : quand la recherche change d'ailleurs (suggestion, ↖), le curseur va à la fin
+    var field by remember { mutableStateOf(TextFieldValue(state.query, TextRange(state.query.length))) }
+    LaunchedEffect(state.query) {
+        if (field.text != state.query) field = TextFieldValue(state.query, TextRange(state.query.length))
+    }
+    LiquidGlass(
+        backdrop,
+        modifier
+            .height(50.dp)
+            // Toucher le champ rouvre l'historique / les suggestions (même après une recherche)
+            .pointerInput(Unit) {
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                    state.suggesting = true
+                }
+            },
+        cornerRadius = 25.dp,
+        bezel = 16.dp,
+        refraction = 16.dp,
+    ) {
+        BasicTextField(
+            value = field,
+            onValueChange = {
+                field = it
+                if (it.text != state.query) {
+                    state.suggesting = true // on tape : les suggestions reviennent
+                    state.query = it.text
+                }
+            },
+            singleLine = true,
+            textStyle = TextStyle(color = Color.White, fontSize = 16.sp, fontFamily = Rounded, fontWeight = FontWeight.Bold, shadow = GlassTextShadow),
+            cursorBrush = SolidColor(Pelage.RouxClair),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            keyboardActions = KeyboardActions(onSearch = { submit() }),
+            modifier = Modifier.align(Alignment.CenterStart).fillMaxWidth().padding(horizontal = 18.dp).focusRequester(focus),
+            decorationBox = { inner ->
+                if (state.query.isEmpty()) Text(stringResource(R.string.music_search_hint), color = Color.White.copy(alpha = 0.7f), fontSize = 16.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                inner()
+            },
+        )
+    }
+}
+
+/** Une rangée de capsules en verre (défile de côté), sous la barre du haut. */
+@Composable
+private fun <T> GlassChipsRow(backdrop: Backdrop, options: List<T>, selected: T, label: (T) -> Int, onPick: (T) -> Unit) {
+    androidx.compose.foundation.lazy.LazyRow(
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        items(options.size) { i ->
+            val option = options[i]
+            app.mikeneko.ui.components.GlassChip(backdrop, stringResource(label(option)), selected = option == selected) { onPick(option) }
+        }
+    }
+}

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Thèmes variés pour les « surprises » du Pour toi (recherches YouTube) -->
+    <string-array name="surprise_topics">
+        <item>documentaire astronomie</item>
+        <item>street food</item>
+        <item>menuiserie projet</item>
+        <item>histoire expliquée</item>
+        <item>visite architecture</item>
+        <item>créatures des abysses</item>
+        <item>tuto origami</item>
+        <item>skateboard</item>
+        <item>session jazz live</item>
+        <item>court métrage animation</item>
+        <item>expérience de chimie</item>
+        <item>restauration objet ancien</item>
+        <item>randonnée montagne</item>
+        <item>philosophie expliquée</item>
+        <item>exploration urbaine</item>
+        <item>tour de magie expliqué</item>
+        <item>dessin timelapse</item>
+        <item>techniques de survie</item>
+        <item>géographie anecdotes</item>
+        <item>faire son pain</item>
+        <item>histoire du jeu vidéo rétro</item>
+        <item>documentaire animaux sauvages</item>
+        <item>poterie tour</item>
+        <item>voyage au Japon</item>
+        <item>physique expliquée</item>
+        <item>train miniature</item>
+        <item>speedrun expliqué</item>
+        <item>apprendre une langue</item>
+        <item>stand up humour</item>
+        <item>potager jardinage</item>
+    </string-array>
+</resources>

@@ -1,0 +1,292 @@
+package app.mikeneko
+
+import app.mikeneko.data.Downloads
+import android.os.Process
+import android.os.Looper
+import android.os.Handler
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
+import app.mikeneko.ui.components.VideoMenu
+import app.mikeneko.ui.screens.MusicSheet
+import android.provider.Settings
+import android.view.WindowManager
+import android.view.OrientationEventListener
+import app.mikeneko.settings.AppSettings
+import app.mikeneko.settings.AppLocale
+import android.content.Context
+import android.app.PictureInPictureParams
+import android.content.ComponentName
+import android.content.Intent
+import android.content.pm.ActivityInfo
+import android.content.res.Configuration
+import android.os.Build
+import android.os.Bundle
+import android.util.Rational
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
+import app.mikeneko.data.youtubeLinkIn
+import app.mikeneko.player.PlaybackService
+import app.mikeneko.player.PlayerHolder
+import app.mikeneko.ui.MikenekoRoot
+import app.mikeneko.ui.fixedSpeedRecomposer
+import app.mikeneko.ui.theme.MikenekoTheme
+import com.google.common.util.concurrent.ListenableFuture
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
+
+class MainActivity : ComponentActivity() {
+    private val inPip = MutableStateFlow(false)
+    private val links = MutableStateFlow<String?>(null)
+    private var controller: ListenableFuture<MediaController>? = null
+
+    /** La langue choisie dans les réglages (sinon celle du téléphone). */
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(newBase)
+        AppLocale.overrideConfiguration(newBase)?.let { applyOverrideConfiguration(it) }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        if (savedInstanceState == null) {
+            links.value = linkFrom(intent)
+            // Nouvelle ouverture : aucun menu resté ouvert de la fois d'avant
+            MusicSheet.open.value = null
+            VideoMenu.target.value = null
+        }
+
+        if (Build.VERSION.SDK_INT >= 31) {
+            // PiP automatique quand on quitte l'app pendant une vidéo. Android lit ce réglage
+            // AVANT onPause : il faut donc le tenir à jour dès que la lecture change.
+            lifecycleScope.launch {
+                repeatOnLifecycle(Lifecycle.State.STARTED) {
+                    combine(PlayerHolder.isPlaying, PlayerHolder.nowPlaying, AppSettings.autoPip) { _, _, auto -> auto && PlayerHolder.shouldEnterPip() }
+                        .distinctUntilChanged()
+                        .collect { setPictureInPictureParams(pipParams(autoEnter = true)) }
+                }
+            }
+        }
+
+        // Barre d'état masquée ou non (réglage), réappliqué dès qu'on le change
+        lifecycleScope.launch { AppSettings.hideStatusBar.collect { applySystemBars() } }
+
+        // Pas de mise en veille pendant une vidéo (la radio, elle, laisse l'écran s'éteindre)
+        lifecycleScope.launch {
+            combine(PlayerHolder.isPlaying, PlayerHolder.nowPlaying) { playing, now -> playing && now?.audioOnly == false }
+                .distinctUntilChanged()
+                .collect { keepOn ->
+                    if (keepOn) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    else window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                }
+        }
+
+        // Animations à la même vitesse sur tous les téléphones (voir AnimationSpeed.kt)
+        setContent(parent = fixedSpeedRecomposer()) {
+            val pip by inPip.collectAsState()
+            MikenekoTheme {
+                MikenekoRoot(
+                    inPip = pip,
+                    links = links,
+                    onLinkHandled = { links.value = null },
+                    onFullscreenChanged = ::applyFullscreen,
+                )
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        linkFrom(intent)?.let { links.value = it }
+    }
+
+    // ---- Inactive 15 min en arrière-plan : l'appli se vide ----
+
+    /** Depuis quand l'appli, en arrière-plan, ne fait plus rien (ni lecture, ni téléchargement). 0 = au premier plan. */
+    private var idleSince = 0L
+    private var idleWatch: Job? = null
+
+    private fun busy() = PlayerHolder.isPlaying.value ||
+        Downloads.tasks.value.any { it.status == Downloads.Status.EN_COURS || it.status == Downloads.Status.EN_ATTENTE } ||
+        app.mikeneko.player.PlaylistDownloads.busy
+
+    /** En arrière-plan : toutes les minutes, on regarde si l'appli travaille encore ; 15 min sans rien → on vide. */
+    private fun watchIdle() {
+        idleSince = System.currentTimeMillis()
+        idleWatch?.cancel()
+        idleWatch = lifecycleScope.launch {
+            while (true) {
+                delay(60_000)
+                val now = System.currentTimeMillis()
+                if (busy()) {
+                    idleSince = now
+                } else if (now - idleSince >= IDLE_CLEAR_MS) {
+                    // Comme retirer l'appli des applis récentes : tout s'arrête, la mémoire est libérée
+                    PlayerHolder.reset()
+                    finishAndRemoveTask()
+                    Handler(Looper.getMainLooper()).postDelayed({ Process.killProcess(Process.myPid()) }, 500)
+                    break
+                }
+            }
+        }
+    }
+
+    /**
+     * Retour au premier plan. Si le téléphone a gelé l'appli (le minuteur n'a pas pu tourner) et qu'elle
+     * dormait depuis plus de 15 min sans rien faire, on la vide maintenant : elle repart de zéro.
+     */
+    private fun stopWatchingIdle(): Boolean {
+        idleWatch?.cancel()
+        idleWatch = null
+        val stale = idleSince > 0 && System.currentTimeMillis() - idleSince >= IDLE_CLEAR_MS && !busy()
+        idleSince = 0L
+        if (stale) {
+            PlayerHolder.reset()
+            startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
+            finish()
+        }
+        return stale
+    }
+
+    override fun onStart() {
+        super.onStart()
+        if (stopWatchingIdle()) return
+        // Se connecter au service : c'est ce qui affiche les contrôles dans la notification
+        val token = SessionToken(this, ComponentName(this, PlaybackService::class.java))
+        controller = MediaController.Builder(this, token).buildAsync()
+    }
+
+    override fun onStop() {
+        // onStop = plus rien de visible (le PiP ne déclenche pas onStop : la vidéo y continue,
+        // mais fermer la fenêtre PiP, si). Pas pendant une simple rotation.
+        if (!isChangingConfigurations) {
+            PlayerHolder.pauseVideoInBackground()
+            watchIdle()
+        }
+        controller?.let { MediaController.releaseFuture(it) }
+        controller = null
+        super.onStop()
+    }
+
+    private companion object {
+        const val IDLE_CLEAR_MS = 15 * 60_000L
+    }
+
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        if (Build.VERSION.SDK_INT < 31 && AppSettings.autoPip.value && PlayerHolder.shouldEnterPip()) {
+            runCatching { enterPictureInPictureMode(pipParams(autoEnter = false)) }
+        }
+    }
+
+    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        inPip.value = isInPictureInPictureMode
+    }
+
+    private fun pipParams(autoEnter: Boolean): PictureInPictureParams {
+        val builder = PictureInPictureParams.Builder().setAspectRatio(Rational(16, 9))
+        if (Build.VERSION.SDK_INT >= 31) {
+            builder.setAutoEnterEnabled(autoEnter && AppSettings.autoPip.value && PlayerHolder.shouldEnterPip())
+            builder.setSeamlessResizeEnabled(true)
+        }
+        return builder.build()
+    }
+
+    /**
+     * Plein écran. [fromRotation] : déclenché parce qu'on a tourné le téléphone (rien à forcer).
+     * Sinon (bouton), on force le paysage / le portrait, puis on rend la main à la rotation
+     * automatique dès que le téléphone est vraiment tenu dans ce sens (comme YouTube).
+     */
+    private fun applyFullscreen(enabled: Boolean, fromRotation: Boolean) {
+        if (!fromRotation) {
+            requestedOrientation = if (enabled) ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE else ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            releaseWhen = if (enabled) Hold.LANDSCAPE else Hold.PORTRAIT
+        }
+        fullscreen = enabled
+        applySystemBars()
+    }
+
+    private var fullscreen = false
+
+    /**
+     * Barres du téléphone : tout est masqué en plein écran ; sinon, la barre d'état (heure,
+     * batterie, notifications) l'est aussi si le réglage est activé. Un glissé depuis le bord
+     * les fait réapparaître un instant. La barre de navigation (gestes) reste hors plein écran.
+     */
+    private fun applySystemBars() {
+        val bars = WindowCompat.getInsetsController(window, window.decorView)
+        bars.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        when {
+            fullscreen -> bars.hide(WindowInsetsCompat.Type.systemBars())
+            AppSettings.hideStatusBar.value -> {
+                bars.show(WindowInsetsCompat.Type.navigationBars())
+                bars.hide(WindowInsetsCompat.Type.statusBars())
+            }
+            else -> bars.show(WindowInsetsCompat.Type.systemBars())
+        }
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        // De retour (notification, autre appli…) : Android a pu réafficher la barre d'état
+        if (hasFocus) applySystemBars()
+    }
+
+    // ---- Rotation : rendre la main au capteur une fois le téléphone tourné ----
+
+    private enum class Hold { PORTRAIT, LANDSCAPE }
+    private var releaseWhen: Hold? = null
+
+    private val orientationListener by lazy {
+        object : OrientationEventListener(this) {
+            override fun onOrientationChanged(degrees: Int) {
+                if (degrees < 0) return
+                val portrait = degrees <= 25 || degrees >= 335
+                val landscape = degrees in 65..115 || degrees in 245..295
+                when (releaseWhen) {
+                    // Si la rotation automatique d'Android est coupée, on garde le paysage forcé
+                    Hold.LANDSCAPE -> if (landscape && autoRotateEnabled()) releaseOrientation()
+                    Hold.PORTRAIT -> if (portrait) releaseOrientation()
+                    null -> Unit
+                }
+            }
+        }
+    }
+
+    private fun releaseOrientation() {
+        releaseWhen = null
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+    }
+
+    private fun autoRotateEnabled(): Boolean =
+        runCatching { Settings.System.getInt(contentResolver, Settings.System.ACCELEROMETER_ROTATION) == 1 }.getOrDefault(false)
+
+    override fun onResume() {
+        super.onResume()
+        if (orientationListener.canDetectOrientation()) orientationListener.enable()
+    }
+
+    override fun onPause() {
+        orientationListener.disable()
+        super.onPause()
+    }
+
+    private fun linkFrom(intent: Intent?): String? = when (intent?.action) {
+        Intent.ACTION_VIEW -> intent.dataString
+        Intent.ACTION_SEND -> youtubeLinkIn(intent.getStringExtra(Intent.EXTRA_TEXT))
+        else -> null
+    }
+}
