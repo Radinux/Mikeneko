@@ -3,7 +3,7 @@
 Client YouTube libre pour Android, en Kotlin + Jetpack Compose : sans pubs, avec SponsorBlock,
 Return YouTube Dislike, lecteur de musique, téléchargements yt-dlp, mini-lecteur PiP et dock en liquid glass.
 
-**Version : 1.19.8** (dernier APK prêt à partager : `Mikeneko-1.18.1.apk` à la racine du projet et dans Download sur le téléphone).
+**Version : 2.0.4** (dernier APK prêt à partager : `Mikeneko-1.18.1.apk` à la racine du projet et dans Download sur le téléphone).
 La version est automatique : `app/version.properties` garde la version de la prochaine compilation
 release ; chaque `assembleRelease` / `installRelease` la prend puis prépare la suivante (dernier
 chiffre +1, `versionCode` +1). Nouvelle fonction : `minor` +1 et `patch=0` à la main. Pas de x.20 : là où on arriverait à x.20.0, c'est une version majeure ((x+1).0.0).
@@ -12,6 +12,30 @@ Pour reprendre le développement : `NOTES-TECHNIQUES.md` (comment et pourquoi, p
 et `FIXES.md` (à faire / à vérifier).
 
 ## Nouveautés
+
+### 2.0.0 → 2.0.4
+
+- **Une vraie page lecteur en paysage** : la vidéo et ses commandes à gauche, tout le reste à droite
+  dans une colonne qui défile (barre de temps, SponsorBlock, titre, chaîne, j'aime / plus tard /
+  playlist / télécharger…, description, commentaires, chapitres, suggestions).
+- **Sortir du plein écran en tenant le téléphone en paysage ne force plus le portrait** : on arrive
+  sur cette page, toujours en paysage. Le portrait n'est forcé que si on était entré en plein écran
+  avec le bouton en tenant le téléphone droit.
+- Ouvrir une vidéo en paysage (depuis l'accueil en colonnes, le mini-lecteur…) ouvre cette page ;
+  tourner le téléphone depuis le portrait passe toujours en plein écran, et la page paysage revient
+  au portrait avec la rotation habituelle d'Android.
+- 2.0.1 : **la barre de progression est dans la vidéo** (portrait et paysage, comme YouTube) : avec
+  les commandes, le temps en bas à gauche, les boutons à droite et la barre complète dessous ; sans
+  elles, une fine ligne rousse au ras du bas de la vidéo. Les commandes ne se cachent pas pendant un
+  glissé sur la barre ni pendant un marquage SponsorBlock.
+- 2.0.2 : en paysage, plus de ligne « Now playing » au-dessus de la vidéo (trop de place) : la flèche
+  pour réduire est un bouton en verre en haut à gauche de la vidéo, avec les commandes ; la vidéo
+  prend 60 % de la largeur.
+- 2.0.3 : en paysage, la vidéo est centrée sur toute la hauteur de l'écran (elle était décalée vers le
+  bas de la hauteur de la barre d'état), et glisser la vidéo vers le bas la réduit en mini-lecteur.
+- 2.0.4 : en paysage, entrer en plein écran ou en sortir (bouton ou retour) fait un **zoom** : la vidéo
+  grandit depuis sa place dans la page jusqu'à remplir l'écran, et y revient en rétrécissant (la page
+  apparaît derrière en fondu). Avant, ça changeait d'un coup.
 
 ### 1.19.0 → 1.19.8
 

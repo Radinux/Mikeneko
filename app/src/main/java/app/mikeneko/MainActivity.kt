@@ -211,13 +211,30 @@ class MainActivity : ComponentActivity() {
      * Sinon (bouton), on force le paysage / le portrait, puis on rend la main à la rotation
      * automatique dès que le téléphone est vraiment tenu dans ce sens (comme YouTube).
      */
-    private fun applyFullscreen(enabled: Boolean, fromRotation: Boolean) {
+    private fun applyFullscreen(enabled: Boolean, fromRotation: Boolean): Boolean {
+        // Renvoie vrai si l'écran va tourner (le plein écran s'affichera ou se retirera avec la rotation)
+        var rotates = false
         if (!fromRotation) {
-            requestedOrientation = if (enabled) ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE else ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-            releaseWhen = if (enabled) Hold.LANDSCAPE else Hold.PORTRAIT
+            val landscapeNow = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+            when {
+                enabled -> {
+                    requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                    releaseWhen = Hold.LANDSCAPE
+                    rotates = !landscapeNow
+                }
+                // Plein écran forcé alors que le téléphone est resté droit : retour au portrait
+                releaseWhen == Hold.LANDSCAPE || !landscapeNow -> {
+                    requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                    releaseWhen = Hold.PORTRAIT
+                    rotates = landscapeNow
+                }
+                // Le téléphone est vraiment tenu en paysage : on y reste (page lecteur en paysage, 2.0.0)
+                else -> releaseOrientation()
+            }
         }
         fullscreen = enabled
         applySystemBars()
+        return rotates
     }
 
     private var fullscreen = false

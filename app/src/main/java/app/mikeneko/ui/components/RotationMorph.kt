@@ -38,6 +38,12 @@ object RotationMorph {
     /** Où est la vidéo du lecteur portrait (root, px). Gardé même quand le lecteur portrait n'est plus affiché. */
     var portraitVideo: Rect? = null
 
+    /** Où est la vidéo de la page lecteur en paysage (root, px), pour le zoom (2.0.4). */
+    var landscapeVideo: Rect? = null
+
+    /** Entrer / sortir du plein écran sans tourner (téléphone tenu en paysage) : un zoom, pas une rotation. */
+    private var zoom by mutableStateOf(false)
+
     /** 0 au départ, 1 à l'arrivée. */
     private val p: Float get() = if (pending) 0f else progress.value
 
@@ -52,7 +58,21 @@ object RotationMorph {
         while (turn > 180f) turn -= 360f
         while (turn <= -180f) turn += 360f
         if (turn == 0f) return
+        zoom = false
         from = turn
+        this.toFullscreen = toFullscreen
+        pending = true
+        token++
+    }
+
+    /**
+     * Téléphone en paysage, plein écran ouvert ou fermé avec le bouton (ou le retour) : la vidéo grandit
+     * depuis sa place dans la page paysage jusqu'au plein écran, ou y revient en rétrécissant.
+     */
+    fun startZoom(toFullscreen: Boolean) {
+        if (landscapeVideo == null) return
+        zoom = true
+        from = 0f
         this.toFullscreen = toFullscreen
         pending = true
         token++
@@ -76,6 +96,17 @@ object RotationMorph {
         if (!toFullscreen || !running) return
         val t = p
         val u = 1f - t
+        if (zoom) {
+            // Depuis la vidéo de la page paysage : même taille d'image au départ, puis tout l'écran
+            val page = landscapeVideo ?: return
+            val image = minOf(size.width, size.height * 16f / 9f)
+            val s = page.width / image * u + t
+            scaleX = s
+            scaleY = s
+            translationX = (page.center.x - size.width / 2f) * u
+            translationY = (page.center.y - size.height / 2f) * u
+            return
+        }
         val h = size.height
         val w = size.width
         // Le centre de l'ancienne vidéo, le long de l'ancien axe vertical (= la largeur d'ici)
@@ -93,7 +124,7 @@ object RotationMorph {
      * (sa longueur = la hauteur de l'ancien plein écran = la largeur d'ici).
      */
     fun GraphicsLayerScope.portraitVideo(screenHeight: Float) {
-        if (toFullscreen || !running) return
+        if (toFullscreen || !running || zoom) return
         val t = p
         val u = 1f - t
         val centerY = portraitVideo?.center?.y ?: (size.height / 2f)
@@ -104,6 +135,26 @@ object RotationMorph {
         translationY = (screenHeight / 2f - centerY) * u
     }
 
-    /** Le voile noir derrière la vidéo qui rentre dans la page portrait (1 → 0). */
+    /**
+     * La vidéo de la page paysage, au retour du plein écran : elle part de la taille du plein écran,
+     * au centre, et rétrécit jusqu'à sa place.
+     */
+    fun GraphicsLayerScope.landscapeVideo(screenWidth: Float, screenHeight: Float) {
+        if (toFullscreen || !running || !zoom) return
+        val page = landscapeVideo ?: return
+        val t = p
+        val u = 1f - t
+        val image = minOf(screenWidth, screenHeight * 16f / 9f)
+        val s = image / page.width * u + t
+        scaleX = s
+        scaleY = s
+        translationX = (screenWidth / 2f - page.center.x) * u
+        translationY = (screenHeight / 2f - page.center.y) * u
+    }
+
+    /** La vidéo de la page (portrait, ou paysage pour le zoom) : sa place, pour le voile noir. */
+    fun pageVideo(landscape: Boolean): Rect? = if (landscape) landscapeVideo else portraitVideo
+
+    /** Le voile noir derrière la vidéo qui rentre dans la page (1 → 0). */
     val scrim: Float get() = if (!toFullscreen && running) 1f - p else 0f
 }

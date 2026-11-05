@@ -107,7 +107,8 @@ fun MikenekoRoot(
     inPip: Boolean,
     links: StateFlow<String?>,
     onLinkHandled: () -> Unit,
-    onFullscreenChanged: (enabled: Boolean, fromRotation: Boolean) -> Unit,
+    /** Renvoie vrai si l'écran va tourner pour ça (bouton plein écran). */
+    onFullscreenChanged: (enabled: Boolean, fromRotation: Boolean) -> Boolean,
     /** Sur l'écran d'une vidéo : Android ne doit pas animer la rotation (c'est la vidéo seule qui tourne). */
     onVideoScreen: (Boolean) -> Unit = {},
 ) {
@@ -190,18 +191,20 @@ fun MikenekoRoot(
 
     fun toggleFullscreen() {
         val target = !fullscreen
-        onFullscreenChanged(target, false)
+        val rotates = onFullscreenChanged(target, false)
         // L'écran va tourner (paysage forcé / portrait) : le plein écran s'affiche ou se retire avec
         // la rotation (voir plus bas), pour ne jamais montrer un écran dans le mauvais sens. Au cas
-        // où l'écran ne tournerait pas, on bascule quand même au bout d'une seconde.
-        fun landscapeNow() = context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-        if (target == landscapeNow()) {
+        // où l'écran ne tournerait pas, on bascule quand même au bout d'une seconde. Sinon (téléphone
+        // tenu en paysage, 2.0.0) : tout de suite, et on reste en paysage (page lecteur en paysage).
+        if (!rotates) {
+            // Téléphone en paysage : pas de rotation, donc un zoom entre la page et le plein écran
+            if (context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE && route == Route.Lecteur) RotationMorph.startZoom(toFullscreen = target)
             fullscreen = target
             return
         }
         scope.launch {
             delay(1_000)
-            if (fullscreen != target && target != landscapeNow()) fullscreen = target
+            if (fullscreen != target) fullscreen = target
         }
     }
 
@@ -235,8 +238,9 @@ fun MikenekoRoot(
             fullscreen = false
             announce = false
         }
-        // Seule la vidéo tourne (voir RotationMorph)
-        if (videoScreen || wasFullscreen) RotationMorph.start(turn[1] * 90, rotationNow * 90, toFullscreen = fullscreen)
+        // Seule la vidéo tourne (voir RotationMorph), quand on entre ou sort du plein écran ; entre les
+        // pages portrait et paysage du lecteur, c'est la rotation habituelle d'Android
+        if (wasFullscreen != fullscreen) RotationMorph.start(turn[1] * 90, rotationNow * 90, toFullscreen = fullscreen)
         turn[0] = orientation
     }
     turn[1] = rotationNow
@@ -247,7 +251,10 @@ fun MikenekoRoot(
         }
     }
     LaunchedEffect(RotationMorph.token) { RotationMorph.animate() }
-    LaunchedEffect(videoScreen || fullscreen) { onVideoScreen(videoScreen || fullscreen) }
+    // Pas d'animation d'Android quand la rotation fait entrer ou sortir du plein écran (portrait ↔ plein
+    // écran) ; la page lecteur en paysage, elle, tourne normalement vers le portrait
+    val videoRotation = fullscreen || (videoScreen && orientation != Configuration.ORIENTATION_LANDSCAPE)
+    LaunchedEffect(videoRotation) { onVideoScreen(videoRotation) }
 
     LaunchedEffect(link) {
         link?.let {
