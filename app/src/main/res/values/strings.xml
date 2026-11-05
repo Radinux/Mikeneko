@@ -362,6 +362,10 @@
     <string name="subs_import_none">No subscriptions found in this file</string>
     <string name="subs_import_without_account">or import them without an account</string>
     <string name="subs_none">No channels yet</string>
+    <string name="subs_none_text">Import your subscriptions from NewPipe, FreeTube or Google Takeout in Settings › Backup.</string>
+    <string name="subs_go_import">Import</string>
+    <string name="settings_import_subs">Import subscriptions</string>
+    <string name="settings_import_subs_text">From NewPipe, FreeTube or Google Takeout (takeout.google.com › YouTube). Nothing is erased.</string>
     <string name="subs_sync_failed">Couldn\'t sync: %1$s</string>
     <string name="subs_synced">Synced with your Google account</string>
     <string name="subs_title">Subscriptions</string>

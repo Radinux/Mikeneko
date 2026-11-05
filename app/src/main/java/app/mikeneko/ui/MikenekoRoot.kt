@@ -317,7 +317,7 @@ fun MikenekoRoot(
                 }
                 // Une chaîne ouverte depuis les abonnements (par-dessus la liste)
                 Route.Abonnements -> subsChannel?.let { ChannelContent(it, onOpen = { video -> openVideo(video.url) }) }
-                    ?: SubscriptionsContent(onOpen = { openVideo(it.url) }, onOpenChannel = { subsChannel = it }, reset = subsReset)
+                    ?: SubscriptionsContent(onOpen = { openVideo(it.url) }, onOpenChannel = { subsChannel = it }, onOpenSettings = { go(Route.Reglages) }, reset = subsReset)
                 Route.Radio -> Box(Modifier.fillMaxSize().onUserScroll({ radio.suggesting }) { radio.dismissSuggestions(); keyboard?.hide() }) { RadioContent(radio, onPlayStations = { list, index ->
                     PlayerHolder.launchPlayback(onError = { toast(context.getString(R.string.error_play_radio, it.message.orEmpty())) }) {
                         PlayerHolder.playQueue(context, list, index)

@@ -25,6 +25,7 @@ import app.mikeneko.data.ReturnDislike
 import app.mikeneko.data.Segment
 import app.mikeneko.data.SponsorBlock
 import app.mikeneko.data.SubscriptionStore
+import app.mikeneko.data.channelIdFrom
 import app.mikeneko.data.VideoItem
 import app.mikeneko.data.WatchHistory
 import app.mikeneko.data.YouTubeRepository
@@ -552,6 +553,10 @@ object PlayerHolder {
             if (autoPlay) p.play() else p.pause()
             nowPlaying.value = nowPlayingFrom(context, info, audioOnly, live)
             ownPosition(nowPlaying.value)
+            // Une chaîne suivie sans image (importée) : la vidéo nous donne son avatar, sans requête de plus
+            if (!audioOnly) nowPlaying.value?.let { now ->
+                now.channelUrl?.let(::channelIdFrom)?.let { id -> SubscriptionStore.get(context).setAvatar(id, now.channelAvatar) }
+            }
             if (!live) rememberOffline(context, info, audioOnly, built)
             SubscriptionStore.get(context).markWatched(info.url)
             // Le « Pour toi » apprend des vidéos (pas de la radio, qui tourne en fond)

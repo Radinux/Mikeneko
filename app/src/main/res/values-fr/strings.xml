@@ -361,6 +361,10 @@
     <string name="subs_import_none">Aucun abonnement trouvé dans ce fichier</string>
     <string name="subs_import_without_account">ou importe-les sans compte</string>
     <string name="subs_none">Aucune chaîne pour l\'instant</string>
+    <string name="subs_none_text">Importe tes abonnements NewPipe, FreeTube ou Google Takeout dans Réglages › Sauvegarde.</string>
+    <string name="subs_go_import">Importer</string>
+    <string name="settings_import_subs">Importer des abonnements</string>
+    <string name="settings_import_subs_text">Depuis NewPipe, FreeTube ou Google Takeout (takeout.google.com › YouTube). Rien n\'est effacé.</string>
     <string name="subs_sync_failed">Synchronisation impossible : %1$s</string>
     <string name="subs_synced">Synchronisé avec ton compte Google</string>
     <string name="subs_title">Abonnements</string>

@@ -3,7 +3,7 @@
 Client YouTube libre pour Android, en Kotlin + Jetpack Compose : sans pubs, avec SponsorBlock,
 Return YouTube Dislike, lecteur de musique, téléchargements yt-dlp, mini-lecteur PiP et dock en liquid glass.
 
-**Version : 1.17.2** (dernier APK prêt à partager : `Mikeneko-1.17.2.apk` à la racine du projet et dans Download sur le téléphone).
+**Version : 1.18.1** (dernier APK prêt à partager : `Mikeneko-1.17.2.apk` à la racine du projet et dans Download sur le téléphone).
 La version est automatique : `app/version.properties` garde la version de la prochaine compilation
 release ; chaque `assembleRelease` / `installRelease` la prend puis prépare la suivante (dernier
 chiffre +1, `versionCode` +1). Nouvelle fonction : `minor` +1 et `patch=0` à la main.
@@ -12,6 +12,16 @@ Pour reprendre le développement : `NOTES-TECHNIQUES.md` (comment et pourquoi, p
 et `FIXES.md` (à faire / à vérifier).
 
 ## Nouveautés
+
+### 1.18.0 → 1.18.1
+
+- **L'import des abonnements est dans Réglages › Sauvegarde** (« Importer des abonnements » :
+  NewPipe, FreeTube, Google Takeout). La grande carte d'import ne reste plus en haut de l'onglet
+  Abonnements ; quand il n'y a encore aucune chaîne, un petit mot et un bouton « Importer » mènent aux
+  réglages.
+- 1.18.1 : **les images des chaînes suivies** reviennent. L'import Takeout n'en a pas : elles arrivent
+  en regardant une vidéo ou en ouvrant la page d'une chaîne (sans requête de plus), et doucement en
+  fond pendant que l'onglet Abonnements est ouvert (une toutes les 4 s, 30 au plus par lancement).
 
 ### 1.17.0 → 1.17.2
 

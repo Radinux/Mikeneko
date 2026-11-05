@@ -168,6 +168,17 @@ object YouTubeRepository {
         }
     }
 
+    /**
+     * L'avatar d'une chaîne seul (une requête, la page de la chaîne sans ses vidéos), pour les
+     * abonnements importés sans image. Une taille moyenne : il s'affiche en 60 dp.
+     */
+    suspend fun channelAvatar(channelId: String): String? = youtube {
+        val extractor = yt.getChannelExtractor("https://www.youtube.com/channel/$channelId").localized()
+        extractor.fetchPage()
+        val avatars = extractor.avatars
+        (avatars.filter { it.height >= 176 }.minByOrNull { it.height } ?: avatars.maxByOrNull { it.height })?.url
+    }
+
     /** Une chaîne : ses infos et ses dernières vidéos ([ChannelPage.next] : la suite). */
     suspend fun channel(url: String): ChannelPage = youtube {
         val extractor = yt.getChannelExtractor(url).localized()

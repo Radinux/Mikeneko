@@ -95,7 +95,7 @@ import java.time.ZoneId
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun SubscriptionsContent(onOpen: (VideoItem) -> Unit, onOpenChannel: (ChannelItem) -> Unit, reset: Int = 0) {
+fun SubscriptionsContent(onOpen: (VideoItem) -> Unit, onOpenChannel: (ChannelItem) -> Unit, onOpenSettings: () -> Unit, reset: Int = 0) {
     val context = LocalContext.current
     val store = remember { SubscriptionStore.get(context) }
     val subs by store.items.collectAsState()
@@ -105,6 +105,8 @@ fun SubscriptionsContent(onOpen: (VideoItem) -> Unit, onOpenChannel: (ChannelIte
     var channel by remember { mutableStateOf<String?>(null) }
 
     val watched by store.watched.collectAsState()
+    // Les chaînes sans image (importées) : leurs avatars arrivent un par un, doucement
+    LaunchedEffect(store) { app.mikeneko.data.SubscriptionAvatars.fill(store) }
 
     // L'onglet Abonnements touché : toutes les chaînes, tous les filtres retirés, en haut de la liste
     val listState = rememberLazyListState()
@@ -211,7 +213,9 @@ fun SubscriptionsContent(onOpen: (VideoItem) -> Unit, onOpenChannel: (ChannelIte
             }
         }
 
-        item {
+        // L'import de fichiers est dans Réglages › Sauvegarde (1.18.0). Ici : la carte Google si le
+        // compte est activé, sinon rien (seulement un mot quand il n'y a encore aucune chaîne, plus bas)
+        if (GoogleAccount.ENABLED) item {
             if (!connected) {
                 AccountCard(
                     onGoogle = ::connectGoogle,
@@ -291,7 +295,12 @@ fun SubscriptionsContent(onOpen: (VideoItem) -> Unit, onOpenChannel: (ChannelIte
         }
 
         when {
-            subs.isEmpty() -> Unit
+            subs.isEmpty() -> item {
+                Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    EmptyCat(stringResource(R.string.subs_none), stringResource(R.string.subs_none_text))
+                    Capsule(stringResource(R.string.subs_go_import), icon = MkIcons.Download, onClick = onOpenSettings)
+                }
+            }
             feed == null -> item { Loading() }
             groups.isEmpty() -> item { EmptyCat(stringResource(R.string.subs_empty), stringResource(R.string.subs_empty_text)) }
             else -> groups.forEach { (title, list) ->

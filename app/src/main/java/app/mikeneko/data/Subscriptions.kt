@@ -41,6 +41,17 @@ class SubscriptionStore private constructor(context: Context) {
         save(merged)
     }
 
+    /** L'image d'une chaîne suivie, reçue en passant (vidéo, page de la chaîne) ou cherchée exprès. */
+    fun setAvatar(channelId: String, avatar: String?) {
+        if (avatar.isNullOrBlank()) return
+        val list = _items.value
+        val index = list.indexOfFirst { it.channelId == channelId }
+        if (index < 0 || list[index].avatar == avatar) return
+        val updated = list.toMutableList().also { it[index] = it[index].copy(avatar = avatar) }
+        _items.value = updated
+        save(updated)
+    }
+
     fun remove(channelId: String) {
         val left = _items.value.filterNot { it.channelId == channelId }
         _items.value = left
@@ -160,6 +171,29 @@ object SubscriptionImport {
 }
 
 /** Flux des abonnements : les flux RSS publics de YouTube, une requête légère par chaîne. */
+/**
+ * Les avatars des chaînes importées sans image (Takeout, NewPipe…) : cherchés doucement, une chaîne
+ * toutes les [GAP_MS], [PER_LAUNCH] au plus par lancement, seulement pendant que l'onglet Abonnements
+ * est ouvert (l'IP de l'utilisateur est sensible aux rafales vers YouTube). Une chaîne qui échoue
+ * n'est pas retentée avant le prochain lancement.
+ */
+object SubscriptionAvatars {
+    private const val GAP_MS = 4_000L
+    private const val PER_LAUNCH = 30
+    private var fetched = 0
+    private val tried = mutableSetOf<String>()
+
+    suspend fun fill(store: SubscriptionStore) {
+        while (fetched < PER_LAUNCH) {
+            val next = store.items.value.firstOrNull { it.avatar == null && it.channelId !in tried } ?: return
+            tried += next.channelId
+            fetched++
+            runCatching { YouTubeRepository.channelAvatar(next.channelId) }.getOrNull()?.let { store.setAvatar(next.channelId, it) }
+            kotlinx.coroutines.delay(GAP_MS)
+        }
+    }
+}
+
 object SubscriptionFeed {
     /** Une entrée par chaîne, gardée 15 min : seules les chaînes nouvelles ou périmées sont rechargées. */
     private val channels = TimedCache<List<FeedVideo>>(15 * 60_000L)

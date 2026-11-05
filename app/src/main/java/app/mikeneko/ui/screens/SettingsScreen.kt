@@ -157,7 +157,24 @@ private fun BackupSection(context: Context) {
             )
         }
     }
+    // Les abonnements d'autres applis (NewPipe .json, FreeTube .db, Google Takeout .csv) : venu de
+    // l'onglet Abonnements en 1.18.0, où la grande carte d'import restait toujours affichée
+    val importSubs = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            val text = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                runCatching { context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() } }.getOrNull().orEmpty()
+            }
+            val list = app.mikeneko.data.SubscriptionImport.parse(text)
+            SubscriptionStore.get(context).addAll(list)
+            toast(if (list.isEmpty()) context.getString(R.string.subs_import_none) else context.resources.getQuantityString(R.plurals.subs_imported_count, list.size, list.size))
+        }
+    }
     Section(stringResource(R.string.settings_section_backup)) {
+        ActionRow(MkIcons.Subscriptions, stringResource(R.string.settings_import_subs), stringResource(R.string.settings_import_subs_text), Pelage.Texte) {
+            importSubs.launch(arrayOf("application/json", "text/*", "application/xml", "application/octet-stream"))
+        }
+        Divider()
         ActionRow(MkIcons.Share, stringResource(R.string.backup_export), stringResource(R.string.backup_export_text), Pelage.Texte) {
             export.launch("mikeneko-${java.time.LocalDate.now()}.xml")
         }

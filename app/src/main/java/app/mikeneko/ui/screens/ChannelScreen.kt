@@ -178,6 +178,8 @@ fun ChannelContent(channel: ChannelItem, onOpen: (VideoItem) -> Unit) {
             failed = true
         } else {
             tabVideos[ChannelTabs.VIDEOS] = loaded.videos
+            // Une chaîne suivie sans image (importée) : elle reçoit celle-ci au passage
+            app.mikeneko.data.SubscriptionStore.get(context).setAvatar(loaded.id, loaded.avatar)
             loaded.next?.let { tabNext[ChannelTabs.VIDEOS] = it }
             // Une chaîne sans onglet Vidéos (que des shorts…) : on ouvre son premier onglet
             if (loaded.tabs.none { it.channelTabKind() == ChannelTabs.VIDEOS }) {
