@@ -6,6 +6,8 @@ import android.os.SystemClock
 import androidx.core.net.toUri
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
+import androidx.annotation.OptIn
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
@@ -193,7 +195,8 @@ object PlayerHolder {
     private fun applyStableVolume(session: Int = player?.audioSessionId ?: 0): Boolean =
         StableVolume.apply(stableVolume.value && nowPlaying.value?.audioOnly != true, session)
 
-    fun get(context: Context): ExoPlayer = player ?: ExoPlayer.Builder(context.applicationContext)
+    @OptIn(UnstableApi::class)
+    fun get(context: Context): ExoPlayer = player ?: ExoPlayer.Builder(context.applicationContext, SpectrumRenderersFactory(context.applicationContext))
         .setAudioAttributes(
             AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MOVIE).build(),
             true,

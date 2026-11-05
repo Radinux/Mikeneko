@@ -2,6 +2,10 @@ package app.mikeneko.ui.screens
 
 import android.content.res.Configuration
 import android.widget.Toast
+import androidx.annotation.OptIn
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -27,6 +31,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -41,6 +46,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.lerp
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -63,6 +71,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
+import androidx.media3.common.util.UnstableApi
 import app.mikeneko.R
 import app.mikeneko.data.ChannelItem
 import app.mikeneko.data.Favorites
@@ -74,6 +83,7 @@ import app.mikeneko.data.channelIdFrom
 import app.mikeneko.data.cleanArtist
 import app.mikeneko.data.formatClock
 import app.mikeneko.data.formatCount
+import app.mikeneko.player.AudioSpectrum
 import app.mikeneko.player.NowPlaying
 import app.mikeneko.player.PlayerHolder
 import app.mikeneko.player.Repeat
@@ -405,7 +415,10 @@ private fun TrackProgress(key: String?, active: Boolean) {
         } while (active)
     }
     val shown = scrub?.let { (it * duration).toLong() } ?: position
+    val fraction = scrub ?: if (duration > 0) position.toFloat() / duration else 0f
     Column(Modifier.fillMaxWidth().padding(top = 8.dp)) {
+        // Au-dessus de la barre : le spectre en fréquence de la musique (2.5.0)
+        SpectrumBars(active, fraction)
         ProgressWithSegments(
             progress = if (duration > 0) position.toFloat() / duration else 0f,
             segments = emptyList(),
@@ -441,5 +454,38 @@ private fun RowScope.ActionSlot(icon: ImageVector, label: String, enabled: Boole
         contentAlignment = Alignment.Center,
     ) {
         Icon(icon, label, tint = Color.White.copy(alpha = if (enabled) 1f else 0.35f), modifier = Modifier.size(23.dp))
+    }
+}
+
+/**
+ * Le spectre en fréquence de ce qui joue ([AudioSpectrum]), en barres arrondies au-dessus de la
+ * barre de progression : rousses sur la partie déjà jouée, pâles sur la suite. Il retombe en pause.
+ */
+@OptIn(UnstableApi::class)
+@Composable
+private fun SpectrumBars(active: Boolean, fraction: Float) {
+    DisposableEffect(active) {
+        AudioSpectrum.listening = active
+        onDispose { AudioSpectrum.listening = false }
+    }
+    val bands by AudioSpectrum.bands.collectAsState()
+    val playing by PlayerHolder.isPlaying.collectAsState()
+    val level by animateFloatAsState(if (playing) 1f else 0f, tween(500), label = "spectre")
+    Canvas(Modifier.fillMaxWidth().height(34.dp).padding(horizontal = 4.dp)) {
+        val count = bands.size
+        val step = size.width / count
+        val bar = step * 0.58f
+        val min = 2.dp.toPx()
+        for (i in 0 until count) {
+            val h = (min + bands[i] * level * (size.height - min)).coerceAtMost(size.height)
+            val x = i * step + (step - bar) / 2
+            val played = (i + 0.5f) / count <= fraction
+            drawRoundRect(
+                color = if (played) Pelage.RouxClair.copy(alpha = 0.9f) else Color.White.copy(alpha = 0.28f),
+                topLeft = Offset(x, size.height - h),
+                size = Size(bar, h),
+                cornerRadius = CornerRadius(bar / 2),
+            )
+        }
     }
 }
