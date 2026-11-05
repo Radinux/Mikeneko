@@ -423,8 +423,9 @@
     <string name="update_allow">Autoriser</string>
     <string name="update_allow_hint">Autoriser Mikeneko à installer ses mises à jour (une fois, plus aucun appui ensuite)</string>
     <string name="update_notes">Nouveautés</string>
-    <string name="update_pill">Mikeneko %1$s est prête</string>
-    <string name="update_now">Mettre à jour</string>
+    <string name="update_pill">Mise à jour prête</string>
+    <string name="update_pill_version">Mikeneko %1$s</string>
+    <string name="update_now">Installer</string>
     <string name="update_later">Plus tard</string>
     <string name="settings_section_backup">Sauvegarde</string>
     <string name="backup_export">Exporter dans un fichier</string>

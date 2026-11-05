@@ -3,7 +3,7 @@
 Client YouTube libre pour Android, en Kotlin + Jetpack Compose : sans pubs, avec SponsorBlock,
 Return YouTube Dislike, lecteur de musique, téléchargements yt-dlp, mini-lecteur PiP et dock en liquid glass.
 
-**Version : 2.1.8** (publiée en release GitHub ; dernier APK partagé à la main : `Mikeneko-2.1.2.apk`).
+**Version : 2.1.10** (publiée en release GitHub ; dernier APK partagé à la main : `Mikeneko-2.1.2.apk`).
 La version est automatique : `app/version.properties` garde la version de la prochaine compilation
 release ; chaque `assembleRelease` / `installRelease` la prend puis prépare la suivante (dernier
 chiffre +1, `versionCode` +1). Nouvelle fonction : `minor` +1 et `patch=0` à la main. Pas de x.20 : là où on arriverait à x.20.0, c'est une version majeure ((x+1).0.0).
@@ -13,10 +13,15 @@ et `FIXES.md` (à faire / à vérifier).
 
 ## Nouveautés
 
-### 2.1.8
+### 2.1.8 → 2.1.10
 
 - Le pouce « J'aime » du lecteur devient **plein** quand la vidéo est aimée (en plus de la capsule
   rousse) : on voit tout de suite que le clic a marché.
+- 2.1.10 (la 2.1.9, compilée, n'a pas été publiée) : la pilule de mise à jour n'est plus coupée (« Mikeneko 2.… ») : deux lignes, « Mise à jour
+  prête » au-dessus de « Mikeneko X », et un bouton court « Installer ».
+- 2.1.10 : dans la recherche vidéo, les capsules de tri (Filtres, Meilleurs, Récentes…) **montent et
+  s'effacent** avec le haut des résultats, comme les rubriques de l'accueil (elles restent si les
+  filtres sont ouverts) ; glisser verticalement dessus fait défiler les résultats.
 
 ### 2.1.3 → 2.1.7
 

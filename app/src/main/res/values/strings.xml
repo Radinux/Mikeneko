@@ -425,8 +425,9 @@
     <string name="update_allow">Allow</string>
     <string name="update_allow_hint">Allow Mikeneko to install its updates (once, no tap needed after that)</string>
     <string name="update_notes">What\'s new</string>
-    <string name="update_pill">Mikeneko %1$s is ready</string>
-    <string name="update_now">Update</string>
+    <string name="update_pill">Update ready</string>
+    <string name="update_pill_version">Mikeneko %1$s</string>
+    <string name="update_now">Install</string>
     <string name="update_later">Later</string>
     <string name="backup_export">Export to a file</string>
     <string name="backup_export_text">Subscriptions, music and video playlists, saved albums and artists, favorite radios, Watch later and liked videos, in one .xml file.</string>

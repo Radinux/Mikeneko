@@ -132,6 +132,10 @@ class HomeState {
     internal var scrollToTop by mutableStateOf(0)
     /** La liste et son « tirer pour rafraîchir » : les rubriques en verre (au-dessus) leur passent les glissements verticaux. */
     internal var list by mutableStateOf<LazyListState?>(null)
+    /** La liste des résultats de recherche, et de combien son haut a défilé (les capsules de tri le suivent). */
+    internal var searchList by mutableStateOf<LazyListState?>(null)
+    var searchChipsShift by androidx.compose.runtime.mutableIntStateOf(0)
+        internal set
     internal var pull by mutableStateOf<PullToRefreshState?>(null)
     internal var refreshing by mutableStateOf(false)
     internal var onRefresh: () -> Unit = {}
@@ -567,11 +571,22 @@ fun HomeOverlay(state: HomeState, backdrop: Backdrop, onSettings: () -> Unit) {
                 modifier = Modifier.padding(horizontal = 16.dp),
                 )
             if (state.searching && state.submitted != null && !state.suggesting) {
-                // Sous les résultats : l'ordre (meilleurs, récentes, plus vues)
+                // Sous les résultats : l'ordre (meilleurs, récentes, plus vues). Comme les rubriques de
+                // l'accueil, les capsules montent et s'effacent avec le haut de la liste (sauf filtres ouverts)
+                val density = LocalDensity.current
+                val gone = with(density) { CATEGORIES_HEIGHT.toPx() }
+                val shift = if (state.filtersOpen) 0 else state.searchChipsShift
+                val searchList = state.searchList
                 LazyRow(
+                    Modifier
+                        .offset { IntOffset(0, -shift.coerceAtMost(4 * gone.toInt())) }
+                        .graphicsLayer { alpha = (1f - shift / gone).coerceIn(0f, 1f) }
+                        // Glisser verticalement sur une capsule fait défiler les résultats dessous
+                        .then(if (searchList != null) Modifier.scrollable(searchList, Orientation.Vertical) else Modifier),
                     contentPadding = PaddingValues(horizontal = 20.dp, vertical = 6.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
+                    if (shift >= gone) return@LazyRow // partie : rien à toucher
                     // D'abord les filtres (orange quand il y en a d'actifs, avec leur nombre)
                     item(key = "filtres") {
                         val active = state.filters.active

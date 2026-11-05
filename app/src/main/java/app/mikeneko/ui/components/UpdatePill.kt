@@ -11,6 +11,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -48,8 +49,8 @@ import app.mikeneko.ui.theme.Rounded
 import app.mikeneko.update.AppUpdates
 
 /**
- * Une mise à jour est téléchargée : une pilule en verre en haut de l'écran, « Mikeneko X est prête »
- * et « Mettre à jour » (installe tout de suite ; ou ouvre le réglage Android s'il faut encore autoriser
+ * Une mise à jour est téléchargée : une pilule en verre en haut de l'écran, « Mise à jour prête /
+ * Mikeneko X » et « Installer » (installe tout de suite ; ou ouvre le réglage Android s'il faut encore autoriser
  * les installations). ✕ : plus tard (elle s'installera quand on quitte l'appli). Demandé le 05/11.
  */
 @Composable
@@ -68,15 +69,26 @@ fun UpdatePill(backdrop: Backdrop, modifier: Modifier = Modifier) {
         exit = fadeOut() + slideOutVertically { -it },
     ) {
         val update = shown ?: return@AnimatedVisibility
-        LiquidGlass(backdrop, Modifier.height(52.dp), cornerRadius = 26.dp, bezel = 16.dp, refraction = 16.dp, tint = Color(0x8C100D0B)) {
-            Row(Modifier.padding(start = 18.dp, end = 6.dp).align(Alignment.Center), verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    stringResource(R.string.update_pill, update.release.version),
-                    Modifier.weight(1f, fill = false),
-                    style = TextStyle(fontFamily = Rounded, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold, shadow = GlassTextShadow),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+        // Deux lignes (« Mise à jour prête » / « Mikeneko 2.1.8 ») et un bouton court : sur une seule
+        // ligne, avec une police système agrandie, le texte était coupé en « Mikeneko 2.… »
+        LiquidGlass(backdrop, Modifier.height(60.dp), cornerRadius = 30.dp, bezel = 16.dp, refraction = 16.dp, tint = Color(0x8C100D0B)) {
+            Row(Modifier.padding(start = 20.dp, end = 6.dp).align(Alignment.Center), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f, fill = false)) {
+                    Text(
+                        stringResource(R.string.update_pill),
+                        style = TextStyle(fontFamily = Rounded, color = Color(0xFFE3DAD2), fontSize = 12.sp, fontWeight = FontWeight.Bold, shadow = GlassTextShadow),
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        stringResource(R.string.update_pill_version, update.release.version),
+                        style = TextStyle(fontFamily = Rounded, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, shadow = GlassTextShadow),
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
                 Spacer(Modifier.width(10.dp))
                 Text(
                     stringResource(R.string.update_now),
@@ -96,6 +108,8 @@ fun UpdatePill(backdrop: Backdrop, modifier: Modifier = Modifier) {
                     color = Pelage.Encre,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.ExtraBold,
+                    maxLines = 1,
+                    softWrap = false,
                 )
                 Box(
                     Modifier.size(40.dp).clip(CircleShape).clickable(role = Role.Button, onClickLabel = stringResource(R.string.update_later)) {

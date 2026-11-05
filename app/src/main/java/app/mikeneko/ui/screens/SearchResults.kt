@@ -21,6 +21,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -99,6 +100,12 @@ fun SearchResultsContent(state: HomeState, query: String, onOpen: (VideoItem) ->
     var loadingMore by remember(query) { mutableStateOf(false) }
     var channels by remember(query) { mutableStateOf(cached?.channels.orEmpty()) }
     val list = rememberLazyListState()
+    // Les capsules de tri (au-dessus, voir HomeOverlay) suivent le haut de la liste
+    SideEffect { state.searchList = list }
+    LaunchedEffect(list) {
+        snapshotFlow { if (list.firstVisibleItemIndex == 0) list.firstVisibleItemScrollOffset else Int.MAX_VALUE }
+            .collect { state.searchChipsShift = it }
+    }
 
     // Les chaînes : celles des résultats, complétées par une recherche de chaînes (en parallèle)
     LaunchedEffect(query) {
