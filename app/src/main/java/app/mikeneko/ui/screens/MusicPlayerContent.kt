@@ -35,12 +35,14 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
@@ -468,10 +470,39 @@ private fun SpectrumBars(active: Boolean, fraction: Float) {
         AudioSpectrum.listening = active
         onDispose { AudioSpectrum.listening = false }
     }
-    val bands by AudioSpectrum.bands.collectAsState()
     val playing by PlayerHolder.isPlaying.collectAsState()
     val level by animateFloatAsState(if (playing) 1f else 0f, tween(500), label = "spectre")
+    // Le son arrive par gros paquets (~4 par seconde) : on le garde, et à chaque image de l'écran on
+    // analyse l'endroit où en est une tête de lecture qui avance en temps réel, une demi-seconde
+    // derrière le dernier son reçu (il est encore dans le tampon du haut-parleur). Fluide (2.5.2).
+    val bands = remember { FloatArray(AudioSpectrum.BANDS) }
+    var frame by remember { mutableIntStateOf(0) }
+    LaunchedEffect(active) {
+        if (!active) return@LaunchedEffect
+        var playhead = -1.0
+        var epoch = -1
+        var last = 0L
+        while (true) {
+            withFrameNanos { now ->
+                val written = AudioSpectrum.written
+                val rate = AudioSpectrum.sampleRate.toDouble()
+                val dt = if (last == 0L) 0.0 else (now - last) / 1e9
+                last = now
+                val behind = rate * 0.5
+                if (AudioSpectrum.epoch != epoch || playhead < 0) {
+                    epoch = AudioSpectrum.epoch
+                    playhead = written - behind
+                }
+                if (PlayerHolder.isPlaying.value) playhead += dt * rate
+                if (playhead > written) playhead = written.toDouble() // rattrapé : on attend le paquet suivant
+                if (playhead < written - 2.4 * behind) playhead = written - behind // trop en retard (saut)
+                AudioSpectrum.bandsAt(playhead.toLong(), bands)
+                frame++
+            }
+        }
+    }
     Canvas(Modifier.fillMaxWidth().height(34.dp).padding(horizontal = 4.dp)) {
+        frame // relu ici : seulement un nouveau dessin à chaque image, pas une recomposition
         val count = bands.size
         val step = size.width / count
         val bar = step * 0.58f

@@ -15,16 +15,14 @@ import kotlin.math.hypot
 import kotlin.math.log10
 import kotlin.math.pow
 import kotlin.math.sin
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * Le spectre en fréquence de ce qui joue (2.5.0), pour la barre de progression de la musique.
  *
  * Le son est lu au passage dans ExoPlayer ([TeeAudioProcessor], voir [SpectrumRenderersFactory]) :
  * pas besoin de la permission micro, contrairement au `Visualizer` d'Android. Une FFT de 1024
- * échantillons, 30 fois par seconde, regroupée en [BANDS] bandes de 40 Hz à 16 kHz (échelle
+ * échantillons à chaque image de l'écran (2.5.2 : avant, au rythme des paquets de son, ~4 par seconde),
+ * regroupée en [BANDS] bandes de 40 Hz à 16 kHz (échelle
  * logarithmique, comme l'oreille), adoucie (monte vite, retombe doucement). Rien n'est calculé tant
  * que personne ne regarde ([listening]).
  */
@@ -32,24 +30,28 @@ import kotlinx.coroutines.flow.asStateFlow
 object AudioSpectrum : TeeAudioProcessor.AudioBufferSink {
     const val BANDS = 40
     private const val N = 1024
+    private const val RING = 1 shl 16 // ~1,5 s à 44,1 kHz
     private const val MIN_HZ = 40.0
     private const val MAX_HZ = 16_000.0
 
-    /** Mis à true par l'écran qui affiche le spectre (sinon, aucun calcul sur le fil audio). */
+    /** Mis à true par l'écran qui affiche le spectre (sinon, rien n'est gardé sur le fil audio). */
     @Volatile var listening = false
 
-    private val _bands = MutableStateFlow(FloatArray(BANDS))
-    /** La hauteur de chaque bande, de 0 à 1 (graves à gauche). */
-    val bands: StateFlow<FloatArray> = _bands.asStateFlow()
+    /** La fréquence d'échantillonnage du son en cours. */
+    @Volatile var sampleRate = 44_100
+        private set
+    /** Combien d'échantillons sont passés en tout (le son arrive par paquets, environ 4 fois par seconde). */
+    @Volatile var written = 0L
+        private set
+    /** Change à chaque saut / changement de morceau : l'écran recale sa tête de lecture. */
+    @Volatile var epoch = 0
+        private set
 
-    private var sampleRate = 44_100
     private var channels = 2
     private var encoding = C.ENCODING_PCM_16BIT
+    private val ring = FloatArray(RING)
 
-    private val ring = FloatArray(N)
-    private var pos = 0
-    private var filled = 0
-    private var sinceLast = 0
+    // Côté écran (fil principal) : la FFT et le lissage
     private val re = FloatArray(N)
     private val im = FloatArray(N)
     private val window = FloatArray(N) { (0.5 - 0.5 * cos(2 * PI * it / (N - 1))).toFloat() } // Hann
@@ -59,49 +61,47 @@ object AudioSpectrum : TeeAudioProcessor.AudioBufferSink {
         sampleRate = sampleRateHz.coerceAtLeast(8_000)
         channels = channelCount.coerceAtLeast(1)
         this.encoding = encoding
-        filled = 0
-        pos = 0
-        sinceLast = 0
+        epoch++
     }
 
     override fun handleBuffer(buffer: ByteBuffer) {
         if (!listening) return
         val b = buffer.duplicate().order(ByteOrder.nativeOrder())
-        val every = sampleRate / 30
+        var w = written
         when (encoding) {
             C.ENCODING_PCM_16BIT -> while (b.remaining() >= 2 * channels) {
                 var sum = 0f
                 repeat(channels) { sum += b.short / 32768f }
-                push(sum / channels, every)
+                ring[(w and (RING - 1).toLong()).toInt()] = sum / channels
+                w++
             }
             C.ENCODING_PCM_FLOAT -> while (b.remaining() >= 4 * channels) {
                 var sum = 0f
                 repeat(channels) { sum += b.float }
-                push(sum / channels, every)
+                ring[(w and (RING - 1).toLong()).toInt()] = sum / channels
+                w++
             }
             else -> return
         }
+        written = w
     }
 
-    private fun push(sample: Float, every: Int) {
-        ring[pos] = sample
-        pos = (pos + 1) % N
-        if (filled < N) filled++
-        if (++sinceLast >= every && filled == N) {
-            sinceLast = 0
-            analyze()
-        }
-    }
-
-    private fun analyze() {
+    /**
+     * Le spectre des [N] échantillons qui finissent à [end] (appelé à chaque image de l'écran, avec
+     * une tête de lecture qui avance en temps réel : voir `SpectrumBars`). Hauteurs de 0 à 1,
+     * adoucies d'une image à l'autre (montent vite, retombent doucement).
+     */
+    fun bandsAt(end: Long, out: FloatArray) {
+        val start = end - N
+        if (start < 0) return
         for (i in 0 until N) {
-            re[i] = ring[(pos + i) % N] * window[i]
+            re[i] = ring[((start + i) and (RING - 1).toLong()).toInt()] * window[i]
             im[i] = 0f
         }
         fft(re, im)
-        val binHz = sampleRate.toDouble() / N
-        val top = minOf(MAX_HZ, sampleRate / 2.0)
-        val out = FloatArray(BANDS)
+        val rate = sampleRate
+        val binHz = rate.toDouble() / N
+        val top = minOf(MAX_HZ, rate / 2.0)
         for (band in 0 until BANDS) {
             val lo = MIN_HZ * (top / MIN_HZ).pow(band.toDouble() / BANDS)
             val hi = MIN_HZ * (top / MIN_HZ).pow((band + 1).toDouble() / BANDS)
@@ -112,10 +112,9 @@ object AudioSpectrum : TeeAudioProcessor.AudioBufferSink {
             // En décibels, ramenés de [-60 dB, 0 dB] à [0, 1] ; les aigus un peu relevés (ils sont plus faibles)
             val db = 20 * log10(peak / (N / 4f) + 1e-9f) + 6f * band / BANDS
             val v = ((db + 60f) / 60f).coerceIn(0f, 1f)
-            smooth[band] = if (v > smooth[band]) smooth[band] * 0.35f + v * 0.65f else smooth[band] * 0.8f + v * 0.2f
+            smooth[band] = if (v > smooth[band]) smooth[band] * 0.45f + v * 0.55f else smooth[band] * 0.86f + v * 0.14f
             out[band] = smooth[band]
         }
-        _bands.value = out
     }
 
     /** FFT radix 2 sur place (taille puissance de 2). */
