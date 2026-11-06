@@ -1,17 +1,61 @@
-# Mikeneko 🐱
+<div align="center">
 
-Client YouTube libre pour Android, en Kotlin + Jetpack Compose : sans pubs, avec SponsorBlock,
-Return YouTube Dislike, lecteur de musique, téléchargements yt-dlp, mini-lecteur PiP et dock en liquid glass.
+<img src="docs/logo.svg" width="140" alt="Logo de Mikeneko : une tête de chat tricolore">
+
+# Mikeneko 三毛猫
+
+**Le client YouTube libre pour Android, tout en verre liquide.**<br>
+Sans pubs · sans compte Google · avec des oreilles de chat.
+
+[![Dernière version](https://img.shields.io/github/v/release/Radinux/Mikeneko-releases?style=for-the-badge&color=E07A2E&label=version)](https://github.com/Radinux/Mikeneko-releases/releases/latest)
+![Android 8+](https://img.shields.io/badge/Android-8.0%2B-3DDC84?style=for-the-badge&logo=android&logoColor=white)
+![Kotlin](https://img.shields.io/badge/Kotlin-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)
+![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white)
+[![Licence GPL-3.0](https://img.shields.io/badge/licence-GPL--3.0-55504D?style=for-the-badge)](LICENSE.txt)
+
+### [⬇️ Télécharger Mikeneko](https://github.com/Radinux/Mikeneko-releases/releases/latest)
+
+</div>
+
+---
+
+## ✨ Ce qu'elle sait faire
+
+- 🚫 **Sans pubs**, avec **SponsorBlock** qui saute sponsors et intros tout seul (le « coup de patte »)
+  et les **dislikes** de Return YouTube Dislike.
+- 🏠 **Accueil « Pour toi »** calculé sur le téléphone (historique, suggestions, abonnements) et
+  **bloqueur de shorts**.
+- 📰 **Abonnements sans compte** : import depuis NewPipe, FreeTube ou Google Takeout, filtre par
+  chaîne, « Pas vues ».
+- 🎵 **Un vrai lecteur de musique** : YouTube Music (morceaux, albums, artistes, playlists), Mix auto,
+  « Pour toi » et « Tes mix », paroles synchronisées, spectre qui danse, playlists perso.
+- ⬇️ **Téléchargements yt-dlp** : vidéo, MP3, FLAC, Opus, M4A, sponsors coupés, écoute hors ligne.
+- 📺 **Mini-lecteur PiP** à oreilles de chat dans l'appli, et vrai PiP système en la quittant.
+- 🫧 **Liquid glass** : dock, boutons et fenêtre musique en verre qui réfracte l'écran (Android 13+).
+- 💬 Commentaires, chapitres, pages de chaîne et de playlist, **Bibliothèque** (historique, à
+  regarder plus tard, J'aime).
+- 🌙 **« T'as vu l'heure ? »** après une heure de visionnage.
+- 🔄 **Mises à jour automatiques** depuis GitHub, en 🇫🇷 français et 🇬🇧 anglais.
+
+## 📥 Installer
+
+1. Télécharge le dernier APK sur la
+   [page des versions](https://github.com/Radinux/Mikeneko-releases/releases/latest)
+   (`arm64-v8a`, pour tous les téléphones récents).
+2. Ouvre-le sur le téléphone et autorise l'installation.
+3. C'est tout : l'appli se met ensuite à jour d'elle-même.
+
+## 🧭 Reprendre le développement
 
 **Version : 2.6.1** (publiée en release GitHub ; dernier APK partagé à la main : `Mikeneko-2.1.2.apk`).
 La version est automatique : `app/version.properties` garde la version de la prochaine compilation
 release ; chaque `assembleRelease` / `installRelease` la prend puis prépare la suivante (dernier
 chiffre +1, `versionCode` +1). Nouvelle fonction : `minor` +1 et `patch=0` à la main. Pas de x.20 : là où on arriverait à x.20.0, c'est une version majeure ((x+1).0.0).
 
-Pour reprendre le développement : `NOTES-TECHNIQUES.md` (comment et pourquoi, pièges, procédures)
+📒 Les cartes du projet : `NOTES-TECHNIQUES.md` (comment et pourquoi, pièges, procédures)
 et `FIXES.md` (à faire / à vérifier).
 
-## Nouveautés
+## 🆕 Nouveautés
 
 ### 2.6.0 → 2.6.1
 
@@ -64,6 +108,9 @@ Ta liste « Mikeneko fixes list » :
 - **Barre d'état affichée** (réglage « masquée » coupé) : une bande noire derrière elle, avec des
   coins arrondis inversés, pour que rien ne passe sous l'heure et les icônes.
 - **Lecteur musique plus transparent** : le voile de la fenêtre et l'assombrissement derrière sont plus légers.
+
+<details>
+<summary><b>📜 Versions précédentes (2.3.0 → 1.1.0)</b></summary>
 
 ### 2.3.0
 
@@ -513,7 +560,9 @@ Ta liste « Mikeneko fixes list » :
   Réglage global : `ANIMATION_SPEED` dans `ui/AnimationSpeed.kt`, à 2 (tout va deux fois plus vite
   que les durées écrites dans le code).
 
-## Ouvrir le projet
+</details>
+
+## 🔧 Ouvrir le projet
 
 1. Android Studio récent (fin 2026), JDK 17 ou plus.
 2. **File › Open** → le dossier `Mikeneko`.
@@ -525,7 +574,7 @@ En ligne de commande : `./gradlew assembleRelease`, puis
 voir plus bas). Un APK par processeur : `arm64-v8a` pour les téléphones,
 `x86_64` pour l'émulateur ; pas de 32 bits.
 
-### Clé de publication
+### 🔑 Clé de publication
 
 La version release est signée avec la clé de publication de Mikeneko, **hors du projet** :
 `~/.config/mikeneko/mikeneko-release.jks` et son mot de passe dans `~/.config/mikeneko/signing.properties`
@@ -534,7 +583,7 @@ gestionnaire de mots de passe) : sans eux, impossible de publier une mise à jou
 Sans ce fichier, la release est signée avec la clé de debug.
 Empreinte SHA-256 : `0F:0B:6E:19:0A:E7:2C:34:63:A0:20:03:61:12:9D:54:F9:F4:B8:6B:CF:DC:70:8A:09:99:3B:03:A7:96:83:DC`.
 
-### Poids de l'appli
+### ⚖️ Poids de l'appli
 
 - APK release arm64 : ~59 Mo (dont ~50 Mo pour python + ffmpeg de yt-dlp, ~8 Mo de code après R8).
   L'APK debug, lui, n'est ni réduit ni compressé (~120 Mo) : il ne sert qu'au développement.
@@ -548,7 +597,7 @@ Toutes les versions sont dans `gradle/libs.versions.toml`. Android Studio te pro
 mettre à jour : accepte, surtout pour **NewPipeExtractor** (c'est lui qui suit les changements
 de YouTube).
 
-## Ce qui est dedans
+## 🧩 Ce qui est dedans
 
 | Fonction | Où |
 | --- | --- |
@@ -574,7 +623,7 @@ de YouTube).
 | « Pour toi » : algorithme local (historique + suggestions YouTube + abonnements) | `data/ForYou.kt`, `data/WatchHistory.kt` |
 | Partager un lien YouTube vers Mikeneko / ouvrir les liens YouTube | `AndroidManifest.xml` |
 
-### Vitesse des animations
+### ⏩ Vitesse des animations
 
 `MainActivity` passe à `setContent` son propre recomposeur (`fixedSpeedRecomposer()` dans
 `ui/AnimationSpeed.kt`) avec une `MotionDurationScale` fixe. Toutes les animations Compose (y compris
@@ -583,7 +632,7 @@ téléphone. `ANIMATION_SPEED = 2` : une animation écrite `tween(400)` dure en 
 les ressorts) ; en tenir compte quand on règle une durée. Attention : `delay()` n'a jamais suivi cette échelle, donc ne
 jamais caler une étape d'animation sur un `delay()`.
 
-### Le liquid glass
+### 🫧 Le liquid glass
 
 `ui/glass/LiquidGlass.kt` :
 
@@ -600,7 +649,7 @@ Le dock musique et sa fenêtre sont une seule vitre (`MusicDockWindow`) dont la 
 (0 = pilule, 1 = fenêtre) : le doigt la tire, un ressort la pose. Le contenu de la fenêtre est construit à sa taille finale
 et seulement découpé par la vitre, pour ne pas remettre en page tout le lecteur à chaque image.
 
-## Langues
+## 🌍 Langues
 
 L'appli est en français et en anglais (l'anglais sert de langue par défaut pour tous les autres
 pays). Le choix se fait dans **Réglages › Langue** ; « Langue du téléphone » suit le système.
@@ -614,7 +663,7 @@ Pour ajouter une langue (par exemple l'espagnol) :
 Les recherches des rubriques de l'accueil (`query_*`) sont aussi des textes traduits : ce sont
 elles qui donnent des vidéos dans la bonne langue.
 
-## Pas de compte Google
+## 🙅 Pas de compte Google
 
 La connexion Google (OAuth + YouTube Data API) a été retirée au grand nettoyage (2.1.3), avec les
 Play Services : elle n'avait jamais pu être activée sans déclarer l'app dans la Google Cloud Console.
@@ -622,7 +671,7 @@ Les abonnements s'importent depuis NewPipe, FreeTube ou Google Takeout (Réglage
 les commentaires se lisent sans compte. Pour la ressortir : `data/GoogleAccount.kt` et la
 procédure de la console sont dans l'historique git (commit `066b0c2`).
 
-## Structure
+## 🗂️ Structure
 
 ```
 app/src/main/java/app/mikeneko/
@@ -640,11 +689,11 @@ app/src/main/java/app/mikeneko/
     └── theme/              palette « pelage » + police M PLUS Rounded 1c
 ```
 
-## Prochaines étapes possibles
+## 🔮 Prochaines étapes possibles
 
 - Couleurs du lecteur tirées de la miniature (`androidx.palette`).
 
-## Crédits
+## 💛 Crédits
 
 - [NewPipeExtractor](https://github.com/TeamNewPipe/NewPipeExtractor) (GPL-3.0) : c'est pourquoi
   Mikeneko est aussi sous GPL-3.0.
@@ -652,3 +701,9 @@ app/src/main/java/app/mikeneko/
 - [youtubedl-android](https://github.com/yausername/youtubedl-android) / yt-dlp.
 - Police **M PLUS Rounded 1c** (The M+ FONTS Project Authors), SIL Open Font License 1.1,
   réduite au latin, aux kanas et à « 三毛猫 ».
+
+---
+
+<div align="center">
+<sub>三毛猫 <i>mikeneko</i> : « chat tricolore » en japonais · logiciel libre sous GPL-3.0</sub>
+</div>
