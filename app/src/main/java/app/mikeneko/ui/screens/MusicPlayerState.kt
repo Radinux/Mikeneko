@@ -1,5 +1,6 @@
 package app.mikeneko.ui.screens
 
+import kotlinx.coroutines.CoroutineStart
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.runtime.Composable
@@ -71,12 +72,14 @@ class MusicPlayerState(private val scope: CoroutineScope) {
         }
     }
 
+    // UNDISPATCHED (2.10.3) : la vitre se pose tout de suite sous le doigt. Avant, chaque mouvement
+    // attendait le tour suivant du fil principal : un léger retard, parfois par à-coups.
     internal fun dragTo(value: Float) {
-        scope.launch { expand.snapTo(value) }
+        scope.launch(start = CoroutineStart.UNDISPATCHED) { expand.snapTo(value) }
     }
 
     internal fun stop() {
-        scope.launch { expand.stop() }
+        scope.launch(start = CoroutineStart.UNDISPATCHED) { expand.stop() }
     }
 
     /** Hauteur (px) entre la pilule et la fenêtre : fixée par [MusicDockWindow]. */

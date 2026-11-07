@@ -1,5 +1,6 @@
 package app.mikeneko.ui.screens
 
+import androidx.compose.runtime.derivedStateOf
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -122,8 +123,11 @@ fun MusicDockWindow(
             }
         }
 
-        // Derrière la fenêtre : la page s'assombrit à mesure qu'elle s'ouvre ; un tap dehors la referme
-        if (state.open || state.expand.value > 0.01f) {
+        // Derrière la fenêtre : la page s'assombrit à mesure qu'elle s'ouvre ; un tap dehors la referme.
+        // derivedStateOf (2.10.3) : avant, la position était relue ici à chaque image, et tout le dock
+        // (vitre, pilule, fenêtre) se recomposait pendant l'animation
+        val dimmed by remember(state) { derivedStateOf { state.open || state.expand.value > 0.01f } }
+        if (dimmed) {
             Box(
                 Modifier
                     .fillMaxSize()

@@ -1,5 +1,7 @@
 package app.mikeneko.ui.screens
 
+import androidx.compose.ui.graphics.FilterQuality
+import coil3.request.ImageRequest
 import android.content.res.Configuration
 import android.widget.Toast
 import androidx.annotation.OptIn
@@ -51,7 +53,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
@@ -179,11 +180,16 @@ internal fun PlayerWindowContent(
                     ),
                 ),
         ) {
+            // La pochette « floutée » : chargée en 48 px et étirée (2.10.3). Avant, un flou de 60 dp
+            // recalculé à chaque image (deux fois : il est aussi enregistré pour le verre), qui faisait
+            // accrocher l'ouverture de la fenêtre.
+            val tiny = remember(now?.thumbnail) { ImageRequest.Builder(context).data(now?.thumbnail).size(48, 48).build() }
             AsyncImage(
-                now?.thumbnail,
+                tiny,
                 null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize().blur(60.dp).graphicsLayer { alpha = 0.14f },
+                filterQuality = FilterQuality.Low,
+                modifier = Modifier.fillMaxSize().graphicsLayer { alpha = 0.14f },
             )
         }
 

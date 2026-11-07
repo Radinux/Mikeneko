@@ -70,6 +70,9 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
   subscriptions filters) is a **connected Material 3 group**: capsules almost touching, rounded ends,
   the selected one a full pill in the accent color; a bit wider.
 - **Lighter colors**: tonal buttons and unselected capsules are a light cream tinted with the accent.
+- 2.10.3: the **music dock animation** is smoother: no more whole-dock recomposition on every frame,
+  the pane follows the finger without delay, and the window's blurred cover no longer costs a blur
+  on every frame.
 - 2.10.2: **music imports about 8× faster**: up to 3 searches at once, slowing down by itself as
   soon as YouTube resists (72 searches in 26 s instead of ~3.5 min).
 - 2.10.1: **Subscribed and the bell form one split pill** (video and channel pages); the "What's new"

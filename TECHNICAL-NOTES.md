@@ -801,6 +801,18 @@ users: the point is to take them from the videos really watched.
 
 ---
 
+## 8 sexdecies. Smoother music dock (2.10.3)
+
+- `MusicDockWindow` read `state.expand.value` in composition (for the dimming veil): the whole dock
+  recomposed on every animation frame. Now `derivedStateOf { open || expand > 0.01 }`.
+- `MusicPlayerState.dragTo` / `stop` launch with `CoroutineStart.UNDISPATCHED`: the pane moves in the
+  same frame as the finger (before, every move waited for the next main-thread turn).
+- The window background no longer uses `Modifier.blur(60.dp)` (a RenderEffect recomputed on every
+  frame, twice since the background is also recorded as the buttons' backdrop): the cover is loaded
+  at 48 px and stretched (`FilterQuality.Low`), which looks blurred for free.
+
+---
+
 ## 9. Compose and Android pitfalls to remember
 
 - A **`derivedStateOf` read only in a `SideEffect`** doesn't trigger recomposition: read it during
