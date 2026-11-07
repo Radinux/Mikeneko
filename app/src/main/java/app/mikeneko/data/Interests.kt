@@ -9,7 +9,7 @@ import kotlin.math.sqrt
 /**
  * Le profil d'intérêts du « Pour toi » (2.7.0), calculé sur le téléphone, jamais envoyé nulle part.
  *
- * Comme les grandes plateformes (YouTube vise le temps regardé, TikTok la vidéo regardée jusqu'au
+ * Comme les grandes plateformes (YouTube vise le temps regardé, d'autres la vidéo regardée jusqu'au
  * bout), une vidéo compte selon ce qu'on en a vraiment regardé : ouverte puis fermée tout de suite,
  * elle ne compte presque pas. S'y ajoutent les J'aime (fort), « À regarder plus tard » et les
  * playlists vidéo, les abonnements, les goûts choisis, et « Pas intéressé » en négatif. Le temps

@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * Les goûts choisis pour le « Pour toi » (2.7.0) : au premier lancement, on touche quelques thèmes
- * (comme sur TikTok) et le fil part de là, avant d'apprendre de ce qu'on regarde. Modifiables dans
+ * et le fil part de là, avant d'apprendre de ce qu'on regarde. Modifiables dans
  * Réglages › Pour toi. Chaque thème a quelques recherches (traduites), tirées au hasard.
  *
  * Garde aussi un nombre tiré au sort une fois pour toutes sur ce téléphone ([seed]) : deux

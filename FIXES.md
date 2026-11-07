@@ -110,7 +110,7 @@ Items marked "to check on the phone" are built and published but not confirmed o
 - [x] 1.10: Music home in rows (greeting, quick access, recently played, playlists, moods, live)
 - [x] 1.11.0: music library (All / Playlists / Albums / Artists / Downloaded filters, save albums and artists) (verified on the phone)
 - [x] 1.12.1: hidden offline cache (music and videos played offline, no exposed files)
-- [x] 1.13.0: download button on your own playlists (music then videos), offline listening in the app like Spotify
+- [x] 1.13.0: download button on your own playlists (music then videos), offline listening in the app
 - [x] 1.13.1: Shuffle on video playlists (and Watch later, Liked)
 - [x] 1.13.6: scrolling down a music playlist, the title and the play button come progressively into the top bar (verified on the phone)
 
@@ -154,7 +154,7 @@ Items marked "to check on the phone" are built and published but not confirmed o
 - [x] 2.1.1: automatic download from GitHub — seen on the phone ("Mikeneko 2.1.1 is ready")
 - [ ] 2.1.2 (arrived on its own on the phone): "Update" pill as soon as the APK is downloaded; Settings › About buttons no longer squashed ("What's new" letter by letter)
 - [ ] 2.11.0: playlist Add | Edit (suggestions + search page, edit mode with name, cover, delete, one-tap remove, reorder only there), Video button in the music player — verified on the emulator (Add/Edit pill, edit mode, suggestions, + → ✓, 19 → 20 tracks); Video button to check on the phone
-- [ ] 2.10.4: spectrum wave at 30 fps (Honor Magic Capsule lagged a little with the music window open) — to check on the phone
+- [ ] 2.10.4: spectrum wave at 30 fps (system animations lagged a little with the music window open) — to check on the phone
 - [x] 2.10.3: smoother music dock animation (pill ↔ window) — verified on the phone, much smoother
 - [x] 2.10.2: faster music import (adaptive, 3 searches at once) — verified on the emulator: 72 searches in 26 s (was ~3.5 min), 19/19 songs, 52/53 artists
 - [x] 2.10.1: Subscribed | bell as one split pill — verified on the phone
@@ -163,7 +163,7 @@ Items marked "to check on the phone" are built and published but not confirmed o
 - [ ] 2.9.0: Share button on the video page; swipe down on the portrait video → mini player; leaving full screen in landscape stays in landscape; live video during the mini player morph (no freeze) — to check on the phone
 - [ ] 2.9.0: dark scenes no longer blocky (Auto = step above the screen on Wi-Fi, highest bitrate at equal resolution) — to check on the phone with the same video as on YouTube
 - [x] 2.9.0: accent colors + pure black background (Settings › Appearance), Material 3 buttons and capsules — verified on the emulator (Ocean + black)
-- [ ] 2.8.0: import a TuneMyMusic export (CSV / TXT): pick playlists, songs found on YouTube Music, artists and albums to the library, duplicates merged — verified on the emulator with a real Spotify export (ASMR + Favorite Albums: 8/9 songs, 11/12 albums); to check on the phone with a bigger import
+- [ ] 2.8.0: import a TuneMyMusic export (CSV / TXT): pick playlists, songs found on YouTube Music, artists and albums to the library, duplicates merged — verified on the emulator with a real export (ASMR + Favorite Albums: 8/9 songs, 11/12 albums); to check on the phone with a bigger import
 - [ ] 2.7.0: new "For you" (interest profile from watch time, likes, saved videos, topics; tastes page on a new phone; no more shared trending feed; fatigue) — to check on the phone
 - [ ] 2.7.0: "What's new" page once after an update — to check on the phone (it should show right after updating to 2.7.0)
 - [ ] 2.6.7: releases and update checks moved to Radinux/Mikeneko (public source) — to check on the phone: the next update arrives from the new repository
@@ -196,7 +196,7 @@ Items marked "to check on the phone" are built and published but not confirmed o
 - [ ] 2.1.3: big code cleanup, nothing should change on screen. Go around: home, subscriptions (channel row, filters, unsubscribe), portrait / landscape / full screen player, mini player, music (pill, window, queue, lyrics, album / artist / search pages), comments (read-only), settings — to check on the phone
 
 ### Music: next ideas (Nov 7)
-- [x] Import playlists exported with TuneMyMusic (Spotify, Deezer…) as a CSV or TXT file, duplicates
+- [x] Import playlists exported with TuneMyMusic as a CSV or TXT file, duplicates
       merged (2.8.0)
 
 ### Subscriptions and backup (Nov 4)
@@ -214,7 +214,7 @@ Items marked "to check on the phone" are built and published but not confirmed o
 ### Radio
 - [x] Full dock on the Radio + a "music dock" (current station) above it, also on the other tabs while
       the radio plays (`MusicDock`)
-- [x] Turn it into a real music player (chosen on Nov 1, verified on the Pixel 10 emulator):
+- [x] Turn it into a real music player (chosen on Nov 1, verified on the emulator):
   - [x] Queue chaining on its own at the end of a song; shuffle; repeat (off / all / one);
         "previous" goes back to the start after 3 s; next/previous in the notification and on earphones
   - [x] Progress bar + time in the big player (not for live streams)
@@ -235,7 +235,7 @@ Items marked "to check on the phone" are built and published but not confirmed o
       network's IP address (not an app bug). Wait a few hours; mobile data works. This block is not
       worked around: the app only reduces its own traffic (see above) and long playback test sessions
       are avoided.
-      Nov 4: the "web" PoToken (WebView BotGuard, like pytubefix #209) wouldn't help as is:
+      Nov 4: the "web" PoToken (WebView BotGuard) wouldn't help as is:
       NewPipeExtractor only asks for Android/iOS tokens. What already helps: the n-sig fix (1.10.3) and
       the offline cache (1.12: a cached song no longer asks for a stream).
 

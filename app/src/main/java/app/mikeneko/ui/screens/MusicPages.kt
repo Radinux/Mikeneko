@@ -251,7 +251,7 @@ private fun byArtistAlbums(list: List<MusicCollection>, name: String): List<Musi
 }
 
 // ---------------------------------------------------------------------------------------------
-// Playlist perso, façon Spotify (2.11.0) : « Ajouter » et « Modifier » sous l'en-tête. En mode
+// Playlist perso (2.11.0) : « Ajouter » et « Modifier » sous l'en-tête. En mode
 // Modifier : nom, pochette, supprimer, un bouton ⊖ à gauche de chaque morceau, et la poignée pour
 // réordonner (plus active en temps normal : on la déclenchait sans le vouloir).
 // ---------------------------------------------------------------------------------------------

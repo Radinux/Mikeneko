@@ -574,11 +574,11 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">Quoi de neuf dans Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Super !</string>
-    <string name="whats_new_body">🎧 Des playlists façon Spotify\n\n• Sous ta playlist : Ajouter et Modifier.\n• Ajouter : des morceaux suggérés d’après ceux de la playlist, et une recherche, avec un + sur chaque morceau.\n• Modifier : le nom, la pochette, supprimer, un ⊖ pour retirer un morceau d’un seul tap, et la poignée pour réordonner (fini les morceaux déplacés sans le vouloir).\n\n🎬 Un bouton Vidéo dans le lecteur musique : le morceau passe sur sa vidéo YouTube, au même moment.\n\n🔔 Depuis la 2.10 : une cloche à côté de S’abonner pour les nouvelles vidéos, et les notifications de mise à jour.</string>
+    <string name="whats_new_body">🎧 Des playlists plus simples\n\n• Sous ta playlist : Ajouter et Modifier.\n• Ajouter : des morceaux suggérés d’après ceux de la playlist, et une recherche, avec un + sur chaque morceau.\n• Modifier : le nom, la pochette, supprimer, un ⊖ pour retirer un morceau d’un seul tap, et la poignée pour réordonner (fini les morceaux déplacés sans le vouloir).\n\n🎬 Un bouton Vidéo dans le lecteur musique : le morceau passe sur sa vidéo YouTube, au même moment.\n\n🔔 Depuis la 2.10 : une cloche à côté de S’abonner pour les nouvelles vidéos, et les notifications de mise à jour.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Importer des playlists</string>
-    <string name="import_playlists_text">Spotify, Deezer, Apple Music… : un export TuneMyMusic (CSV ou TXT)</string>
+    <string name="import_playlists_text">Depuis une autre appli de musique : un export TuneMyMusic (CSV ou TXT)</string>
     <string name="import_pick_title">Quoi importer ?</string>
     <string name="import_pick_estimate">%1$d recherches · environ %2$d min</string>
     <string name="import_pick_all">Tout</string>
@@ -619,7 +619,7 @@
     <string name="bell_disabled">Plus de notifications de %1$s</string>
     <string name="bell_denied">Autorise les notifications de Mikeneko dans les réglages d’Android</string>
 
-    <!-- Gestion des playlists façon Spotify (2.11.0) -->
+    <!-- Gestion des playlists (2.11.0) -->
     <string name="playlist_add_songs">Ajouter</string>
     <string name="playlist_edit">Modifier</string>
     <string name="playlist_done">Terminé</string>

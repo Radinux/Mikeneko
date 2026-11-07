@@ -31,8 +31,8 @@ import org.json.JSONObject
  * - [Store.Music] et [Store.Videos] : ce qui a été lu, dans le dossier cache d'Android (compté en
  *   « cache », Android peut le vider s'il manque de place), 1 Go chacune, les moins récemment lus
  *   partent d'abord. Séparées pour que les vidéos ne chassent pas toute la musique.
- * - [Store.SavedMusic] et [Store.SavedVideos] : les playlists perso téléchargées (bouton ⤓, comme sur
- *   Spotify, voir [PlaylistDownloads]), dans les données de l'appli, sans limite ni effacement
+ * - [Store.SavedMusic] et [Store.SavedVideos] : les playlists perso téléchargées (bouton ⤓, voir
+ *   [PlaylistDownloads]), dans les données de l'appli, sans limite ni effacement
  *   automatique : elles restent tant que la playlist est téléchargée.
  *
  * Les adresses des flux YouTube changent à chaque fois : la clé d'un flux est « id:itag » (la vidéo

@@ -5,7 +5,7 @@ import kotlin.math.pow
 import org.json.JSONObject
 
 /**
- * La « fatigue » du « Pour toi » (2.7.0, idée tirée de l'algorithme publié de X) : une vidéo que le
+ * La « fatigue » du « Pour toi » (2.7.0) : une vidéo que le
  * fil a montrée plusieurs fois sans qu'on l'ouvre descend, puis disparaît. Une vue compte au plus
  * une fois par demi-heure (faire défiler le fil plusieurs fois ne la fatigue pas plus). Les traces
  * s'effacent au bout de 10 jours. Reste sur le téléphone.

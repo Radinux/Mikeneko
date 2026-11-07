@@ -18,12 +18,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
 /**
- * Importer sa musique d'autres services (2.8.0) à partir d'un export **TuneMyMusic** (Spotify,
- * Deezer, Apple Music… vers un fichier) : CSV ou TXT.
+ * Importer sa musique d'autres services (2.8.0) à partir d'un export **TuneMyMusic**
+ * (d'une autre appli de musique vers un fichier) : CSV ou TXT.
  *
  * - CSV : colonnes reconnues par leur nom, séparées par `,` `;` ou une tabulation, champs entre
- *   guillemets. Vu sur un vrai export Spotify : `Track name, Artist name, Album, Playlist name, Type,
- *   ISRC, Spotify - id`, avec `Type` = Playlist, Favorite (titres likés), Artist (artistes suivis :
+ *   guillemets. Vu sur un vrai export : `Track name, Artist name, Album, Playlist name, Type,
+ *   ISRC`, puis l'identifiant du service, avec `Type` = Playlist, Favorite (titres likés), Artist (artistes suivis :
  *   le nom est dans « Track name ») ou Album (albums sauvegardés : le nom de l'album dans « Track name »).
  * - TXT : une ligne par morceau, « Artiste - Titre ».
  *

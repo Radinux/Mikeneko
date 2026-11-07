@@ -26,7 +26,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
- * Les playlists perso téléchargées (bouton ⤓ de la playlist, comme sur Spotify) : leurs morceaux ou
+ * Les playlists perso téléchargées (bouton ⤓ de la playlist) : leurs morceaux ou
  * vidéos sont gardés dans l'appli ([OfflineCache], réserves [Store.SavedMusic] / [Store.SavedVideos],
  * jamais effacées d'elles-mêmes) et se lisent sans réseau, sans fichier visible dans le téléphone.
  *

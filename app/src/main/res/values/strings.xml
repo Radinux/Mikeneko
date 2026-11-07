@@ -574,11 +574,11 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">What’s new in Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Nice!</string>
-    <string name="whats_new_body">🎧 Playlists, Spotify style\n\n• Under your playlist: Add and Edit.\n• Add: songs suggested from the ones already in the playlist, and a search, with a + on each song.\n• Edit: the name, the cover, delete, a ⊖ to remove a song in one tap, and the handle to reorder (no more moving songs by accident).\n\n🎬 A Video button in the music player: the song switches to its YouTube video, at the same moment.\n\n🔔 Since 2.10: a bell next to Subscribe for new videos, and update notifications.</string>
+    <string name="whats_new_body">🎧 Easier playlists\n\n• Under your playlist: Add and Edit.\n• Add: songs suggested from the ones already in the playlist, and a search, with a + on each song.\n• Edit: the name, the cover, delete, a ⊖ to remove a song in one tap, and the handle to reorder (no more moving songs by accident).\n\n🎬 A Video button in the music player: the song switches to its YouTube video, at the same moment.\n\n🔔 Since 2.10: a bell next to Subscribe for new videos, and update notifications.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Import playlists</string>
-    <string name="import_playlists_text">Spotify, Deezer, Apple Music…: a TuneMyMusic export (CSV or TXT)</string>
+    <string name="import_playlists_text">From another music app: a TuneMyMusic export (CSV or TXT)</string>
     <string name="import_pick_title">What to import?</string>
     <string name="import_pick_estimate">%1$d searches · about %2$d min</string>
     <string name="import_pick_all">All</string>
@@ -619,7 +619,7 @@
     <string name="bell_disabled">No more notifications from %1$s</string>
     <string name="bell_denied">Allow Mikeneko’s notifications in Android’s settings</string>
 
-    <!-- Gestion des playlists façon Spotify (2.11.0) -->
+    <!-- Gestion des playlists (2.11.0) -->
     <string name="playlist_add_songs">Add</string>
     <string name="playlist_edit">Edit</string>
     <string name="playlist_done">Done</string>

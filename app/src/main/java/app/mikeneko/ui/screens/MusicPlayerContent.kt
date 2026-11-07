@@ -545,7 +545,7 @@ private fun SpectrumWave(active: Boolean, cover: Color, backdrop: Backdrop, modi
                 if (playhead > written) playhead = written.toDouble() // rattrapé : on attend le paquet suivant
                 if (playhead < written - 2.4 * behind) playhead = written - behind // trop en retard (saut)
                 // 30 images par seconde suffisent à la vague (2.10.4) : à chaque image d'écran, elle
-                // occupait la puce graphique en continu (le Magic Capsule d'Honor ramait fenêtre ouverte)
+                // occupait la puce graphique en continu (les animations du système ramaient, fenêtre ouverte)
                 if (now - drawn < WAVE_FRAME_NANOS) return@withFrameNanos
                 drawn = now
                 AudioSpectrum.bandsAt(playhead.toLong(), bands)

@@ -73,7 +73,7 @@ Code comments are in French.
   - few video loads, with calm videos, so as not to get blocked by YouTube;
   - never work around YouTube's anti-bot checks (section 2).
 - **Release key**: outside the project, in `~/.config/mikeneko/`. Never print its password.
-- Emulator: AVD `Pixel_10` (APK x86_64: `app-x86_64-release.apk`). If the install answers
+- Emulator: an x86_64 AVD (APK `app-x86_64-release.apk`). If the install answers
   `INSTALL_FAILED_UPDATE_INCOMPATIBLE`, uninstall the old test copy first. Close the emulator after
   testing (`adb emu kill`).
 
@@ -90,7 +90,7 @@ Code comments are in French.
   - **To do**: go back to an official release as soon as one after 0.26.5 ships.
 - **"Sign in to confirm you're not a bot"**: a temporary block of the network's IP address. It is
   **not worked around**.
-  - A "web" PoToken through a WebView BotGuard (like pytubefix #209 or the yt-dlp guide) is useless
+  - A "web" PoToken through a WebView BotGuard (as described in the yt-dlp guide) is useless
     here, since NewPipeExtractor's `PoTokenProvider` only asks for Android/iOS tokens.
   - What really helps:
     - the n-sig fix;
@@ -179,7 +179,7 @@ Four stores (`enum Store`):
 
 ---
 
-## 5. Downloaded playlists, Spotify style (1.13)
+## 5. Downloaded playlists (1.13)
 
 - `player/PlaylistDownloads.kt`: two instances, `PlaylistDownloads.music` and
   `PlaylistDownloads.videos`.
@@ -662,9 +662,9 @@ A full screen player like YouTube's; next shorts = the original list, then the s
 
 ## 8 duodecies. New "For you" and "What's new" page (2.7.0)
 
-Inspired by what the big platforms published: YouTube (two stages, candidates then ranking, aimed at
-watch time), TikTok (completion as a strong signal, interests picked at the start, diversity and
-exploration), X's open-sourced algorithm (fatigue for things shown without engagement). Collaborative
+Common recommendation principles: two stages (candidates, then ranking), aimed at watch time;
+completion as a strong signal, interests picked at the start, diversity and exploration; fatigue for
+things shown without engagement. Collaborative
 filtering is impossible locally, but YouTube's related videos already are one, computed over all its
 users: the point is to take them from the videos really watched.
 
@@ -700,7 +700,7 @@ users: the point is to take them from the videos really watched.
   (prefs `nouveautes`); a first install (`firstInstallTime == lastUpdateTime`) counts as seen.
   `WhatsNewSheet` (frosted glass panel over a veil, in `MikenekoRoot` above everything) shows
   `whats_new_title` / `whats_new_body`.
-- Checked on the Pixel 10 emulator (fresh install): tastes page, then a feed from the chosen tastes
+- Checked on the emulator (fresh install): tastes page, then a feed from the chosen tastes
   ("Because you like Science"), no crash. French strings: use ’ rather than `&apos;` (aapt fails on
   an unescaped apostrophe).
 
@@ -708,8 +708,8 @@ users: the point is to take them from the videos really watched.
 
 ## 8 terdecies. Import from TuneMyMusic (2.8.0)
 
-- `data/PlaylistImport.kt`. TuneMyMusic doesn't document its file formats; a real Spotify export
-  (1219 lines) had `Track name, Artist name, Album, Playlist name, Type, ISRC, Spotify - id`, UTF-8
+- `data/PlaylistImport.kt`. TuneMyMusic doesn't document its file formats; a real export (1219
+  lines) had `Track name, Artist name, Album, Playlist name, Type, ISRC`, then a service id column, UTF-8
   with a BOM, every field quoted, `Type` = Playlist / Favorite (liked songs, playlist "Favorite
   Songs") / Artist (followed artists: the name is in `Track name`, no artist) / Album (saved albums:
   the album name in `Track name`). Artist names can contain `,` or `&` ("OH, HAYIR!", "W&W"): never
@@ -731,7 +731,7 @@ users: the point is to take them from the videos really watched.
 - `busy` keeps the app from clearing itself in the background (`MainActivity.busy`,
   `PlaybackService.onTaskRemoved`). UI: `PlaylistImportProgress` under the Settings row,
   `PlaylistImportSummary` dialog at the end.
-- Checked on the Pixel 10 emulator with the real export (pushed to Download): picker groups, progress,
+- Checked on the emulator with the real export (pushed to Download): picker groups, progress,
   summary. A full import of that file would be ~1100 searches (~40 min): import a few playlists at a
   time.
 
@@ -812,11 +812,11 @@ users: the point is to take them from the videos really watched.
   at 48 px and stretched (`FilterQuality.Low`), which looks blurred for free.
 - 2.10.4: `SpectrumWave` still moves its playhead on every frame, but computes the bands and redraws
   (`frame++`, a new RenderEffect for `LiquidWave`) at most every 33 ms (`WAVE_FRAME_NANOS`): the
-  open window no longer keeps the GPU busy on every frame (Honor's Magic Capsule lagged).
+  open window no longer keeps the GPU busy on every frame (system animations lagged).
 
 ---
 
-## 8 septdecies. Playlists, Spotify style (2.11.0)
+## 8 septdecies. Playlist management (2.11.0)
 
 - `MyPlaylistContent` (MusicPages.kt): `editing` (rememberSaveable, back leaves it). Normal: download
   circle, Shuffle, and an Add | Edit split pill (`ConnectedChip`); song rows with ⋮ and the downloaded

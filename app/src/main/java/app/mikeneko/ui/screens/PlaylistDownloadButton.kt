@@ -77,7 +77,7 @@ private fun DownloadToggle(downloads: PlaylistDownloads, id: String, state: Down
     }
 }
 
-/** Le rond ⤓ des playlists musique (à côté d'Aléatoire), avec l'anneau de progression, comme sur Spotify. */
+/** Le rond ⤓ des playlists musique (à côté d'Aléatoire), avec l'anneau de progression. */
 @Composable
 fun PlaylistDownloadCircle(downloads: PlaylistDownloads, id: String, items: List<VideoItem>) {
     if (items.isEmpty()) return

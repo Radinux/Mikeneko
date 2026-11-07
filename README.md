@@ -30,8 +30,8 @@ No ads · no Google account · with cat ears (=^･ω･^=)
   channel, "Unwatched".
 - 🎧 **A real music player**: YouTube Music (songs, albums, artists, playlists), auto Mix,
   "For you" and "Your mixes", synced lyrics, a dancing spectrum wave, your own playlists.
-- 🎶 **Bring your music**: import your Spotify, Deezer, Apple Music… playlists, liked artists and
-  saved albums from a TuneMyMusic export (CSV or TXT), duplicates merged.
+- 🎶 **Bring your music**: import your playlists, liked artists and saved albums
+  from other music apps through a TuneMyMusic export (CSV or TXT), duplicates merged.
 - 💾 **Mikeneko backup** (`.xml`): your whole Mikeneko in one file, to move to a new phone or keep
   safe (details below).
 - 🍙 **yt-dlp downloads**: video, MP3, FLAC, Opus, M4A, sponsors cut out, offline listening.
@@ -40,7 +40,7 @@ No ads · no Google account · with cat ears (=^･ω･^=)
 - 💮 Comments, chapters, channel and playlist pages, a **Library** (history, watch later, likes).
 - 🌙 **"Did you see the time?"** after an hour of watching (－_－) zzZ
 - 🎨 **Your colors**: 7 accent colors (Calico, Sakura, Ocean, Matcha, Cherry, Mint, Amber), a pure
-  black background for OLED screens, and Material You buttons.
+  black background for OLED screens, and Material 3 buttons.
 - 🔔 **Notifications**: a bell next to Subscribe for a channel's new videos, and a heads-up when an
   update is available.
 - 🍥 **Automatic updates** from GitHub, in 🇬🇧 English and 🇫🇷 French.
@@ -60,7 +60,7 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ### 2.11
 
-- **Playlists, Spotify style**: under your own playlist, an **Add | Edit** split pill.
+- **Easier playlist management**: under your own playlist, an **Add | Edit** split pill.
   - **Add** opens a page with songs suggested from the playlist's own songs (YouTube Music mixes of
     3 of them, without what's already in it) and a search, a + on every song (✓ once added, tap again
     to remove);
@@ -68,6 +68,7 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
     every song to remove it in one tap, and the handle to reorder. Reordering is no longer active the
     rest of the time (songs moved by accident).
 - A **Video** button in the music player: the song switches to its YouTube video, at the same moment.
+- 2.11.1: texts cleaned up (no other app names in the app).
 
 ### 2.10
 
@@ -82,8 +83,7 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
   the selected one a full pill in the accent color; a bit wider.
 - **Lighter colors**: tonal buttons and unselected capsules are a light cream tinted with the accent.
 - 2.10.4: the spectrum wave is drawn at 30 frames per second (it used every screen frame): less
-  graphics work while the music window is open, so system animations (Honor's Magic Capsule) stay
-  smooth.
+  graphics work while the music window is open, so system animations stay smooth.
 - 2.10.3: the **music dock animation** is smoother: no more whole-dock recomposition on every frame,
   the pane follows the finger without delay, and the window's blurred cover no longer costs a blur
   on every frame.
@@ -96,7 +96,7 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 - **Your colors**: Settings › Appearance, an accent color to pick (Calico, Sakura, Ocean, Matcha,
   Cherry, Mint, Amber) and a pure black background for OLED screens. Buttons and capsules are now
-  **Material You** (Material 3); the liquid glass stays.
+  **Material 3**; the liquid glass stays.
 - **Cleaner videos**: on Wi-Fi, Auto quality picks the YouTube step above your screen (1440p on a
   1264-line screen), like the YouTube app; at equal resolution, the stream with the highest bitrate
   the phone decodes in hardware. Dark scenes were blocky in 1080p.
@@ -111,7 +111,7 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 ### 2.8
 
 - **Import your music from other services**: Settings › Backup › Import playlists. Export your
-  Spotify, Deezer, Apple Music… library with [TuneMyMusic](https://www.tunemymusic.com) to a CSV or
+  library from another music app with [TuneMyMusic](https://www.tunemymusic.com) to a CSV or
   TXT file, then tick the playlists to import (with the number of songs and the estimated time).
   - every song is found on YouTube Music (or among videos if it isn't a YouTube Music song), at an
     adaptive speed so YouTube doesn't block you (since 2.10.2); the import runs in the background and
@@ -185,7 +185,7 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 - **1.15**: Mikeneko **.xml backup** (export / import); French Takeout import fixed; offline = only
   what is downloaded.
 - **1.14**: **more liquid glass**: glass pills and capsules, clear glass drawers and "Up next" panel.
-- **1.13**: **download your own playlists** for offline listening, Spotify style.
+- **1.13**: **download your own playlists** for offline listening.
 - **1.12**: hidden **offline cache**: what was played in full replays without a network.
 - **1.11**: a **music library** with filters, saved albums and artists.
 - **1.10**: the Music home in rows; a NewPipeExtractor dev build fixing "Source error".

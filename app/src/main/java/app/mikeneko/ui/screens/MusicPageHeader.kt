@@ -160,7 +160,7 @@ internal fun PageHeader(
 
 /**
  * Donne à la barre du haut le titre et le bouton lecture de la page ; ils y apparaissent quand le
- * titre de l'en-tête passe sous la barre (comme sur Spotify).
+ * titre de l'en-tête passe sous la barre.
  */
 @Composable
 internal fun PageBarEffect(state: MusicState, list: LazyListState, title: String, onPlay: (() -> Unit)?): PlayAnchor {
@@ -249,7 +249,7 @@ internal fun ShuffleButton(tracks: List<VideoItem>) {
  * 1024 px) ; « Mosaïque » revient aux pochettes des 4 premiers morceaux.
  */
 /**
- * Le mode Modifier d'une playlist perso (2.11.0, façon Spotify) : le nom (modifié en direct), la
+ * Le mode Modifier d'une playlist perso (2.11.0) : le nom (modifié en direct), la
  * pochette (photo ou mosaïque), « Supprimer » (toucher deux fois) et « Terminé ». Avant, la pochette
  * était en capsules dans l'en-tête, et le nom et la suppression cachés dans le menu ⋮.
  */
