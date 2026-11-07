@@ -574,6 +574,8 @@ private fun UpdateRow(context: Context) {
 }
 
 private val CREDITS = listOf(
+    // Le code de Mikeneko lui-même (GPL-3.0 : la source à côté des APK, 2.6.7)
+    "Mikeneko (source code, GPL-3.0)" to "https://github.com/Radinux/Mikeneko",
     "NewPipe Extractor" to "https://github.com/TeamNewPipe/NewPipeExtractor",
     "SponsorBlock" to "https://sponsor.ajay.app",
     "Return YouTube Dislike" to "https://returnyoutubedislike.com",

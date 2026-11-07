@@ -20,8 +20,9 @@ import okhttp3.Request
 import org.json.JSONObject
 
 /**
- * Les mises à jour de Mikeneko, depuis les releases GitHub du dépôt public Radinux/Mikeneko-releases
- * (le code reste dans un dépôt privé : aucun jeton dans l'APK).
+ * Les mises à jour de Mikeneko, depuis les releases GitHub du dépôt public Radinux/Mikeneko (le code
+ * et les APK au même endroit depuis 2.6.7 ; avant, les APK étaient sur Radinux/Mikeneko-releases,
+ * archivé). Aucun jeton dans l'APK.
  *
  * Au lancement (une fois par jour au plus), on demande la dernière release. Plus récente que la
  * version installée : son APK se télécharge en fond, puis s'installe **sans appui** (Android 12+,
@@ -30,7 +31,7 @@ import org.json.JSONObject
  * des applis (« sources inconnues ») ; avant Android 12, Android demande une confirmation.
  */
 object AppUpdates {
-    private const val LATEST = "https://api.github.com/repos/Radinux/Mikeneko-releases/releases/latest"
+    private const val LATEST = "https://api.github.com/repos/Radinux/Mikeneko/releases/latest"
     private const val DAY_MS = 24 * 60 * 60_000L
 
     data class Release(val version: String, val notes: String, val page: String, val apkUrl: String)

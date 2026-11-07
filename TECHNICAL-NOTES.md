@@ -1,0 +1,672 @@
+# Mikeneko: technical notes (to pick the work back up)
+
+This file explains **how** and **why** changes were made, so that anyone picking the project up
+doesn't have to rediscover everything.
+- What users see, version by version → `README.md` ("What's new").
+- What is left to do or to check → `FIXES.md`.
+- Here: the architecture, the files, the choices and the pitfalls.
+
+Code comments are in French.
+
+---
+
+## 1. Working conventions
+
+- The app's **default language is English**; the French translations live in `values-fr`.
+- **Every shipped change = a new version.**
+  - `patch` and `code` go up on their own with every `assembleRelease`, `installRelease` or
+    `bundleRelease` (`app/build.gradle.kts`).
+  - For a **new feature**: set `minor+1` and `patch=0` by hand in `app/version.properties` before
+    building.
+  - Careful: even `assembleRelease --dry-run` bumps the version. If that happens, put `patch` and
+    `code` back by hand.
+- **Releasing a version**:
+  1. `./gradlew assembleRelease`, signed with the release key (see below).
+  2. Check the APK: `aapt2 dump badging` (versionName) and `apksigner verify --print-certs`
+     (SHA-256 `0f0b6e19…`).
+  3. Commit, push, then publish the release on this repository (section 8 quinquies).
+  4. Update `README.md` ("What's new") and `FIXES.md`.
+- **After every install**, launch the app and check that it runs (`pidof app.mikeneko`,
+  `dumpsys dropbox --print data_app_crash` for crashes). 1.12.0 crashed at startup and the error was
+  only noticed afterwards.
+- When a UI element is named loosely in a bug report, **take a screenshot first**. Example: "Up next"
+  meant the full screen panel, not the portrait list, and the misreading cost two versions
+  (1.14.3 → 1.14.5).
+- Playback tests:
+  - few video loads, with calm videos, so as not to get blocked by YouTube;
+  - never work around YouTube's anti-bot checks (section 2).
+- **Release key**: outside the project, in `~/.config/mikeneko/`. Never print its password.
+- Emulator: AVD `Pixel_10` (APK x86_64: `app-x86_64-release.apk`). If the install answers
+  `INSTALL_FAILED_UPDATE_INCOMPATIBLE`, uninstall the old test copy first. Close the emulator after
+  testing (`adb emu kill`).
+
+---
+
+## 2. YouTube: blocks and the extractor (1.10.3)
+
+- **Symptom**: "Source error" when starting a video.
+- **Probable cause**: NewPipeExtractor 0.26.5's "n-sig" decryption was outdated.
+- **Fix**: `gradle/libs.versions.toml` → `newpipeExtractor = "6cb36e9823"`, the **dev** commit of
+  Nov 2 taken from JitPack, which contains #1545, #1556 and #1520.
+  - API consequence: `Description.HTML` became **`Description.Type.HTML`** (`Description` is now a
+    record). Files touched: `data/Comments.kt` and `player/PlayerHolder.kt`.
+  - **To do**: go back to an official release as soon as one after 0.26.5 ships.
+- **"Sign in to confirm you're not a bot"**: a temporary block of the network's IP address. It is
+  **not worked around**.
+  - A "web" PoToken through a WebView BotGuard (like pytubefix #209 or the yt-dlp guide) is useless
+    here, since NewPipeExtractor's `PoTokenProvider` only asks for Android/iOS tokens.
+  - What really helps:
+    - the n-sig fix;
+    - the offline cache (section 4): a cached song no longer asks for a stream;
+    - preloading with reuse.
+
+---
+
+## 3. Music: library (1.11)
+
+- `data/MusicLibrary.kt` (singleton `get(context)`, prefs `bibliotheque_musique`):
+  - content: YouTube Music albums and playlists (`MusicCollection`) and artists (`ChannelItem`);
+  - functions: `toggleAlbum`, `toggleArtist`, `hasAlbum`, `hasArtist`, and `addAll` for import;
+  - two artists are the same if they have the same URL, or the same name when the URL is missing
+    (an artist coming from a song).
+- `ui/screens/MusicUi.kt`:
+  - `MusicPage.Library`;
+  - `enum LibraryFilter { All, Playlists, Albums, Artists, Downloaded }`, kept in
+    `MusicState.libraryFilter`.
+- `ui/screens/MusicPages.kt`:
+  - `MusicLibraryContent`, plus the `SaveAlbumButton`, `SaveArtistButton` and `SaveCapsule` buttons on
+    album and artist pages;
+  - on the Music home, the "Your library" quick access tile and `Shelf(onMore)`;
+  - `SquareCard(round)` for round artists.
+
+---
+
+## 4. Hidden offline cache (1.12)
+
+**Idea**: everything the player reads from YouTube goes through a Media3 cache private to the app
+(nothing in the gallery or in the files). What was played in full plays again **without a network**.
+
+### `player/OfflineCache.kt`
+
+Four stores (`enum Store`):
+
+| Store | Folder | Size | Eviction |
+| --- | --- | --- | --- |
+| `Music` | `cacheDir/hors_ligne/musique` | 1 GB | LRU (`LeastRecentlyUsedCacheEvictor`) |
+| `Videos` | `cacheDir/hors_ligne/videos` | 1 GB | LRU |
+| `SavedMusic` | `filesDir/hors_ligne/playlists_musique` | unlimited | never (`NoOpCacheEvictor`) |
+| `SavedVideos` | `filesDir/hors_ligne/playlists_videos` | unlimited | never |
+
+- The stores share a single `StandaloneDatabaseProvider`.
+- `warmUp()` opens them in the background at startup (`MikenekoApp`): reading a `SimpleCache` index
+  on the first song would block the screen.
+- **Stable keys**: YouTube URLs change every time, so every stream gets a key
+  `setCustomCacheKey("<id>:<a|v|m><itag>")`: `a` for audio, `v` for video only, `m` for the
+  "all-in-one" (muxed) video.
+- **Index per store** (SharedPreferences): for each videoId, an `Entry` (url, title, channel,
+  thumbnail, `audioKey`, `videoKey`, height, `at`).
+- Functions:
+  - `entry()` only returns the entry if the streams are **complete** in the cache (`complete()` uses
+    `ContentMetadata.getContentLength` + `isCached`);
+  - `playable(url, audioOnly)` looks in the downloaded playlists' store first, then in the playback
+    cache;
+  - `source(entry)` builds a `ProgressiveMediaSource` on a `CacheDataSource` **without upstream** (a
+    gap = an error), merging video + audio if needed;
+  - `prune()` only removes entries **older than an hour** whose cache is empty. A recent entry can be
+    empty because the preloaded song hasn't started yet; a first version deleted them by mistake;
+  - `clear()` (Settings) only empties `Music` and `Videos`; downloaded playlists stay.
+
+### The rest
+
+- `player/MediaSources.kt`:
+  - `build(..., cache)` returns `Built(source, height, audioKey, videoKey)` and reads through
+    `OfflineCache.factory(cache, upstream)` (`FLAG_IGNORE_CACHE_ON_ERROR`);
+  - `bestVideo(streams, limit)` picks the video stream;
+  - `downloadPlan(info, audioOnly, maxHeight)` returns the same keys for playlist downloads.
+- `player/MusicLoadControl.kt`: a **subclass** of `DefaultLoadControl` that loads the whole song (audio
+  only, not live, up to 20 min and 40 MB). The song thus ends up in the cache even if it isn't played
+  to the end.
+  - **Pitfall (1.12.0 crashed at startup)**: writing `LoadControl by base` in Kotlin does **not**
+    delegate the Java interface's `default` methods, hence the error
+    `getBackBufferDurationUs not implemented`. Extend `DefaultLoadControl` instead (1.12.1).
+- `player/PlayerHolder.kt`:
+  - `.setLoadControl(MusicLoadControl())`;
+  - `play()` checks the cache **first** (music: `OfflineCache.playable`; video: the `SavedVideos`
+    store);
+  - if video extraction fails, it falls back on the `Videos` cache;
+  - added functions: `rememberOffline`, `playOffline`, `offlineNowPlaying` and `fillDetails`, which
+    completes the info in the background when the network comes back;
+  - preloading (`Preloaded(..., offline)`) and `adoptPreloaded` handle an offline entry.
+- Settings (`SettingsScreen.kt`, `OfflineSection`): store sizes and a button to clear them. Write the
+  full name `OfflineCache.Store` (there is another `cache` in that file).
+
+---
+
+## 5. Downloaded playlists, Spotify style (1.13)
+
+- `player/PlaylistDownloads.kt`: two instances, `PlaylistDownloads.music` and
+  `PlaylistDownloads.videos`.
+  - Functions: `init` (in `MikenekoApp`), `setDownloaded(id, on)`, and the `playlists`, `saved`,
+    `current` and `busy` StateFlows.
+  - A **single sequential worker** does the downloads:
+    - a 2.5 s pause between two songs (to stay discreet with YouTube);
+    - a retry 10 min after an error;
+    - if the stream is already complete in the playback cache, it **copies** it; otherwise it
+      downloads it with `CacheWriter`;
+    - videos are capped at **720p**.
+  - `busy` is wired to `MainActivity.busy()` (no cleanup during a download) and to
+    `PlaybackService.onTaskRemoved`.
+- `ui/screens/PlaylistDownloadButton.kt`:
+  - `PlaylistDownloadCircle` on your own music playlists;
+  - `PlaylistDownloadCapsule` on the Library's video playlists;
+  - `DownloadedMark`, the small mark on each song;
+  - a dialog confirming before removing downloads.
+- `LibraryScreen.kt`: `PlayButtons` + `ShuffleVideosButton`, shuffle on video playlists,
+  "Watch later" and "Liked" (1.13.1).
+
+### Title and play button following the scroll (1.13.2 → 1.13.6)
+
+- `MusicUi.kt`:
+  - `class PageBar(title, onPlay, owner, passed: State<Float>)`;
+  - `MusicState.bar` and `MusicState.barProgress` (0 outside the pages).
+- `MusicPages.kt`, `PageBarEffect(state, list, title, onPlay)`:
+  - progress = `(offset − (header size − bar − FADE_LEAD)) / FADE`, with `FADE = 90.dp` and
+    `FADE_LEAD = 20.dp`;
+  - this tuning was validated on the phone: leave it alone.
+- **A single play button (1.15.3)**: the pill's small button was removed (an empty slot remains, a
+  `Spacer` of `PLAY_SMALL`). `PlayAnchor` (`MusicUi.kt`) computes where the header's big button is:
+  from the list's `layoutInfo` (top of the header), the button's position in the header and
+  `MusicState.barPill` (the pill without its animation). Over `PLAY_TRAVEL = 56.dp` of scrolling, it
+  slides and goes from 58 to 42 dp into the pill (y = place + travel·(1−t)², slowing down as it
+  arrives). At t = 0 the header's button is drawn; as soon as t > 0, it is `TravellingPlayButton`
+  (`RadioOverlay`), and the header's one goes to alpha 0. No `onGloballyPositioned` during scrolling
+  for the position: it would be one frame late. The pill's fade (FADE / FADE_LEAD) is unchanged.
+- **Pages' Shuffle (1.15.3)**: `ShuffleButton` is a toggle, on when `PlayerHolder.shuffle` is true and
+  every song of the page is in the queue.
+- **Pitfall (1.13.2, the bar never showed)**: a `derivedStateOf` read **only in a `SideEffect`**
+  doesn't trigger recomposition. Read it during composition.
+- **Offline = only what is downloaded (1.15.5)**: `OfflineCache.playable` only uses the playback cache
+  (`Music` / `Videos`, the hidden cache of 1.12) when there is a network (`ConnectivityManager`,
+  permission `ACCESS_NETWORK_STATE`). Without a network, only the `SavedMusic` / `SavedVideos` stores
+  play. Before, after "Remove", a song already played in full stayed playable offline, which made the
+  removal look broken. 1.15.4 deleted those songs from the cache on removal: that's reverted (the
+  cache saves requests to YouTube), and it covered neither a playlist removed earlier nor a song played
+  again afterwards. The player keeps the current song and its neighbours in memory
+  (`MusicLoadControl`): those can finish playing without a network.
+
+---
+
+## 6. More liquid glass (1.14)
+
+Reminder: a `LiquidGlass` only shows what is **behind** it. It must live in the `…Overlay` layer,
+above the backdrop source, never inside it.
+Parameters: `backdrop`, `cornerRadius`, `bezel`, `refraction`, `tint`, `frost` (the frosted glass
+blur) and `onClick`.
+
+### Glass pill and capsules
+
+- **Music pages** (`MusicScreen.kt`, `MusicHeader`): a 50 dp glass pill, with the title and a 42 dp
+  orange play button. Its alpha, translation and scale follow `barProgress`, and the reads go through
+  `graphicsLayer`.
+  - Taps going through the pill (1.14.1): once active, the pill consumes taps with
+    `pointerInput { detectTapGestures { } }`.
+- **`GlassChip`** (`ui/components/Components.kt`):
+  - height 44 dp, `cornerRadius` 22;
+  - Roux tint at 0.82 when the capsule is selected, otherwise `0x38100D0B`.
+- **`GlassChipsRow`** (`MusicScreen.kt`): the music library filters and the music search kinds (when
+  not typing). The "tabs" item of `MusicSearchContent` was removed.
+- **Home** (`HomeScreen.kt`):
+  - the categories moved into `HomeOverlay`, in `HomeCategories(state, backdrop)`;
+  - the content follows them with `HomeState.categoriesShift`, updated by a `snapshotFlow` on the
+    list;
+  - in the list, a 56 dp `Spacer` (`CATEGORIES_HEIGHT`) keeps their place;
+  - the capsules are moved with **`offset { }`** and not `graphicsLayer`, so the glass's
+    `onGloballyPositioned` follows;
+  - the search sort and filters are `GlassChip`s too;
+  - **Vertical drag on a capsule (1.15.1)**: the glass layer is above the list, so Compose doesn't pass
+    it the gesture. The `LazyRow` carries `Modifier.scrollable(list, Vertical)` on the list's
+    `LazyListState`, and, before it, `Modifier.pullToRefresh(...)` with the same
+    `PullToRefreshState`. `HomeState.list`, `pull`, `refreshing` and `onRefresh` are filled by a
+    `SideEffect` of the content. The row is **never removed**: it stays empty once gone, because
+    removing it would cut the gesture and its momentum. Its shift is bounded (`categoriesShift` is
+    `MAX` when the list is scrolled down).
+- The dark veil of `RadioOverlay` was removed.
+
+### Lighter frosted glass (1.14.2)
+
+- `SearchSuggestions.kt`: tint `0x70`, bezel 20, frost 26.
+- `CommentsUi.kt`: tint `0x80`, frost 32.
+
+### Player suggestions
+
+- **Portrait (1.14.3/1.14.4)**: the "Up next" list under the video was removed from
+  `PlayerScreen.kt`. Only a margin remains when there is a playlist or suggestions.
+  - `ui/components/PlaylistDrawer.kt` became a tabbed drawer: `PlaylistDrawer(backdrop, onOpen)`, with
+    `DrawerTab { Playlist, UpNext }` and `DrawerTabChip`.
+  - Tapping a suggestion closes the drawer and starts the video. In `MikenekoRoot`,
+    `onOpen = { openVideo(it.url) }`.
+  - Clear glass: tint `0x9E120F0D`, **no frost**, and a text shadow through
+    `CompositionLocalProvider(LocalTextStyle)`.
+  - The drawer was kept, but since 1.17.1 only for videos from a playlist; the "Up next" list came
+    back into the page (1.17.0), under the comments.
+- **Full screen (1.14.5/1.14.6)**: `FullscreenSuggestions.kt`.
+  - **Clear liquid glass, NOT frosted**: no frost, tint `0x4D100D0B`, and a shadow under the title.
+  - Centred: `side = max(left inset, right inset of safeDrawing)`, then
+    `padding(horizontal = side + 12.dp)`. The notch no longer shifts the panel to one side.
+
+---
+
+## 7. Subscriptions: Takeout import fixed (1.14.7)
+
+- **Bug**: "no channels" with Google Takeout's `abonnements.csv` in French. The file starts with a BOM
+  and its header is in French, while the parser looked for English columns.
+- `data/Subscriptions.kt` (`SubscriptionImport`):
+  - the BOM is removed;
+  - dispatch: `MikenekoBackup.looksLike` means an XML backup, `{` NewPipe's JSON, and everything else
+    is read as Takeout CSV;
+  - Takeout is read **ignoring the header**: on each line, a field that looks like
+    `UC[A-Za-z0-9_-]{22}` or a channel URL gives the id, and the title is the last field that is
+    neither the id nor a URL;
+  - the `csvFields` parser handles quoted fields.
+- Verified on the emulator with a French CSV.
+
+---
+
+## 8. Mikeneko backup in .xml (1.15.0)
+
+`data/Backup.kt`, object `MikenekoBackup`:
+- `export(context, out, appVersion)`;
+- `read(input)` / `read(text)` returns a `Content`;
+- `import(context, content)` returns `Added` (the number of items added per category);
+- `looksLike(text)`.
+
+Format (`android.util.Xml`, serializer and pull parser):
+
+```xml
+<mikeneko version="1" app="1.15.0" date="…">
+  <subscriptions><channel id="" name="" url="" avatar=""/></subscriptions>
+  <playlists kind="music|videos">
+    <playlist name=""><video url="" title="" channel="" thumbnail="" duration="" live=""/></playlist>
+  </playlists>
+  <library><album …/><artist …/></library>
+  <favorites>…</favorites> <later>…</later> <liked>…</liked>
+</mikeneko>
+```
+
+- Import **merges** and never replaces. It relies on `Playlists.merge(name, items)`,
+  `VideoLibrary.addLater` / `addLiked`, `Favorites.addAll` and `MusicLibrary.addAll`.
+- Reimporting the same file adds nothing (verified on the emulator).
+- Settings → Backup section: Export (`CreateDocument("text/xml")`, named `mikeneko-<date>.xml`) and
+  Import (`OpenDocument`), with toasts.
+- The Subscriptions screen accepts the .xml too, but only takes the subscriptions from it.
+
+- 1.18.0: importing subscriptions from other apps (`SubscriptionImport`: NewPipe, FreeTube, Takeout,
+  and our .xml) left the Subscriptions tab for `BackupSection` ("Import subscriptions", above the
+  Mikeneko export / import). In `SubscriptionsContent`, `AccountCard` only shows if
+  `GoogleAccount.ENABLED`; with no channel, an `EmptyCat` and an "Import" capsule (`onOpenSettings` →
+  `Route.Reglages`).
+- 1.18.1: subscription avatars. Takeout (CSV) and the RSS feed don't provide any. They come:
+  - in passing, with no request: `PlayerHolder.play()` (the video's channel avatar) and a channel page
+    (`ChannelScreen`), through `SubscriptionStore.setAvatar`;
+  - in the background: `SubscriptionAvatars.fill` (`Subscriptions.kt`), started by the Subscriptions
+    tab, one channel every 4 s, at most 30 per launch, with `YouTubeRepository.channelAvatar` (the
+    channel page only, the smallest image ≥ 176 px). The pace is chosen to go easy on YouTube.
+
+---
+
+## 8 bis. Video resume (1.16.0)
+
+- `data/WatchPositions.kt`: SharedPreferences `reprise_videos`, video id → `position;date`, at most 10
+  (the oldest go out). Under 10 s or less than 20 s from the end: the entry is deleted (it will start
+  over). Respects "history paused"; cleared by "Clear history".
+- `PlayerHolder`:
+  - saves (`saveVideoPosition`) on pause, at the end, before switching streams (`setCurrent`), on
+    `stop()`, and every 10 s during playback (in case the app is killed);
+  - `play()`: a video requested without a position (`startAtMs == 0`) resumes at the kept position.
+- **Pitfall**: ExoPlayer calls its listeners during `setMediaSource` (`onIsPlayingChanged(false)`),
+  while `nowPlaying` is still the old video. The new one's position would have been saved under the
+  old id. Hence `positionOwner`: set to null in `setCurrent` (after saving the old position), and set
+  again by `ownPosition()` right after `nowPlaying.value = …` (online and offline video).
+- 1.17.0: the entry also keeps the duration (`position;date;duration`); `WatchPositions.progress()` is
+  a `StateFlow` id → fraction, read by `WatchProgressBar` (`Components.kt`), laid in `VideoThumbnail`
+  and in the history's small card (`LibraryScreen`). 1.16.0 entries, without a duration, get no bar.
+- 1.17.0: suggestions are also in the player page (`PlayerContent`, under the comments,
+  `CompactVideoRow`, without the thumbnail morph); the page scrolls back to the top on every new
+  video. 1.17.1: `PlaylistDrawer` only shows for a video from a playlist; a single video only has the
+  page's list.
+
+---
+
+## 8 ter. Rotation: only the video rotates (1.19.0)
+
+- `MainActivity.setVideoRotation`: on the player screen (or in full screen), the window switches to
+  `ROTATION_ANIMATION_JUMPCUT` (Android no longer animates the rotation); elsewhere
+  `ROTATION_ANIMATION_ROTATE`. Called by `MikenekoRoot` (`onVideoScreen`).
+- `MikenekoRoot` decides full screen **during composition**, when the orientation changes (no longer
+  in a `LaunchedEffect`): otherwise, without Android's animation to hide it, a frame of the portrait
+  player stretched to landscape showed. `onFullscreenChanged` runs in a `SideEffect`.
+- `ui/components/RotationMorph.kt`: start = the inverse of the screen rotation (`Display.rotation`,
+  old → new, brought to ±90°). To full screen: the video box starts sideways, at 9/16, in place of the
+  portrait video (`portraitVideo`, kept even when the portrait player is gone), on the left or right
+  depending on the direction. To portrait: sideways in the centre at 16/9, then to its place, `zIndex`
+  above the page and a black veil fading out. `tween(700)` (~350 ms in reality).
+- The full screen button (`toggleFullscreen`) no longer switches before the rotation: it forces the
+  orientation, and the orientation change does the switch (safety net: after 1 s).
+- 1.19.1 → 1.19.2: the mini player (`MiniPip`, `Video.kt`) is a **calico** cat head, like the logo:
+  `CatHeadFrame` draws the white silhouette (`catHeadPath`, a polygon with rounded corners
+  `roundedPolygon`), two patches (`clipPath` on the head), dark grey (`GrisChat`) on the left and
+  orange (`RouxChat`) on the right, outline `Contour`, shadow; inside of the ears dark on the left,
+  light on the right. Ears 30 dp high, 52 dp wide at the base, tip 13 dp from the edge (straight,
+  extending the sides). Video 168 dp, 6 dp frame: `MiniPipSize` = 180 × 136.5 dp. The shapes were
+  checked with a PIL rendering of the same geometry before installing.
+- 1.19.3 → 1.19.4: `Pelage.Violet` is removed from the palette. Backgrounds without an image (`Cover`,
+  the music pill and window, `rememberCoverColor`'s default, comment avatars, the ⋮ menu's thumbnail)
+  are `RouxNuit`, icons / initials `RouxClair`.
+- 1.19.5: music (`MusicWindow.kt`) no longer reads `PlayerHolder.nowPlaying` as is but `musicNow()`
+  (nothing if it's a video); during a video, the pill shows `parkedTrack()` (the song set aside, found
+  in the queue), its ▶ calls `restoreParkedMusic(autoPlay = true)`, and opening the window brings it
+  back paused. The play buttons no longer touch the video.
+- 1.19.6: `PlayerHolder.parkVideo()` (entering Music: pause + `parkedVideo` = URL and position) and
+  `restoreParkedVideo()` (leaving: nothing if the video is still loaded, otherwise
+  `play(…, autoPlay = false)`), called by `MikenekoRoot`. The mini player isn't shown on
+  `Route.Musique`. The video doesn't come back while music plays. The set-aside music no longer
+  reloads when entering Music while a video is loaded (the pill shows it, 1.19.5).
+- 1.19.7: `MiniPip`: `LaunchedEffect(controls, poke)` hides the controls after `MINI_CONTROLS_MS`
+  (3 s), `poke` restarted by play / pause. 1.19.8: veil, buttons and time bar in a fading
+  `AnimatedVisibility` (340 / 480 ms, like the big player).
+- No x.20: 1.19 was followed by 2.0.0.
+
+---
+
+## 8 quater. Landscape player page (2.0.0)
+
+- `PlayerContent` is split into three pieces (`header`, `videoArea(modifier)`, `details`): portrait = a
+  scrolling column (as before); landscape = a `Row`: on the left (60 % since 2.0.2) the centred video,
+  rounded corners (the header is no longer there); on the right (40 %) the scrolling `details`.
+  `RotationMorph.portraitVideo` is only updated in portrait.
+- `MainActivity.applyFullscreen` returns whether the screen will rotate. Leaving full screen: portrait
+  is forced only if landscape had been forced by the button and never "released" (phone kept upright,
+  `releaseWhen == Hold.LANDSCAPE`); otherwise `releaseOrientation()` and it stays in landscape.
+  `toggleFullscreen` switches right away when the screen doesn't rotate.
+- `RotationMorph` only starts when entering or leaving full screen (`wasFullscreen != fullscreen`);
+  `ROTATION_ANIMATION_JUMPCUT` only in full screen or on the player's portrait page: the landscape page
+  rotates to portrait with Android's animation.
+- Opening a video in landscape doesn't go full screen (automatic full screen only triggers when the
+  orientation changes).
+- 2.0.1: the progress bar moved from `details` into the video (`videoArea`): in the controls layer, a
+  `Column` at the bottom (time + buttons, then `ProgressWithSegments` with sponsors, preview and
+  marking); controls hidden, a 3 dp line (`progress.fraction`) fading. No auto-hide during a drag
+  (`scrubbing`) or a marking (`marking`). Subtitles raised to 0.34.
+- 2.0.2: in landscape, `header()` is no longer shown; the "minimise" arrow is a `GlassCircleButton` at
+  the top left of the controls layer. Columns 60 % / 40 %.
+- 2.0.3: in landscape, `statusBarSpacePadding()` only on the info column (the video centres on the full
+  height), and `pullToMinimize` (drag down → mini player) on the video.
+- 2.0.4: `RotationMorph.startZoom(toFullscreen)` (called by `toggleFullscreen` when the screen doesn't
+  rotate, in landscape on the player): same `token` / `progress`, but without rotation. Full screen:
+  the box starts at the size and place of `landscapeVideo` (the landscape page's video); back: the
+  page's video starts from the size of the full screen picture, in the centre (`landscapeVideo(…)`),
+  with the black veil. `videoArea` gets its `shape` and clips **after** the transformation; the left
+  column goes above the info one (`zIndex`) during the zoom.
+
+---
+
+## 8 quinquies. Updates from GitHub (2.1.0, moved in 2.6.7)
+
+- Since 2.6.7, the source and the releases live together in the **public** repository
+  `Radinux/Mikeneko`. From 2.1.0 to 2.6.6, the APKs were published on `Radinux/Mikeneko-releases`
+  (now archived: its releases stay downloadable) while the code was private. 2.6.7 was published on
+  both repositories, so phones still checking the old one move over. No token in the APK (it would be
+  extractable).
+- **Publishing**: build, commit, push, then
+  `gh release create v<version> app/build/outputs/apk/release/app-arm64-v8a-release.apk --repo Radinux/Mikeneko --target main --title "Mikeneko <version>" --notes "<What's new>"`,
+  then rename the attached file:
+  `gh api -X PATCH repos/Radinux/Mikeneko/releases/assets/<id> -f name=Mikeneko-<version>.apk`.
+  The tag name must be `v` + versionName (the tag also marks the exact source of the APK, for the
+  GPL); the app takes the release's first `.apk` file.
+- 2.1.2: `UpdatePill` (a glass pill at the top, "Mikeneko X is ready · Update", ✕ later) as soon as
+  the APK is downloaded; it replaces the toast. And `UpdateRow`'s buttons are in a `FlowRow` (text
+  `maxLines = 1`, `softWrap = false`): in a `Row`, "What's new" got squashed and wrapped letter by
+  letter.
+- **Play Protect** triggers on every new version installed outside the Play Store (unknown file,
+  unverified developer, `REQUEST_INSTALL_PACKAGES` permission). The app cannot and must not avoid it.
+  Clean options: scan / send for scanning, or Google's developer verification (linking `app.mikeneko`
+  and the signing key to a verified identity).
+- `update/AppUpdates.kt`: `checkIfDue` (once a day, `MikenekoRoot`), API `releases/latest` (404 =
+  nothing published = up to date), digit-by-digit comparison with the installed versionName, download
+  into `cacheDir/mises_a_jour`, then `PackageInstaller` with
+  `setRequireUserAction(USER_ACTION_NOT_REQUIRED)` (Android 12+: an app can update itself without a
+  tap, same signature, if it was granted `REQUEST_INSTALL_PACKAGES` once). `UpdateReceiver` gets the
+  answer (confirmation to show before Android 12, or an error).
+- Automatic install in `MainActivity.onStop` (installing closes the app), unless music is playing;
+  otherwise "Install now" in Settings › About (`UpdateRow`).
+
+---
+
+## 8 sexies. Big cleanup (2.1.3, `nettoyage` branch)
+
+A deep cleanup of old code and merging of related pieces, done on a branch so that `main` (= 2.1.2)
+stayed untouched. Nothing was meant to change on screen.
+
+- **Google account removed**: `data/GoogleAccount.kt`, the comment bar (`CommentBar`, replies,
+  `Comments.addMine`), `AccountCard` and the Subscriptions account button, the Settings'
+  `AccountSection`, `SubscriptionStore.connected/setConnected`, the `Account` / `Send` icons, and the
+  `play-services-auth` + `kotlinx-coroutines-play-services` dependencies. The subscriptions' `google`
+  preference stays in old installs' prefs (no effect).
+- **Split files** (same package, nothing renamed in the API):
+
+  | Before | After |
+  | --- | --- |
+  | `PlayerScreen.kt` (1066 l.) | `PlayerScreen.kt` (page), `FullscreenPlayer.kt`, `PlayerControls.kt` (progress, centre buttons, autoplay, CC, fades) |
+  | `MusicWindow.kt` (1181 l.) | `MusicWindow.kt` (pane + gesture), `MusicPlayerState.kt`, `MusicDock.kt` (pill), `MusicPlayerContent.kt` (open window, details), `MusicQueue.kt` (queue) |
+  | `MusicPages.kt` (970 l.) | `MusicPages.kt` (album, artist, playlist, downloaded, your music), `MusicHome.kt`, `MusicSearch.kt`, `MusicPageHeader.kt` |
+  | `PlayerHolder.kt` (1459 l.) | `PlayerHolder.kt`, `PlayerTypes.kt` (`NowPlaying`, `SettingsPage`, `SleepTimer`, `Repeat`), `VideoFrames.kt` (transition frame between video screens) |
+
+  What was `private` and is now used across files became `internal`. `PlayerHolder` is still a big
+  object: the rest shares too much private state to be moved out safely.
+- **Radio → Music** in the Music tab's code: `RadioScreen.kt` → `MusicScreen.kt`, `RadioState` →
+  `MusicState`, `RadioPage` → `MusicPage`, `RadioOverlay/Header/Content/Home` → `Music…`,
+  `Route.Radio` → `Route.Musique` (the variable in `MikenekoRoot`: `musicPages`). Still "radio": a
+  video's Radio button (`onRadio`, a real YouTube radio), `MkIcons.Radio`, `R.string.radio` /
+  `error_play_radio`.
+- **Merged duplicates**: `formatClock(ms)` (in `data/Models.kt`) replaces the music's `clock()` and the
+  `formatDuration(x / 1000).ifEmpty { "0:00" }`; `shareLink` replaces the music's private `share`;
+  `lerp` comes from `androidx.compose.ui.util`; the `musicKindLabel`/`kindLabel` and
+  `libraryFilterLabel`/`filterLabel` pairs are now a single function each.
+- **Unused code removed**: `CatEars`, `VideoLibrary.isLater/isLiked`, about fifty strings (EN + FR,
+  including the `radio_*` ones and `tab_downloads`).
+- **Tidying**: unused imports removed (~200), fully qualified names replaced by imports (~140; except
+  `androidx.compose.animation.AnimatedVisibility`, written in full on purpose inside a `Column` so as
+  not to pick the `ColumnScope` version), imports sorted, indentation of re-wrapped blocks fixed
+  (whitespace only).
+- **Pitfall met**: a cut by text pattern first took away the Subscriptions' channel row and filters
+  (the end pattern was further down); restored from `HEAD`. Always reread the `git diff` of a
+  deletion.
+
+---
+
+## 8 septies. Shorts player (2.2.0)
+
+A full screen player like YouTube's; next shorts = the original list, then the suggestions.
+
+- `ui/screens/ShortsPlayer.kt`:
+  - `object Shorts`: `offer(list)` keeps the last 8 shown lists containing shorts (home and search
+    through a `SideEffect`, a channel's Shorts tab and subscriptions on tap); `start(url)` (called by
+    `openVideo`) finds the list containing the video and opens a `Session(items, index)` if it's a
+    short (`VideoItem.isShort`, or a `/shorts/` link), otherwise resets the session to null.
+  - `ShortsPlayer`: `VerticalPager`; the settled page (`settledPage`) starts
+    `PlayerHolder.play(…, short = true)` (except the first, already started by `openVideo`). Near the
+    end, the `related` items that are shorts get appended. Each page: thumbnail below,
+    `VideoSurface(lastFrame = false)` only on the playing page (otherwise it would show the previous
+    short's frame).
+- `PlayerHolder.play(short = true)`: `REPEAT_MODE_ONE` + `loop`, no reading of `WatchPositions` nor
+  `positionOwner` (a short doesn't replace a video in the resume list). `stop()` resets
+  `playingShort` to false.
+- `MikenekoRoot`: `Route.Lecteur` shows `ShortsPlayer` when `Shorts.session != null` (with only
+  `CommentsPanel` above); `closeShorts()` stops playback and goes back to `beforePlayer`;
+  `videoScreen` excludes shorts (no automatic full screen when rotating).
+- 2.2.1: lists don't always know a video is a short (subscriptions RSS feed, "For you": `isShort`
+  false). `NowPlaying.isShort` comes from `StreamInfo.isShortFormContent`, or failing that from an
+  upright video (highest stream: width < height) of 3 min or less. A `LaunchedEffect(now)` in
+  `MikenekoRoot` then calls `Shorts.adopt(now)` and `PlayerHolder.becomeShort()` (loop, no more
+  resume): the player page gives way to Shorts.
+
+- 2.3.0, "Your shorts": `VideoLibrary.shorts` (prefs `bibliotheque`, key `shorts`, loaded with
+  `isShort = true`), `toggleShort` / `removeShort` / `addShorts`; bookmark `MkIcons.Bookmark` /
+  `BookmarkFilled` in `ShortActions`; `LibraryPage.Shorts` → `ShortsPage` (a grid of `ShortCard`, now
+  `internal` in `ChannelScreen.kt`, calling `Shorts.offer(shorts)` before opening); `MikenekoBackup`
+  exports / imports `<shorts>`.
+- 2.3.0, "No shorts": `AppSettings.hideShorts` (prefs `reglages`, `shorts_masques`).
+  `VideoItem.looksShort` = `isShort` or a `/shorts/` URL (the subscriptions RSS only gives that).
+  Filtered in `Feedback.allows` (home, "For you", player suggestions: `related` items are filtered on
+  load), `SearchFilters.accepts`, the subscriptions list, a channel's tabs (read without observing:
+  inside the `LazyColumn`) and the "Your shorts" tile.
+
+---
+
+## 8 octies. The "Mikeneko fixes list" (2.4.0)
+
+- Shorts blocker: `VideoItem.looksShort` also counts videos of 1 to 60 s; the subscriptions RSS reads
+  `<link href=…/shorts/…>`; `isShort` is kept in the lists' JSON (`toTrackJson`, key `short`) and the
+  history's (`WatchHistory`, whose `related` items feed "For you": that's how shorts came back).
+- `tracksSummary(tracks)` (`MusicSearch.kt`): count + total duration; `TrackRow(number)` is no longer
+  used by albums.
+- Covers: `Playlist.cover` (a path in `filesDir/pochettes`, a new name for every photo for Coil's
+  cache); `Playlist.coverModel()` = the file, otherwise `PlaylistArt(4 URLs)`, otherwise the first
+  cover. `PlaylistArtFetcher` (+ `Key`, registered in `MikenekoApp`) builds the 512 px mosaic with the
+  `ImageLoader`. `Cover`, `PageHeader`, `SquareCard`, `QuickTile`, `CollectionRow` and
+  `rememberCoverColor` now take an `Any?` model. The music pages' header buttons are in a `FlowRow`
+  (they no longer get squashed).
+- Lyrics: an `Animatable` `drag` as `translationY`, a `NestedScrollConnection` (the rest of the drag
+  when the lyrics are at the top) and a drag on the top bar; closes past 120 dp or on a quick fling.
+  Lyrics open: `view.keepScreenOn` (DisposableEffect).
+- `StatusBarBand` (`MikenekoRoot`): a black `Canvas` the height of `statusBarSpace` + 34 dp (22 dp in
+  2.4.0), minus a rectangle with rounded top corners (`PathOperation.Difference`), only if the status
+  bar is shown and outside Shorts.
+- More transparent music: `PlayerWindowContent`'s veil at alpha 0.55 → 0.8, dimming of the page behind
+  0.38 → 0.22.
+
+---
+
+## 8 nonies. Music spectrum (2.5.0)
+
+- `player/AudioSpectrum.kt`: `SpectrumRenderersFactory` (passed to `ExoPlayer.Builder`) builds a
+  `DefaultAudioSink` with a `TeeAudioProcessor(AudioSpectrum)`: the PCM goes through unchanged, and a
+  copy goes to `AudioSpectrum.handleBuffer` (audio thread). No `Visualizer` (it would need
+  `RECORD_AUDIO`). Mono, a ring of 1024 samples, radix-2 FFT with a Hann window 30 times a second, 40
+  logarithmic bands from 40 Hz to 16 kHz (each band's peak in dB, −60…0 dB → 0…1, treble raised by up
+  to 6 dB), smoothing rise 0.65 / fall 0.2. Computed only while `listening` (set by the spectrum
+  composable when the window is open).
+- 2.5.2: `DefaultAudioSink` passes sound in chunks (~4 per second, when the AudioTrack has room):
+  analysing on arrival stuttered. Now `handleBuffer` only fills a mono ring of 65,536 samples
+  (`written` counts the total, `epoch` changes on every `flush`); and the composable moves a real-time
+  playhead (`withFrameNanos`, only while playing), 0.5 s behind `written` (≈ the sound still in the
+  speaker's buffer), and calls `bandsAt(playhead)` on every frame; the `Canvas` rereads a frame counter
+  (redraw only).
+- 2.5.3, pill (`MusicDockRow`): the cover no longer moves (`Crossfade`); only the text (`TrackText`)
+  follows `swipe`, and the neighbour (`nextItem` / `previousItem`, the queue loops like `playAt`; on
+  the right after 3 s, it is the current song, which "previous" restarts) is drawn at
+  `swipe ± (width + 40 px)`. Confirmed swipe: the neighbour finishes its travel to 0, it is kept in
+  `landed` (shown right away), then `swipe` goes back to 0 and `next` / `previous` is started;
+  `landed` fades when `now` or `pending` catches up (2 s at most).
+- 2.5.3, music window: `settle` springs 0.66/58 → 0.8/80 (opening) and 0.62/75 → 0.86/110 (closing): a
+  single small overshoot.
+
+---
+
+## 8 decies. Music "For you" and "Your mixes" (2.6.0)
+
+- `data/MusicForYou.kt`: seeds = the 3 most frequent artists (`cleanArtist(channel)`) in
+  `MusicHistory` (last 30), with their latest song; `Music.mix(id)` for each (in parallel). "For you"
+  = the mixes interleaved, without ids already played or in a playlist (30 at most). Mixes kept if ≥ 4
+  songs: `GeneratedMix("mix:artist", …)`; plus "Rediscover" (your playlists minus recent plays, a
+  shuffle stable over the day). `TimedCache` of 6 h, key = the seed artists.
+- UI: `MusicHome` (`produceState` on the last song played: `cached` otherwise `load`), "For you"
+  shelves (`SquareCard`, plays the list from the tapped song) and "Your mixes" (`PlaylistArt` mosaic);
+  `MusicPage.Generated(mix)` → `GeneratedMixContent` (header, shuffle,
+  "Keep" = `Playlists.merge(title, songs)`).
+- 2.6.0, yt-dlp: in release, `YoutubeDL.init` → `ZipUtils.unzip` threw `ExceptionInInitializerError`
+  (no message) ← "class … is not a concrete class": R8 broke Apache Commons Compress (zip extra fields
+  created by reflection). `proguard-rules.pro` keeps `org.apache.commons.compress.**` and
+  `org.apache.commons.io.**`. Reproduced then verified on the emulator (`Medium_Phone_API_37.0`, x86_64
+  APK, Library › Downloads). `Downloads` now writes the error to the log (`Log.e`), shows kind +
+  message + cause (`describe`), and `prepare` retries after a failure (`ready` recreated).
+- 2.6.1: on the phone, downloads then failed with a Python trace ("frozen runpy,
+  _run_module_as_main") while the same link in FLAC worked on the emulator. Likely cause: a Python /
+  yt-dlp install damaged by the earlier failed attempts. `repair()` deletes
+  `no_backup/youtubedl-android/packages/python` and `yt-dlp`, the `pythonLibVersion` preference (prefs
+  `youtubedl-android`) and `maj_ytdlp`, then calls `initPython` / `init_ytdlp` (public); a single
+  retry. `readableError` shows the last `ERROR:` line (or the trace's last line); `Log.e` keeps
+  everything. If it fails again: `adb logcat | grep -A40 "téléchargement raté"`. After the 2.6.1
+  update, downloads worked on the phone: the damaged-install hypothesis holds (the automatic repair
+  was enough).
+
+---
+
+## 8 undecies. Spectrum wave in liquid glass (2.6.2 → 2.6.6)
+
+- `SpectrumWave` (`ui/screens/MusicPlayerContent.kt`): behind the music window's content, aligned to
+  the bottom, 28 % of its height in portrait, 46 % in landscape. It replaces the bars above the
+  progress bar (2.5.0), which pushed the buttons too low. It doesn't show the progress (that's the
+  progress bar's job).
+- Colour: `rememberCoverColor` (the same as the window's veil, which is darkened), brightened in HSV
+  (value 0.95), crossfading between songs.
+- `ui/glass/LiquidWave.kt` (Android 13+): an AGSL shader receives the 40 crest heights as
+  `uniform float crest[40]` and redoes the same curve as `quadraticTo` through the midpoints
+  (quadratic B-spline, straight segments at both ends). Under the crest: refraction of the backdrop,
+  tint and transparency fading towards the bottom, a highlight on the crest. The shader is compiled
+  once as a test (`liquidWaveSupported`): if it fails, the wave drawn with a `Canvas` comes back
+  instead of crashing.
+- AGSL: no variable array index outside a loop, hence `at(k)` walking the 40 points.
+- 2.6.6: the wave must refract **the page behind the window** (`MusicDockWindow`'s `Backdrop`, passed
+  to `PlayerWindowContent` as `page`), not the window veil's `Backdrop`. With the veil, it redrew it on
+  top of itself: opaque, and the refraction of a blurred gradient is invisible.
+
+---
+
+## 9. Compose and Android pitfalls to remember
+
+- A **`derivedStateOf` read only in a `SideEffect`** doesn't trigger recomposition: read it during
+  composition.
+- For an animation following the scroll pixel by pixel, read the state in **`graphicsLayer { }`**:
+  that avoids a recomposition per frame.
+- `RowScope.AnimatedVisibility`: implicit receiver error in a nested `Row`. Replaced by
+  `animateFloatAsState` + `graphicsLayer`.
+- For a moving glass element, use `offset { }`, not `graphicsLayer`, otherwise the position seen by
+  the glass doesn't follow.
+- Kotlin delegation of a Java interface (`by`): `default` methods are **not** delegated; extend the
+  concrete class.
+- A duplicate string in `strings.xml` fails the build. Example: the old `music_library` ("Your music")
+  was removed.
+- `ANIMATION_SPEED = 2`: `tween(400)` really lasts 200 ms; `delay()` doesn't follow this scale.
+- **Centring on the screen inside a block with `safeDrawing`** (1.17.2, full screen "Up next"): in
+  landscape, the notch gives a bigger margin on one side, so the block's middle isn't the screen's.
+  Shift by `(right − left) / 2` of the `safeDrawing` margins. And no `Spacer(weight)` on each side:
+  that centres in the remaining space, not on the screen.
+- **Centring the landscape dock rail** (2.6.2 → 2.6.5): with the status bar hidden, centre it on the
+  whole screen (no top or bottom padding); with it shown, pad the top by the status bar height only,
+  so it centres between the status bar and the bottom. A bottom padding for the navigation bar moved
+  the centre up.
+- **A node that is no longer placed (`place` skipped) no longer receives the pointer**, even
+  mid-gesture, nor its release (`HitPathTracker` checks `isPlaced` on every event). 1.15.1 bug, fixed
+  in 1.15.2: the music window (`MusicWindow.kt`) is only placed above 30 % open; when folding it
+  through its scroll (`scrollConnection`), the finger went below 30 %, the scroll never received the
+  release, `onPreFling` never came and the pane froze around 0.26–0.29. Now the window stays placed
+  while `MusicPlayerState.pulling` is true (an observed state). On top of that, `endPull()` settles
+  the pane when the finger lifts without a fling, because a cancelled gesture doesn't trigger
+  `onPreFling` (`Draggable` → `processDragCancel`).
+
+---
+
+## 10. Open leads (details in FIXES.md)
+
+- To check on a phone:
+  - 1.10.3's Source error;
+  - the visuals of 1.14.0, 1.14.1, 1.14.2 and 1.14.6, and dragging on the home capsules (1.15.1);
+  - offline, only downloaded items play, even a removed playlist (1.15.5);
+  - resuming the last 10 videos after closing (1.16.0);
+  - the thumbnails' progress bar and the suggestions in the player page (1.17.0);
+  - reimporting a real Takeout `abonnements.csv`.
+- Suggested but not chosen yet:
+  - importing the `youtube.com/feed/channels` page saved as .mhtml from Chrome (an idea taken from
+    youtube-subscription-extractor).
+- Go back to an official NewPipeExtractor release when it ships.
