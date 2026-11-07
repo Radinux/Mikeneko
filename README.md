@@ -11,7 +11,7 @@ No ads · no Google account · with cat ears (=^･ω･^=)
 ![Android 8+](https://img.shields.io/badge/Android-8.0%2B-3DDC84?style=for-the-badge&logo=android&logoColor=white)
 ![Kotlin](https://img.shields.io/badge/Kotlin-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)
 ![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white)
-[![License GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-55504D?style=for-the-badge)](LICENSE.txt)
+[![License GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-55504D?style=for-the-badge)](LICENSE)
 
 ### [⛩️ Download Mikeneko ⛩️](https://github.com/Radinux/Mikeneko/releases/latest)
 
@@ -714,6 +714,16 @@ Code comments are in French.
 - [youtubedl-android](https://github.com/yausername/youtubedl-android) / yt-dlp.
 - **M PLUS Rounded 1c** font (The M+ FONTS Project Authors), SIL Open Font License 1.1, trimmed to
   Latin, kana and "三毛猫".
+
+## 📄 License
+
+Mikeneko — a free YouTube client for Android
+Copyright (C) 2026 Kirby
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU
+General Public License as published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version. It uses NewPipeExtractor, itself under GPL-3.0.
+Full text: [LICENSE](LICENSE).
 
 ---
 
