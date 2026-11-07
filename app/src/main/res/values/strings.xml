@@ -632,4 +632,6 @@
     <string name="add_songs_add">Add %1$s</string>
     <string name="add_songs_added">Remove %1$s from the playlist</string>
     <string name="watch_video">Video</string>
+    <string name="playlist_reorder">Reorder</string>
+    <string name="playlist_reorder_hint">Hold ≡ and drag a song</string>
 </resources>

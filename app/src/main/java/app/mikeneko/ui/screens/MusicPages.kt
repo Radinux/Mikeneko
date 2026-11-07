@@ -1,5 +1,8 @@
 package app.mikeneko.ui.screens
 
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.material3.Button
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.material3.Icon
 import androidx.compose.foundation.layout.Arrangement
@@ -251,9 +254,10 @@ private fun byArtistAlbums(list: List<MusicCollection>, name: String): List<Musi
 }
 
 // ---------------------------------------------------------------------------------------------
-// Playlist perso (2.11.0) : « Ajouter » et « Modifier » sous l'en-tête. En mode
-// Modifier : nom, pochette, supprimer, un bouton ⊖ à gauche de chaque morceau, et la poignée pour
-// réordonner (plus active en temps normal : on la déclenchait sans le vouloir).
+// Playlist perso (2.11.0) : « Ajouter », « Modifier » et « Réordonner » sous l'en-tête. Modifier :
+// nom, pochette, supprimer et un bouton ⊖ à gauche de chaque morceau. Réordonner (2.11.2, à part) :
+// seulement les poignées, et la liste défile toute seule près des bords. En temps normal, rien ne
+// bouge (on déplaçait des morceaux sans le vouloir).
 // ---------------------------------------------------------------------------------------------
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -266,8 +270,26 @@ private fun MyPlaylistContent(state: MusicState, id: String) {
     val now by PlayerHolder.nowPlaying.collectAsState()
     val list = rememberLazyListState()
     var editing by rememberSaveable(id) { mutableStateOf(false) }
-    BackHandler(enabled = editing) { editing = false }
-    val reorder = remember(id) { ReorderState(list, firstIndex = 1, count = { store.get(id)?.items?.size ?: 0 }) { from, to -> store.move(id, from, to) } }
+    var reordering by rememberSaveable(id) { mutableStateOf(false) }
+    BackHandler(enabled = editing || reordering) {
+        editing = false
+        reordering = false
+    }
+    val scope = rememberCoroutineScope()
+    val density = LocalDensity.current
+    val topInset = with(density) { pageTop().toPx() }
+    val bottomInset = with(density) { (BOTTOM_SPACE - 40.dp).toPx() }
+    val reorder = remember(id, topInset, bottomInset) {
+        ReorderState(
+            list,
+            firstIndex = 1,
+            count = { store.get(id)?.items?.size ?: 0 },
+            scope = scope,
+            topInset = topInset,
+            bottomInset = bottomInset,
+            edge = with(density) { 72.dp.toPx() },
+        ) { from, to -> store.move(id, from, to) }
+    }
     val play = PageBarEffect(state, list, playlist.name, playInOrder(context, playlist.items))
     LazyColumn(Modifier.fillMaxSize(), state = list, contentPadding = PaddingValues(bottom = BOTTOM_SPACE)) {
         item(key = "entete") {
@@ -275,24 +297,30 @@ private fun MyPlaylistContent(state: MusicState, id: String) {
                 playlist.name,
                 tracksSummary(playlist.items),
                 playlist.coverModel(),
-                onPlay = if (editing) null else playInOrder(context, playlist.items),
+                onPlay = if (editing || reordering) null else playInOrder(context, playlist.items),
                 play = play,
             ) {
-                if (editing) {
-                    PlaylistEditPanel(
+                when {
+                    editing -> PlaylistEditPanel(
                         playlist,
                         onDone = { editing = false },
                         onDeleted = { state.pages.removeAll { it == MusicPage.MyPlaylist(id) || it == MusicPage.AddSongs(id) } },
                     )
-                } else {
-                    PlaylistDownloadCircle(PlaylistDownloads.music, id, playlist.items)
-                    ShuffleButton(playlist.items)
-                    // Ajouter | Modifier : une pilule découpée
-                    Row(horizontalArrangement = Arrangement.spacedBy(CONNECTED_GAP)) {
-                        ConnectedChip(stringResource(R.string.playlist_add_songs), selected = false, first = true, last = false, icon = MkIcons.Plus) {
-                            state.open(MusicPage.AddSongs(id))
+                    reordering -> Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(R.string.playlist_reorder_hint), Modifier.weight(1f), color = Pelage.Gris, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        Button(onClick = { reordering = false }) { Text(stringResource(R.string.playlist_done), fontWeight = FontWeight.ExtraBold) }
+                    }
+                    else -> {
+                        PlaylistDownloadCircle(PlaylistDownloads.music, id, playlist.items)
+                        ShuffleButton(playlist.items)
+                        // Ajouter | Modifier | Réordonner : une pilule découpée
+                        Row(horizontalArrangement = Arrangement.spacedBy(CONNECTED_GAP)) {
+                            ConnectedChip(stringResource(R.string.playlist_add_songs), selected = false, first = true, last = false, icon = MkIcons.Plus) {
+                                state.open(MusicPage.AddSongs(id))
+                            }
+                            ConnectedChip(stringResource(R.string.playlist_edit), selected = false, first = false, last = false, icon = MkIcons.Pencil) { editing = true }
+                            ConnectedChip(stringResource(R.string.playlist_reorder), selected = false, first = false, last = true, icon = MkIcons.DragHandle) { reordering = true }
                         }
-                        ConnectedChip(stringResource(R.string.playlist_edit), selected = false, first = false, last = true, icon = MkIcons.Pencil) { editing = true }
                     }
                 }
             }
@@ -310,7 +338,7 @@ private fun MyPlaylistContent(state: MusicState, id: String) {
                     Modifier.animateItem()
                 },
                 playing = sameTrack(now?.url, track.url),
-                onMore = if (editing) null else ({ MusicSheet.open.value = MusicSheet.Track(track, playlistId = id, index = index) }),
+                onMore = if (editing || reordering) null else ({ MusicSheet.open.value = MusicSheet.Track(track, playlistId = id, index = index) }),
                 leading = if (editing) {
                     {
                         // Retirer en un clic
@@ -322,9 +350,12 @@ private fun MyPlaylistContent(state: MusicState, id: String) {
                     null
                 },
                 trailing = {
-                    if (editing) DragHandle(reorder, track.url) else DownloadedMark(PlaylistDownloads.music, track.url)
+                    when {
+                        reordering -> DragHandle(reorder, track.url)
+                        !editing -> DownloadedMark(PlaylistDownloads.music, track.url)
+                    }
                 },
-            ) { if (!editing) playTracks(context, playlist.items, index) }
+            ) { if (!editing && !reordering) playTracks(context, playlist.items, index) }
         }
     }
 }

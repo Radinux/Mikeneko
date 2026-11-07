@@ -831,6 +831,14 @@ users: the point is to take them from the videos really watched.
 - Music player: a Video `ActionSlot` → `onWatchVideo(url, position)` (MusicDockWindow → MikenekoRoot):
   the window folds and `openVideo(url, startAtMs)` opens the video at the music's position (the music
   is set aside as when any video starts).
+- 2.11.2: a separate `reordering` mode (Add | Edit | Reorder pill): handles only, a hint and Done;
+  Edit keeps name, cover, delete and the ⊖ buttons. `Playlists.add` inserts at the top.
+  `ReorderState` auto-scrolls: given a scope and the hidden top / bottom insets (top bar, docks), when
+  the dragged row is within `edge` of the visible area, a frame loop calls `list.scrollBy` (up to
+  22 px per frame, faster closer to the edge), adds the scrolled amount to the drag offset (the row
+  stays under the finger) and swaps rows as it goes; it stops at the end of the list or on release.
+- Emulator tip: if screenshots turn black and the app "isn't responding" while its main thread just
+  waits for vsync, the emulator's GPU is stuck: restart it with `-gpu swiftshader_indirect`.
 
 ---
 

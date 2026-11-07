@@ -52,11 +52,11 @@ class Playlists private constructor(context: Context, file: String) {
 
     fun delete(id: String) = update { list -> list.filterNot { it.id == id } }
 
-    /** Ajoute à la fin. Renvoie false si le morceau y était déjà. */
+    /** Ajoute en tête (2.11.2 : le dernier ajouté en premier). Renvoie false si le morceau y était déjà. */
     fun add(id: String, item: VideoItem): Boolean {
         val playlist = get(id) ?: return false
         if (playlist.items.any { sameTrack(it.url, item.url) }) return false
-        change(id) { it.copy(items = it.items + item) }
+        change(id) { it.copy(items = listOf(item) + it.items) }
         return true
     }
 

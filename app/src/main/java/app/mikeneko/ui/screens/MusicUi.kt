@@ -1,5 +1,10 @@
 package app.mikeneko.ui.screens
 
+import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.runtime.withFrameNanos
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.CoroutineScope
 import android.content.Context
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -400,11 +405,23 @@ fun MusicSectionTitle(text: String, modifier: Modifier = Modifier) {
  * Réordonner une LazyColumn en tenant la poignée ≡ d'une ligne. [firstIndex] : nombre d'éléments
  * avant la liste (en-têtes) ; [onMove] reçoit des positions dans la liste elle-même.
  */
-class ReorderState(private val list: LazyListState, private val firstIndex: Int, private val count: () -> Int, private val onMove: (Int, Int) -> Unit) {
+class ReorderState(
+    private val list: LazyListState,
+    private val firstIndex: Int,
+    private val count: () -> Int,
+    /** Pour faire défiler la liste quand on tire une ligne près d'un bord (2.11.2) ; null : jamais. */
+    private val scope: CoroutineScope? = null,
+    /** Les bords (px) cachés par la barre du haut / les docks du bas : la zone de défilement commence après. */
+    private val topInset: Float = 0f,
+    private val bottomInset: Float = 0f,
+    private val edge: Float = 160f,
+    private val onMove: (Int, Int) -> Unit,
+) {
     var dragging by mutableStateOf<Any?>(null)
         private set
     var offset by mutableFloatStateOf(0f)
         private set
+    private var autoScroll: Job? = null
 
     fun start(key: Any) {
         dragging = key
@@ -413,6 +430,47 @@ class ReorderState(private val list: LazyListState, private val firstIndex: Int,
 
     fun drag(dy: Float) {
         offset += dy
+        swap()
+        followEdges()
+    }
+
+    /**
+     * Près du haut ou du bas de ce qu'on voit, la liste défile toute seule, d'autant plus vite qu'on
+     * approche du bord ; la ligne tirée reste sous le doigt et prend sa nouvelle place au passage.
+     */
+    private fun followEdges() {
+        val scope = scope ?: return
+        if (speed() == 0f || autoScroll?.isActive == true) return
+        autoScroll = scope.launch {
+            while (dragging != null) {
+                val step = speed()
+                if (step == 0f) break
+                withFrameNanos { }
+                val used = list.scrollBy(step)
+                if (used == 0f) break // au bout de la liste
+                offset += used
+                swap()
+            }
+        }
+    }
+
+    /** px par image : négatif vers le haut, 0 hors des bords. */
+    private fun speed(): Float {
+        val info = list.layoutInfo
+        val current = info.visibleItemsInfo.firstOrNull { it.key == dragging } ?: return 0f
+        val top = current.offset + offset
+        val bottom = top + current.size
+        val start = info.viewportStartOffset + topInset
+        val end = info.viewportEndOffset - bottomInset
+        val push = when {
+            top < start + edge -> -((start + edge - top) / edge)
+            bottom > end - edge -> (bottom - (end - edge)) / edge
+            else -> 0f
+        }
+        return push.coerceIn(-1.5f, 1.5f) * MAX_AUTO_SCROLL
+    }
+
+    private fun swap() {
         val visible = list.layoutInfo.visibleItemsInfo
         val current = visible.firstOrNull { it.key == dragging } ?: return
         val center = current.offset + offset + current.size / 2f
@@ -425,10 +483,15 @@ class ReorderState(private val list: LazyListState, private val firstIndex: Int,
     }
 
     fun end() {
+        autoScroll?.cancel()
+        autoScroll = null
         dragging = null
         offset = 0f
     }
 }
+
+/** Vitesse maximale du défilement automatique en tirant une ligne (px par image). */
+private const val MAX_AUTO_SCROLL = 22f
 
 /** La poignée ≡ : la tenir et glisser déplace la ligne. */
 @Composable

@@ -69,6 +69,9 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
     rest of the time (songs moved by accident).
 - A **Video** button in the music player: the song switches to its YouTube video, at the same moment.
 - 2.11.1: texts cleaned up (no other app names in the app).
+- 2.11.2: **Reorder** is its own mode (Add | Edit | Reorder), apart from Edit; added songs go to the
+  **top** of the playlist; while dragging a song near the top or bottom, the list **scrolls by
+  itself**.
 
 ### 2.10
 
