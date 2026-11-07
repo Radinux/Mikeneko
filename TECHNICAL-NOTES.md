@@ -10,6 +10,40 @@ Code comments are in French.
 
 ---
 
+## 0. Build, signing, size, animation speed
+
+- **Versioning**: `app/version.properties` holds the version of the next release build; every
+  `assembleRelease` / `installRelease` uses it, then prepares the next one (last digit +1,
+  `versionCode` +1). New feature: `minor` +1 and `patch=0` by hand. No x.20: where x.20.0 would come,
+  it's a major version ((x+1).0.0) instead.
+- **ABIs**: one APK per CPU, `arm64-v8a` for phones and `x86_64` for the emulator; no 32-bit.
+- **Release key**: official releases are signed with `~/.config/mikeneko/mikeneko-release.jks`, its
+  password in `~/.config/mikeneko/signing.properties` (path can be changed with the
+  `MIKENEKO_SIGNING` variable). Without that file, the release build is signed with the debug key.
+  Back the key up: without it, no update can be installed on top of an existing install. SHA-256:
+  `0F:0B:6E:19:0A:E7:2C:34:63:A0:20:03:61:12:9D:54:F9:F4:B8:6B:CF:DC:70:8A:09:99:3B:03:A7:96:83:DC`.
+- **Size**: release APK arm64 ~59 MB (~50 MB of Python + ffmpeg for yt-dlp, ~8 MB of code after R8);
+  the debug APK is neither shrunk nor compressed (~120 MB). yt-dlp installs itself (~125 MB unpacked
+  in `no_backup/`) only the first time the Downloaded tab opens, and checks for its update at most
+  once a day. Thumbnails: disk cache capped at 64 MB (`MikenekoApp.newImageLoader`). Downloaded files
+  (`Android/data/app.mikeneko/files/Movies` and `Music`) count in the app's "data" for Android.
+- **Dependencies**: all versions are in `gradle/libs.versions.toml`; keep **NewPipeExtractor** up to
+  date (it follows YouTube's changes).
+- **Animation speed**: `MainActivity` hands `setContent` its own recomposer (`fixedSpeedRecomposer()`
+  in `ui/AnimationSpeed.kt`) with a fixed `MotionDurationScale`, so every Compose animation (menus and
+  popups included) runs at the same speed whatever the phone's animation scale (only exception:
+  animations turned off in accessibility). `ANIMATION_SPEED = 2`: `tween(400)` really lasts 200 ms
+  (springs too). `delay()` never followed this scale: never sync an animation step with a `delay()`.
+- **Liquid glass details** (`ui/glass/LiquidGlass.kt`): the video uses a `TextureView`
+  (`res/layout/player_texture.xml`) so the glass can refract it. The music dock and its window are a
+  single pane (`MusicDockWindow`) whose size follows `MusicPlayerState.expand` (0 = pill, 1 = window):
+  the finger pulls it, a spring settles it; the window's content is built at its final size and only
+  clipped by the pane, so the player isn't laid out again on every frame.
+- **Google account code**: removed in 2.1.3; `data/GoogleAccount.kt` and the Google Cloud Console
+  procedure are still in commit `11811f8`.
+
+---
+
 ## 1. Working conventions
 
 - The app's **default language is English**; the French translations live in `values-fr`.
