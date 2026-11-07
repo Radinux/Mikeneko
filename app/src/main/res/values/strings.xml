@@ -574,7 +574,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">What’s new in Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Nice!</string>
-    <string name="whats_new_body">🔔 Notifications\n\n• A bell next to Subscribe: turn it on to be notified of a channel’s new videos (checked every ~2 hours, even with the app closed).\n• Mikeneko now tells you when an update is available or ready.\n\n🎨 Lighter, connected capsules\n• Every row of capsules (home, search, music, channels, subscriptions) is now a connected Material 3 group, a bit wider.\n• Buttons and capsules use lighter colors.\n\n🎬 Since 2.9: accent colors and pure black (Settings › Appearance), cleaner videos on Wi-Fi, no more freeze between the mini player and the player.</string>
+    <string name="whats_new_body">🎧 Playlists, Spotify style\n\n• Under your playlist: Add and Edit.\n• Add: songs suggested from the ones already in the playlist, and a search, with a + on each song.\n• Edit: the name, the cover, delete, a ⊖ to remove a song in one tap, and the handle to reorder (no more moving songs by accident).\n\n🎬 A Video button in the music player: the song switches to its YouTube video, at the same moment.\n\n🔔 Since 2.10: a bell next to Subscribe for new videos, and update notifications.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Import playlists</string>
@@ -618,4 +618,18 @@
     <string name="bell_enabled">You’ll be notified of new videos from %1$s</string>
     <string name="bell_disabled">No more notifications from %1$s</string>
     <string name="bell_denied">Allow Mikeneko’s notifications in Android’s settings</string>
+
+    <!-- Gestion des playlists façon Spotify (2.11.0) -->
+    <string name="playlist_add_songs">Add</string>
+    <string name="playlist_edit">Edit</string>
+    <string name="playlist_done">Done</string>
+    <string name="playlist_name_label">Name</string>
+    <string name="playlist_remove_song">Remove %1$s</string>
+    <string name="add_songs_title">Add to %1$s</string>
+    <string name="add_songs_search">Search songs</string>
+    <string name="add_songs_suggested">Suggested from this playlist</string>
+    <string name="add_songs_empty_hint">Search for songs to start this playlist</string>
+    <string name="add_songs_add">Add %1$s</string>
+    <string name="add_songs_added">Remove %1$s from the playlist</string>
+    <string name="watch_video">Video</string>
 </resources>

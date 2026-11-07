@@ -1,5 +1,14 @@
 package app.mikeneko.ui.screens
 
+import androidx.compose.foundation.layout.Spacer
+import app.mikeneko.ui.components.CONNECTED_GAP
+import app.mikeneko.ui.components.ConnectedChip
+import kotlinx.coroutines.delay
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -239,11 +248,24 @@ internal fun ShuffleButton(tracks: List<VideoItem>) {
  * La pochette d'une playlist perso : « Pochette » choisit une photo (gardée dans l'appli, réduite à
  * 1024 px) ; « Mosaïque » revient aux pochettes des 4 premiers morceaux.
  */
+/**
+ * Le mode Modifier d'une playlist perso (2.11.0, façon Spotify) : le nom (modifié en direct), la
+ * pochette (photo ou mosaïque), « Supprimer » (toucher deux fois) et « Terminé ». Avant, la pochette
+ * était en capsules dans l'en-tête, et le nom et la suppression cachés dans le menu ⋮.
+ */
 @Composable
-internal fun PlaylistCoverButtons(playlist: Playlist) {
+internal fun PlaylistEditPanel(playlist: Playlist, onDone: () -> Unit, onDeleted: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val store = remember { Playlists.get(context) }
+    var name by remember(playlist.id) { mutableStateOf(playlist.name) }
+    var confirm by remember { mutableStateOf(false) }
+    LaunchedEffect(confirm) {
+        if (confirm) {
+            delay(3_000)
+            confirm = false
+        }
+    }
     val pick = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
         scope.launch {
@@ -256,16 +278,57 @@ internal fun PlaylistCoverButtons(playlist: Playlist) {
             store.setCover(playlist.id, path)
         }
     }
-    Capsule(stringResource(R.string.playlist_cover), selected = playlist.cover != null, icon = MkIcons.Image) {
-        pick.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-    }
-    if (playlist.cover != null) {
-        Capsule(stringResource(R.string.playlist_cover_mosaic), icon = MkIcons.Close) {
-            playlist.cover?.let { File(it).delete() }
-            store.setCover(playlist.id, null)
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        OutlinedTextField(
+            value = name,
+            onValueChange = {
+                name = it
+                if (it.isNotBlank()) store.rename(playlist.id, it)
+            },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text(stringResource(R.string.playlist_name_label)) },
+            singleLine = true,
+        )
+        // La pochette : une photo, ou la mosaïque des 4 premières pochettes
+        Row(horizontalArrangement = Arrangement.spacedBy(CONNECTED_GAP)) {
+            ConnectedChip(
+                stringResource(R.string.playlist_cover),
+                selected = playlist.cover != null,
+                first = true,
+                last = playlist.cover == null,
+                icon = MkIcons.Image,
+                pillWhenSelected = false,
+            ) { pick.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
+            if (playlist.cover != null) {
+                ConnectedChip(stringResource(R.string.playlist_cover_mosaic), selected = false, first = false, last = true, icon = MkIcons.Close) {
+                    playlist.cover?.let { File(it).delete() }
+                    store.setCover(playlist.id, null)
+                }
+            }
+        }
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            OutlinedButton(
+                onClick = {
+                    if (!confirm) {
+                        confirm = true
+                    } else {
+                        playlist.cover?.let { File(it).delete() }
+                        store.delete(playlist.id)
+                        onDeleted()
+                    }
+                },
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFFF8A80)),
+            ) {
+                Icon(MkIcons.Trash, null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                Text(stringResource(if (confirm) R.string.confirm_touch_again else R.string.playlist_delete), fontWeight = FontWeight.Bold)
+            }
+            Spacer(Modifier.weight(1f))
+            Button(onClick = onDone) { Text(stringResource(R.string.playlist_done), fontWeight = FontWeight.ExtraBold) }
         }
     }
 }
+
 
 /** Copie la photo choisie dans l'appli, réduite (1024 px au plus), en JPEG. Renvoie son chemin. */
 private fun saveCover(context: Context, id: String, uri: Uri): String {

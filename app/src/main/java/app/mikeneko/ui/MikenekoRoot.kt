@@ -177,13 +177,13 @@ fun MikenekoRoot(
         go(target)
     }
 
-    fun openVideo(url: String) {
+    fun openVideo(url: String, startAtMs: Long = 0L) {
         if (route != Route.Lecteur) beforePlayer = route
         route = Route.Lecteur
         // Un short s'ouvre dans le lecteur Shorts (plein écran, en boucle, glisser pour le suivant)
         val short = Shorts.start(url)
         scope.launch {
-            runCatching { PlayerHolder.play(context, url, audioOnly = false, short = short) }
+            runCatching { PlayerHolder.play(context, url, audioOnly = false, startAtMs = startAtMs, short = short) }
                 .onFailure { toast(context.getString(R.string.error_play_video, it.message.orEmpty())) }
         }
     }
@@ -495,6 +495,11 @@ fun MikenekoRoot(
                 // Depuis le lecteur : la page de l'artiste / de l'album s'ouvre dans Musique, la fenêtre se rabat
                 onOpenArtist = { musicPages.pages.add(MusicPage.Artist(it)); music.collapse() },
                 onOpenAlbum = { musicPages.pages.add(MusicPage.Album(it)); music.collapse() },
+                // Le morceau en vidéo (2.11.0) : la fenêtre se rabat, la vidéo reprend au même endroit
+                onWatchVideo = { url, position ->
+                    music.collapse()
+                    openVideo(url, position)
+                },
             )
         }
 

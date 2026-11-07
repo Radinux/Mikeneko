@@ -816,6 +816,24 @@ users: the point is to take them from the videos really watched.
 
 ---
 
+## 8 septdecies. Playlists, Spotify style (2.11.0)
+
+- `MyPlaylistContent` (MusicPages.kt): `editing` (rememberSaveable, back leaves it). Normal: download
+  circle, Shuffle, and an Add | Edit split pill (`ConnectedChip`); song rows with ⋮ and the downloaded
+  mark, no drag handle. Editing: `PlaylistEditPanel` (MusicPageHeader.kt: `OutlinedTextField` renaming
+  live, Cover / Mosaic chips, Delete playlist touched twice, Done), rows with a leading ⊖
+  (`TrackRow(leading = …)`, `Playlists.remove(id, index)`) and the drag handle. Deleting pops the
+  playlist and its Add page from `MusicState.pages`.
+- `MusicPage.AddSongs(id)` → `AddSongsContent`: suggestions = `Music.mix(videoId)` of 3 random songs
+  of the playlist, interleaved, without the songs it had when the page opened, 40 at most; a search
+  field (`Music.songs`, 400 ms debounce). Trailing `FilledTonalIconButton` + / `FilledIconButton` ✓
+  (removes again). Tapping a row plays it.
+- Music player: a Video `ActionSlot` → `onWatchVideo(url, position)` (MusicDockWindow → MikenekoRoot):
+  the window folds and `openVideo(url, startAtMs)` opens the video at the music's position (the music
+  is set aside as when any video starts).
+
+---
+
 ## 9. Compose and Android pitfalls to remember
 
 - A **`derivedStateOf` read only in a `SideEffect`** doesn't trigger recomposition: read it during

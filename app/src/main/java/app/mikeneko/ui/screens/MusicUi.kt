@@ -111,6 +111,8 @@ sealed interface MusicPage {
     data class Album(val collection: MusicCollection) : MusicPage
     data class Artist(val artist: ChannelItem) : MusicPage
     data class MyPlaylist(val id: String) : MusicPage
+    /** Ajouter des morceaux à une playlist perso : suggestions d'après ses morceaux, et recherche (2.11.0). */
+    data class AddSongs(val id: String) : MusicPage
     data object Downloads : MusicPage
     /** Ta bibliothèque : playlists, albums et artistes sauvegardés, téléchargés (avec des filtres). */
     data object Library : MusicPage
@@ -312,6 +314,8 @@ fun TrackRow(
     number: Int? = null,
     onMore: (() -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null,
+    /** À gauche de la pochette : le bouton « retirer » du mode Modifier d'une playlist (2.11.0). */
+    leading: (@Composable () -> Unit)? = null,
     onClick: () -> Unit,
 ) {
     Row(
@@ -325,6 +329,7 @@ fun TrackRow(
                 if (playing) PlayingBars() else Text(number.toString(), color = Pelage.Gris, fontSize = 13.sp, fontWeight = FontWeight.Bold)
             }
         }
+        leading?.invoke()
         Cover(track.thumbnail, 48.dp, 8.dp)
         Column(Modifier.weight(1f)) {
             Text(

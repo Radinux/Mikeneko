@@ -78,6 +78,7 @@ fun MusicDockWindow(
     onDownload: (String) -> Unit,
     onOpenArtist: (ChannelItem) -> Unit,
     onOpenAlbum: (MusicCollection) -> Unit,
+    onWatchVideo: (String, Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val density = LocalDensity.current
@@ -216,7 +217,7 @@ fun MusicDockWindow(
                     }
                     .graphicsLayer { alpha = ((state.expand.value - 0.3f) / 0.45f).coerceIn(0f, 1f) },
             ) {
-                PlayerWindowContent(state, backdrop, onDownload, onOpenArtist, onOpenAlbum)
+                PlayerWindowContent(state, backdrop, onDownload, onWatchVideo, onOpenArtist, onOpenAlbum)
             }
         }
     }

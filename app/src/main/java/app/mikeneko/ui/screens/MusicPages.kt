@@ -1,5 +1,26 @@
 package app.mikeneko.ui.screens
 
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.foundation.layout.Column
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.graphics.Color
+import app.mikeneko.data.videoIdOf
+import app.mikeneko.ui.components.CONNECTED_GAP
+import app.mikeneko.ui.components.ConnectedChip
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.async
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.IconButton
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.activity.compose.BackHandler
 import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -71,6 +92,7 @@ fun MusicContent(state: MusicState, onPlayStations: (List<VideoItem>, Int) -> Un
         is MusicPage.Album -> AlbumContent(state, page.collection)
         is MusicPage.Artist -> ArtistContent(state, page.artist)
         is MusicPage.MyPlaylist -> MyPlaylistContent(state, page.id)
+        is MusicPage.AddSongs -> AddSongsContent(state, page.id)
         MusicPage.Downloads -> DownloadsLibraryContent(state)
         MusicPage.Library -> MusicLibraryContent(state)
         is MusicPage.Generated -> GeneratedMixContent(state, page.mix)
@@ -229,7 +251,9 @@ private fun byArtistAlbums(list: List<MusicCollection>, name: String): List<Musi
 }
 
 // ---------------------------------------------------------------------------------------------
-// Playlist perso : réordonner en glissant, retirer avec ⋮
+// Playlist perso, façon Spotify (2.11.0) : « Ajouter » et « Modifier » sous l'en-tête. En mode
+// Modifier : nom, pochette, supprimer, un bouton ⊖ à gauche de chaque morceau, et la poignée pour
+// réordonner (plus active en temps normal : on la déclenchait sans le vouloir).
 // ---------------------------------------------------------------------------------------------
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -241,6 +265,8 @@ private fun MyPlaylistContent(state: MusicState, id: String) {
     val playlist = playlists.firstOrNull { it.id == id } ?: return
     val now by PlayerHolder.nowPlaying.collectAsState()
     val list = rememberLazyListState()
+    var editing by rememberSaveable(id) { mutableStateOf(false) }
+    BackHandler(enabled = editing) { editing = false }
     val reorder = remember(id) { ReorderState(list, firstIndex = 1, count = { store.get(id)?.items?.size ?: 0 }) { from, to -> store.move(id, from, to) } }
     val play = PageBarEffect(state, list, playlist.name, playInOrder(context, playlist.items))
     LazyColumn(Modifier.fillMaxSize(), state = list, contentPadding = PaddingValues(bottom = BOTTOM_SPACE)) {
@@ -249,12 +275,26 @@ private fun MyPlaylistContent(state: MusicState, id: String) {
                 playlist.name,
                 tracksSummary(playlist.items),
                 playlist.coverModel(),
-                onPlay = playInOrder(context, playlist.items),
+                onPlay = if (editing) null else playInOrder(context, playlist.items),
                 play = play,
             ) {
-                PlaylistDownloadCircle(PlaylistDownloads.music, id, playlist.items)
-                ShuffleButton(playlist.items)
-                PlaylistCoverButtons(playlist)
+                if (editing) {
+                    PlaylistEditPanel(
+                        playlist,
+                        onDone = { editing = false },
+                        onDeleted = { state.pages.removeAll { it == MusicPage.MyPlaylist(id) || it == MusicPage.AddSongs(id) } },
+                    )
+                } else {
+                    PlaylistDownloadCircle(PlaylistDownloads.music, id, playlist.items)
+                    ShuffleButton(playlist.items)
+                    // Ajouter | Modifier : une pilule découpée
+                    Row(horizontalArrangement = Arrangement.spacedBy(CONNECTED_GAP)) {
+                        ConnectedChip(stringResource(R.string.playlist_add_songs), selected = false, first = true, last = false, icon = MkIcons.Plus) {
+                            state.open(MusicPage.AddSongs(id))
+                        }
+                        ConnectedChip(stringResource(R.string.playlist_edit), selected = false, first = false, last = true, icon = MkIcons.Pencil) { editing = true }
+                    }
+                }
             }
         }
         if (playlist.items.isEmpty()) {
@@ -270,14 +310,99 @@ private fun MyPlaylistContent(state: MusicState, id: String) {
                     Modifier.animateItem()
                 },
                 playing = sameTrack(now?.url, track.url),
-                onMore = { MusicSheet.open.value = MusicSheet.Track(track, playlistId = id, index = index) },
-                trailing = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        DownloadedMark(PlaylistDownloads.music, track.url)
-                        DragHandle(reorder, track.url)
+                onMore = if (editing) null else ({ MusicSheet.open.value = MusicSheet.Track(track, playlistId = id, index = index) }),
+                leading = if (editing) {
+                    {
+                        // Retirer en un clic
+                        IconButton(onClick = { store.remove(id, index) }, modifier = Modifier.size(36.dp)) {
+                            Icon(MkIcons.MinusCircle, stringResource(R.string.playlist_remove_song, track.title), tint = Color(0xFFFF8A80), modifier = Modifier.size(24.dp))
+                        }
                     }
+                } else {
+                    null
                 },
-            ) { playTracks(context, playlist.items, index) }
+                trailing = {
+                    if (editing) DragHandle(reorder, track.url) else DownloadedMark(PlaylistDownloads.music, track.url)
+                },
+            ) { if (!editing) playTracks(context, playlist.items, index) }
+        }
+    }
+}
+
+/**
+ * Ajouter des morceaux à une playlist perso (2.11.0) : des suggestions tirées des Mix YouTube Music
+ * de 3 morceaux de la playlist (sans ceux qui y sont déjà), et une recherche. Un « + » par morceau
+ * (« ✓ » une fois ajouté, qui le retire) ; toucher le morceau l'écoute.
+ */
+@Composable
+private fun AddSongsContent(state: MusicState, id: String) {
+    val context = LocalContext.current
+    val store = remember { Playlists.get(context) }
+    val playlists by store.items.collectAsState()
+    val playlist = playlists.firstOrNull { it.id == id } ?: return
+    var query by rememberSaveable(id) { mutableStateOf("") }
+    val initial = remember(id) { playlist.items.mapNotNull { videoIdOf(it.url) }.toSet() }
+    val seeds = remember(id) { playlist.items.shuffled().take(3).mapNotNull { videoIdOf(it.url) } }
+    val suggestions by produceState<List<VideoItem>?>(null, id) {
+        value = coroutineScope {
+            seeds.map { vid -> async { runCatching { Music.mix(vid).tracks }.getOrDefault(emptyList()) } }.awaitAll()
+        }.let { lists ->
+            val longest = lists.maxOfOrNull { it.size } ?: 0
+            (0 until longest).flatMap { i -> lists.mapNotNull { it.getOrNull(i) } }
+        }.filter { (videoIdOf(it.url) ?: it.url) !in initial }.distinctBy { videoIdOf(it.url) ?: it.url }.take(40)
+    }
+    val results by produceState<List<VideoItem>?>(null, query) {
+        value = null
+        if (query.isBlank()) return@produceState
+        delay(400) // on attend que la frappe se calme
+        value = runCatching { Music.songs(query.trim()) }.getOrDefault(emptyList())
+    }
+    val searching = query.isNotBlank()
+    val shown = if (searching) results else suggestions
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(top = pageTop(), bottom = BOTTOM_SPACE)) {
+        item(key = "titre") {
+            Column(Modifier.padding(horizontal = 18.dp)) {
+                Text(stringResource(R.string.add_songs_title, playlist.name), color = Pelage.Texte, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                    placeholder = { Text(stringResource(R.string.add_songs_search)) },
+                    leadingIcon = { Icon(MkIcons.Search, null, modifier = Modifier.size(20.dp)) },
+                    trailingIcon = if (searching) ({
+                        IconButton(onClick = { query = "" }) { Icon(MkIcons.Close, stringResource(R.string.cancel), modifier = Modifier.size(18.dp)) }
+                    }) else null,
+                    singleLine = true,
+                    shape = CircleShape,
+                )
+                if (!searching && seeds.isNotEmpty()) {
+                    Text(stringResource(R.string.add_songs_suggested), Modifier.padding(top = 18.dp, bottom = 4.dp), color = Pelage.Gris, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
+                }
+            }
+        }
+        when {
+            !searching && seeds.isEmpty() -> item(key = "indice") {
+                EmptyCat(stringResource(R.string.add_songs_search), stringResource(R.string.add_songs_empty_hint), Modifier.padding(top = 20.dp))
+            }
+            shown == null -> item(key = "chargement") { Loading(Modifier.padding(top = 40.dp)) }
+            else -> itemsIndexed(shown, key = { _, it -> "ajout:" + it.url }) { index, track ->
+                val added = playlist.items.any { sameTrack(it.url, track.url) }
+                TrackRow(
+                    track,
+                    trailing = {
+                        if (added) {
+                            FilledIconButton(onClick = {
+                                val at = playlist.items.indexOfFirst { sameTrack(it.url, track.url) }
+                                if (at >= 0) store.remove(id, at)
+                            }) { Icon(MkIcons.Check, stringResource(R.string.add_songs_added, track.title), modifier = Modifier.size(20.dp)) }
+                        } else {
+                            FilledTonalIconButton(onClick = { store.add(id, track) }) {
+                                Icon(MkIcons.Plus, stringResource(R.string.add_songs_add, track.title), modifier = Modifier.size(20.dp))
+                            }
+                        }
+                    },
+                ) { playTracks(context, shown, index) }
+            }
         }
     }
 }

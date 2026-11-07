@@ -130,6 +130,8 @@ internal fun PlayerWindowContent(
     /** La page derrière la fenêtre : c'est elle que réfracte la vague en verre (2.6.6). */
     page: Backdrop,
     onDownload: (String) -> Unit,
+    /** Passer le morceau sur sa vidéo YouTube (2.11.0) : l'adresse et la position en cours. */
+    onWatchVideo: (String, Long) -> Unit,
     onOpenArtist: (ChannelItem) -> Unit,
     onOpenAlbum: (MusicCollection) -> Unit,
 ) {
@@ -303,6 +305,10 @@ internal fun PlayerWindowContent(
                             current()?.let { MusicSheet.open.value = MusicSheet.AddToPlaylist(it) }
                         }
                         if (!local) {
+                            // La vidéo du morceau (ça reste un client YouTube), reprise au même endroit
+                            ActionSlot(MkIcons.Video, stringResource(R.string.watch_video), enabled = now != null && !live) {
+                                now?.url?.let { url -> onWatchVideo(url, PlayerHolder.progress().first) }
+                            }
                             ActionSlot(MkIcons.Share, stringResource(R.string.share), enabled = now != null) { now?.let { shareLink(context, it.title, it.url) } }
                             ActionSlot(MkIcons.Download, stringResource(R.string.download), enabled = now != null && !live) { now?.url?.let(onDownload) }
                         }

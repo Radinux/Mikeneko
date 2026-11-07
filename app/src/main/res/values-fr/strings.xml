@@ -574,7 +574,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">Quoi de neuf dans Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Super !</string>
-    <string name="whats_new_body">🔔 Notifications\n\n• Une cloche à côté de S’abonner : allume-la pour être prévenu des nouvelles vidéos d’une chaîne (vérifié toutes les ~2 h, même appli fermée).\n• Mikeneko te prévient maintenant quand une mise à jour est disponible ou prête.\n\n🎨 Des capsules plus claires et connectées\n• Toutes les rangées de capsules (accueil, recherche, musique, chaînes, abonnements) forment un groupe Material 3 connecté, un peu plus large.\n• Les boutons et capsules prennent des couleurs plus claires.\n\n🎬 Depuis la 2.9 : couleurs d’accent et noir pur (Réglages › Apparence), vidéos plus propres en Wi-Fi, plus de gel entre le mini-lecteur et le lecteur.</string>
+    <string name="whats_new_body">🎧 Des playlists façon Spotify\n\n• Sous ta playlist : Ajouter et Modifier.\n• Ajouter : des morceaux suggérés d’après ceux de la playlist, et une recherche, avec un + sur chaque morceau.\n• Modifier : le nom, la pochette, supprimer, un ⊖ pour retirer un morceau d’un seul tap, et la poignée pour réordonner (fini les morceaux déplacés sans le vouloir).\n\n🎬 Un bouton Vidéo dans le lecteur musique : le morceau passe sur sa vidéo YouTube, au même moment.\n\n🔔 Depuis la 2.10 : une cloche à côté de S’abonner pour les nouvelles vidéos, et les notifications de mise à jour.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Importer des playlists</string>
@@ -618,4 +618,18 @@
     <string name="bell_enabled">Tu seras prévenu des nouvelles vidéos de %1$s</string>
     <string name="bell_disabled">Plus de notifications de %1$s</string>
     <string name="bell_denied">Autorise les notifications de Mikeneko dans les réglages d’Android</string>
+
+    <!-- Gestion des playlists façon Spotify (2.11.0) -->
+    <string name="playlist_add_songs">Ajouter</string>
+    <string name="playlist_edit">Modifier</string>
+    <string name="playlist_done">Terminé</string>
+    <string name="playlist_name_label">Nom</string>
+    <string name="playlist_remove_song">Retirer %1$s</string>
+    <string name="add_songs_title">Ajouter à %1$s</string>
+    <string name="add_songs_search">Chercher des morceaux</string>
+    <string name="add_songs_suggested">Suggestions d’après cette playlist</string>
+    <string name="add_songs_empty_hint">Cherche des morceaux pour commencer cette playlist</string>
+    <string name="add_songs_add">Ajouter %1$s</string>
+    <string name="add_songs_added">Retirer %1$s de la playlist</string>
+    <string name="watch_video">Vidéo</string>
 </resources>

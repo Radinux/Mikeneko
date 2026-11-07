@@ -58,6 +58,17 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ## 🎌 What's new ⸜(｡˃ ᵕ ˂ )⸝♡
 
+### 2.11
+
+- **Playlists, Spotify style**: under your own playlist, an **Add | Edit** split pill.
+  - **Add** opens a page with songs suggested from the playlist's own songs (YouTube Music mixes of
+    3 of them, without what's already in it) and a search, a + on every song (✓ once added, tap again
+    to remove);
+  - **Edit**: the name (edited live), the cover (photo or mosaic), Delete playlist, a ⊖ on the left of
+    every song to remove it in one tap, and the handle to reorder. Reordering is no longer active the
+    rest of the time (songs moved by accident).
+- A **Video** button in the music player: the song switches to its YouTube video, at the same moment.
+
 ### 2.10
 
 - **Notifications** (there were none before):
