@@ -76,7 +76,7 @@ fun PlaylistImportPicker(preview: PlaylistImport.Preview, onDismiss: () -> Unit)
     // Un petit fichier : tout est coché ; un gros (des centaines de recherches) : on choisit
     var chosen by remember { mutableStateOf(if (preview.searches(groups.toSet()) <= 150) groups.toSet() else emptySet()) }
     val searches = preview.searches(chosen)
-    val minutes = ceil(searches * (PlaylistImport.PACE_MS + 600) / 60_000.0).toInt()
+    val minutes = ceil(PlaylistImport.estimateSeconds(searches) / 60.0).toInt()
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = Pelage.Coussin,

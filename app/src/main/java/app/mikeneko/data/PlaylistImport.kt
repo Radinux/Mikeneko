@@ -8,6 +8,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,8 +28,8 @@ import kotlinx.coroutines.withTimeoutOrNull
  * - TXT : une ligne par morceau, « Artiste - Titre ».
  *
  * On choisit d'abord quoi importer ([preview], une case par playlist) : un gros export (un millier
- * de morceaux) prendrait longtemps, une recherche YouTube Music par morceau, espacées de [PACE_MS]
- * pour ne pas se faire bloquer. Si YouTube refuse plusieurs recherches d'affilée, l'import s'arrête
+ * de morceaux) prendrait longtemps, une recherche YouTube Music par morceau, à vitesse adaptative
+ * (3 en parallèle au départ, plus lent dès que YouTube résiste) pour ne pas se faire bloquer. Si YouTube refuse plusieurs recherches d'affilée, l'import s'arrête
  * ([Result.refused]) ; ce qui est trouvé est gardé.
  *
  * Les doublons sont fusionnés : un même morceau répété dans une playlist (titres comparés sans
@@ -66,7 +69,13 @@ object PlaylistImport {
         val refused: Boolean,
     )
 
-    const val PACE_MS = 2_000L
+    private const val MAX_PARALLEL = 3
+    private const val MIN_PAUSE_MS = 250L
+    private const val MAX_PAUSE_MS = 4_000L
+    private const val SPEED_UP_AFTER = 20
+
+    /** Le temps estimé pour [searches] recherches, à pleine vitesse (secondes). */
+    fun estimateSeconds(searches: Int): Int = (searches * 0.6).toInt()
     private const val SEARCH_TIMEOUT_MS = 12_000L
     private const val MAX_FAILURES_IN_A_ROW = 5
 
@@ -111,30 +120,65 @@ object PlaylistImport {
         val artists = ArrayList<ChannelItem>()
         val albums = ArrayList<MusicCollection>()
         val notFound = ArrayList<String>()
+        var stopped = false
+
+        // Vitesse adaptative (2.10.2) : jusqu'à [MAX_PARALLEL] recherches en même temps, presque sans
+        // pause ; chaque erreur (ou délai dépassé) retire une recherche parallèle et double la pause,
+        // [SPEED_UP_AFTER] réussites d'affilée réaccélèrent. [MAX_FAILURES_IN_A_ROW] échecs d'affilée :
+        // YouTube refuse, on s'arrête en gardant ce qui est trouvé.
+        val queue = java.util.concurrent.ConcurrentLinkedQueue<Pair<Item, suspend () -> Unit>>()
+        val lock = Mutex()
         var done = 0
         var failures = 0
-        var stopped = false
+        var streak = 0
+        var parallel = MAX_PARALLEL
+        var pause = MIN_PAUSE_MS
         var refused = false
-        suspend fun <T> step(item: Item, search: suspend () -> T?): T? {
-            val result = withTimeoutOrNull(SEARCH_TIMEOUT_MS) { runCatching { search() } }
-            failures = if (result == null || result.isFailure) failures + 1 else 0
-            if (failures >= MAX_FAILURES_IN_A_ROW) {
-                refused = true
-                throw CancellationException("refusé")
-            }
+
+        suspend fun <T> search(item: Item, find: suspend () -> T?, keep: (T?) -> Unit) {
+            val result = withTimeoutOrNull(SEARCH_TIMEOUT_MS) { runCatching { find() } }
+            val failed = result == null || result.isFailure
             val found = result?.getOrNull()
-            if (found == null) notFound += label(item)
-            done++
-            _state.value = State.Running(done, total, done - notFound.size)
-            delay(PACE_MS)
-            return found
+            lock.withLock {
+                if (failed) {
+                    failures++
+                    streak = 0
+                    parallel = (parallel - 1).coerceAtLeast(1)
+                    pause = (pause * 2).coerceAtMost(MAX_PAUSE_MS)
+                    if (failures >= MAX_FAILURES_IN_A_ROW) refused = true
+                } else {
+                    failures = 0
+                    if (++streak >= SPEED_UP_AFTER) {
+                        streak = 0
+                        parallel = (parallel + 1).coerceAtMost(MAX_PARALLEL)
+                        pause = (pause / 2).coerceAtLeast(MIN_PAUSE_MS)
+                    }
+                }
+                keep(found)
+                if (found == null) notFound += label(item)
+                done++
+                _state.value = State.Running(done, total, done - notFound.size)
+            }
         }
+        toFind.forEach { song -> queue += song to suspend { search(song, { findSong(song) }) { foundSongs[key(song)] = it } } }
+        artistItems.forEach { a -> queue += a to suspend { search(a, { findArtist(a) }) { it?.let { found -> artists += found } } } }
+        albumItems.forEach { a -> queue += a to suspend { search(a, { findAlbum(a) }) { it?.let { found -> albums += found } } } }
         try {
-            toFind.forEach { song -> foundSongs[key(song)] = step(song) { findSong(song) } }
-            artistItems.forEach { a -> step(a) { findArtist(a) }?.let { artists += it } }
-            albumItems.forEach { a -> step(a) { findAlbum(a) }?.let { albums += it } }
+            coroutineScope {
+                repeat(MAX_PARALLEL) { worker ->
+                    launch {
+                        while (!refused) {
+                            // Ralenti : les recherches parallèles en trop attendent (sans prendre de travail)
+                            while (worker >= parallel && !refused && queue.isNotEmpty()) delay(300)
+                            val (_, task) = queue.poll() ?: break
+                            task()
+                            delay(pause)
+                        }
+                    }
+                }
+            }
         } catch (e: CancellationException) {
-            stopped = !refused
+            stopped = true
         }
 
         // On garde ce qui a été trouvé, même après un arrêt
@@ -180,7 +224,7 @@ object PlaylistImport {
         return bestMatch(Music.songs(query), song, title)
             // Pas un morceau de YouTube Music (ASMR, podcast, live…) : parmi les vidéos
             ?: run {
-                delay(PACE_MS / 2)
+                delay(300)
                 bestMatch(YouTubeRepository.search(query).filterNot { it.isLive }, song, title)
             }
     }

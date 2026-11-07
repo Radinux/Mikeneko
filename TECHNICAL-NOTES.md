@@ -722,8 +722,11 @@ users: the point is to take them from the videos really watched.
   `Music.songs` then, if nothing matches, `YouTubeRepository.search` (ASMR, podcasts…). Best result:
   title word overlap + 0.35 if an artist word is in the channel or title, accepted from 0.6. Artists:
   `Music.artists` (exact normalized name first); albums: `Music.collections(…, Albums)` (≥ 0.8).
-  `PACE_MS` = 2 s between searches; 5 failures in a row (errors or timeouts, not "no match") stop the
-  import (`Result.refused`). Results are merged at the end, even after a stop: `Playlists.merge` per
+  Adaptive speed (2.10.2; before, one search every 2 s): 3 workers take tasks from a queue
+  (`MAX_PARALLEL`), 250 ms pause; every error or timeout lowers the allowed parallel searches by one
+  and doubles the pause (up to 1 search, 4 s); 20 successes in a row speed up again. 5 failures in a
+  row (errors or timeouts, not "no match") stop the import (`Result.refused`). Measured on the
+  emulator: 72 searches in 26 s. `estimateSeconds` = 0.6 s per search. Results are merged at the end, even after a stop: `Playlists.merge` per
   playlist (skipping songs already there), `MusicLibrary.addAll` for artists and albums.
 - `busy` keeps the app from clearing itself in the background (`MainActivity.busy`,
   `PlaybackService.onTaskRemoved`). UI: `PlaylistImportProgress` under the Settings row,

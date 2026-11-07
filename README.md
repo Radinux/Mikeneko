@@ -70,6 +70,8 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
   subscriptions filters) is a **connected Material 3 group**: capsules almost touching, rounded ends,
   the selected one a full pill in the accent color; a bit wider.
 - **Lighter colors**: tonal buttons and unselected capsules are a light cream tinted with the accent.
+- 2.10.2: **music imports about 8× faster**: up to 3 searches at once, slowing down by itself as
+  soon as YouTube resists (72 searches in 26 s instead of ~3.5 min).
 - 2.10.1: **Subscribed and the bell form one split pill** (video and channel pages); the "What's new"
   page no longer shows again for a bug-fix version.
 
@@ -94,9 +96,9 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 - **Import your music from other services**: Settings › Backup › Import playlists. Export your
   Spotify, Deezer, Apple Music… library with [TuneMyMusic](https://www.tunemymusic.com) to a CSV or
   TXT file, then tick the playlists to import (with the number of songs and the estimated time).
-  - every song is found on YouTube Music (or among videos if it isn't a YouTube Music song), one
-    search every 2 seconds so YouTube doesn't block you; the import runs in the background and can be
-    stopped, what was found is kept;
+  - every song is found on YouTube Music (or among videos if it isn't a YouTube Music song), at an
+    adaptive speed so YouTube doesn't block you (since 2.10.2); the import runs in the background and
+    can be stopped, what was found is kept;
   - liked artists and saved albums go to Your library;
   - **duplicates are merged**: a song repeated in a playlist, a song already in the Mikeneko playlist
     of the same name, two lines landing on the same video; a song in several playlists is searched
