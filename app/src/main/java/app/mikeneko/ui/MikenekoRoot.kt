@@ -499,11 +499,16 @@ fun MikenekoRoot(
 
         if (showDock) {
             if (landscape) {
+                // Barre d'état affichée : le rail descend sous sa bande noire (il y était rogné, 2.6.2)
+                val statusShown = !AppSettings.hideStatusBar.collectAsState().value && Shorts.session == null
+                val statusTop = with(LocalDensity.current) { WindowInsets.statusBarSpace.getTop(this).toDp() }
+                val railTop by animateDpAsState(if (statusShown) statusTop + 8.dp else 8.dp, label = "rail")
                 FloatingDock(
                     backdrop = backdrop,
                     current = route,
                     visible = dockVisible,
-                    modifier = Modifier.align(Alignment.CenterStart).windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Start)).padding(start = 12.dp),
+                    modifier = Modifier.align(Alignment.CenterStart).windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Start + WindowInsetsSides.Bottom))
+                        .padding(start = 12.dp, top = railTop, bottom = 8.dp),
                     vertical = true,
                     onSelect = ::selectTab,
                 )

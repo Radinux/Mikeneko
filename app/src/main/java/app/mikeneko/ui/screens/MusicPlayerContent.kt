@@ -31,6 +31,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.Path
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -291,6 +298,14 @@ internal fun PlayerWindowContent(
                     }
                 }
             }
+            // En fond de la fenêtre : le spectre en vague continue qui monte du bas, derrière les
+            // boutons (2.6.2 ; avant, des barres au-dessus de la progression qui poussaient tout vers le bas)
+            if (now != null && !live) {
+                SpectrumWave(
+                    state.open,
+                    Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(maxHeight * if (landscape) 0.46f else 0.28f),
+                )
+            }
             if (landscape) {
                 // Paysage : la pochette à gauche, le reste à droite (qui défile : artiste, album)
                 Row(Modifier.fillMaxSize().padding(start = 18.dp, end = 18.dp, top = 14.dp, bottom = 14.dp), horizontalArrangement = Arrangement.spacedBy(18.dp)) {
@@ -417,10 +432,7 @@ private fun TrackProgress(key: String?, active: Boolean) {
         } while (active)
     }
     val shown = scrub?.let { (it * duration).toLong() } ?: position
-    val fraction = scrub ?: if (duration > 0) position.toFloat() / duration else 0f
     Column(Modifier.fillMaxWidth().padding(top = 8.dp)) {
-        // Au-dessus de la barre : le spectre en fréquence de la musique (2.5.0)
-        SpectrumBars(active, fraction)
         ProgressWithSegments(
             progress = if (duration > 0) position.toFloat() / duration else 0f,
             segments = emptyList(),
@@ -460,22 +472,33 @@ private fun RowScope.ActionSlot(icon: ImageVector, label: String, enabled: Boole
 }
 
 /**
- * Le spectre en fréquence de ce qui joue ([AudioSpectrum]), en barres arrondies au-dessus de la
- * barre de progression : rousses sur la partie déjà jouée, pâles sur la suite. Il retombe en pause.
+ * Le spectre en fréquence de ce qui joue ([AudioSpectrum]), en vague continue qui monte du bas de la
+ * fenêtre (graves à gauche, aigus à droite) : rousse sur la partie déjà jouée du morceau, pâle sur la
+ * suite. Elle retombe en un filet en pause.
  */
 @OptIn(UnstableApi::class)
 @Composable
-private fun SpectrumBars(active: Boolean, fraction: Float) {
+private fun SpectrumWave(active: Boolean, modifier: Modifier) {
     DisposableEffect(active) {
         AudioSpectrum.listening = active
         onDispose { AudioSpectrum.listening = false }
     }
     val playing by PlayerHolder.isPlaying.collectAsState()
     val level by animateFloatAsState(if (playing) 1f else 0f, tween(500), label = "spectre")
+    var progress by remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(active) {
+        while (active) {
+            val (p, d) = PlayerHolder.progress()
+            progress = if (d > 0) p.toFloat() / d else 0f
+            delay(250)
+        }
+    }
+    val fraction by animateFloatAsState(progress, tween(250, easing = LinearEasing), label = "joué")
     // Le son arrive par gros paquets (~4 par seconde) : on le garde, et à chaque image de l'écran on
     // analyse l'endroit où en est une tête de lecture qui avance en temps réel, une demi-seconde
     // derrière le dernier son reçu (il est encore dans le tampon du haut-parleur). Fluide (2.5.2).
     val bands = remember { FloatArray(AudioSpectrum.BANDS) }
+    val smooth = remember { FloatArray(AudioSpectrum.BANDS) }
     var frame by remember { mutableIntStateOf(0) }
     LaunchedEffect(active) {
         if (!active) return@LaunchedEffect
@@ -497,26 +520,43 @@ private fun SpectrumBars(active: Boolean, fraction: Float) {
                 if (playhead > written) playhead = written.toDouble() // rattrapé : on attend le paquet suivant
                 if (playhead < written - 2.4 * behind) playhead = written - behind // trop en retard (saut)
                 AudioSpectrum.bandsAt(playhead.toLong(), bands)
+                // Lissée avec ses voisines : une vague, pas des pics isolés
+                for (i in bands.indices) {
+                    val l = bands[(i - 1).coerceAtLeast(0)]
+                    val r = bands[(i + 1).coerceAtMost(bands.size - 1)]
+                    smooth[i] = l * 0.25f + bands[i] * 0.5f + r * 0.25f
+                }
                 frame++
             }
         }
     }
-    Canvas(Modifier.fillMaxWidth().height(34.dp).padding(horizontal = 4.dp)) {
+    val wave = remember { Path() }
+    Canvas(modifier) {
         frame // relu ici : seulement un nouveau dessin à chaque image, pas une recomposition
-        val count = bands.size
-        val step = size.width / count
-        val bar = step * 0.58f
-        val min = 2.dp.toPx()
-        for (i in 0 until count) {
-            val h = (min + bands[i] * level * (size.height - min)).coerceAtMost(size.height)
-            val x = i * step + (step - bar) / 2
-            val played = (i + 0.5f) / count <= fraction
-            drawRoundRect(
-                color = if (played) Pelage.RouxClair.copy(alpha = 0.9f) else Color.White.copy(alpha = 0.28f),
-                topLeft = Offset(x, size.height - h),
-                size = Size(bar, h),
-                cornerRadius = CornerRadius(bar / 2),
-            )
+        val count = smooth.size
+        val min = 3.dp.toPx()
+        val w = size.width
+        val h = size.height
+        fun x(i: Int) = i * w / (count - 1)
+        fun y(i: Int) = h - (min + smooth[i] * level * (h - min)).coerceAtMost(h)
+        wave.reset()
+        wave.moveTo(0f, h)
+        wave.lineTo(x(0), y(0))
+        for (i in 1 until count - 1) {
+            wave.quadraticTo(x(i), y(i), (x(i) + x(i + 1)) / 2, (y(i) + y(i + 1)) / 2)
+        }
+        wave.lineTo(x(count - 1), y(count - 1))
+        wave.lineTo(w, h)
+        wave.close()
+        val split = fraction.coerceIn(0f, 1f) * w
+        val edge = Stroke(2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+        clipRect(right = split) {
+            drawPath(wave, Brush.verticalGradient(listOf(Pelage.RouxClair.copy(alpha = 0.42f), Pelage.Roux.copy(alpha = 0.08f))))
+            drawPath(wave, Pelage.RouxClair.copy(alpha = 0.75f), style = edge)
+        }
+        clipRect(left = split) {
+            drawPath(wave, Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.16f), Color.White.copy(alpha = 0.02f))))
+            drawPath(wave, Color.White.copy(alpha = 0.32f), style = edge)
         }
     }
 }

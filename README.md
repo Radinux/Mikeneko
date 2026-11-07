@@ -47,7 +47,7 @@ Sans pubs · sans compte Google · avec des oreilles de chat (=^･ω･^=)
 
 ## 🥷 Reprendre le développement
 
-**Version : 2.6.1** (publiée en release GitHub ; dernier APK partagé à la main : `Mikeneko-2.1.2.apk`).
+**Version : 2.6.2** (publiée en release GitHub ; dernier APK partagé à la main : `Mikeneko-2.1.2.apk`).
 La version est automatique : `app/version.properties` garde la version de la prochaine compilation
 release ; chaque `assembleRelease` / `installRelease` la prend puis prépare la suivante (dernier
 chiffre +1, `versionCode` +1). Nouvelle fonction : `minor` +1 et `patch=0` à la main. Pas de x.20 : là où on arriverait à x.20.0, c'est une version majeure ((x+1).0.0).
@@ -57,7 +57,7 @@ et `FIXES.md` (à faire / à vérifier).
 
 ## 🎌 Nouveautés ⸜(｡˃ ᵕ ˂ )⸝♡
 
-### 2.6.0 → 2.6.1
+### 2.6.0 → 2.6.2
 
 - **Musique « Pour toi ».** Sur l'accueil Musique, d'après ce que tu écoutes :
   - **Pour toi** : une étagère de morceaux à découvrir, tirés des mix YouTube Music de tes 3 artistes
@@ -74,6 +74,10 @@ et `FIXES.md` (à faire / à vérifier).
 - 2.6.1 : un téléchargement qui échouait avec une trace Python (« Traceback… ») : l'appli refait
   alors proprement son installation de Python et de yt-dlp, puis réessaie une fois. L'erreur affichée
   est la vraie raison (la fin de la trace), et la trace complète va dans le journal.
+- 2.6.2 : le **spectre** de la fenêtre musique devient une **vague continue** qui monte du bas de la
+  fenêtre, en fond derrière les boutons (rousse sur la partie jouée, pâle sur la suite). Les barres
+  au-dessus de la progression poussaient les boutons trop bas (coupés en paysage). Et en paysage avec
+  la barre d'état affichée, le **dock** descend sous sa bande noire (son haut était rogné).
 
 ### 2.5.0 → 2.5.3
 

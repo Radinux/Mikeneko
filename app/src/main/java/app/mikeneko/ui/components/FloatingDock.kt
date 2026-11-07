@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -135,7 +136,7 @@ private fun DockRail(backdrop: Backdrop, current: Route, visible: Boolean, modif
         enter = slideInHorizontally(spring(dampingRatio = 0.62f, stiffness = Spring.StiffnessLow)) { -it * 2 },
         exit = slideOutHorizontally(tween(300)) { -it * 2 },
     ) {
-        LiquidGlass(backdrop, Modifier.width(DOCK_RAIL_WIDTH).height(292.dp), cornerRadius = 34.dp, bezel = 24.dp, refraction = 24.dp) {
+        LiquidGlass(backdrop, Modifier.width(DOCK_RAIL_WIDTH).heightIn(max = 292.dp).fillMaxHeight(), cornerRadius = 34.dp, bezel = 24.dp, refraction = 24.dp) {
             BoxWithConstraints(Modifier.fillMaxSize().padding(6.dp)) {
                 val gap = 4.dp
                 val itemHeight = (maxHeight - gap * (TABS.size - 1)) / TABS.size
