@@ -47,7 +47,7 @@ Sans pubs · sans compte Google · avec des oreilles de chat (=^･ω･^=)
 
 ## 🥷 Reprendre le développement
 
-**Version : 2.6.4** (publiée en release GitHub ; dernier APK partagé à la main : `Mikeneko-2.1.2.apk`).
+**Version : 2.6.5** (publiée en release GitHub ; dernier APK partagé à la main : `Mikeneko-2.1.2.apk`).
 La version est automatique : `app/version.properties` garde la version de la prochaine compilation
 release ; chaque `assembleRelease` / `installRelease` la prend puis prépare la suivante (dernier
 chiffre +1, `versionCode` +1). Nouvelle fonction : `minor` +1 et `patch=0` à la main. Pas de x.20 : là où on arriverait à x.20.0, c'est une version majeure ((x+1).0.0).
@@ -57,7 +57,7 @@ et `FIXES.md` (à faire / à vérifier).
 
 ## 🎌 Nouveautés ⸜(｡˃ ᵕ ˂ )⸝♡
 
-### 2.6.0 → 2.6.4
+### 2.6.0 → 2.6.5
 
 - **Musique « Pour toi ».** Sur l'accueil Musique, d'après ce que tu écoutes :
   - **Pour toi** : une étagère de morceaux à découvrir, tirés des mix YouTube Music de tes 3 artistes
@@ -83,6 +83,8 @@ et `FIXES.md` (à faire / à vérifier).
 - 2.6.4 : la vague prend la **couleur de la pochette** (comme la fenêtre, en plus vif) et devient
   du **liquid glass** : sous sa crête, le fond de la fenêtre est réfracté comme sous les boutons en
   verre, avec un reflet clair sur la crête (Android 13+ ; avant, la vague dessinée).
+- 2.6.5 : en paysage, le **dock** est centré sur l'écran quand la barre d'état est masquée (il
+  remontait trop haut), et centré entre la barre d'état et le bas de l'écran quand elle est affichée.
 
 ### 2.5.0 → 2.5.3
 
