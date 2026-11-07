@@ -633,5 +633,7 @@
     <string name="add_songs_added">Retirer %1$s de la playlist</string>
     <string name="watch_video">Vidéo</string>
     <string name="playlist_reorder">Réordonner</string>
-    <string name="playlist_reorder_hint">Tiens ≡ et glisse un morceau</string>
+    <string name="playlist_reorder_hint">Touche ⊖ pour retirer un morceau, tiens ≡ pour le déplacer</string>
+    <string name="playlist_search">Chercher dans cette playlist</string>
+    <string name="playlist_details">Infos</string>
 </resources>

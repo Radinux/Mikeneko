@@ -69,6 +69,10 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
     rest of the time (songs moved by accident).
 - A **Video** button in the music player: the song switches to its YouTube video, at the same moment.
 - 2.11.1: texts cleaned up (no other app names in the app).
+- 2.11.4: the playlist pill is **Add | Edit | Details**, under the play button: **Edit** is for the
+  songs (⊖ to remove, ≡ to move), **Details** for the playlist itself (name, cover, delete). A
+  **search** in the playlist replaces the ⋮ at the top right. While moving a song, it stays between
+  the top bar and the docks: no need to reach the status bar to scroll (the move used to stop there).
 - 2.11.2: **Reorder** is its own mode (Add | Edit | Reorder), apart from Edit; added songs go to the
   **top** of the playlist; while dragging a song near the top or bottom, the list **scrolls by
   itself**.

@@ -837,6 +837,15 @@ users: the point is to take them from the videos really watched.
   the dragged row is within `edge` of the visible area, a frame loop calls `list.scrollBy` (up to
   22 px per frame, faster closer to the edge), adds the scrolled amount to the drag offset (the row
   stays under the finger) and swaps rows as it goes; it stops at the end of the list or on release.
+- 2.11.4: modes `details` (`PlaylistEditPanel`: name, cover, delete) and `songsEdit` (⊖ + handles,
+  hint, Done); the Add | Edit | Details pill moved to `PageHeader(below = …)` (a new slot under the
+  play button row), equal widths (`ConnectedChip(sidePadding = 8.dp)`), icons Pencil / Info.
+  `MusicState.playlistFilter`: the top-right ⋮ of a playlist became a search (`PlaylistFilterField`,
+  glass, in place of the title pill); the list shows matching titles / artists with their original
+  indices; editing is turned off while filtering; back closes the search first.
+  `ReorderState.keepInside` keeps the dragged row between the top bar and the docks: the finger no
+  longer needs to reach the status bar (the system sometimes took the gesture over there and the
+  move stopped dead); against an edge the list scrolls at full speed (`edge` 96 dp).
 - Emulator tip: if screenshots turn black and the app "isn't responding" while its main thread just
   waits for vsync, the emulator's GPU is stuck: restart it with `-gpu swiftshader_indirect`.
 

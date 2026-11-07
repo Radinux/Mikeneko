@@ -408,6 +408,8 @@ fun ConnectedChip(
     pillWhenSelected: Boolean = true,
     /** Pour une capsule sans texte (icône seule). */
     description: String? = null,
+    /** Marge de côté (moins dans une rangée qui partage la largeur, pour que le texte tienne). */
+    sidePadding: Dp = 22.dp,
     onClick: () -> Unit,
 ) {
     val round = CONNECTED_HEIGHT / 2
@@ -425,7 +427,7 @@ fun ConnectedChip(
         contentColor = content,
     ) {
         Row(
-            Modifier.padding(horizontal = if (text.isEmpty()) 14.dp else 22.dp),
+            Modifier.padding(horizontal = if (text.isEmpty()) 14.dp else sidePadding),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
         ) {

@@ -209,6 +209,8 @@ class MusicState(context: Context) {
     /** Le panneau historique / suggestions sous le champ est ouvert. */
     var suggesting by mutableStateOf(false)
     var kind by mutableStateOf(MusicKind.Songs)
+    /** La recherche dans la playlist perso ouverte (2.11.3) : null = fermée. */
+    var playlistFilter by mutableStateOf<String?>(null)
     /** Le titre et le bouton lecture de la page ouverte, pour la barre du haut. */
     var bar by mutableStateOf<PageBar?>(null)
     /** La pilule de la barre du haut à l'écran, sans son animation : la place du bouton lecture. */
@@ -233,6 +235,7 @@ class MusicState(context: Context) {
 
     fun goBack() {
         when {
+            playlistFilter != null && page is MusicPage.MyPlaylist -> playlistFilter = null // d'abord fermer la recherche
             pages.isNotEmpty() -> pages.removeAt(pages.lastIndex)
             // Suggestions ouvertes par-dessus des résultats : on revient d'abord aux résultats
             suggesting && submitted != null -> {
@@ -430,8 +433,26 @@ class ReorderState(
 
     fun drag(dy: Float) {
         offset += dy
+        keepInside()
         swap()
         followEdges()
+    }
+
+    /**
+     * La ligne tirée reste entre la barre du haut et les docks du bas (2.11.3) : plus besoin de monter
+     * le doigt jusque dans la bande noire de la barre d'état (le système y reprenait parfois le geste,
+     * qui s'arrêtait net). Contre un bord, elle fait défiler la liste à pleine vitesse.
+     */
+    private fun keepInside() {
+        if (scope == null) return
+        val info = list.layoutInfo
+        val current = info.visibleItemsInfo.firstOrNull { it.key == dragging } ?: return
+        val top = current.offset + offset
+        val min = info.viewportStartOffset + topInset
+        val max = info.viewportEndOffset - bottomInset - current.size
+        if (max <= min) return
+        if (top < min) offset += min - top
+        if (top > max) offset -= top - max
     }
 
     /**

@@ -156,8 +156,11 @@ private fun MusicHeader(state: MusicState, backdrop: Backdrop) {
                     val bar = state.bar
                     // Une pilule en verre avec le titre de la page et le bouton lecture : elle arrive à mesure
                     // que l'en-tête passe sous la barre (la liste se déforme dessous en défilant)
+                    val filtering = page is MusicPage.MyPlaylist && state.playlistFilter != null
                     Box(Modifier.weight(1f).padding(horizontal = 10.dp).onGloballyPositioned { state.barPill = it.boundsInRoot() }) {
-                        if (bar != null) {
+                        if (filtering) {
+                            PlaylistFilterField(state, backdrop)
+                        } else if (bar != null) {
                             val active by remember { androidx.compose.runtime.derivedStateOf { state.barProgress > 0.5f } }
                             LiquidGlass(
                                 backdrop,
@@ -198,9 +201,13 @@ private fun MusicHeader(state: MusicState, backdrop: Backdrop) {
                             }
                         }
                     }
+                    // Playlist perso : une loupe pour chercher dedans (2.11.3, à la place du ⋮ : renommer et
+                    // supprimer sont dans « Modifier »)
                     if (page is MusicPage.MyPlaylist) {
-                        GlassCircleButton(backdrop, MkIcons.More, stringResource(R.string.more_options)) {
-                            MusicSheet.open.value = MusicSheet.PlaylistOptions(page.id)
+                        if (filtering) {
+                            GlassCircleButton(backdrop, MkIcons.Close, stringResource(R.string.search_close)) { state.playlistFilter = null }
+                        } else {
+                            GlassCircleButton(backdrop, MkIcons.Search, stringResource(R.string.playlist_search)) { state.playlistFilter = "" }
                         }
                     }
                 }
@@ -292,6 +299,30 @@ private fun MusicSearchField(state: MusicState, backdrop: Backdrop, focus: Focus
             modifier = Modifier.align(Alignment.CenterStart).fillMaxWidth().padding(horizontal = 18.dp).focusRequester(focus),
             decorationBox = { inner ->
                 if (state.query.isEmpty()) Text(stringResource(R.string.music_search_hint), color = Color.White.copy(alpha = 0.7f), fontSize = 16.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                inner()
+            },
+        )
+    }
+}
+
+/** Le champ de recherche dans une playlist perso, en verre, dans la barre du haut (2.11.3). */
+@Composable
+private fun PlaylistFilterField(state: MusicState, backdrop: Backdrop) {
+    val focus = remember { FocusRequester() }
+    LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
+    LiquidGlass(backdrop, Modifier.fillMaxWidth().height(50.dp), cornerRadius = 25.dp, bezel = 16.dp, refraction = 16.dp) {
+        BasicTextField(
+            value = state.playlistFilter.orEmpty(),
+            onValueChange = { state.playlistFilter = it },
+            singleLine = true,
+            textStyle = TextStyle(color = Color.White, fontSize = 16.sp, fontFamily = Rounded, fontWeight = FontWeight.Bold, shadow = GlassTextShadow),
+            cursorBrush = SolidColor(Pelage.RouxClair),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            modifier = Modifier.align(Alignment.CenterStart).fillMaxWidth().padding(horizontal = 18.dp).focusRequester(focus),
+            decorationBox = { inner ->
+                if (state.playlistFilter.isNullOrEmpty()) {
+                    Text(stringResource(R.string.playlist_search), color = Color.White.copy(alpha = 0.7f), fontSize = 16.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                }
                 inner()
             },
         )

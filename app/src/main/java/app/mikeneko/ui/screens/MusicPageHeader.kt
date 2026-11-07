@@ -94,6 +94,8 @@ internal fun PageHeader(
     /** Le bouton lecture vient se ranger dans la barre du haut en défilant (voir [PlayAnchor]). */
     play: PlayAnchor? = null,
     actions: @Composable () -> Unit = {},
+    /** Sous la ligne du bouton lecture, sur toute la largeur (2.11.3 : Ajouter | Modifier | Réordonner). */
+    below: @Composable () -> Unit = {},
 ) {
     val density = LocalDensity.current
     var headerCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
@@ -155,6 +157,7 @@ internal fun PageHeader(
                 }
             }
         }
+        below()
     }
 }
 

@@ -153,6 +153,7 @@ Items marked "to check on the phone" are built and published but not confirmed o
 - [x] 2.1.0: automatic updates from GitHub (Radinux/Mikeneko-releases) — 2.1.1 downloaded and installed itself; Play Protect triggers on every version (expected, see the notes)
 - [x] 2.1.1: automatic download from GitHub — seen on the phone ("Mikeneko 2.1.1 is ready")
 - [ ] 2.1.2 (arrived on its own on the phone): "Update" pill as soon as the APK is downloaded; Settings › About buttons no longer squashed ("What's new" letter by letter)
+- [ ] 2.11.4: Add | Edit (songs: remove + move) | Details (name, cover, delete) under the play button, search in the playlist (top right), dragged song kept below the top bar — verified on the emulator (drag held at the very top: list scrolled up, song became first; search "david"); to check on the phone
 - [ ] 2.11.2: Reorder as its own mode, added songs at the top, auto-scroll while dragging near the edges — verified on the emulator (drag held at the bottom: the list scrolled to the end, the song moved there); to check on the phone
 - [ ] 2.11.0: playlist Add | Edit (suggestions + search page, edit mode with name, cover, delete, one-tap remove, reorder only there), Video button in the music player — verified on the emulator (Add/Edit pill, edit mode, suggestions, + → ✓, 19 → 20 tracks); Video button to check on the phone
 - [ ] 2.10.4: spectrum wave at 30 fps (system animations lagged a little with the music window open) — to check on the phone
