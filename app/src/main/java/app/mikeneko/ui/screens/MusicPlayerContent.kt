@@ -31,13 +31,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.Path
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -473,8 +470,8 @@ private fun RowScope.ActionSlot(icon: ImageVector, label: String, enabled: Boole
 
 /**
  * Le spectre en fréquence de ce qui joue ([AudioSpectrum]), en vague continue qui monte du bas de la
- * fenêtre (graves à gauche, aigus à droite) : rousse sur la partie déjà jouée du morceau, pâle sur la
- * suite. Elle retombe en un filet en pause.
+ * fenêtre (graves à gauche, aigus à droite), rousse et qui s'efface vers le bas. Elle retombe en un
+ * filet en pause. Elle ne montre pas la progression : c'est le rôle de la barre (2.6.3).
  */
 @OptIn(UnstableApi::class)
 @Composable
@@ -485,15 +482,6 @@ private fun SpectrumWave(active: Boolean, modifier: Modifier) {
     }
     val playing by PlayerHolder.isPlaying.collectAsState()
     val level by animateFloatAsState(if (playing) 1f else 0f, tween(500), label = "spectre")
-    var progress by remember { mutableFloatStateOf(0f) }
-    LaunchedEffect(active) {
-        while (active) {
-            val (p, d) = PlayerHolder.progress()
-            progress = if (d > 0) p.toFloat() / d else 0f
-            delay(250)
-        }
-    }
-    val fraction by animateFloatAsState(progress, tween(250, easing = LinearEasing), label = "joué")
     // Le son arrive par gros paquets (~4 par seconde) : on le garde, et à chaque image de l'écran on
     // analyse l'endroit où en est une tête de lecture qui avance en temps réel, une demi-seconde
     // derrière le dernier son reçu (il est encore dans le tampon du haut-parleur). Fluide (2.5.2).
@@ -530,6 +518,7 @@ private fun SpectrumWave(active: Boolean, modifier: Modifier) {
             }
         }
     }
+    val line = remember { Path() }
     val wave = remember { Path() }
     Canvas(modifier) {
         frame // relu ici : seulement un nouveau dessin à chaque image, pas une recomposition
@@ -539,24 +528,29 @@ private fun SpectrumWave(active: Boolean, modifier: Modifier) {
         val h = size.height
         fun x(i: Int) = i * w / (count - 1)
         fun y(i: Int) = h - (min + smooth[i] * level * (h - min)).coerceAtMost(h)
-        wave.reset()
-        wave.moveTo(0f, h)
-        wave.lineTo(x(0), y(0))
+        // La crête (seule à avoir un trait), puis la vague pleine fermée par le bas de la fenêtre
+        line.reset()
+        line.moveTo(x(0), y(0))
         for (i in 1 until count - 1) {
-            wave.quadraticTo(x(i), y(i), (x(i) + x(i + 1)) / 2, (y(i) + y(i + 1)) / 2)
+            line.quadraticTo(x(i), y(i), (x(i) + x(i + 1)) / 2, (y(i) + y(i + 1)) / 2)
         }
-        wave.lineTo(x(count - 1), y(count - 1))
+        line.lineTo(x(count - 1), y(count - 1))
+        wave.reset()
+        wave.addPath(line)
         wave.lineTo(w, h)
+        wave.lineTo(0f, h)
         wave.close()
-        val split = fraction.coerceIn(0f, 1f) * w
-        val edge = Stroke(2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
-        clipRect(right = split) {
-            drawPath(wave, Brush.verticalGradient(listOf(Pelage.RouxClair.copy(alpha = 0.42f), Pelage.Roux.copy(alpha = 0.08f))))
-            drawPath(wave, Pelage.RouxClair.copy(alpha = 0.75f), style = edge)
-        }
-        clipRect(left = split) {
-            drawPath(wave, Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.16f), Color.White.copy(alpha = 0.02f))))
-            drawPath(wave, Color.White.copy(alpha = 0.32f), style = edge)
-        }
+        // Le dégradé part de la crête la plus haute : la vague reste colorée même quand elle est basse,
+        // et s'efface vers le bas de la fenêtre (2.6.3)
+        var crest = h
+        for (i in 0 until count) crest = minOf(crest, y(i))
+        drawPath(wave, Brush.verticalGradient(
+            0f to Pelage.RouxClair.copy(alpha = 0.85f),
+            0.4f to Pelage.Roux.copy(alpha = 0.45f),
+            1f to Pelage.Roux.copy(alpha = 0f),
+            startY = crest,
+            endY = crest + (h - crest) * 0.9f + 1f,
+        ))
+        drawPath(line, Pelage.RouxClair, style = Stroke(2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
     }
 }
