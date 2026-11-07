@@ -153,6 +153,9 @@ Items marked "to check on the phone" are built and published but not confirmed o
 - [x] 2.1.0: automatic updates from GitHub (Radinux/Mikeneko-releases) — 2.1.1 downloaded and installed itself; Play Protect triggers on every version (expected, see the notes)
 - [x] 2.1.1: automatic download from GitHub — seen on the phone ("Mikeneko 2.1.1 is ready")
 - [ ] 2.1.2 (arrived on its own on the phone): "Update" pill as soon as the APK is downloaded; Settings › About buttons no longer squashed ("What's new" letter by letter)
+- [ ] 2.9.0: Share button on the video page; swipe down on the portrait video → mini player; leaving full screen in landscape stays in landscape; live video during the mini player morph (no freeze) — to check on the phone
+- [ ] 2.9.0: dark scenes no longer blocky (Auto = step above the screen on Wi-Fi, highest bitrate at equal resolution) — to check on the phone with the same video as on YouTube
+- [x] 2.9.0: accent colors + pure black background (Settings › Appearance), Material 3 buttons and capsules — verified on the emulator (Ocean + black)
 - [ ] 2.8.0: import a TuneMyMusic export (CSV / TXT): pick playlists, songs found on YouTube Music, artists and albums to the library, duplicates merged — verified on the emulator with a real Spotify export (ASMR + Favorite Albums: 8/9 songs, 11/12 albums); to check on the phone with a bigger import
 - [ ] 2.7.0: new "For you" (interest profile from watch time, likes, saved videos, topics; tastes page on a new phone; no more shared trending feed; fatigue) — to check on the phone
 - [ ] 2.7.0: "What's new" page once after an update — to check on the phone (it should show right after updating to 2.7.0)

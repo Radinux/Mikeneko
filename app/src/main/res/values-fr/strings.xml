@@ -574,13 +574,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">Quoi de neuf dans Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Super !</string>
-    <string name="whats_new_body">🎧 Ramène ta musique
-
-• Réglages › Sauvegarde › Importer des playlists : exporte ta bibliothèque Spotify, Deezer, Apple Music… avec TuneMyMusic (CSV ou TXT), puis choisis les playlists à importer.
-• Chaque morceau est retrouvé sur YouTube Music ; les artistes suivis et les albums sauvegardés vont dans ta bibliothèque.
-• Les doublons sont fusionnés, et ce qui est introuvable est listé.
-
-🐾 Depuis la 2.7 : un tout nouveau Pour toi qui apprend de ce que tu regardes vraiment, part de tes goûts (Réglages › Pour toi et historique) et donne à chaque téléphone son propre fil.</string>
+    <string name="whats_new_body">🎨 Tes couleurs\n\n• Réglages › Apparence : choisis une couleur d’accent (Calico, Sakura, Océan, Matcha, Cerise, Menthe, Ambre) et un fond noir pur pour les écrans OLED.\n• Les boutons et capsules passent en Material You.\n\n🎬 De meilleures vidéos\n• En Wi-Fi, la qualité Auto prend le palier au-dessus de ton écran, comme YouTube : les scènes sombres sont propres au lieu de faire des blocs.\n• La vidéo continue de jouer pendant qu’elle vole entre le mini-lecteur et le lecteur (elle se figeait une seconde).\n• Glisse la vidéo vers le bas pour le mini-lecteur, aussi en portrait, et un bouton Partager sur la page vidéo.\n• Sortir du plein écran en tenant le téléphone de côté reste en paysage.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Importer des playlists</string>
@@ -593,13 +587,22 @@
     <string name="import_running">Recherche de ta musique sur YouTube Music… %1$d / %2$d</string>
     <string name="import_stop">Arrêter</string>
     <string name="import_done_title">Import terminé</string>
-    <string name="import_done_text">Morceaux ajoutés : %1$d
-Playlists : %2$d
-Artistes sauvegardés : %3$d
-Albums sauvegardés : %4$d
-Doublons fusionnés : %5$d</string>
+    <string name="import_done_text">Morceaux ajoutés : %1$d\nPlaylists : %2$d\nArtistes sauvegardés : %3$d\nAlbums sauvegardés : %4$d\nDoublons fusionnés : %5$d</string>
     <string name="import_not_found">Pas trouvés (%1$d) :</string>
     <string name="import_stopped">Arrêté : ce qui a été trouvé est gardé.</string>
     <string name="import_refused">YouTube refuse les recherches pour l’instant : importe le reste plus tard.</string>
     <string name="import_ok">OK</string>
+
+    <!-- Apparence (2.9.0) : couleur d'accent et fond noir -->
+    <string name="settings_section_appearance">Apparence</string>
+    <string name="settings_accent">Couleur</string>
+    <string name="settings_amoled">Fond noir pur</string>
+    <string name="settings_amoled_text">Pour les écrans OLED : économise la batterie</string>
+    <string name="accent_calico">Calico</string>
+    <string name="accent_sakura">Sakura</string>
+    <string name="accent_ocean">Océan</string>
+    <string name="accent_matcha">Matcha</string>
+    <string name="accent_cherry">Cerise</string>
+    <string name="accent_mint">Menthe</string>
+    <string name="accent_amber">Ambre</string>
 </resources>

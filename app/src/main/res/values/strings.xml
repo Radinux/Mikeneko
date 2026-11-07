@@ -574,13 +574,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">What’s new in Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Nice!</string>
-    <string name="whats_new_body">🎧 Bring your music
-
-• Settings › Backup › Import playlists: export your Spotify, Deezer, Apple Music… library with TuneMyMusic (CSV or TXT), then pick which playlists to import.
-• Every song is found on YouTube Music; liked artists and saved albums go to your library.
-• Duplicates are merged, and what can’t be found is listed.
-
-🐾 Since 2.7: a brand new For you that learns from what you really watch, starts from your tastes (Settings › For you and history) and gives every phone its own feed.</string>
+    <string name="whats_new_body">🎨 Your colors\n\n• Settings › Appearance: pick an accent color (Calico, Sakura, Ocean, Matcha, Cherry, Mint, Amber) and a pure black background for OLED screens.\n• Buttons and capsules are now Material You.\n\n🎬 Better videos\n• On Wi-Fi, Auto quality picks the step above your screen, like YouTube: dark scenes are clean instead of blocky.\n• The video keeps playing while it flies between the mini player and the player (it froze for a second).\n• Swipe the video down to the mini player in portrait too, and a Share button on the video page.\n• Leaving full screen while holding the phone sideways stays in landscape.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Import playlists</string>
@@ -593,13 +587,22 @@
     <string name="import_running">Finding your music on YouTube Music… %1$d / %2$d</string>
     <string name="import_stop">Stop</string>
     <string name="import_done_title">Import finished</string>
-    <string name="import_done_text">Songs added: %1$d
-Playlists: %2$d
-Artists saved: %3$d
-Albums saved: %4$d
-Duplicates merged: %5$d</string>
+    <string name="import_done_text">Songs added: %1$d\nPlaylists: %2$d\nArtists saved: %3$d\nAlbums saved: %4$d\nDuplicates merged: %5$d</string>
     <string name="import_not_found">Not found (%1$d):</string>
     <string name="import_stopped">Stopped: what was found is kept.</string>
     <string name="import_refused">YouTube is refusing searches for now: import the rest later.</string>
     <string name="import_ok">OK</string>
+
+    <!-- Apparence (2.9.0) : couleur d'accent et fond noir -->
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_accent">Color</string>
+    <string name="settings_amoled">Pure black background</string>
+    <string name="settings_amoled_text">For OLED screens: saves battery</string>
+    <string name="accent_calico">Calico</string>
+    <string name="accent_sakura">Sakura</string>
+    <string name="accent_ocean">Ocean</string>
+    <string name="accent_matcha">Matcha</string>
+    <string name="accent_cherry">Cherry</string>
+    <string name="accent_mint">Mint</string>
+    <string name="accent_amber">Amber</string>
 </resources>

@@ -229,8 +229,16 @@ class MainActivity : ComponentActivity() {
                     releaseWhen = Hold.LANDSCAPE
                     rotates = !landscapeNow
                 }
+                // Le téléphone est tenu en paysage (d'après le capteur, même si la rotation automatique
+                // d'Android est coupée) : on reste en paysage, sur la page lecteur, jusqu'à ce qu'on le
+                // redresse (2.9.0 ; avant, il repassait souvent en portrait)
+                physical == Hold.LANDSCAPE -> {
+                    requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                    releaseWhen = Hold.UNTIL_PORTRAIT
+                    rotates = !landscapeNow
+                }
                 // Plein écran forcé alors que le téléphone est resté droit : retour au portrait
-                releaseWhen == Hold.LANDSCAPE || !landscapeNow -> {
+                releaseWhen == Hold.LANDSCAPE || !landscapeNow || physical == Hold.PORTRAIT -> {
                     requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
                     releaseWhen = Hold.PORTRAIT
                     rotates = landscapeNow
@@ -285,8 +293,16 @@ class MainActivity : ComponentActivity() {
 
     // ---- Rotation : rendre la main au capteur une fois le téléphone tourné ----
 
-    private enum class Hold { PORTRAIT, LANDSCAPE }
+    /**
+     * PORTRAIT / LANDSCAPE : forcé dans ce sens, rendu au capteur quand le téléphone y est vraiment.
+     * UNTIL_PORTRAIT : paysage gardé (sortie du plein écran en tenant le téléphone en paysage), rendu
+     * quand on le redresse.
+     */
+    private enum class Hold { PORTRAIT, LANDSCAPE, UNTIL_PORTRAIT }
     private var releaseWhen: Hold? = null
+
+    /** Comment le téléphone est vraiment tenu (capteur) ; null : inconnu ou à plat. */
+    private var physical: Hold? = null
 
     private val orientationListener by lazy {
         object : OrientationEventListener(this) {
@@ -294,10 +310,11 @@ class MainActivity : ComponentActivity() {
                 if (degrees < 0) return
                 val portrait = degrees <= 25 || degrees >= 335
                 val landscape = degrees in 65..115 || degrees in 245..295
+                if (portrait) physical = Hold.PORTRAIT else if (landscape) physical = Hold.LANDSCAPE
                 when (releaseWhen) {
                     // Si la rotation automatique d'Android est coupée, on garde le paysage forcé
                     Hold.LANDSCAPE -> if (landscape && autoRotateEnabled()) releaseOrientation()
-                    Hold.PORTRAIT -> if (portrait) releaseOrientation()
+                    Hold.PORTRAIT, Hold.UNTIL_PORTRAIT -> if (portrait) releaseOrientation()
                     null -> Unit
                 }
             }

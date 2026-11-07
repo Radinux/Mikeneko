@@ -1,5 +1,12 @@
 package app.mikeneko.ui.components
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Button
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,13 +37,10 @@ import app.mikeneko.R
 import app.mikeneko.data.Tastes
 import app.mikeneko.ui.theme.Pelage
 import app.mikeneko.ui.theme.Rounded
-import app.mikeneko.ui.theme.clay
-import app.mikeneko.ui.theme.jellyClickable
-import app.mikeneko.ui.theme.plopOnSelect
 
 /**
- * Les capsules des goûts (2.7.0) : une par thème, rousse quand elle est choisie. Dans la liste de
- * l'accueil (qui est la source du verre) : en pâte à modeler, pas en verre.
+ * Les capsules des goûts (2.7.0) : une par thème, de la couleur d'accent quand elle est choisie.
+ * Des puces Material 3 (2.9.0, avant en pâte à modeler) ; pas de verre dans la liste de l'accueil.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -48,22 +52,15 @@ fun TasteChips(selected: Set<String>, modifier: Modifier = Modifier, onToggle: (
     ) {
         Tastes.ALL.forEach { taste ->
             val on = taste.id in selected
-            Box(
-                Modifier
-                    .plopOnSelect(on)
-                    .clay(if (on) Pelage.Roux else Pelage.Bord, CircleShape, elevation = if (on) 6.dp else 3.dp)
-                    .jellyClickable(role = Role.Checkbox) { onToggle(taste.id) }
-                    .semantics { this.selected = on }
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
-            ) {
-                Text(
-                    "${taste.emoji}  ${stringResource(taste.label)}",
-                    color = if (on) Pelage.Encre else Pelage.Texte,
-                    fontFamily = Rounded,
-                    fontSize = 15.sp,
-                    fontWeight = if (on) FontWeight.ExtraBold else FontWeight.Bold,
-                )
-            }
+            FilterChip(
+                selected = on,
+                onClick = { onToggle(taste.id) },
+                label = { Text("${taste.emoji}  ${stringResource(taste.label)}", fontSize = 15.sp, fontWeight = if (on) FontWeight.ExtraBold else FontWeight.Bold) },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.primary,
+                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                ),
+            )
         }
     }
 }
@@ -94,28 +91,9 @@ fun TastesPicker(modifier: Modifier = Modifier, onDone: (Set<String>) -> Unit, o
         )
         TasteChips(picked, Modifier.fillMaxWidth()) { id -> picked = if (id in picked) picked - id else picked + id }
         Row(Modifier.padding(top = 26.dp), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                stringResource(R.string.tastes_skip),
-                Modifier.jellyClickable { onSkip() }.padding(horizontal = 18.dp, vertical = 12.dp),
-                color = Pelage.Gris,
-                fontFamily = Rounded,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-            )
-            val ready = picked.isNotEmpty()
-            Box(
-                Modifier
-                    .clay(if (ready) Pelage.Roux else Pelage.Bord, CircleShape)
-                    .jellyClickable { if (ready) onDone(picked) }
-                    .padding(horizontal = 26.dp, vertical = 13.dp),
-            ) {
-                Text(
-                    stringResource(R.string.tastes_start),
-                    color = if (ready) Pelage.Encre else Color.White.copy(alpha = 0.4f),
-                    fontFamily = Rounded,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                )
+            TextButton(onClick = onSkip) { Text(stringResource(R.string.tastes_skip), fontSize = 15.sp, fontWeight = FontWeight.Bold) }
+            Button(onClick = { onDone(picked) }, enabled = picked.isNotEmpty()) {
+                Text(stringResource(R.string.tastes_start), fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
             }
         }
     }

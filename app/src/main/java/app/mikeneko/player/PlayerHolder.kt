@@ -210,6 +210,7 @@ object PlayerHolder {
         .also { created ->
             player = created
             appContext = context.applicationContext
+            MediaSources.appContext = context.applicationContext
             created.addListener(object : Player.Listener {
                 override fun onRenderedFirstFrame() {
                     VideoFrames.firstFrames.value++

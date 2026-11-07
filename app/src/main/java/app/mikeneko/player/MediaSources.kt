@@ -2,7 +2,9 @@ package app.mikeneko.player
 
 import android.content.res.Resources
 import android.media.MediaCodecInfo
+import android.content.Context
 import android.media.MediaCodecList
+import android.net.ConnectivityManager
 import android.os.Build
 import androidx.annotation.OptIn
 import androidx.core.net.toUri
@@ -44,14 +46,26 @@ data class CaptionTrack(
 @OptIn(UnstableApi::class)
 object MediaSources {
 
+    /** Pour savoir si la connexion est illimitée (Wi-Fi) : rempli par PlayerHolder.init. */
+    internal var appContext: Context? = null
+
     /**
-     * Qualité « Auto » : la meilleure jusqu'à la résolution de l'écran (1080p sur un écran
-     * Full HD, 1440p sur un écran QHD), sans jamais descendre sous 720p ni dépasser 1440p.
+     * Qualité « Auto ». En Wi-Fi (2.9.0) : le palier YouTube au-dessus de la résolution de l'écran,
+     * comme l'appli YouTube (1440p sur un écran de 1264 lignes) : un débit bien plus haut, réduit à
+     * la taille de l'écran, donne des scènes sombres propres (en 1080p, elles se voyaient en blocs).
+     * En données mobiles : jusqu'à la résolution de l'écran, comme avant. Jamais sous 720p ni
+     * au-dessus de 1440p.
      */
-    val autoMaxHeight: Int by lazy {
-        val metrics = Resources.getSystem().displayMetrics
-        minOf(metrics.widthPixels, metrics.heightPixels).coerceIn(720, 1440)
-    }
+    val autoMaxHeight: Int
+        get() {
+            val metrics = Resources.getSystem().displayMetrics
+            val screen = minOf(metrics.widthPixels, metrics.heightPixels)
+            val unmetered = appContext?.let { context ->
+                runCatching { context.getSystemService(ConnectivityManager::class.java)?.isActiveNetworkMetered == false }.getOrNull()
+            } ?: false
+            val limit = if (unmetered) TIERS.firstOrNull { it >= screen } ?: screen else screen
+            return limit.coerceIn(720, 1440)
+        }
 
     /** La source à jouer, et la hauteur vidéo réellement choisie (0 pour l'audio seul / le direct). */
     class Built(val source: MediaSource, val height: Int, val audioKey: String? = null, val videoKey: String? = null)
@@ -178,9 +192,14 @@ object MediaSources {
     }
 
     /** À hauteur égale : le codec le plus léger que le téléphone décode en matériel (voir codecRank), puis le plus fluide. */
+    /**
+     * La meilleure vidéo jusqu'à [limit] : la plus haute résolution ; à résolution égale, un flux que le
+     * téléphone décode en matériel, puis **le plus gros débit** (2.9.0 : avant, le codec d'abord,
+     * et l'AV1 de YouTube, souvent au débit le plus bas, faisait des blocs dans les scènes sombres).
+     */
     private fun bestVideo(streams: List<VideoStream>, limit: Int) =
         streams.filter { it.shortSide <= limit }
-            .maxWithOrNull(compareBy<VideoStream>({ it.shortSide }, { codecRank(it) }, { it.fps }))
+            .maxWithOrNull(compareBy<VideoStream>({ it.shortSide }, { codecRank(it) >= 3 }, { it.bitrate }, { codecRank(it) }, { it.fps }))
             ?: streams.minByOrNull { it.shortSide } // rien d'assez petit : la plus petite disponible
 
     /** Ce qu'il faut télécharger pour garder une vidéo / un morceau hors ligne (mêmes choix et mêmes clés que [build]). */

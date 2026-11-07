@@ -1,5 +1,10 @@
 package app.mikeneko.ui.components
 
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Button
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
@@ -118,25 +123,21 @@ fun GlassCircleButton(
 }
 
 /**
- * Capsule en pâte à modeler, crème (ou orange si sélectionnée) : s'écrase comme une goutte sous
- * le doigt, et fait « plop » quand on la choisit.
+ * Une capsule = un bouton Material 3 (2.9.0, avant en pâte à modeler) : choisie, un bouton plein de
+ * la couleur d'accent ; sinon un bouton tonal.
  */
 @Composable
 fun Capsule(text: String, modifier: Modifier = Modifier, selected: Boolean = false, icon: ImageVector? = null, onClick: () -> Unit) {
-    val color by animateColorAsState(if (selected) Pelage.Roux else Pelage.Creme, spring(stiffness = Spring.StiffnessMediumLow), label = "capsule")
-    Row(
-        modifier
-            .plopOnSelect(selected)
-            .jellyClickable(onClick = onClick)
-            .height(44.dp)
-            .clay(color)
-            .padding(horizontal = 18.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        if (icon != null) Icon(icon, null, tint = Pelage.Encre, modifier = Modifier.size(20.dp))
-        Text(text, color = Pelage.Encre, fontSize = 14.sp, fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Bold)
+    val padding = if (icon != null) ButtonDefaults.ButtonWithIconContentPadding else ButtonDefaults.ContentPadding
+    val content: @Composable RowScope.() -> Unit = {
+        if (icon != null) {
+            Icon(icon, null, modifier = Modifier.size(ButtonDefaults.IconSize))
+            Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+        }
+        Text(text, fontSize = 14.sp, fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Bold, maxLines = 1)
     }
+    if (selected) Button(onClick, modifier, contentPadding = padding, content = content)
+    else FilledTonalButton(onClick, modifier, contentPadding = padding, content = content)
 }
 
 /** Petite étiquette (durée, EN DIRECT…). */

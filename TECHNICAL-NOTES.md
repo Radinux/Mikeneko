@@ -734,6 +734,41 @@ users: the point is to take them from the videos really watched.
 
 ---
 
+## 8 quattuordecies. Colors, Material 3, video quality and orientation (2.9.0)
+
+- **Colors**: `ui/theme/Theme.kt`: `Accent` (7 presets: base / light / dark / night, no purple) and
+  `Appearance` (Compose states `accent`, `amoled`, filled by `AppSettings.init`, saved as `accent` /
+  `amoled`). `Pelage.Roux/RouxClair/RouxFonce/RouxNuit` and `Nuit/Coussin/Bord` are getters on
+  `Appearance`, so everything reading them redraws when the setting changes; the cat's colors
+  (`RouxChat`, `GrisChat`) stay calico. `MikenekoTheme` builds the Material 3 color scheme from them
+  (`secondaryContainer` = Bord tinted 22 % with the accent, for tonal buttons). Settings ›
+  Appearance: color swatches + pure black switch.
+- **Material 3**: `Capsule` (Components.kt) = `Button` when selected, `FilledTonalButton` otherwise;
+  player actions = `FilledTonalButton` with icon, like/dislike = a two-part pill in the button colors;
+  tastes = `FilterChip`; downloads, SponsorBlock marker, bedtime reminder, What's new = Material
+  buttons; the undo bar = `inverseSurface`. Still clay: `Tag` (small labels) and the dock's selection
+  drop (inside the glass).
+- **Video quality**: `MediaSources.autoMaxHeight` is now a getter: on an unmetered network, the first
+  YouTube tier ≥ the screen's short side (1264 → 1440), otherwise ≤ the screen (as before), always
+  720…1440. `bestVideo` compares tier, then "decoded in hardware" (`codecRank >= 3`), then **bitrate**,
+  then codec and fps. Downloads use the same Auto limit.
+- **Morph without freeze**: `VideoFrames.live(width)` grabs the current frame of the attached
+  TextureView (`getBitmap(reuse)`, 640 px wide, one reused Bitmap). The destination screen is only
+  hidden by alpha during the morph, so it already receives frames; `VideoMorphLayer` swaps the photo
+  for the live frame on every screen frame once `firstFrames` moved and the video plays.
+- **Swipe to the mini player**: `pullToMinimize` (PlayerScreen) uses `awaitVerticalTouchSlopOrCancellation`
+  and only takes downward drags (upward ones go to the page scroll); in portrait it's on the video too,
+  only when the page is at the top.
+- **Orientation**: `MainActivity.physical` remembers how the phone is really held (orientation sensor,
+  even with Android's auto-rotate off). Leaving full screen with the phone held sideways forces
+  `SENSOR_LANDSCAPE` with `Hold.UNTIL_PORTRAIT` (released when the phone is turned upright). Before,
+  the decision depended on `releaseWhen`, which only switched once the sensor had seen landscape
+  *with auto-rotate on*, so it often forced portrait.
+- Pitfall: in Python `re.sub`, a `\\n` in the replacement becomes a real newline; Android then turns it
+  into a space (the 2.8.0 import summary lost its line breaks). Use a function as replacement.
+
+---
+
 ## 9. Compose and Android pitfalls to remember
 
 - A **`derivedStateOf` read only in a `SideEffect`** doesn't trigger recomposition: read it during

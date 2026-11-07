@@ -1,5 +1,7 @@
 package app.mikeneko.ui.components
 
+import androidx.compose.ui.draw.shadow
+import androidx.compose.material3.MaterialTheme
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
@@ -234,7 +236,8 @@ private fun UndoBar(modifier: Modifier) {
             Modifier
                 .fillMaxWidth()
                 .heightIn(min = 52.dp)
-                .clay(Pelage.Creme, RoundedCornerShape(26.dp), elevation = 10.dp)
+                .shadow(6.dp, RoundedCornerShape(16.dp))
+                .background(MaterialTheme.colorScheme.inverseSurface, RoundedCornerShape(16.dp))
                 .semantics { liveRegion = LiveRegionMode.Polite }
                 .padding(start = 18.dp, end = 6.dp),
             verticalAlignment = Alignment.CenterVertically,

@@ -128,7 +128,7 @@ internal fun QueueSheet(backdrop: Backdrop, visible: Boolean, onClose: () -> Uni
                             Row(
                                 Modifier
                                     .then(
-                                        if (dragged) Modifier.zIndex(1f).graphicsLayer { translationY = reorder.offset }.background(Color(0xFF2A2420))
+                                        if (dragged) Modifier.zIndex(1f).graphicsLayer { translationY = reorder.offset }.background(Pelage.Bord)
                                         else Modifier.animateItem(),
                                     )
                                     .fillMaxWidth()

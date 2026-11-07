@@ -1,5 +1,8 @@
 package app.mikeneko.ui.screens
 
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Button
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -78,7 +81,7 @@ fun SleepReminder(suppressed: Boolean = false, firstAfterMinutes: Int = 60, snoo
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Row(
-                Modifier.height(36.dp).clay(Pelage.Creme).padding(horizontal = 16.dp),
+                Modifier.height(36.dp).background(Pelage.Creme, CircleShape).padding(horizontal = 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
@@ -96,21 +99,16 @@ fun SleepReminder(suppressed: Boolean = false, firstAfterMinutes: Int = 60, snoo
                 textAlign = TextAlign.Center,
             )
             Spacer(Modifier.weight(1f))
-            Box(
-                Modifier.fillMaxWidth().jellyClickable(strength = 0.6f) {
+            Button(
+                onClick = {
                     PlayerHolder.pause()
                     snooze()
-                }.height(56.dp).clay(Pelage.Roux),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(stringResource(R.string.sleep_goodnight), color = Pelage.Encre, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
-            }
+                },
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+            ) { Text(stringResource(R.string.sleep_goodnight), fontSize = 16.sp, fontWeight = FontWeight.ExtraBold) }
             Spacer(Modifier.height(12.dp))
-            Box(
-                Modifier.fillMaxWidth().jellyClickable(strength = 0.6f, onClick = ::snooze).height(56.dp).clay(Pelage.Bord),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(stringResource(R.string.sleep_snooze, snoozeMinutes), color = Pelage.Texte, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            FilledTonalButton(onClick = ::snooze, modifier = Modifier.fillMaxWidth().height(56.dp)) {
+                Text(stringResource(R.string.sleep_snooze, snoozeMinutes), fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
         }
     }

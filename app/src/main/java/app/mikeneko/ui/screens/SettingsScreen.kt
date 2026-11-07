@@ -90,6 +90,10 @@ import app.mikeneko.ui.components.ambientSupported
 import app.mikeneko.ui.components.sponsorLabel
 import app.mikeneko.ui.icons.MkIcons
 import app.mikeneko.ui.theme.Pelage
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.contentDescription
+import app.mikeneko.ui.theme.Appearance
+import app.mikeneko.ui.theme.Accent
 import app.mikeneko.ui.theme.statusBarSpacePadding
 import app.mikeneko.update.AppUpdates
 import java.time.LocalDate
@@ -126,6 +130,7 @@ fun SettingsContent(onBack: () -> Unit) {
                 )
             }
         }
+        item { AppearanceSection() }
         item { LanguageSection(context) }
         item { PlaybackSection() }
         item { SponsorBlockSection() }
@@ -304,6 +309,45 @@ private fun LanguageSection(context: Context) {
             if (value == region) return@ChoiceRow
             AppSettings.setRegion(value)
             refreshContent()
+        }
+    }
+}
+
+/** Apparence (2.9.0) : la couleur d'accent (une pastille par couleur) et le fond noir pur. */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+private fun AppearanceSection() {
+    val accent = Appearance.accent
+    Section(stringResource(R.string.settings_section_appearance)) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
+            Text(stringResource(R.string.settings_accent), color = Pelage.Texte, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(accent.label), color = Pelage.RouxClair, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            androidx.compose.foundation.layout.FlowRow(
+                Modifier.fillMaxWidth().padding(top = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Accent.entries.forEach { option ->
+                    val selected = option == accent
+                    val label = stringResource(option.label)
+                    Box(
+                        Modifier
+                            .size(44.dp)
+                            .clip(CircleShape)
+                            .background(option.base)
+                            .border(if (selected) 3.dp else 0.dp, Pelage.Texte, CircleShape)
+                            .clickable(role = Role.RadioButton, onClickLabel = label) { AppSettings.setAccent(option) }
+                            .semantics { contentDescription = label; this.selected = selected },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (selected) Icon(MkIcons.Check, null, tint = Pelage.Encre, modifier = Modifier.size(22.dp))
+                    }
+                }
+            }
+        }
+        Divider()
+        SwitchRow(MkIcons.Moon, stringResource(R.string.settings_amoled), stringResource(R.string.settings_amoled_text), Appearance.amoled) {
+            AppSettings.setAmoled(it)
         }
     }
 }

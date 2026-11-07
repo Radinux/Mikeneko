@@ -1,5 +1,6 @@
 package app.mikeneko.update
 
+import androidx.compose.material3.Button
 import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -121,14 +122,8 @@ fun WhatsNewSheet(backdrop: Backdrop) {
                                 style = TextStyle(fontFamily = Rounded, color = Color(0xFFEDE6DF), fontSize = 15.sp, lineHeight = 21.sp, shadow = GlassTextShadow),
                             )
                         }
-                        Box(
-                            Modifier
-                                .padding(top = 18.dp)
-                                .clay(Pelage.Roux, CircleShape)
-                                .jellyClickable { close() }
-                                .padding(horizontal = 30.dp, vertical = 13.dp),
-                        ) {
-                            Text(stringResource(R.string.whats_new_ok), color = Pelage.Encre, fontFamily = Rounded, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+                        Button(onClick = { close() }, modifier = Modifier.padding(top = 18.dp)) {
+                            Text(stringResource(R.string.whats_new_ok), fontFamily = Rounded, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
                         }
                     }
                 }

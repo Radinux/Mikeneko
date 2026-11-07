@@ -64,6 +64,24 @@ object VideoFrames {
         return shot
     }
 
+    private var liveBitmap: Bitmap? = null
+
+    /**
+     * L'image en cours de l'écran vidéo branché, réduite à [width] pixels de large (2.9.0) : le morph
+     * mini-lecteur ↔ grand lecteur la reprend à chaque image d'écran, pour que la vidéo continue de
+     * jouer pendant le vol (avant, une photo figée pendant ~1 s). L'écran d'arrivée est caché
+     * (transparent) mais reçoit déjà les images. Le même Bitmap est réutilisé d'une image à l'autre.
+     */
+    fun live(width: Int): Bitmap? {
+        val view = texture?.get() ?: return null
+        if (!view.isAvailable || view.width <= 0 || view.height <= 0) return null
+        val w = width.coerceIn(1, view.width)
+        val h = (w * view.height.toFloat() / view.width).toInt().coerceAtLeast(1)
+        val reuse = liveBitmap?.takeIf { it.width == w && it.height == h }
+            ?: Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888).also { liveBitmap = it }
+        return runCatching { view.getBitmap(reuse) }.getOrNull()
+    }
+
     private fun capture(view: TextureView): Bitmap? {
         if (!view.isAvailable || view.width <= 0 || view.height <= 0) return null
         val bitmap = runCatching { view.bitmap }.getOrNull() ?: return null

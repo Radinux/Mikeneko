@@ -1,5 +1,13 @@
 package app.mikeneko.ui.components
 
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Button
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -208,47 +216,29 @@ private fun TimeRow(label: String, value: Long?, setLabel: String, onSet: () -> 
         )
         Nudge("+1 s", stringResource(R.string.mark_later), enabled = value != null) { onNudge(1_000) }
         Spacer(Modifier.weight(1f))
-        Text(
-            stringResource(R.string.mark_here),
-            Modifier
-                .jellyClickable(onClickLabel = setLabel, onClick = onSet)
-                .height(40.dp)
-                .clay(Pelage.Creme)
-                .padding(horizontal = 16.dp, vertical = 10.dp),
-            color = Pelage.Encre,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.ExtraBold,
-        )
+        FilledTonalButton(onClick = onSet, modifier = Modifier.semantics { onClick(setLabel) { onSet(); true } }) {
+            Text(stringResource(R.string.mark_here), fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
+        }
     }
 }
 
 @Composable
 private fun Nudge(text: String, label: String, enabled: Boolean, onClick: () -> Unit) {
-    Box(
-        Modifier
-            .size(44.dp, 40.dp)
-            .alpha(if (enabled) 1f else 0.35f)
-            .then(if (enabled) Modifier.jellyClickable(onClickLabel = label, onClick = onClick) else Modifier)
-            .clay(Pelage.Bord, elevation = 4.dp),
-        contentAlignment = Alignment.Center,
+    OutlinedButton(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = Modifier.size(52.dp, 40.dp).semantics { contentDescription = label },
+        contentPadding = PaddingValues(0.dp),
     ) {
-        Text(text, color = Pelage.Texte, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        Text(text, fontSize = 12.sp, fontWeight = FontWeight.Bold)
     }
 }
 
 @Composable
 private fun SmallButton(text: String, enabled: Boolean, filled: Boolean, onClick: () -> Unit) {
-    Text(
-        text,
-        Modifier
-            .alpha(if (enabled) 1f else 0.4f)
-            .then(if (enabled) Modifier.jellyClickable(onClick = onClick) else Modifier)
-            .clay(if (filled) Pelage.Roux else Pelage.Bord)
-            .padding(horizontal = 18.dp, vertical = 10.dp),
-        color = if (filled) Pelage.Encre else Pelage.Texte,
-        fontSize = 14.sp,
-        fontWeight = FontWeight.ExtraBold,
-    )
+    val label: @Composable RowScope.() -> Unit = { Text(text, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold) }
+    if (filled) Button(onClick = onClick, enabled = enabled, content = label)
+    else FilledTonalButton(onClick = onClick, enabled = enabled, content = label)
 }
 
 /** Nom lisible d'une catégorie SponsorBlock. */

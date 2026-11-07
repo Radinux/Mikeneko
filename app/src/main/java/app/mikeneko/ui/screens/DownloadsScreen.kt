@@ -1,5 +1,7 @@
 package app.mikeneko.ui.screens
 
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.FilledTonalButton
 import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -160,23 +162,14 @@ fun DownloadsContent(prefilledLink: String, top: Dp = 24.dp) {
                 }
                 val file = task.file
                 if (task.status == Downloads.Status.TERMINE && file != null) {
-                    Text(
-                        stringResource(R.string.open),
-                        Modifier.jellyClickable {
-                            val uri = FileProvider.getUriForFile(context, "${context.packageName}.fichiers", file)
-                            val open = Intent(Intent.ACTION_VIEW).setDataAndType(uri, context.contentResolver.getType(uri)).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                            runCatching { context.startActivity(open) }
-                        }.clay(Pelage.Bord).padding(horizontal = 14.dp, vertical = 11.dp),
-                        color = Pelage.Texte,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                    )
+                    FilledTonalButton(onClick = {
+                        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fichiers", file)
+                        val open = Intent(Intent.ACTION_VIEW).setDataAndType(uri, context.contentResolver.getType(uri)).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        runCatching { context.startActivity(open) }
+                    }) { Text(stringResource(R.string.open), fontSize = 13.sp, fontWeight = FontWeight.ExtraBold) }
                 } else {
-                    Box(
-                        Modifier.jellyClickable { Downloads.cancel(task.id) }.size(44.dp).clay(Pelage.Bord),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(MkIcons.Close, stringResource(R.string.cancel), tint = Pelage.Texte, modifier = Modifier.size(18.dp))
+                    FilledTonalIconButton(onClick = { Downloads.cancel(task.id) }) {
+                        Icon(MkIcons.Close, stringResource(R.string.cancel), modifier = Modifier.size(18.dp))
                     }
                 }
             }

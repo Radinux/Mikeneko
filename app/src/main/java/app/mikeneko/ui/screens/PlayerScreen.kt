@@ -1,5 +1,7 @@
 package app.mikeneko.ui.screens
 
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.ButtonDefaults
 import android.content.res.Configuration
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
@@ -11,7 +13,10 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitVerticalTouchSlopOrCancellation
+import androidx.compose.foundation.gestures.verticalDrag
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -74,6 +79,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.boundsInRoot
@@ -130,6 +136,7 @@ import app.mikeneko.ui.components.VideoMorph
 import app.mikeneko.ui.components.VideoSurface
 import app.mikeneko.ui.components.ambientSupported
 import app.mikeneko.ui.components.linkedText
+import app.mikeneko.ui.components.shareLink
 import app.mikeneko.ui.glass.Backdrop
 import app.mikeneko.ui.glass.backdropSource
 import app.mikeneko.ui.glass.rememberBackdrop
@@ -245,6 +252,9 @@ fun PlayerContent(onMinimize: () -> Unit, onDownload: (String) -> Unit, onRadio:
     val minimizeDistance = with(density) { 110.dp.toPx() }
     val minimizeSpeed = with(density) { 900.dp.toPx() } // par seconde : un petit coup rapide suffit
     val minimize by rememberUpdatedState(onMinimize)
+    val portraitPage by rememberUpdatedState(!landscape)
+    // Seulement un glissé vers le bas (2.9.0) : vers le haut, la page défile comme avant. En portrait
+    // il marche aussi sur la vidéo, tant que la page est tout en haut (sinon, on la fait redescendre).
     val pullToMinimize = Modifier.pointerInput(Unit) {
         val tracker = VelocityTracker()
         fun release(cancelled: Boolean) {
@@ -253,13 +263,21 @@ fun PlayerContent(onMinimize: () -> Unit, onDownload: (String) -> Unit, onRadio:
             if (!cancelled && (pull.value > minimizeDistance || speed > minimizeSpeed)) minimize()
             pullScope.launch { pull.animateTo(0f, spring(dampingRatio = 0.5f, stiffness = Spring.StiffnessMediumLow)) }
         }
-        detectVerticalDragGestures(
-            onDragEnd = { release(cancelled = false) },
-            onDragCancel = { release(cancelled = true) },
-        ) { change, dy ->
-            change.consume()
-            pullScope.launch { pull.snapTo((pull.value + dy).coerceAtLeast(0f)) }
-            tracker.addPosition(change.uptimeMillis, Offset(0f, pull.value + dy))
+        awaitEachGesture {
+            val down = awaitFirstDown(requireUnconsumed = false)
+            if (portraitPage && scroll.value > 0) return@awaitEachGesture
+            val start = awaitVerticalTouchSlopOrCancellation(down.id) { change, over ->
+                if (over > 0) change.consume() // vers le bas seulement ; vers le haut, la page prend le geste
+            } ?: return@awaitEachGesture
+            tracker.resetTracking()
+            var offset = 0f
+            val finished = verticalDrag(start.id) { change ->
+                offset = (offset + change.positionChange().y).coerceAtLeast(0f)
+                change.consume()
+                pullScope.launch { pull.snapTo(offset) }
+                tracker.addPosition(change.uptimeMillis, Offset(0f, offset))
+            }
+            release(cancelled = !finished)
         }
     }
 
@@ -467,25 +485,34 @@ fun PlayerContent(onMinimize: () -> Unit, onDownload: (String) -> Unit, onRadio:
                 val liked = likedList.any { sameTrack(it.url, info.url) }
                 val later = laterList.any { sameTrack(it.url, info.url) }
                 Row(Modifier.padding(top = 6.dp).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(Modifier.height(44.dp).clay(if (liked) Pelage.Roux else Pelage.Creme).padding(horizontal = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+                    // J'aime / je n'aime pas : un bouton Material 3 en deux parties (2.9.0) ; plein de la
+                    // couleur d'accent quand la vidéo est aimée
+                    val likeColors = if (liked) ButtonDefaults.buttonColors() else ButtonDefaults.filledTonalButtonColors()
+                    Row(
+                        Modifier.height(40.dp).clip(CircleShape).background(likeColors.containerColor),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
                         Row(
-                            Modifier.clip(CircleShape).clickable(role = Role.Button, onClickLabel = stringResource(if (liked) R.string.library_liked_remove else R.string.library_liked_add)) {
+                            Modifier.fillMaxHeight().clickable(role = Role.Button, onClickLabel = stringResource(if (liked) R.string.library_liked_remove else R.string.library_liked_add)) {
                                 library.toggleLiked(asVideo)
-                            },
+                            }.padding(start = 16.dp, end = 12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Icon(if (liked) MkIcons.ThumbUpFilled else MkIcons.ThumbUp, stringResource(R.string.like), tint = Pelage.Encre, modifier = Modifier.size(20.dp))
-                            Text(" ${formatCount(info.likes)}", color = Pelage.Encre, fontSize = 14.sp, fontWeight = if (liked) FontWeight.ExtraBold else FontWeight.Bold)
+                            Icon(if (liked) MkIcons.ThumbUpFilled else MkIcons.ThumbUp, stringResource(R.string.like), tint = likeColors.contentColor, modifier = Modifier.size(18.dp))
+                            Text(" ${formatCount(info.likes)}", color = likeColors.contentColor, fontSize = 14.sp, fontWeight = if (liked) FontWeight.ExtraBold else FontWeight.Bold)
                         }
-                        Box(Modifier.padding(horizontal = 12.dp).size(1.dp, 22.dp).background(Color(0xFFD9CFC4)))
-                        Icon(MkIcons.ThumbUp, stringResource(R.string.dislike_ryd), tint = Pelage.Encre, modifier = Modifier.size(20.dp).rotate(180f))
-                        Text(" ${info.dislikes?.let(::formatCount) ?: "…"}", color = Pelage.Encre, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        Box(Modifier.size(1.dp, 22.dp).background(likeColors.contentColor.copy(alpha = 0.3f)))
+                        Row(Modifier.padding(start = 12.dp, end = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(MkIcons.ThumbUp, stringResource(R.string.dislike_ryd), tint = likeColors.contentColor, modifier = Modifier.size(18.dp).rotate(180f))
+                            Text(" ${info.dislikes?.let(::formatCount) ?: "…"}", color = likeColors.contentColor, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        }
                     }
                     WhiteAction(MkIcons.Clock, stringResource(if (later) R.string.library_later_saved else R.string.library_later_short)) {
                         val added = library.toggleLater(asVideo)
                         Toast.makeText(context, context.getString(if (added) R.string.library_later_added else R.string.library_later_removed), Toast.LENGTH_SHORT).show()
                     }
                     WhiteAction(MkIcons.PlaylistAdd, stringResource(R.string.playlist_short)) { VideoMenu.openPlaylists(asVideo) }
+                    WhiteAction(MkIcons.Share, stringResource(R.string.share)) { shareLink(context, info.title, info.url) }
                     WhiteAction(MkIcons.Download, stringResource(R.string.download)) { onDownload(info.url) }
                     WhiteAction(MkIcons.Radio, stringResource(R.string.radio), onClick = onRadio)
                     if (!info.live) WhiteAction(MkIcons.Paw, stringResource(R.string.mark_segment)) { marking = !marking }
@@ -555,22 +582,20 @@ fun PlayerContent(onMinimize: () -> Unit, onDownload: (String) -> Unit, onRadio:
         } else {
             Column(Modifier.fillMaxSize().verticalScroll(scroll).statusBarSpacePadding().padding(bottom = 48.dp)) {
                 header()
-                videoArea(Modifier.fillMaxWidth(), RectangleShape)
+                videoArea(Modifier.fillMaxWidth().then(pullToMinimize), RectangleShape) // glisser vers le bas : mini-lecteur (2.9.0)
                 details()
             }
         }
     }
 }
 
+/** Une action sous la vidéo : un bouton tonal Material 3 avec son icône (2.9.0, avant en pâte crème). */
 @Composable
 private fun WhiteAction(icon: ImageVector, label: String, onClick: () -> Unit) {
-    Row(
-        Modifier.jellyClickable(onClick = onClick).height(44.dp).clay(Pelage.Creme).padding(start = 12.dp, end = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        Icon(icon, null, tint = Pelage.Encre, modifier = Modifier.size(20.dp))
-        Text(label, color = Pelage.Encre, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+    FilledTonalButton(onClick = onClick, contentPadding = ButtonDefaults.ButtonWithIconContentPadding) {
+        Icon(icon, null, modifier = Modifier.size(ButtonDefaults.IconSize))
+        Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+        Text(label, fontSize = 14.sp, fontWeight = FontWeight.Bold)
     }
 }
 

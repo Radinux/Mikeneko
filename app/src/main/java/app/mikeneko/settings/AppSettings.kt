@@ -2,6 +2,8 @@ package app.mikeneko.settings
 
 import android.content.Context
 import android.content.SharedPreferences
+import app.mikeneko.ui.theme.Accent
+import app.mikeneko.ui.theme.Appearance
 import java.util.UUID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -60,7 +62,15 @@ object AppSettings {
         _sleepReminder.value = prefs.getBoolean("dodo", true)
         _sleepMinutes.value = prefs.getInt("dodo_minutes", 60)
         _hideShorts.value = prefs.getBoolean("shorts_masques", false)
+        Appearance.accent = Accent.of(prefs.getString("accent", null))
+        Appearance.amoled = prefs.getBoolean("amoled", false)
     }
+
+    /** La couleur d'accent (2.9.0). */
+    fun setAccent(value: Accent) = save("accent", value.id) { Appearance.accent = value }
+
+    /** Fond noir pur (2.9.0). */
+    fun setAmoled(value: Boolean) = save("amoled", value) { Appearance.amoled = value }
 
     /** Lu avant init() par attachBaseContext de l'activité. */
     fun languageFrom(context: Context): String =

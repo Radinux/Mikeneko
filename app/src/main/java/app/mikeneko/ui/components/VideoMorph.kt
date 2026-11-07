@@ -8,6 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import app.mikeneko.player.PlayerHolder
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
@@ -51,6 +53,11 @@ object VideoMorph {
         val travel = Animatable(0f)
         /** L'atterrissage : 1 = écrasé, puis tremblote jusqu'à 0. */
         val landing = Animatable(0f)
+        /** La vidéo vivante (2.9.0), dès que l'écran d'arrivée a sa première image ; sinon la photo. */
+        var live: ImageBitmap? = null
+        /** Compté à chaque nouvelle image vivante : le dessin la relit (le Bitmap est réutilisé). */
+        var frame by mutableIntStateOf(0)
+        internal val framesAtStart = VideoFrames.firstFrames.value
     }
 
     /** Où est la vidéo du mini-lecteur / du grand lecteur à l'écran (null = pas affichée). */
@@ -85,6 +92,9 @@ object VideoMorph {
 private val MINI_CORNER = 18.dp
 private const val TILT_DEGREES = 7f
 
+/** Largeur des images vivantes du morph : assez pour une vidéo qui vole, sans ralentir. */
+private const val LIVE_WIDTH = 640
+
 /** À placer tout en haut de l'écran principal, au-dessus de tout le reste. */
 @Composable
 fun VideoMorphLayer() {
@@ -96,6 +106,19 @@ fun VideoMorphLayer() {
             while ((if (morph.toMini) VideoMorph.miniBounds else VideoMorph.playerBounds) == null) withFrameNanos { }
         }
         coroutineScope {
+            // La vidéo continue pendant le vol : à chaque image d'écran, l'image en cours de l'écran
+            // d'arrivée (caché, mais déjà branché), dès qu'il a sa première image et si ça joue
+            val liveFrames = launch {
+                while (true) {
+                    withFrameNanos { }
+                    if (VideoFrames.firstFrames.value > morph.framesAtStart && PlayerHolder.isPlaying.value) {
+                        VideoFrames.live(LIVE_WIDTH)?.let {
+                            morph.live = it.asImageBitmap()
+                            morph.frame++
+                        }
+                    }
+                }
+            }
             // L'atterrissage se déclenche dès qu'on touche la place (pendant le petit rebond du trajet)
             launch {
                 snapshotFlow { morph.travel.value >= 0.97f }.first { it }
@@ -104,6 +127,8 @@ fun VideoMorphLayer() {
             }
             // Un ressort un peu mou : plus lent qu'avant, il dépasse sa place puis revient
             morph.travel.animateTo(1f, spring(dampingRatio = 0.68f, stiffness = 85f))
+            snapshotFlow { morph.landing.isRunning }.first { !it }
+            liveFrames.cancel()
         }
         // Encore deux images : la vraie vidéo est bien affichée dessous avant de retirer la photo
         withFrameNanos { }
@@ -112,6 +137,8 @@ fun VideoMorphLayer() {
     }
 
     Canvas(Modifier.fillMaxSize()) {
+        morph.frame // relu : une nouvelle image vivante redessine (sans recomposer)
+        val image = morph.live ?: morph.image
         val target = (if (morph.toMini) VideoMorph.miniBounds else VideoMorph.playerBounds) ?: morph.from
         val t = morph.travel.value
         val tIn = t.coerceIn(0f, 1f)
@@ -157,8 +184,8 @@ fun VideoMorphLayer() {
                 cornerRadius = CornerRadius(radius),
             )
             // Côté grand lecteur, la vidéo est entière (bandes noires) ; côté mini-lecteur, recadrée
-            val iw = morph.image.width.toFloat()
-            val ih = morph.image.height.toFloat()
+            val iw = image.width.toFloat()
+            val ih = image.height.toFloat()
             val fit = minOf(rect.width / iw, rect.height / ih)
             val crop = maxOf(rect.width / iw, rect.height / ih)
             val imageScale = fit + (crop - fit) * miniSide
@@ -167,7 +194,7 @@ fun VideoMorphLayer() {
             clipPath(Path().apply { addRoundRect(RoundRect(rect, CornerRadius(radius))) }) {
                 drawRect(Color.Black, rect.topLeft, rect.size)
                 drawImage(
-                    morph.image,
+                    image,
                     dstOffset = IntOffset((rect.center.x - w / 2f).roundToInt(), (rect.center.y - h / 2f).roundToInt()),
                     dstSize = IntSize(w.roundToInt(), h.roundToInt()),
                 )

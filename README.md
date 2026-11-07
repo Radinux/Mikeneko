@@ -39,6 +39,8 @@ No ads · no Google account · with cat ears (=^･ω･^=)
 - 🔮 **Liquid glass**: dock, buttons and music window in glass that refracts the screen (Android 13+).
 - 💮 Comments, chapters, channel and playlist pages, a **Library** (history, watch later, likes).
 - 🌙 **"Did you see the time?"** after an hour of watching (－_－) zzZ
+- 🎨 **Your colors**: 7 accent colors (Calico, Sakura, Ocean, Matcha, Cherry, Mint, Amber), a pure
+  black background for OLED screens, and Material You buttons.
 - 🍥 **Automatic updates** from GitHub, in 🇬🇧 English and 🇫🇷 French.
 
 ## 🎴 Install (｀・ω・´)ゞ
@@ -53,6 +55,22 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 `0F:0B:6E:19:0A:E7:2C:34:63:A0:20:03:61:12:9D:54:F9:F4:B8:6B:CF:DC:70:8A:09:99:3B:03:A7:96:83:DC`.
 
 ## 🎌 What's new ⸜(｡˃ ᵕ ˂ )⸝♡
+
+### 2.9
+
+- **Your colors**: Settings › Appearance, an accent color to pick (Calico, Sakura, Ocean, Matcha,
+  Cherry, Mint, Amber) and a pure black background for OLED screens. Buttons and capsules are now
+  **Material You** (Material 3); the liquid glass stays.
+- **Cleaner videos**: on Wi-Fi, Auto quality picks the YouTube step above your screen (1440p on a
+  1264-line screen), like the YouTube app; at equal resolution, the stream with the highest bitrate
+  the phone decodes in hardware. Dark scenes were blocky in 1080p.
+- The video **keeps playing while it flies** between the mini player and the player (it froze for
+  about a second).
+- **Swipe the video down** to the mini player in portrait too (only downward: upward still scrolls).
+- A **Share** button under the video.
+- Leaving full screen while holding the phone sideways **stays in landscape**, even with Android's
+  auto-rotate off (it often went back to portrait).
+- The import summary and the "What's new" page keep their line breaks.
 
 ### 2.8
 
