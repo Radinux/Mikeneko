@@ -810,6 +810,9 @@ users: the point is to take them from the videos really watched.
 - The window background no longer uses `Modifier.blur(60.dp)` (a RenderEffect recomputed on every
   frame, twice since the background is also recorded as the buttons' backdrop): the cover is loaded
   at 48 px and stretched (`FilterQuality.Low`), which looks blurred for free.
+- 2.10.4: `SpectrumWave` still moves its playhead on every frame, but computes the bands and redraws
+  (`frame++`, a new RenderEffect for `LiquidWave`) at most every 33 ms (`WAVE_FRAME_NANOS`): the
+  open window no longer keeps the GPU busy on every frame (Honor's Magic Capsule lagged).
 
 ---
 

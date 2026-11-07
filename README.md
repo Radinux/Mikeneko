@@ -70,6 +70,9 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
   subscriptions filters) is a **connected Material 3 group**: capsules almost touching, rounded ends,
   the selected one a full pill in the accent color; a bit wider.
 - **Lighter colors**: tonal buttons and unselected capsules are a light cream tinted with the accent.
+- 2.10.4: the spectrum wave is drawn at 30 frames per second (it used every screen frame): less
+  graphics work while the music window is open, so system animations (Honor's Magic Capsule) stay
+  smooth.
 - 2.10.3: the **music dock animation** is smoother: no more whole-dock recomposition on every frame,
   the pane follows the finger without delay, and the window's blurred cover no longer costs a blur
   on every frame.

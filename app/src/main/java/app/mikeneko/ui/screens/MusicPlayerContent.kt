@@ -362,6 +362,9 @@ internal fun PlayerWindowContent(
     }
 }
 
+/** Une nouvelle image de la vague au plus toutes les 33 ms (30 par seconde). */
+private const val WAVE_FRAME_NANOS = 33_000_000L
+
 /** Ce qui dépasse sous les commandes : le titre de la première section, pour montrer qu'on peut faire défiler. */
 private val DETAILS_PEEK = 44.dp
 
@@ -520,6 +523,7 @@ private fun SpectrumWave(active: Boolean, cover: Color, backdrop: Backdrop, modi
         var playhead = -1.0
         var epoch = -1
         var last = 0L
+        var drawn = 0L
         while (true) {
             withFrameNanos { now ->
                 val written = AudioSpectrum.written
@@ -534,6 +538,10 @@ private fun SpectrumWave(active: Boolean, cover: Color, backdrop: Backdrop, modi
                 if (PlayerHolder.isPlaying.value) playhead += dt * rate
                 if (playhead > written) playhead = written.toDouble() // rattrapé : on attend le paquet suivant
                 if (playhead < written - 2.4 * behind) playhead = written - behind // trop en retard (saut)
+                // 30 images par seconde suffisent à la vague (2.10.4) : à chaque image d'écran, elle
+                // occupait la puce graphique en continu (le Magic Capsule d'Honor ramait fenêtre ouverte)
+                if (now - drawn < WAVE_FRAME_NANOS) return@withFrameNanos
+                drawn = now
                 AudioSpectrum.bandsAt(playhead.toLong(), bands)
                 // Lissée avec ses voisines : une vague, pas des pics isolés
                 for (i in bands.indices) {
