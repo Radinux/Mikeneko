@@ -153,7 +153,7 @@ Items marked "to check on the phone" are built and published but not confirmed o
 - [x] 2.1.0: automatic updates from GitHub (Radinux/Mikeneko-releases) — 2.1.1 downloaded and installed itself; Play Protect triggers on every version (expected, see the notes)
 - [x] 2.1.1: automatic download from GitHub — seen on the phone ("Mikeneko 2.1.1 is ready")
 - [ ] 2.1.2 (arrived on its own on the phone): "Update" pill as soon as the APK is downloaded; Settings › About buttons no longer squashed ("What's new" letter by letter)
-- [ ] 2.10.3: smoother music dock animation (pill ↔ window) — to check on the phone
+- [x] 2.10.3: smoother music dock animation (pill ↔ window) — verified on the phone, much smoother
 - [x] 2.10.2: faster music import (adaptive, 3 searches at once) — verified on the emulator: 72 searches in 26 s (was ~3.5 min), 19/19 songs, 52/53 artists
 - [x] 2.10.1: Subscribed | bell as one split pill — verified on the phone
 - [ ] 2.10.0: bell next to Subscribe (new video notifications, checked every ~2 h in the background) and update notifications — to check on the phone (turn a bell on, wait for a new video)
