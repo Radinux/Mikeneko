@@ -31,6 +31,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.StrokeCap
@@ -101,6 +103,10 @@ import app.mikeneko.ui.components.Tag
 import app.mikeneko.ui.components.rememberCoverColor
 import app.mikeneko.ui.components.shareLink
 import app.mikeneko.ui.glass.LiquidGlass
+import app.mikeneko.ui.glass.Backdrop
+import app.mikeneko.ui.glass.liquidWaveSupported
+import app.mikeneko.ui.glass.WAVE_POINTS
+import app.mikeneko.ui.glass.LiquidWave
 import app.mikeneko.ui.glass.backdropSource
 import app.mikeneko.ui.glass.rememberBackdrop
 import app.mikeneko.ui.icons.MkIcons
@@ -300,6 +306,8 @@ internal fun PlayerWindowContent(
             if (now != null && !live) {
                 SpectrumWave(
                     state.open,
+                    coverColor,
+                    glass,
                     Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(maxHeight * if (landscape) 0.46f else 0.28f),
                 )
             }
@@ -470,23 +478,34 @@ private fun RowScope.ActionSlot(icon: ImageVector, label: String, enabled: Boole
 
 /**
  * Le spectre en fréquence de ce qui joue ([AudioSpectrum]), en vague continue qui monte du bas de la
- * fenêtre (graves à gauche, aigus à droite), rousse et qui s'efface vers le bas. Elle retombe en un
+ * fenêtre (graves à gauche, aigus à droite), de la couleur de la pochette (comme la fenêtre, en plus
+ * vif, 2.6.4) et qui s'efface vers le bas. Android 13+ : en liquid glass ([LiquidWave]) ; avant, dessinée. Elle retombe en un
  * filet en pause. Elle ne montre pas la progression : c'est le rôle de la barre (2.6.3).
  */
 @OptIn(UnstableApi::class)
 @Composable
-private fun SpectrumWave(active: Boolean, modifier: Modifier) {
+private fun SpectrumWave(active: Boolean, cover: Color, backdrop: Backdrop, modifier: Modifier) {
     DisposableEffect(active) {
         AudioSpectrum.listening = active
         onDispose { AudioSpectrum.listening = false }
     }
     val playing by PlayerHolder.isPlaying.collectAsState()
     val level by animateFloatAsState(if (playing) 1f else 0f, tween(500), label = "spectre")
+    // La couleur de la fenêtre est la pochette assombrie : on la ravive pour la vague
+    val bright = remember(cover) {
+        val hsv = FloatArray(3)
+        android.graphics.Color.colorToHSV(cover.toArgb(), hsv)
+        hsv[1] = (hsv[1] * 0.9f).coerceAtMost(0.75f)
+        hsv[2] = 0.95f
+        Color(android.graphics.Color.HSVToColor(hsv))
+    }
+    val color by animateColorAsState(bright, tween(600), label = "vague")
     // Le son arrive par gros paquets (~4 par seconde) : on le garde, et à chaque image de l'écran on
     // analyse l'endroit où en est une tête de lecture qui avance en temps réel, une demi-seconde
     // derrière le dernier son reçu (il est encore dans le tampon du haut-parleur). Fluide (2.5.2).
     val bands = remember { FloatArray(AudioSpectrum.BANDS) }
     val smooth = remember { FloatArray(AudioSpectrum.BANDS) }
+    val levels = remember { FloatArray(WAVE_POINTS) }
     var frame by remember { mutableIntStateOf(0) }
     LaunchedEffect(active) {
         if (!active) return@LaunchedEffect
@@ -513,10 +532,15 @@ private fun SpectrumWave(active: Boolean, modifier: Modifier) {
                     val l = bands[(i - 1).coerceAtLeast(0)]
                     val r = bands[(i + 1).coerceAtMost(bands.size - 1)]
                     smooth[i] = l * 0.25f + bands[i] * 0.5f + r * 0.25f
+                    levels[i] = smooth[i] * level
                 }
                 frame++
             }
         }
+    }
+    if (liquidWaveSupported) {
+        LiquidWave(backdrop, levels, frame = { frame }, color = { color }, modifier = modifier)
+        return
     }
     val line = remember { Path() }
     val wave = remember { Path() }
@@ -527,10 +551,11 @@ private fun SpectrumWave(active: Boolean, modifier: Modifier) {
         val w = size.width
         val h = size.height
         fun x(i: Int) = i * w / (count - 1)
-        fun y(i: Int) = h - (min + smooth[i] * level * (h - min)).coerceAtMost(h)
+        fun y(i: Int) = h - (min + levels[i] * (h - min)).coerceAtMost(h)
         // La crête (seule à avoir un trait), puis la vague pleine fermée par le bas de la fenêtre
         line.reset()
         line.moveTo(x(0), y(0))
+        line.lineTo((x(0) + x(1)) / 2, (y(0) + y(1)) / 2)
         for (i in 1 until count - 1) {
             line.quadraticTo(x(i), y(i), (x(i) + x(i + 1)) / 2, (y(i) + y(i + 1)) / 2)
         }
@@ -545,12 +570,12 @@ private fun SpectrumWave(active: Boolean, modifier: Modifier) {
         var crest = h
         for (i in 0 until count) crest = minOf(crest, y(i))
         drawPath(wave, Brush.verticalGradient(
-            0f to Pelage.RouxClair.copy(alpha = 0.85f),
-            0.4f to Pelage.Roux.copy(alpha = 0.45f),
-            1f to Pelage.Roux.copy(alpha = 0f),
+            0f to color.copy(alpha = 0.8f),
+            0.4f to color.copy(alpha = 0.4f),
+            1f to color.copy(alpha = 0f),
             startY = crest,
             endY = crest + (h - crest) * 0.9f + 1f,
         ))
-        drawPath(line, Pelage.RouxClair, style = Stroke(2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
+        drawPath(line, color, style = Stroke(2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
     }
 }
