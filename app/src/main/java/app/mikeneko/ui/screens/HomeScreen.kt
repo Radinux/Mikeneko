@@ -1,5 +1,7 @@
 package app.mikeneko.ui.screens
 
+import app.mikeneko.ui.components.CONNECTED_GAP
+import app.mikeneko.ui.components.ConnectedChip
 import android.content.Context
 import android.widget.Toast
 import androidx.annotation.StringRes
@@ -94,7 +96,6 @@ import app.mikeneko.data.YouTubeRepository
 import app.mikeneko.settings.AppLocale
 import app.mikeneko.settings.AppSettings
 import app.mikeneko.ui.components.EmptyCat
-import app.mikeneko.ui.components.GlassChip
 import app.mikeneko.ui.components.GlassCircleButton
 import app.mikeneko.ui.components.Loading
 import app.mikeneko.ui.components.Mascot
@@ -630,21 +631,25 @@ fun HomeOverlay(state: HomeState, backdrop: Backdrop, onSettings: () -> Unit) {
                         // Glisser verticalement sur une capsule fait défiler les résultats dessous
                         .then(if (searchList != null) Modifier.scrollable(searchList, Orientation.Vertical) else Modifier),
                     contentPadding = PaddingValues(horizontal = 20.dp, vertical = 6.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(CONNECTED_GAP),
                 ) {
                     if (shift >= gone) return@LazyRow // partie : rien à toucher
-                    // D'abord les filtres (orange quand il y en a d'actifs, avec leur nombre)
+                    // D'abord les filtres (de la couleur d'accent quand il y en a d'actifs, avec leur nombre),
+                    // seuls ; puis le groupe connecté des tris
                     item(key = "filtres") {
                         val active = state.filters.active
-                        GlassChip(
-                            backdrop,
+                        ConnectedChip(
                             if (active > 0) stringResource(R.string.filters_count, active) else stringResource(R.string.filters),
                             selected = active > 0 || state.filtersOpen,
+                            first = true,
+                            last = true,
+                            modifier = Modifier.padding(end = 8.dp),
                             icon = MkIcons.Settings,
                         ) { state.filtersOpen = !state.filtersOpen }
                     }
-                    items(SearchSort.entries, key = { it.name }) { sort ->
-                        GlassChip(backdrop, stringResource(sort.label), selected = state.sort == sort) { state.sort = sort }
+                    items(SearchSort.entries.size, key = { SearchSort.entries[it].name }) { i ->
+                        val sort = SearchSort.entries[i]
+                        ConnectedChip(stringResource(sort.label), state.sort == sort, first = i == 0, last = i == SearchSort.entries.lastIndex) { state.sort = sort }
                     }
                 }
                 if (state.filtersOpen) {
@@ -687,10 +692,12 @@ private fun HomeCategories(state: HomeState, backdrop: Backdrop) {
             )
             .then(if (list != null) Modifier.scrollable(list, Orientation.Vertical) else Modifier),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(CONNECTED_GAP),
     ) {
-        if (shift < gone) items(CATEGORIES, key = { it.id }) { category ->
-            GlassChip(backdrop, stringResource(category.label), selected = state.category == category.id) {
+        // Un groupe connecté Material 3 (2.10.0, avant des capsules en verre)
+        if (shift < gone) items(CATEGORIES.size, key = { CATEGORIES[it].id }) { i ->
+            val category = CATEGORIES[i]
+            ConnectedChip(stringResource(category.label), state.category == category.id, first = i == 0, last = i == CATEGORIES.lastIndex) {
                 state.category = category.id
                 state.submitted = null
             }

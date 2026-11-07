@@ -1,5 +1,7 @@
 package app.mikeneko.ui.screens
 
+import app.mikeneko.ui.components.CONNECTED_GAP
+import app.mikeneko.ui.components.ConnectedChip
 import android.widget.Toast
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -163,8 +165,10 @@ fun SubscriptionsContent(onOpen: (VideoItem) -> Unit, onOpenChannel: (ChannelIte
             }
             item {
                 FlowRow(Modifier.padding(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Capsule(stringResource(R.string.filter_all), selected = !unwatchedOnly) { unwatchedOnly = false }
-                    Capsule(stringResource(R.string.filter_unwatched), selected = unwatchedOnly) { unwatchedOnly = true }
+                    Row(horizontalArrangement = Arrangement.spacedBy(CONNECTED_GAP)) {
+                        ConnectedChip(stringResource(R.string.filter_all), !unwatchedOnly, first = true, last = false) { unwatchedOnly = false }
+                        ConnectedChip(stringResource(R.string.filter_unwatched), unwatchedOnly, first = false, last = true) { unwatchedOnly = true }
+                    }
                     val selectedId = channel
                     val name = subs.firstOrNull { it.channelId == selectedId }?.name
                     if (selectedId != null && name != null) {

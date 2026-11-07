@@ -120,6 +120,7 @@ dependencies {
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.animation)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.work.runtime) // vérifications en fond : nouvelles vidéos, mises à jour (2.10.0)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     implementation(libs.androidx.media3.exoplayer)

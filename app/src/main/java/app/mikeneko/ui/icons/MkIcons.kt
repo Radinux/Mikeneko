@@ -25,6 +25,8 @@ object MkIcons {
     val Moon = stroke("minuteur", "M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z")
     val Queue = stroke("file", "M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01")
     val Share = stroke("partager", "M12 3v12M7 8l5-5 5 5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5")
+    val Bell = stroke("cloche", "M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9 M10.3 21a1.94 1.94 0 0 0 3.4 0")
+    val BellFilled = fill("cloche_pleine", "M12 2a6 6 0 0 0-6 6c0 7-3 9-3 9h18s-3-2-3-9a6 6 0 0 0-6-6z M10.3 21a1.94 1.94 0 0 0 3.4 0z")
     val Check = stroke("ok", "M5 12.5l4.5 4.5L19 7.5", width = 2.6f)
     val Plus = stroke("plus", "M12 5v14M5 12h14")
     /** Une photo (pochette perso d'une playlist). */

@@ -769,6 +769,32 @@ users: the point is to take them from the videos really watched.
 
 ---
 
+## 8 quindecies. Notifications and connected capsules (2.10.0)
+
+- `update/Notifier.kt`: channels `mises_a_jour` and `nouvelles_videos` (created in `MikenekoApp`),
+  `WatchWorker` (WorkManager 2.12, `enqueueUniquePeriodicWork("veille", KEEP)`, every 2 h with a
+  network). It checks:
+  - the channels whose bell is on (`SubscriptionStore.bells`, prefs `abonnements` key `cloches`,
+    off by default): `SubscriptionFeed.latest(listOf(sub))` (RSS, or the channel's Videos tab if RSS
+    is down), notifies what was published after the last check (`cloches_vues`, per channel; the
+    first check only records), 3 per channel at most, no live streams, no shorts with "No shorts",
+    nothing already watched; thumbnail through Coil (`BigPictureStyle`); a tap opens the video
+    (`ACTION_VIEW` to `MainActivity`).
+  - an update once a day (`AppUpdates.latest()`), notified once per version (`maj_annoncee`);
+    `AppUpdates.download` also notifies when the APK is ready (`maj_prete`). A tap opens the app with
+    `EXTRA_UPDATE` → `AppUpdates.check`.
+  - Nothing is posted without the permission (`Notifier.allowed`).
+- `ui/components/BellButton.kt`: `FilledIconToggleButton` next to Subscribe (only when subscribed),
+  on the player page and the channel page; asks for `POST_NOTIFICATIONS` (Android 13+) when turned on.
+  Unsubscribing turns the bell off.
+- `ConnectedChip` (Components.kt) replaces `GlassChip` and option rows of `Capsule`: 44 dp high, 22 dp
+  side padding, 3 dp gap (`CONNECTED_GAP`), outer ends rounded and inner corners 6 dp, the selected
+  one animates to a full pill in `primary`. The home categories, search sort (with the Filters chip
+  apart), search filter options, music library filters and kinds, channel tabs, subscriptions filters.
+- Lighter colors: `secondaryContainer` = cream mixed 30 % with the accent's light color, text `Encre`.
+
+---
+
 ## 9. Compose and Android pitfalls to remember
 
 - A **`derivedStateOf` read only in a `SideEffect`** doesn't trigger recomposition: read it during

@@ -31,6 +31,16 @@ class SubscriptionStore private constructor(context: Context) {
     /** Les vidéos déjà ouvertes, observable pour que « Nouveau » / « Pas vues » se mettent à jour. */
     val watched: StateFlow<Set<String>> = _watched.asStateFlow()
 
+    private val _bells = MutableStateFlow(prefs.getStringSet("cloches", emptySet())!!.toSet())
+    /** Les chaînes dont on veut une notification à chaque nouvelle vidéo (2.10.0, éteint par défaut). */
+    val bells: StateFlow<Set<String>> = _bells.asStateFlow()
+
+    fun toggleBell(channelId: String) {
+        val next = if (channelId in _bells.value) _bells.value - channelId else _bells.value + channelId
+        _bells.value = next
+        prefs.edit().putStringSet("cloches", next).apply()
+    }
+
     fun addAll(list: List<Subscription>) {
         // Les nouvelles infos d'abord : un import ou une synchro Google met à jour noms et avatars
         val merged = (list + _items.value).distinctBy { it.channelId }.sortedBy { it.name.lowercase() }
@@ -53,6 +63,7 @@ class SubscriptionStore private constructor(context: Context) {
         val left = _items.value.filterNot { it.channelId == channelId }
         _items.value = left
         save(left)
+        if (channelId in _bells.value) toggleBell(channelId) // plus abonné : plus de cloche
     }
 
 

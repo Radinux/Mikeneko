@@ -1,5 +1,6 @@
 package app.mikeneko
 
+import app.mikeneko.update.Notifier
 import android.app.Application
 import app.mikeneko.data.NewPipeDownloader
 import app.mikeneko.player.OfflineCache
@@ -26,6 +27,8 @@ class MikenekoApp : Application(), SingletonImageLoader.Factory {
         // La sauvegarde hors ligne s'ouvre en fond (lire son index au premier morceau bloquerait l'écran)
         Thread { OfflineCache.warmUp(this) }.start()
         PlaylistDownloads.init(this) // reprend les playlists à télécharger
+        Notifier.createChannels(this) // notifications : mises à jour, nouvelles vidéos (2.10.0)
+        Notifier.schedule(this)
     }
 
     /**

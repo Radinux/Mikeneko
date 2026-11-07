@@ -1,5 +1,10 @@
 package app.mikeneko.ui.components
 
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material3.FilledTonalButton
@@ -386,47 +391,47 @@ fun CompactVideoRow(video: VideoItem, modifier: Modifier = Modifier, onClick: ()
 }
 
 /**
- * Une capsule en liquid glass (filtres, rubriques, tri), à poser par-dessus une liste qui défile.
- * Choisie : le verre se teinte d'orange. Doit être dans une couche au-dessus de la source de [backdrop].
+ * Une capsule d'une rangée « groupe connecté » (Material 3 Expressive, 2.10.0) : les capsules d'une
+ * rangée se touchent presque (3 dp), les bouts du groupe sont arrondis et l'intérieur a de petits
+ * coins ; celle qui est choisie devient une pilule entière, pleine de la couleur d'accent.
+ * Remplace les capsules en verre (GlassChip) et les rangées de [Capsule] servant de choix.
  */
 @Composable
-fun GlassChip(
-    backdrop: Backdrop,
+fun ConnectedChip(
     text: String,
+    selected: Boolean,
+    first: Boolean,
+    last: Boolean,
     modifier: Modifier = Modifier,
-    selected: Boolean = false,
     icon: ImageVector? = null,
     onClick: () -> Unit,
 ) {
-    val tint by animateColorAsState(
-        if (selected) Pelage.Roux.copy(alpha = 0.82f) else Color(0x38100D0B),
-        spring(stiffness = Spring.StiffnessMediumLow),
-        label = "capsule en verre",
-    )
-    val content = if (selected) Pelage.Encre else Color.White
-    LiquidGlass(
-        backdrop,
-        modifier.plopOnSelect(selected).height(44.dp),
-        cornerRadius = 22.dp,
-        bezel = 14.dp,
-        refraction = 14.dp,
-        tint = tint,
-        shadowElevation = 8.dp,
+    val round = CONNECTED_HEIGHT / 2
+    val start by animateDpAsState(if (selected || first) round else CONNECTED_INNER, spring(stiffness = Spring.StiffnessMediumLow), label = "coin début")
+    val end by animateDpAsState(if (selected || last) round else CONNECTED_INNER, spring(stiffness = Spring.StiffnessMediumLow), label = "coin fin")
+    val colors = MaterialTheme.colorScheme
+    val container by animateColorAsState(if (selected) colors.primary else colors.secondaryContainer, label = "capsule")
+    val content = if (selected) colors.onPrimary else colors.onSecondaryContainer
+    Surface(
         onClick = onClick,
+        modifier = modifier.height(CONNECTED_HEIGHT).semantics { this.selected = selected },
+        shape = RoundedCornerShape(topStart = start, bottomStart = start, topEnd = end, bottomEnd = end),
+        color = container,
+        contentColor = content,
     ) {
         Row(
-            Modifier.align(Alignment.Center).padding(horizontal = 18.dp),
+            Modifier.padding(horizontal = 22.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
         ) {
-            if (icon != null) Icon(icon, null, tint = content, modifier = Modifier.size(20.dp))
-            Text(
-                text,
-                color = content,
-                fontSize = 14.sp,
-                fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Bold,
-                style = TextStyle(shadow = if (selected) null else GlassTextShadow),
-            )
+            if (icon != null) Icon(icon, null, modifier = Modifier.size(18.dp))
+            Text(text, fontSize = 14.sp, fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Bold, maxLines = 1)
         }
     }
 }
+
+val CONNECTED_HEIGHT = 44.dp
+private val CONNECTED_INNER = 6.dp
+
+/** L'espace entre deux capsules d'un groupe connecté. */
+val CONNECTED_GAP = 3.dp

@@ -1,5 +1,7 @@
 package app.mikeneko.ui.screens
 
+import app.mikeneko.ui.components.CONNECTED_GAP
+import app.mikeneko.ui.components.ConnectedChip
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -61,7 +63,6 @@ import androidx.compose.ui.unit.sp
 import app.mikeneko.R
 import app.mikeneko.data.MusicKind
 import app.mikeneko.data.SearchHistory
-import app.mikeneko.ui.components.GlassChip
 import app.mikeneko.ui.components.GlassCircleButton
 import app.mikeneko.ui.glass.Backdrop
 import app.mikeneko.ui.glass.LiquidGlass
@@ -297,16 +298,16 @@ private fun MusicSearchField(state: MusicState, backdrop: Backdrop, focus: Focus
     }
 }
 
-/** Une rangée de capsules en verre (défile de côté), sous la barre du haut. */
+/** Une rangée de capsules (défile de côté), sous la barre du haut : un groupe connecté Material 3 (2.10.0). */
 @Composable
 private fun <T> GlassChipsRow(backdrop: Backdrop, options: List<T>, selected: T, label: (T) -> Int, onPick: (T) -> Unit) {
     LazyRow(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(CONNECTED_GAP),
     ) {
         items(options.size) { i ->
             val option = options[i]
-            GlassChip(backdrop, stringResource(label(option)), selected = option == selected) { onPick(option) }
+            ConnectedChip(stringResource(label(option)), option == selected, first = i == 0, last = i == options.lastIndex) { onPick(option) }
         }
     }
 }

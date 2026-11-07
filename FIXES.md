@@ -153,6 +153,8 @@ Items marked "to check on the phone" are built and published but not confirmed o
 - [x] 2.1.0: automatic updates from GitHub (Radinux/Mikeneko-releases) — 2.1.1 downloaded and installed itself; Play Protect triggers on every version (expected, see the notes)
 - [x] 2.1.1: automatic download from GitHub — seen on the phone ("Mikeneko 2.1.1 is ready")
 - [ ] 2.1.2 (arrived on its own on the phone): "Update" pill as soon as the APK is downloaded; Settings › About buttons no longer squashed ("What's new" letter by letter)
+- [ ] 2.10.0: bell next to Subscribe (new video notifications, checked every ~2 h in the background) and update notifications — to check on the phone (turn a bell on, wait for a new video)
+- [x] 2.10.0: connected Material 3 capsule rows, wider, lighter tonal colors — verified on the emulator
 - [ ] 2.9.0: Share button on the video page; swipe down on the portrait video → mini player; leaving full screen in landscape stays in landscape; live video during the mini player morph (no freeze) — to check on the phone
 - [ ] 2.9.0: dark scenes no longer blocky (Auto = step above the screen on Wi-Fi, highest bitrate at equal resolution) — to check on the phone with the same video as on YouTube
 - [x] 2.9.0: accent colors + pure black background (Settings › Appearance), Material 3 buttons and capsules — verified on the emulator (Ocean + black)

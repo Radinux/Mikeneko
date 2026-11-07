@@ -1,5 +1,6 @@
 package app.mikeneko
 
+import app.mikeneko.update.Notifier
 import android.app.PictureInPictureParams
 import android.content.ComponentName
 import android.content.Context
@@ -66,6 +67,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         if (savedInstanceState == null) {
             links.value = linkFrom(intent)
+            if (intent?.getBooleanExtra(Notifier.EXTRA_UPDATE, false) == true) AppUpdates.check(this) // notification de mise à jour
             // Nouvelle ouverture : aucun menu resté ouvert de la fois d'avant
             MusicSheet.open.value = null
             VideoMenu.target.value = null
@@ -114,6 +116,7 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         linkFrom(intent)?.let { links.value = it }
+        if (intent.getBooleanExtra(Notifier.EXTRA_UPDATE, false)) AppUpdates.check(this)
     }
 
     // ---- Inactive 15 min en arrière-plan : l'appli se vide ----

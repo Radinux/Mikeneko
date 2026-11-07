@@ -41,6 +41,8 @@ No ads · no Google account · with cat ears (=^･ω･^=)
 - 🌙 **"Did you see the time?"** after an hour of watching (－_－) zzZ
 - 🎨 **Your colors**: 7 accent colors (Calico, Sakura, Ocean, Matcha, Cherry, Mint, Amber), a pure
   black background for OLED screens, and Material You buttons.
+- 🔔 **Notifications**: a bell next to Subscribe for a channel's new videos, and a heads-up when an
+  update is available.
 - 🍥 **Automatic updates** from GitHub, in 🇬🇧 English and 🇫🇷 French.
 
 ## 🎴 Install (｀・ω・´)ゞ
@@ -55,6 +57,19 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 `0F:0B:6E:19:0A:E7:2C:34:63:A0:20:03:61:12:9D:54:F9:F4:B8:6B:CF:DC:70:8A:09:99:3B:03:A7:96:83:DC`.
 
 ## 🎌 What's new ⸜(｡˃ ᵕ ˂ )⸝♡
+
+### 2.10
+
+- **Notifications** (there were none before):
+  - a **bell** next to Subscribe (video and channel pages): turned on, a notification for each new
+    video of the channel, checked in the background every ~2 hours through its RSS feed, even with the
+    app closed (off by default);
+  - **updates**: a notification when a new version is available (checked once a day in the
+    background) or downloaded and ready to install.
+- Every row of capsules (home categories, search sort and filters, music filters, channel tabs,
+  subscriptions filters) is a **connected Material 3 group**: capsules almost touching, rounded ends,
+  the selected one a full pill in the accent color; a bit wider.
+- **Lighter colors**: tonal buttons and unselected capsules are a light cream tinted with the accent.
 
 ### 2.9
 
@@ -204,6 +219,7 @@ Without the release key, your build is signed with the debug key.
 | yt-dlp downloads (in the Library): video, MP3, FLAC, Opus, M4A, sponsors cut out | `data/Downloads.kt`, `ui/screens/DownloadsScreen.kt` |
 | Settings: language, region, playback, SponsorBlock, history, bedtime reminder, backup, updates | `ui/screens/SettingsScreen.kt`, `settings/` |
 | Automatic updates from this repository's releases | `update/AppUpdates.kt` |
+| Notifications: new videos (channel bells), updates, background check | `update/Notifier.kt`, `ui/components/BellButton.kt` |
 | "For you": local algorithm (interest profile, tastes, YouTube suggestions, subscriptions, fatigue) | `data/ForYou.kt`, `data/Interests.kt`, `data/Tastes.kt`, `data/Impressions.kt` |
 | "What's new" page after an update | `update/WhatsNew.kt` |
 

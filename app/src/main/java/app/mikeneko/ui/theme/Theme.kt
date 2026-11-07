@@ -113,8 +113,10 @@ fun MikenekoTheme(content: @Composable () -> Unit) {
             onPrimaryContainer = Pelage.Texte,
             secondary = Pelage.RouxClair,
             onSecondary = Pelage.Encre,
-            secondaryContainer = lerp(Pelage.Bord, Pelage.Roux, 0.22f),
-            onSecondaryContainer = Pelage.Texte,
+            // Boutons tonals et capsules non choisies : clairs (2.10.0, demandé), une crème légèrement
+            // teintée de l'accent, texte foncé ; les choisis sont pleins de l'accent
+            secondaryContainer = lerp(Pelage.Creme, Pelage.RouxClair, 0.3f),
+            onSecondaryContainer = Pelage.Encre,
             tertiary = Pelage.Creme,
             onTertiary = Pelage.Encre,
             background = Pelage.Nuit,

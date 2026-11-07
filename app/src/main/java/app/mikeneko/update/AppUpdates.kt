@@ -103,8 +103,8 @@ object AppUpdates {
         }
     }
 
-    /** La dernière release (null : aucune publiée). */
-    private fun latest(): Release? {
+    /** La dernière release (null : aucune publiée). Aussi pour la vérification en fond (Notifier). */
+    internal fun latest(): Release? {
         val request = Request.Builder().url(LATEST).header("Accept", "application/vnd.github+json").header("User-Agent", "Mikeneko").build()
         http.newCall(request).execute().use { response ->
             if (response.code == 404) return null
@@ -149,6 +149,7 @@ object AppUpdates {
             }
         }.onSuccess {
             _state.value = State.Ready(release, file)
+            Notifier.updateReady(context, release.version) // si l'appli est quittée avant de la voir
         }.onFailure {
             file.delete()
             _state.value = State.Failed(it.message ?: it.javaClass.simpleName)

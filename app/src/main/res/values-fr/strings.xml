@@ -574,7 +574,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">Quoi de neuf dans Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Super !</string>
-    <string name="whats_new_body">🎨 Tes couleurs\n\n• Réglages › Apparence : choisis une couleur d’accent (Calico, Sakura, Océan, Matcha, Cerise, Menthe, Ambre) et un fond noir pur pour les écrans OLED.\n• Les boutons et capsules passent en Material You.\n\n🎬 De meilleures vidéos\n• En Wi-Fi, la qualité Auto prend le palier au-dessus de ton écran, comme YouTube : les scènes sombres sont propres au lieu de faire des blocs.\n• La vidéo continue de jouer pendant qu’elle vole entre le mini-lecteur et le lecteur (elle se figeait une seconde).\n• Glisse la vidéo vers le bas pour le mini-lecteur, aussi en portrait, et un bouton Partager sur la page vidéo.\n• Sortir du plein écran en tenant le téléphone de côté reste en paysage.</string>
+    <string name="whats_new_body">🔔 Notifications\n\n• Une cloche à côté de S’abonner : allume-la pour être prévenu des nouvelles vidéos d’une chaîne (vérifié toutes les ~2 h, même appli fermée).\n• Mikeneko te prévient maintenant quand une mise à jour est disponible ou prête.\n\n🎨 Des capsules plus claires et connectées\n• Toutes les rangées de capsules (accueil, recherche, musique, chaînes, abonnements) forment un groupe Material 3 connecté, un peu plus large.\n• Les boutons et capsules prennent des couleurs plus claires.\n\n🎬 Depuis la 2.9 : couleurs d’accent et noir pur (Réglages › Apparence), vidéos plus propres en Wi-Fi, plus de gel entre le mini-lecteur et le lecteur.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Importer des playlists</string>
@@ -605,4 +605,17 @@
     <string name="accent_cherry">Cerise</string>
     <string name="accent_mint">Menthe</string>
     <string name="accent_amber">Ambre</string>
+
+    <!-- Notifications (Notifier.kt, 2.10.0) -->
+    <string name="notif_channel_updates">Mises à jour</string>
+    <string name="notif_channel_videos">Nouvelles vidéos</string>
+    <string name="notif_update_available">Mikeneko %1$s est disponible</string>
+    <string name="notif_update_available_text">Touche pour mettre à jour</string>
+    <string name="notif_update_ready">Mikeneko %1$s est prête</string>
+    <string name="notif_update_ready_text">Elle s’installe quand tu quittes l’appli, ou touche pour mettre à jour maintenant</string>
+    <string name="bell_on">Me prévenir des nouvelles vidéos</string>
+    <string name="bell_off">Ne plus me prévenir</string>
+    <string name="bell_enabled">Tu seras prévenu des nouvelles vidéos de %1$s</string>
+    <string name="bell_disabled">Plus de notifications de %1$s</string>
+    <string name="bell_denied">Autorise les notifications de Mikeneko dans les réglages d’Android</string>
 </resources>

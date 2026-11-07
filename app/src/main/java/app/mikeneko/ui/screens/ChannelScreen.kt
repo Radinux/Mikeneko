@@ -1,5 +1,8 @@
 package app.mikeneko.ui.screens
 
+import app.mikeneko.ui.components.BellButton
+import app.mikeneko.ui.components.CONNECTED_GAP
+import app.mikeneko.ui.components.ConnectedChip
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -305,16 +308,20 @@ fun ChannelContent(channel: ChannelItem, onOpen: (VideoItem) -> Unit) {
                     }
                     subscribersText(info?.subscribers ?: channel.subscribers)?.let { Text(it, color = Pelage.Gris, fontSize = 13.sp) }
                     if (id != null) {
-                        Capsule(
-                            stringResource(if (subscribed) R.string.subscribed else R.string.subscribe),
-                            selected = subscribed,
-                            icon = if (subscribed) MkIcons.Check else MkIcons.Plus,
-                        ) {
-                            if (subscribed) {
-                                store.remove(id)
-                            } else {
-                                store.addAll(listOf(Subscription(info?.name ?: channel.name, "https://www.youtube.com/channel/$id", id, info?.avatar ?: channel.avatar)))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Capsule(
+                                stringResource(if (subscribed) R.string.subscribed else R.string.subscribe),
+                                selected = subscribed,
+                                icon = if (subscribed) MkIcons.Check else MkIcons.Plus,
+                            ) {
+                                if (subscribed) {
+                                    store.remove(id)
+                                } else {
+                                    store.addAll(listOf(Subscription(info?.name ?: channel.name, "https://www.youtube.com/channel/$id", id, info?.avatar ?: channel.avatar)))
+                                }
                             }
+                            // La cloche des nouvelles vidéos (2.10.0), une fois abonné
+                            if (subscribed) BellButton(id, info?.name ?: channel.name, Modifier.padding(start = 4.dp))
                         }
                     }
                     info?.description?.takeIf { it.isNotBlank() }?.let { ChannelDescription(it) }
@@ -328,10 +335,11 @@ fun ChannelContent(channel: ChannelItem, onOpen: (VideoItem) -> Unit) {
             item(key = "onglets") {
                 LazyRow(
                     contentPadding = PaddingValues(horizontal = 20.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(CONNECTED_GAP),
                 ) {
-                    items(tabs, key = { it }) { kind ->
-                        Capsule(stringResource(channelTabLabel(kind)), selected = tab == kind) { tab = kind }
+                    items(tabs.size, key = { tabs[it] }) { i ->
+                        val kind = tabs[i]
+                        ConnectedChip(stringResource(channelTabLabel(kind)), tab == kind, first = i == 0, last = i == tabs.lastIndex) { tab = kind }
                     }
                 }
             }

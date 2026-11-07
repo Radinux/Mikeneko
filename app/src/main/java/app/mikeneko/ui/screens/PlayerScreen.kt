@@ -1,5 +1,6 @@
 package app.mikeneko.ui.screens
 
+import app.mikeneko.ui.components.BellButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.ButtonDefaults
 import android.content.res.Configuration
@@ -201,6 +202,7 @@ private fun VideoChannelRow(info: NowPlaying, onOpenChannel: (ChannelItem) -> Un
                     store.addAll(listOf(Subscription(info.channel, "https://www.youtube.com/channel/$id", id, info.channelAvatar)))
                 }
             }
+            if (subscribed) BellButton(id, info.channel, Modifier.padding(start = 4.dp)) // notifications (2.10.0)
         }
     }
 }

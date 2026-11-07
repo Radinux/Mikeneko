@@ -1,5 +1,7 @@
 package app.mikeneko.ui.screens
 
+import app.mikeneko.ui.components.CONNECTED_GAP
+import app.mikeneko.ui.components.ConnectedChip
 import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
@@ -302,11 +304,11 @@ private fun <T> FilterSection(@StringRes title: Int, options: List<T>, selected:
         )
         LazyRow(
             contentPadding = PaddingValues(horizontal = 14.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(CONNECTED_GAP),
         ) {
             items(options.size) { i ->
                 val option = options[i]
-                Capsule(stringResource(label(option)), selected = option == selected) { onPick(option) }
+                ConnectedChip(stringResource(label(option)), option == selected, first = i == 0, last = i == options.lastIndex) { onPick(option) }
             }
         }
     }
