@@ -69,6 +69,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import app.mikeneko.R
 import app.mikeneko.data.Comments
+import app.mikeneko.data.PlaylistImport
 import app.mikeneko.ui.components.TasteChips
 import app.mikeneko.data.Impressions
 import app.mikeneko.data.Tastes
@@ -185,7 +186,30 @@ private fun BackupSection(context: Context) {
             toast(if (list.isEmpty()) context.getString(R.string.subs_import_none) else context.resources.getQuantityString(R.plurals.subs_imported_count, list.size, list.size))
         }
     }
+    // Playlists d'autres services, exportées avec TuneMyMusic (2.8.0) : on choisit quoi importer
+    var importPreview by remember { mutableStateOf<PlaylistImport.Preview?>(null) }
+    val importPlaylists = androidx.activity.compose.rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            val preview = kotlinx.coroutines.withContext(Dispatchers.IO) {
+                runCatching {
+                    val name = context.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)
+                        ?.use { c -> if (c.moveToFirst()) c.getString(0) else null }.orEmpty()
+                    val text = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }.orEmpty()
+                    PlaylistImport.preview(text, name)
+                }.getOrNull()
+            }
+            if (preview == null || preview.items.isEmpty()) toast(context.getString(R.string.import_empty)) else importPreview = preview
+        }
+    }
+    importPreview?.let { PlaylistImportPicker(it) { importPreview = null } }
+    PlaylistImportSummary()
     Section(stringResource(R.string.settings_section_backup)) {
+        ActionRow(MkIcons.Music, stringResource(R.string.import_playlists), stringResource(R.string.import_playlists_text), Pelage.Texte) {
+            importPlaylists.launch(arrayOf("text/csv", "text/comma-separated-values", "application/csv", "text/plain", "text/*", "application/octet-stream"))
+        }
+        PlaylistImportProgress()
+        Divider()
         ActionRow(MkIcons.Subscriptions, stringResource(R.string.settings_import_subs), stringResource(R.string.settings_import_subs_text), Pelage.Texte) {
             importSubs.launch(arrayOf("application/json", "text/*", "application/xml", "application/octet-stream"))
         }

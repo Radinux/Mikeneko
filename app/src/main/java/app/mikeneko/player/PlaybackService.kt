@@ -11,6 +11,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import app.mikeneko.data.PlaylistImport
 import app.mikeneko.MainActivity
 import app.mikeneko.data.Downloads
 
@@ -47,7 +48,7 @@ class PlaybackService : MediaSessionService() {
         session = null
         stopSelf()
         val downloading = Downloads.tasks.value.any { it.status == Downloads.Status.EN_COURS || it.status == Downloads.Status.EN_ATTENTE } ||
-            PlaylistDownloads.busy
+            PlaylistDownloads.busy || PlaylistImport.busy
         if (!downloading) {
             // Le temps que la notification disparaisse, puis on quitte
             Handler(Looper.getMainLooper()).postDelayed({ Process.killProcess(Process.myPid()) }, 300)

@@ -30,6 +30,8 @@ No ads · no Google account · with cat ears (=^･ω･^=)
   channel, "Unwatched".
 - 🎧 **A real music player**: YouTube Music (songs, albums, artists, playlists), auto Mix,
   "For you" and "Your mixes", synced lyrics, a dancing spectrum wave, your own playlists.
+- 🎶 **Bring your music**: import your Spotify, Deezer, Apple Music… playlists, liked artists and
+  saved albums from a TuneMyMusic export (CSV or TXT), duplicates merged.
 - 💾 **Mikeneko backup** (`.xml`): your whole Mikeneko in one file, to move to a new phone or keep
   safe (details below).
 - 🍙 **yt-dlp downloads**: video, MP3, FLAC, Opus, M4A, sponsors cut out, offline listening.
@@ -51,6 +53,20 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 `0F:0B:6E:19:0A:E7:2C:34:63:A0:20:03:61:12:9D:54:F9:F4:B8:6B:CF:DC:70:8A:09:99:3B:03:A7:96:83:DC`.
 
 ## 🎌 What's new ⸜(｡˃ ᵕ ˂ )⸝♡
+
+### 2.8
+
+- **Import your music from other services**: Settings › Backup › Import playlists. Export your
+  Spotify, Deezer, Apple Music… library with [TuneMyMusic](https://www.tunemymusic.com) to a CSV or
+  TXT file, then tick the playlists to import (with the number of songs and the estimated time).
+  - every song is found on YouTube Music (or among videos if it isn't a YouTube Music song), one
+    search every 2 seconds so YouTube doesn't block you; the import runs in the background and can be
+    stopped, what was found is kept;
+  - liked artists and saved albums go to Your library;
+  - **duplicates are merged**: a song repeated in a playlist, a song already in the Mikeneko playlist
+    of the same name, two lines landing on the same video; a song in several playlists is searched
+    only once;
+  - at the end, a summary lists what couldn't be found.
 
 ### 2.7
 
@@ -156,6 +172,7 @@ Without the release key, your build is signed with the debug key.
 | Channel pages: banner, Videos / Shorts / Live / Playlists tabs, playlist pages | `ui/screens/ChannelScreen.kt` |
 | Import without an account: NewPipe (.json), FreeTube (.db), Google Takeout (.csv) | `data/Subscriptions.kt` |
 | Mikeneko backup: export / import of everything in one `.xml` file | `data/Backup.kt` |
+| Import from other music services (TuneMyMusic CSV / TXT) | `data/PlaylistImport.kt`, `ui/screens/PlaylistImportUi.kt` |
 | Video player: glass buttons on the video, automatic SponsorBlock ("paw swipe"), dislikes, chapters, channel + "Subscribe", autoplay | `ui/screens/PlayerScreen.kt`, `FullscreenPlayer.kt`, `PlayerControls.kt`, `player/` |
 | Shorts player | `ui/screens/ShortsPlayer.kt` |
 | "Mark a segment": send sponsors, intros, credits… to SponsorBlock (anonymous) | `ui/components/SegmentMarker.kt`, `data/CommunityApis.kt` |

@@ -574,5 +574,32 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">Quoi de neuf dans Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Super !</string>
-    <string name="whats_new_body">🐾 Un tout nouveau Pour toi\n\n• Il apprend de ce que tu regardes vraiment : une vidéo fermée au bout de quelques secondes compte à peine, les J’aime et les vidéos gardées comptent beaucoup.\n• Il comprend des sujets, pas seulement des chaînes.\n• Choisis tes goûts dans Réglages › Pour toi et historique.\n• Fini les tendances que tout le monde reçoit : la découverte vient de tes propres sujets, et chaque téléphone a son propre fil.\n• Une vidéo montrée encore et encore sans être ouverte finit par partir.\n\n📜 Cette page s’affiche une fois après chaque mise à jour.</string>
+    <string name="whats_new_body">🎧 Ramène ta musique
+
+• Réglages › Sauvegarde › Importer des playlists : exporte ta bibliothèque Spotify, Deezer, Apple Music… avec TuneMyMusic (CSV ou TXT), puis choisis les playlists à importer.
+• Chaque morceau est retrouvé sur YouTube Music ; les artistes suivis et les albums sauvegardés vont dans ta bibliothèque.
+• Les doublons sont fusionnés, et ce qui est introuvable est listé.
+
+🐾 Depuis la 2.7 : un tout nouveau Pour toi qui apprend de ce que tu regardes vraiment, part de tes goûts (Réglages › Pour toi et historique) et donne à chaque téléphone son propre fil.</string>
+
+    <!-- Import TuneMyMusic (PlaylistImport.kt) -->
+    <string name="import_playlists">Importer des playlists</string>
+    <string name="import_playlists_text">Spotify, Deezer, Apple Music… : un export TuneMyMusic (CSV ou TXT)</string>
+    <string name="import_pick_title">Quoi importer ?</string>
+    <string name="import_pick_estimate">%1$d recherches · environ %2$d min</string>
+    <string name="import_pick_all">Tout</string>
+    <string name="import_start">Importer</string>
+    <string name="import_empty">Aucun morceau trouvé dans ce fichier</string>
+    <string name="import_running">Recherche de ta musique sur YouTube Music… %1$d / %2$d</string>
+    <string name="import_stop">Arrêter</string>
+    <string name="import_done_title">Import terminé</string>
+    <string name="import_done_text">Morceaux ajoutés : %1$d
+Playlists : %2$d
+Artistes sauvegardés : %3$d
+Albums sauvegardés : %4$d
+Doublons fusionnés : %5$d</string>
+    <string name="import_not_found">Pas trouvés (%1$d) :</string>
+    <string name="import_stopped">Arrêté : ce qui a été trouvé est gardé.</string>
+    <string name="import_refused">YouTube refuse les recherches pour l’instant : importe le reste plus tard.</string>
+    <string name="import_ok">OK</string>
 </resources>

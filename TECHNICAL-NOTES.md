@@ -706,6 +706,34 @@ users: the point is to take them from the videos really watched.
 
 ---
 
+## 8 terdecies. Import from TuneMyMusic (2.8.0)
+
+- `data/PlaylistImport.kt`. TuneMyMusic doesn't document its file formats; a real Spotify export
+  (1219 lines) had `Track name, Artist name, Album, Playlist name, Type, ISRC, Spotify - id`, UTF-8
+  with a BOM, every field quoted, `Type` = Playlist / Favorite (liked songs, playlist "Favorite
+  Songs") / Artist (followed artists: the name is in `Track name`, no artist) / Album (saved albums:
+  the album name in `Track name`). Artist names can contain `,` or `&` ("OH, HAYIR!", "W&W"): never
+  split them. The parser finds columns by name, picks `,` `;` or tab from the header, handles quotes;
+  without a known header it reads "Artist - Title" lines (TXT).
+- `preview()` → `Preview.groups` (one per playlist and kind, duplicates already merged in the
+  counts) → `PlaylistImportPicker` (checkboxes, searches and minutes estimate; everything ticked if
+  ≤ 150 searches, nothing otherwise) → `start()`.
+- One search per distinct song (`key` = normalized artist + title without feat./remaster/live…),
+  `Music.songs` then, if nothing matches, `YouTubeRepository.search` (ASMR, podcasts…). Best result:
+  title word overlap + 0.35 if an artist word is in the channel or title, accepted from 0.6. Artists:
+  `Music.artists` (exact normalized name first); albums: `Music.collections(…, Albums)` (≥ 0.8).
+  `PACE_MS` = 2 s between searches; 5 failures in a row (errors or timeouts, not "no match") stop the
+  import (`Result.refused`). Results are merged at the end, even after a stop: `Playlists.merge` per
+  playlist (skipping songs already there), `MusicLibrary.addAll` for artists and albums.
+- `busy` keeps the app from clearing itself in the background (`MainActivity.busy`,
+  `PlaybackService.onTaskRemoved`). UI: `PlaylistImportProgress` under the Settings row,
+  `PlaylistImportSummary` dialog at the end.
+- Checked on the Pixel 10 emulator with the real export (pushed to Download): picker groups, progress,
+  summary. A full import of that file would be ~1100 searches (~40 min): import a few playlists at a
+  time.
+
+---
+
 ## 9. Compose and Android pitfalls to remember
 
 - A **`derivedStateOf` read only in a `SideEffect`** doesn't trigger recomposition: read it during

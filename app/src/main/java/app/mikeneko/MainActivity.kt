@@ -28,6 +28,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import app.mikeneko.data.PlaylistImport
 import app.mikeneko.data.Downloads
 import app.mikeneko.data.youtubeLinkIn
 import app.mikeneko.player.PlaybackService
@@ -123,7 +124,7 @@ class MainActivity : ComponentActivity() {
 
     private fun busy() = PlayerHolder.isPlaying.value ||
         Downloads.tasks.value.any { it.status == Downloads.Status.EN_COURS || it.status == Downloads.Status.EN_ATTENTE } ||
-        PlaylistDownloads.busy
+        PlaylistDownloads.busy || PlaylistImport.busy
 
     /** En arrière-plan : toutes les minutes, on regarde si l'appli travaille encore ; 15 min sans rien → on vide. */
     private fun watchIdle() {

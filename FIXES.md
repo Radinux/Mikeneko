@@ -153,6 +153,7 @@ Items marked "to check on the phone" are built and published but not confirmed o
 - [x] 2.1.0: automatic updates from GitHub (Radinux/Mikeneko-releases) — 2.1.1 downloaded and installed itself; Play Protect triggers on every version (expected, see the notes)
 - [x] 2.1.1: automatic download from GitHub — seen on the phone ("Mikeneko 2.1.1 is ready")
 - [ ] 2.1.2 (arrived on its own on the phone): "Update" pill as soon as the APK is downloaded; Settings › About buttons no longer squashed ("What's new" letter by letter)
+- [ ] 2.8.0: import a TuneMyMusic export (CSV / TXT): pick playlists, songs found on YouTube Music, artists and albums to the library, duplicates merged — verified on the emulator with a real Spotify export (ASMR + Favorite Albums: 8/9 songs, 11/12 albums); to check on the phone with a bigger import
 - [ ] 2.7.0: new "For you" (interest profile from watch time, likes, saved videos, topics; tastes page on a new phone; no more shared trending feed; fatigue) — to check on the phone
 - [ ] 2.7.0: "What's new" page once after an update — to check on the phone (it should show right after updating to 2.7.0)
 - [ ] 2.6.7: releases and update checks moved to Radinux/Mikeneko (public source) — to check on the phone: the next update arrives from the new repository
@@ -185,10 +186,8 @@ Items marked "to check on the phone" are built and published but not confirmed o
 - [ ] 2.1.3: big code cleanup, nothing should change on screen. Go around: home, subscriptions (channel row, filters, unsubscribe), portrait / landscape / full screen player, mini player, music (pill, window, queue, lyrics, album / artist / search pages), comments (read-only), settings — to check on the phone
 
 ### Music: next ideas (Nov 7)
-- [ ] Import playlists exported with TuneMyMusic (Spotify, Deezer…) as a file: find every track on
-      YouTube Music (one search per track, paced)
-- [ ] Last.fm "listeners also like" (`track.getSimilar` / `artist.getSimilar`) to enrich the music
-      "For you" (free API key, non-commercial, credit Last.fm); ListenBrainz as the open alternative
+- [x] Import playlists exported with TuneMyMusic (Spotify, Deezer…) as a CSV or TXT file, duplicates
+      merged (2.8.0)
 
 ### Subscriptions and backup (Nov 4)
 - [x] 1.14.7: the Google Takeout import found no channel (CSV header in French) — verified on the emulator

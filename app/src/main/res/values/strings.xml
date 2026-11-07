@@ -574,5 +574,32 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">What’s new in Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Nice!</string>
-    <string name="whats_new_body">🐾 A brand new For you\n\n• It learns from what you really watch: a video closed after a few seconds barely counts, likes and saved videos count a lot.\n• It understands topics, not only channels.\n• Pick your tastes in Settings › For you and history.\n• No more trending videos that everyone gets: discovery comes from your own topics, and every phone gets its own feed.\n• A video shown again and again without being opened slowly goes away.\n\n📜 This page shows up once after each update.</string>
+    <string name="whats_new_body">🎧 Bring your music
+
+• Settings › Backup › Import playlists: export your Spotify, Deezer, Apple Music… library with TuneMyMusic (CSV or TXT), then pick which playlists to import.
+• Every song is found on YouTube Music; liked artists and saved albums go to your library.
+• Duplicates are merged, and what can’t be found is listed.
+
+🐾 Since 2.7: a brand new For you that learns from what you really watch, starts from your tastes (Settings › For you and history) and gives every phone its own feed.</string>
+
+    <!-- Import TuneMyMusic (PlaylistImport.kt) -->
+    <string name="import_playlists">Import playlists</string>
+    <string name="import_playlists_text">Spotify, Deezer, Apple Music…: a TuneMyMusic export (CSV or TXT)</string>
+    <string name="import_pick_title">What to import?</string>
+    <string name="import_pick_estimate">%1$d searches · about %2$d min</string>
+    <string name="import_pick_all">All</string>
+    <string name="import_start">Import</string>
+    <string name="import_empty">No songs found in this file</string>
+    <string name="import_running">Finding your music on YouTube Music… %1$d / %2$d</string>
+    <string name="import_stop">Stop</string>
+    <string name="import_done_title">Import finished</string>
+    <string name="import_done_text">Songs added: %1$d
+Playlists: %2$d
+Artists saved: %3$d
+Albums saved: %4$d
+Duplicates merged: %5$d</string>
+    <string name="import_not_found">Not found (%1$d):</string>
+    <string name="import_stopped">Stopped: what was found is kept.</string>
+    <string name="import_refused">YouTube is refusing searches for now: import the rest later.</string>
+    <string name="import_ok">OK</string>
 </resources>
