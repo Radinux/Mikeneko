@@ -212,7 +212,7 @@ fun MusicDockWindow(
                     }
                     .graphicsLayer { alpha = ((state.expand.value - 0.3f) / 0.45f).coerceIn(0f, 1f) },
             ) {
-                PlayerWindowContent(state, onDownload, onOpenArtist, onOpenAlbum)
+                PlayerWindowContent(state, backdrop, onDownload, onOpenArtist, onOpenAlbum)
             }
         }
     }

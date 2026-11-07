@@ -33,7 +33,9 @@ val liquidWaveSupported: Boolean by lazy {
 /**
  * Une vague en liquid glass (2.6.4) : sous sa crête, le fond de [backdrop] est réfracté comme sous
  * les boutons en verre (bord bombé, petite frange arc-en-ciel), teinté de [color], avec un reflet
- * sur la crête, et le verre s'efface vers le bas.
+ * sur la crête, et le verre s'efface vers le bas. Dans la fenêtre musique, [backdrop] est la page
+ * derrière la fenêtre (2.6.6) : avec le voile de la fenêtre, la vague le redoublait (opaque, et la
+ * réfraction d'un dégradé flou ne se voit pas).
  *
  * [levels] : une hauteur entre 0 et 1 par point de la vague ([WAVE_POINTS] points, de gauche à
  * droite), modifiée sur place ; [frame] est relu à chaque image pour redessiner sans recomposer.
@@ -139,11 +141,11 @@ half4 main(float2 coord) {
     float3 glass = float3(red, green.g, blue);
     // De la crête vers le bas de la vague : la teinte puis le verre s'effacent
     float depth = clamp((coord.y - cy) / max(size.y - cy, 1.0), 0.0, 1.0);
-    float3 col = mix(glass, tint.rgb, 0.5 * (1.0 - depth));
+    float3 col = mix(glass * 0.92, tint.rgb, 0.26 * (1.0 - depth));
     // Reflet sur la crête, clair et un peu teinté
     float rim = 1.0 - smoothstep(0.0, 3.0, d);
-    col = mix(col, mix(float3(1.0), tint.rgb, 0.35), rim * 0.85);
-    float alpha = edge * (1.0 - smoothstep(0.15, 0.95, depth));
+    col = mix(col, mix(float3(1.0), tint.rgb, 0.35), rim * 0.8);
+    float alpha = edge * (1.0 - smoothstep(0.1, 1.0, depth)) * 0.9;
     return half4(half3(col * alpha), half(alpha));
 }
 """

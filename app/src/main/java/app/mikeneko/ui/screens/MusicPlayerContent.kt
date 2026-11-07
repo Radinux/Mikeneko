@@ -126,6 +126,8 @@ import kotlinx.coroutines.launch
 @Composable
 internal fun PlayerWindowContent(
     state: MusicPlayerState,
+    /** La page derrière la fenêtre : c'est elle que réfracte la vague en verre (2.6.6). */
+    page: Backdrop,
     onDownload: (String) -> Unit,
     onOpenArtist: (ChannelItem) -> Unit,
     onOpenAlbum: (MusicCollection) -> Unit,
@@ -307,7 +309,7 @@ internal fun PlayerWindowContent(
                 SpectrumWave(
                     state.open,
                     coverColor,
-                    glass,
+                    page,
                     Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(maxHeight * if (landscape) 0.46f else 0.28f),
                 )
             }
