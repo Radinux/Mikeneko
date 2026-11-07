@@ -792,6 +792,9 @@ users: the point is to take them from the videos really watched.
   one animates to a full pill in `primary`. The home categories, search sort (with the Filters chip
   apart), search filter options, music library filters and kinds, channel tabs, subscriptions filters.
 - Lighter colors: `secondaryContainer` = cream mixed 30 % with the accent's light color, text `Encre`.
+- 2.10.1: Subscribe and the bell are one split pill: `ConnectedChip(first = true, last = !subscribed,
+  pillWhenSelected = false)` + `BellButton` (a `ConnectedChip` with an icon only, `last = true`).
+  `WhatsNew.pending` ignores patch updates (same major.minor).
 
 ---
 

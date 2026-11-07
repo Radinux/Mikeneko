@@ -308,11 +308,15 @@ fun ChannelContent(channel: ChannelItem, onOpen: (VideoItem) -> Unit) {
                     }
                     subscribersText(info?.subscribers ?: channel.subscribers)?.let { Text(it, color = Pelage.Gris, fontSize = 13.sp) }
                     if (id != null) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Capsule(
+                        // Une pilule découpée (2.10.1) : « S'abonné » | cloche ; non abonné, une pilule seule
+                        Row(horizontalArrangement = Arrangement.spacedBy(CONNECTED_GAP)) {
+                            ConnectedChip(
                                 stringResource(if (subscribed) R.string.subscribed else R.string.subscribe),
                                 selected = subscribed,
+                                first = true,
+                                last = !subscribed,
                                 icon = if (subscribed) MkIcons.Check else MkIcons.Plus,
+                                pillWhenSelected = false,
                             ) {
                                 if (subscribed) {
                                     store.remove(id)
@@ -321,7 +325,7 @@ fun ChannelContent(channel: ChannelItem, onOpen: (VideoItem) -> Unit) {
                                 }
                             }
                             // La cloche des nouvelles vidéos (2.10.0), une fois abonné
-                            if (subscribed) BellButton(id, info?.name ?: channel.name, Modifier.padding(start = 4.dp))
+                            if (subscribed) BellButton(id, info?.name ?: channel.name)
                         }
                     }
                     info?.description?.takeIf { it.isNotBlank() }?.let { ChannelDescription(it) }

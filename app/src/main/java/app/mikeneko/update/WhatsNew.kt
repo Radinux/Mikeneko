@@ -51,7 +51,7 @@ import app.mikeneko.ui.theme.jellyClickable
 
 /**
  * La page « Quoi de neuf » (2.7.0) : au premier lancement après une mise à jour (pas après une
- * première installation), une fois par version. Le texte est dans l'APK (`whats_new_body`, traduit),
+ * première installation), une fois par version moyenne (pas pour une simple correction, 2.10.1). Le texte est dans l'APK (`whats_new_body`, traduit),
  * donc elle marche sans réseau ; il est à réécrire à chaque version qui apporte quelque chose.
  */
 object WhatsNew {
@@ -64,6 +64,11 @@ object WhatsNew {
         val current = version(context)
         val seen = prefs.getString("vue", null)
         if (seen == current) return false
+        // Une version de correction (2.10.0 → 2.10.1) : même page qu'avant, on ne la remontre pas
+        if (seen != null && seen.split('.').take(2) == current.split('.').take(2)) {
+            markSeen(context)
+            return false
+        }
         if (seen == null) {
             val info = runCatching { context.packageManager.getPackageInfo(context.packageName, 0) }.getOrNull()
             if (info == null || info.firstInstallTime == info.lastUpdateTime) {

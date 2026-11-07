@@ -404,11 +404,16 @@ fun ConnectedChip(
     last: Boolean,
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
+    /** false : choisie, elle garde ses petits coins intérieurs (bouton partagé : S'abonner | cloche). */
+    pillWhenSelected: Boolean = true,
+    /** Pour une capsule sans texte (icône seule). */
+    description: String? = null,
     onClick: () -> Unit,
 ) {
     val round = CONNECTED_HEIGHT / 2
-    val start by animateDpAsState(if (selected || first) round else CONNECTED_INNER, spring(stiffness = Spring.StiffnessMediumLow), label = "coin début")
-    val end by animateDpAsState(if (selected || last) round else CONNECTED_INNER, spring(stiffness = Spring.StiffnessMediumLow), label = "coin fin")
+    val pill = selected && pillWhenSelected
+    val start by animateDpAsState(if (pill || first) round else CONNECTED_INNER, spring(stiffness = Spring.StiffnessMediumLow), label = "coin début")
+    val end by animateDpAsState(if (pill || last) round else CONNECTED_INNER, spring(stiffness = Spring.StiffnessMediumLow), label = "coin fin")
     val colors = MaterialTheme.colorScheme
     val container by animateColorAsState(if (selected) colors.primary else colors.secondaryContainer, label = "capsule")
     val content = if (selected) colors.onPrimary else colors.onSecondaryContainer
@@ -420,12 +425,12 @@ fun ConnectedChip(
         contentColor = content,
     ) {
         Row(
-            Modifier.padding(horizontal = 22.dp),
+            Modifier.padding(horizontal = if (text.isEmpty()) 14.dp else 22.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
         ) {
-            if (icon != null) Icon(icon, null, modifier = Modifier.size(18.dp))
-            Text(text, fontSize = 14.sp, fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Bold, maxLines = 1)
+            if (icon != null) Icon(icon, description, modifier = Modifier.size(18.dp))
+            if (text.isNotEmpty()) Text(text, fontSize = 14.sp, fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Bold, maxLines = 1)
         }
     }
 }

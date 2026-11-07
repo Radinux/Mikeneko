@@ -1,5 +1,7 @@
 package app.mikeneko.ui.screens
 
+import app.mikeneko.ui.components.CONNECTED_GAP
+import app.mikeneko.ui.components.ConnectedChip
 import app.mikeneko.ui.components.BellButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.ButtonDefaults
@@ -191,18 +193,24 @@ private fun VideoChannelRow(info: NowPlaying, onOpenChannel: (ChannelItem) -> Un
             }
         }
         if (id != null) {
-            Capsule(
-                stringResource(if (subscribed) R.string.subscribed else R.string.subscribe),
-                selected = subscribed,
-                icon = if (subscribed) MkIcons.Check else MkIcons.Plus,
-            ) {
-                if (subscribed) {
-                    store.remove(id)
-                } else {
-                    store.addAll(listOf(Subscription(info.channel, "https://www.youtube.com/channel/$id", id, info.channelAvatar)))
+            // Une pilule découpée (2.10.1) : « S'abonné » | cloche des notifications ; non abonné, une pilule seule
+            Row(horizontalArrangement = Arrangement.spacedBy(CONNECTED_GAP)) {
+                ConnectedChip(
+                    stringResource(if (subscribed) R.string.subscribed else R.string.subscribe),
+                    selected = subscribed,
+                    first = true,
+                    last = !subscribed,
+                    icon = if (subscribed) MkIcons.Check else MkIcons.Plus,
+                    pillWhenSelected = false,
+                ) {
+                    if (subscribed) {
+                        store.remove(id)
+                    } else {
+                        store.addAll(listOf(Subscription(info.channel, "https://www.youtube.com/channel/$id", id, info.channelAvatar)))
+                    }
                 }
+                if (subscribed) BellButton(id, info.channel)
             }
-            if (subscribed) BellButton(id, info.channel, Modifier.padding(start = 4.dp)) // notifications (2.10.0)
         }
     }
 }

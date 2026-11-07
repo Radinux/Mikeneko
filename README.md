@@ -70,6 +70,8 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
   subscriptions filters) is a **connected Material 3 group**: capsules almost touching, rounded ends,
   the selected one a full pill in the accent color; a bit wider.
 - **Lighter colors**: tonal buttons and unselected capsules are a light cream tinted with the accent.
+- 2.10.1: **Subscribed and the bell form one split pill** (video and channel pages); the "What's new"
+  page no longer shows again for a bug-fix version.
 
 ### 2.9
 
