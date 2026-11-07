@@ -61,6 +61,7 @@ import app.mikeneko.data.Comments
 import app.mikeneko.data.VideoItem
 import app.mikeneko.player.PlayerHolder
 import app.mikeneko.settings.AppSettings
+import app.mikeneko.update.WhatsNewSheet
 import app.mikeneko.ui.components.CommentsPanel
 import app.mikeneko.ui.components.DOCK_RAIL_SPACE
 import app.mikeneko.ui.components.FloatingDock
@@ -571,6 +572,8 @@ fun MikenekoRoot(
             )
         }
 
+        // « Quoi de neuf » après une mise à jour (2.7.0), au-dessus de tout, une fois par version
+        WhatsNewSheet(backdrop)
     }
 }
 

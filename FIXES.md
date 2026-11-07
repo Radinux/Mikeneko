@@ -153,6 +153,8 @@ Items marked "to check on the phone" are built and published but not confirmed o
 - [x] 2.1.0: automatic updates from GitHub (Radinux/Mikeneko-releases) — 2.1.1 downloaded and installed itself; Play Protect triggers on every version (expected, see the notes)
 - [x] 2.1.1: automatic download from GitHub — seen on the phone ("Mikeneko 2.1.1 is ready")
 - [ ] 2.1.2 (arrived on its own on the phone): "Update" pill as soon as the APK is downloaded; Settings › About buttons no longer squashed ("What's new" letter by letter)
+- [ ] 2.7.0: new "For you" (interest profile from watch time, likes, saved videos, topics; tastes page on a new phone; no more shared trending feed; fatigue) — to check on the phone
+- [ ] 2.7.0: "What's new" page once after an update — to check on the phone (it should show right after updating to 2.7.0)
 - [ ] 2.6.7: releases and update checks moved to Radinux/Mikeneko (public source) — to check on the phone: the next update arrives from the new repository
 - [x] 2.6.6: glass wave refracting the page behind the window, more transparent (2.6.4's glass didn't show and the wave was quite opaque) — verified on the phone
 - [x] 2.6.5: landscape dock centred on the screen (status bar hidden) or between the status bar and the bottom (shown) — verified on the phone
@@ -181,6 +183,12 @@ Items marked "to check on the phone" are built and published but not confirmed o
 - [ ] 2.1.8: the player's "Like" thumb turns filled when the video is liked (on top of the orange capsule) — to check on the phone
 - [ ] 2.1.4 → 2.1.6: in portrait, "next" touched the settings button; 2.1.4 moved them far too high, 2.1.6 moves them up just enough (6 dp gap) — to check on the phone
 - [ ] 2.1.3: big code cleanup, nothing should change on screen. Go around: home, subscriptions (channel row, filters, unsubscribe), portrait / landscape / full screen player, mini player, music (pill, window, queue, lyrics, album / artist / search pages), comments (read-only), settings — to check on the phone
+
+### Music: next ideas (Nov 7)
+- [ ] Import playlists exported with TuneMyMusic (Spotify, Deezer…) as a file: find every track on
+      YouTube Music (one search per track, paced)
+- [ ] Last.fm "listeners also like" (`track.getSimilar` / `artist.getSimilar`) to enrich the music
+      "For you" (free API key, non-commercial, credit Last.fm); ListenBrainz as the open alternative
 
 ### Subscriptions and backup (Nov 4)
 - [x] 1.14.7: the Google Takeout import found no channel (CSV header in French) — verified on the emulator

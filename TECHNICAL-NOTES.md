@@ -60,6 +60,9 @@ Code comments are in French.
      (SHA-256 `0f0b6e19…`).
   3. Commit, push, then publish the release on this repository (section 8 quinquies).
   4. Update `README.md` ("What's new") and `FIXES.md`.
+  5. For a version that brings something users should know about, rewrite `whats_new_body` (EN in
+     `values/strings.xml`, FR in `values-fr/strings.xml`): the "What's new" page shows it once after
+     the update (section 8 duodecies).
 - **After every install**, launch the app and check that it runs (`pidof app.mikeneko`,
   `dumpsys dropbox --print data_app_crash` for crashes). 1.12.0 crashed at startup and the error was
   only noticed afterwards.
@@ -654,6 +657,52 @@ A full screen player like YouTube's; next shorts = the original list, then the s
 - 2.6.6: the wave must refract **the page behind the window** (`MusicDockWindow`'s `Backdrop`, passed
   to `PlayerWindowContent` as `page`), not the window veil's `Backdrop`. With the veil, it redrew it on
   top of itself: opaque, and the refraction of a blurred gradient is invisible.
+
+---
+
+## 8 duodecies. New "For you" and "What's new" page (2.7.0)
+
+Inspired by what the big platforms published: YouTube (two stages, candidates then ranking, aimed at
+watch time), TikTok (completion as a strong signal, interests picked at the start, diversity and
+exploration), X's open-sourced algorithm (fatigue for things shown without engagement). Collaborative
+filtering is impossible locally, but YouTube's related videos already are one, computed over all its
+users: the point is to take them from the videos really watched.
+
+- `data/Interests.kt`: the profile, computed on demand. `watchWeight(entry)` = engagement × recency
+  (half-life 30 days); engagement from `WatchHistory.Entry.watched` (< 10 % → 0.1, ≥ 80 % → 1,
+  unknown → 0.6). Likes +2, "Watch later" and video playlists +1, subscriptions +0.8 on the channel,
+  "Not interested" −1.5 on the channel and −0.9 on its title's words (fading over 60 days), chosen
+  tastes +1.5 on their queries' words (weaker as history grows: ÷ (1 + strength/10)). Topics = title
+  words + tags, lowercased, accents removed, without stop words (EN/FR + YouTube noise) nor the
+  channel's own name; a word seen on a single channel is damped. `topicMatch` / `channelMatch` give
+  −1…1.
+- `data/WatchHistory.kt`: entries keep `watched` (max fraction, from `PlayerHolder.saveVideoPosition`
+  → `recordProgress`) and up to 10 `tags`; 200 entries (60 before), only the 60 most recent keep their
+  related videos (file size); `loaded` tells when the file has been read.
+- `data/Tastes.kt`: 20 themes (`taste_*` labels, `taste_q_*` query arrays, EN/FR), the chosen set,
+  `skipped`, and a per-install `seed`.
+- `data/Impressions.kt`: fatigue. `HomeContent` reports the For you cards that become visible
+  (at most once per 30 min per video); score × 0.55^(views − 1), dropped after 5 views, forgotten
+  after 10 days; saved when the feed leaves the screen; cleared with the history.
+- `data/ForYou.kt`: personal candidates = related videos of the 25 most weighted watched entries +
+  subscriptions' new uploads; score × (1 + 0.9·topicMatch + 0.5·channelMatch) × random 0.85–1.15 ×
+  `Feedback.penalty` × fatigue; `diversify`. Discovery (1 in 5, `mix`): a random query of 1 chosen
+  taste (3 when cold), one strong profile topic plus the word that most often goes with it in watched
+  titles, surprise topics to fill a budget of 3 searches (4 when cold), and "one thing leads to
+  another"; results filtered (views, ≥ 60 s), sorted by topic match + randomness, 6 per query. The
+  random generator is seeded with `Tastes.seed` (stable for 10 min unless refreshing). No more
+  `YouTubeRepository.home()` (trending kiosks + fixed searches, the same for everyone).
+- `ui/components/TastesPicker.kt`: `TasteChips` (clay capsules, in the list = the glass source, so no
+  glass) and `TastesPicker`, shown by `HomeContent` instead of the For you feed when history is
+  loaded and empty, no taste is chosen and it wasn't skipped (no request meanwhile). Settings ›
+  For you and history › Your tastes uses `TasteChips` too.
+- `update/WhatsNew.kt`: `WhatsNew.pending` compares the installed versionName with the last one seen
+  (prefs `nouveautes`); a first install (`firstInstallTime == lastUpdateTime`) counts as seen.
+  `WhatsNewSheet` (frosted glass panel over a veil, in `MikenekoRoot` above everything) shows
+  `whats_new_title` / `whats_new_body`.
+- Checked on the Pixel 10 emulator (fresh install): tastes page, then a feed from the chosen tastes
+  ("Because you like Science"), no crash. French strings: use ’ rather than `&apos;` (aapt fails on
+  an unescaped apostrophe).
 
 ---
 

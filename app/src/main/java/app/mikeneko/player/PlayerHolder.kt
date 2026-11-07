@@ -77,7 +77,9 @@ object PlayerHolder {
         val p = player ?: return
         val c = appContext ?: return
         if (p.mediaItemCount == 0) return
-        WatchPositions.save(c, owner, p.currentPosition, p.duration.takeIf { it != C.TIME_UNSET } ?: 0L)
+        val duration = p.duration.takeIf { it != C.TIME_UNSET } ?: 0L
+        WatchPositions.save(c, owner, p.currentPosition, duration)
+        WatchHistory.get(c).recordProgress(owner, p.currentPosition, duration) // le temps regardé nourrit le « Pour toi »
     }
 
     /** La vidéo [now] est maintenant celle du lecteur : sa position sera gardée. */

@@ -15,7 +15,7 @@ import org.json.JSONObject
  * ni aux abonnements (comme sur YouTube).
  */
 class Feedback private constructor(context: Context) {
-    data class Hidden(val url: String, val channelKey: String?, val at: Long)
+    data class Hidden(val url: String, val channelKey: String?, val at: Long, val title: String = "")
     data class Blocked(val key: String, val name: String)
 
     private val prefs = context.getSharedPreferences("retours", Context.MODE_PRIVATE)
@@ -47,7 +47,7 @@ class Feedback private constructor(context: Context) {
     }
 
     fun notInterested(video: VideoItem) {
-        _hidden.value = (listOf(Hidden(video.url, video.channelKey(), System.currentTimeMillis())) +
+        _hidden.value = (listOf(Hidden(video.url, video.channelKey(), System.currentTimeMillis(), video.title)) +
             _hidden.value.filterNot { it.url == video.url }).take(MAX_HIDDEN)
         saveHidden()
     }
@@ -76,7 +76,7 @@ class Feedback private constructor(context: Context) {
 
     private fun saveHidden() {
         val array = JSONArray()
-        _hidden.value.forEach { array.put(JSONObject().put("url", it.url).put("chaine", it.channelKey ?: "").put("at", it.at)) }
+        _hidden.value.forEach { array.put(JSONObject().put("url", it.url).put("chaine", it.channelKey ?: "").put("at", it.at).put("titre", it.title)) }
         prefs.edit().putString("masquees", array.toString()).apply()
     }
 
@@ -90,7 +90,7 @@ class Feedback private constructor(context: Context) {
         val array = JSONArray(prefs.getString("masquees", "[]"))
         (0 until array.length()).map { i ->
             val o = array.getJSONObject(i)
-            Hidden(o.getString("url"), o.optString("chaine").ifEmpty { null }, o.optLong("at"))
+            Hidden(o.getString("url"), o.optString("chaine").ifEmpty { null }, o.optLong("at"), o.optString("titre"))
         }
     }.getOrDefault(emptyList())
 

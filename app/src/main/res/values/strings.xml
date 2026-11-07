@@ -540,4 +540,39 @@
     <string name="only_channel">Only %1$s</string>
     <string name="unsubscribe">Unsubscribe</string>
     <string name="unsubscribed">Unsubscribed from %1$s</string>
+
+    <!-- Les goûts du « Pour toi » (Tastes.kt) : nom et recherches de chaque thème -->
+    <string name="taste_cooking">Cooking</string>
+    <string name="taste_gaming">Video games</string>
+    <string name="taste_science">Science</string>
+    <string name="taste_tech">Tech</string>
+    <string name="taste_music">Music</string>
+    <string name="taste_comedy">Comedy</string>
+    <string name="taste_sport">Sport</string>
+    <string name="taste_travel">Travel</string>
+    <string name="taste_nature">Animals &amp; nature</string>
+    <string name="taste_history">History</string>
+    <string name="taste_diy">DIY &amp; crafts</string>
+    <string name="taste_art">Art &amp; drawing</string>
+    <string name="taste_cars">Cars</string>
+    <string name="taste_movies">Movies &amp; series</string>
+    <string name="taste_anime">Anime &amp; manga</string>
+    <string name="taste_fitness">Fitness</string>
+    <string name="taste_space">Space</string>
+    <string name="taste_podcasts">Podcasts &amp; interviews</string>
+    <string name="taste_fashion">Fashion &amp; beauty</string>
+    <string name="taste_learning">Learning</string>
+    <string name="tastes_title">What do you like?</string>
+    <string name="tastes_text">Pick a few topics: your For you starts from them, then learns from what you watch.</string>
+    <string name="tastes_start">Start</string>
+    <string name="tastes_skip">Skip</string>
+    <string name="settings_tastes">Your tastes</string>
+    <string name="settings_tastes_none">None chosen</string>
+    <string name="reason_taste">Because you like %1$s</string>
+    <string name="reason_topic">Because you watch %1$s</string>
+
+    <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
+    <string name="whats_new_title">What’s new in Mikeneko %1$s ✨</string>
+    <string name="whats_new_ok">Nice!</string>
+    <string name="whats_new_body">🐾 A brand new For you\n\n• It learns from what you really watch: a video closed after a few seconds barely counts, likes and saved videos count a lot.\n• It understands topics, not only channels.\n• Pick your tastes in Settings › For you and history.\n• No more trending videos that everyone gets: discovery comes from your own topics, and every phone gets its own feed.\n• A video shown again and again without being opened slowly goes away.\n\n📜 This page shows up once after each update.</string>
 </resources>

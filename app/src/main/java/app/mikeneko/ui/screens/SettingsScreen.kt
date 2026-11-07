@@ -69,6 +69,9 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import app.mikeneko.R
 import app.mikeneko.data.Comments
+import app.mikeneko.ui.components.TasteChips
+import app.mikeneko.data.Impressions
+import app.mikeneko.data.Tastes
 import app.mikeneko.data.Feedback
 import app.mikeneko.data.ForYou
 import app.mikeneko.data.MikenekoBackup
@@ -350,7 +353,41 @@ private fun HistorySection(context: Context) {
     val blocked by feedback.blocked.collectAsState()
     var blockedOpen by remember { mutableStateOf(false) }
     var confirm by remember { mutableStateOf(false) }
+    val tastes = remember { Tastes.get(context) }
+    val chosenTastes by tastes.chosen.collectAsState()
+    var tastesOpen by remember { mutableStateOf(false) }
     Section(stringResource(R.string.settings_section_foryou)) {
+        // Les goûts du « Pour toi » (2.7.0) : les thèmes d'où part le fil
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .heightIn(min = 60.dp)
+                .clickable(role = Role.Button) { tastesOpen = !tastesOpen }
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(MkIcons.Heart, null, tint = Color.White, modifier = Modifier.size(22.dp))
+            Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
+                Text(stringResource(R.string.settings_tastes), color = Pelage.Texte, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                val labels = Tastes.ALL.filter { it.id in chosenTastes }.map { stringResource(it.label) }
+                Text(
+                    labels.joinToString(", ").ifEmpty { stringResource(R.string.settings_tastes_none) },
+                    color = if (labels.isEmpty()) Secondary else Pelage.RouxClair,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Icon(if (tastesOpen) MkIcons.ChevronDown else MkIcons.ChevronRight, null, tint = Secondary, modifier = Modifier.size(18.dp))
+        }
+        AnimatedVisibility(tastesOpen, enter = expandVertically(), exit = shrinkVertically()) {
+            TasteChips(chosenTastes, Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, bottom = 14.dp)) { id ->
+                tastes.toggle(id)
+                ForYou.clearCache()
+            }
+        }
+        Divider()
         SwitchRow(MkIcons.Clock, stringResource(R.string.settings_history_pause), stringResource(R.string.settings_history_pause_text), paused) {
             AppSettings.setHistoryPaused(it)
         }
@@ -426,6 +463,7 @@ private fun HistorySection(context: Context) {
                 TextButton(onClick = {
                     WatchHistory.get(context).clear()
                     WatchPositions.clear(context)
+                    Impressions.get(context).clear()
                     SubscriptionStore.get(context).clearWatched()
                     ForYou.clearCache()
                     confirm = false

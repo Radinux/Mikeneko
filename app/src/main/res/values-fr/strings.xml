@@ -540,4 +540,39 @@
     <string name="only_channel">Seulement %1$s</string>
     <string name="unsubscribe">Se désabonner</string>
     <string name="unsubscribed">Désabonné de %1$s</string>
+
+    <!-- Les goûts du « Pour toi » (Tastes.kt) : nom et recherches de chaque thème -->
+    <string name="taste_cooking">Cuisine</string>
+    <string name="taste_gaming">Jeux vidéo</string>
+    <string name="taste_science">Science</string>
+    <string name="taste_tech">Tech</string>
+    <string name="taste_music">Musique</string>
+    <string name="taste_comedy">Humour</string>
+    <string name="taste_sport">Sport</string>
+    <string name="taste_travel">Voyage</string>
+    <string name="taste_nature">Animaux et nature</string>
+    <string name="taste_history">Histoire</string>
+    <string name="taste_diy">Bricolage et création</string>
+    <string name="taste_art">Art et dessin</string>
+    <string name="taste_cars">Voitures</string>
+    <string name="taste_movies">Films et séries</string>
+    <string name="taste_anime">Anime et manga</string>
+    <string name="taste_fitness">Sport à la maison</string>
+    <string name="taste_space">Espace</string>
+    <string name="taste_podcasts">Podcasts et interviews</string>
+    <string name="taste_fashion">Mode et beauté</string>
+    <string name="taste_learning">Apprendre</string>
+    <string name="tastes_title">Qu’est-ce que tu aimes ?</string>
+    <string name="tastes_text">Choisis quelques sujets : ton Pour toi part de là, puis apprend de ce que tu regardes.</string>
+    <string name="tastes_start">C’est parti</string>
+    <string name="tastes_skip">Passer</string>
+    <string name="settings_tastes">Tes goûts</string>
+    <string name="settings_tastes_none">Aucun choisi</string>
+    <string name="reason_taste">Parce que tu aimes %1$s</string>
+    <string name="reason_topic">Parce que tu regardes %1$s</string>
+
+    <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
+    <string name="whats_new_title">Quoi de neuf dans Mikeneko %1$s ✨</string>
+    <string name="whats_new_ok">Super !</string>
+    <string name="whats_new_body">🐾 Un tout nouveau Pour toi\n\n• Il apprend de ce que tu regardes vraiment : une vidéo fermée au bout de quelques secondes compte à peine, les J’aime et les vidéos gardées comptent beaucoup.\n• Il comprend des sujets, pas seulement des chaînes.\n• Choisis tes goûts dans Réglages › Pour toi et historique.\n• Fini les tendances que tout le monde reçoit : la découverte vient de tes propres sujets, et chaque téléphone a son propre fil.\n• Une vidéo montrée encore et encore sans être ouverte finit par partir.\n\n📜 Cette page s’affiche une fois après chaque mise à jour.</string>
 </resources>

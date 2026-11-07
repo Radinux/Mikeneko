@@ -23,8 +23,9 @@ No ads · no Google account · with cat ears (=^･ω･^=)
 
 - 🗡️ **No ads**, with **SponsorBlock** skipping sponsors and intros on its own (the "paw swipe")
   and the **dislikes** from Return YouTube Dislike.
-- 🏯 **"For you" home feed** computed on the phone (history, suggestions, subscriptions) and a
-  **shorts blocker**.
+- 🏯 **"For you" home feed** computed on the phone: it learns your topics from what you really
+  watch, like and save, starts from the tastes you pick, and never shows everyone the same feed.
+  Plus a **shorts blocker**.
 - 📜 **Subscriptions without an account**: import from NewPipe, FreeTube or Google Takeout, filter by
   channel, "Unwatched".
 - 🎧 **A real music player**: YouTube Music (songs, albums, artists, playlists), auto Mix,
@@ -50,6 +51,17 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 `0F:0B:6E:19:0A:E7:2C:34:63:A0:20:03:61:12:9D:54:F9:F4:B8:6B:CF:DC:70:8A:09:99:3B:03:A7:96:83:DC`.
 
 ## 🎌 What's new ⸜(｡˃ ᵕ ˂ )⸝♡
+
+### 2.7
+
+- **A brand new "For you"**, still computed on the phone:
+  - it learns from what you **really watch** (a video closed after a few seconds barely counts),
+    your likes, "Watch later" and playlists, and understands **topics**, not only channels;
+  - on a new phone, you **pick your tastes** first (editable in Settings › For you and history);
+  - no more trending videos that everyone gets: discovery (about 1 video in 5) comes from your own
+    topics, and every phone gets its own feed;
+  - a video shown again and again without being opened slowly goes away.
+- A **"What's new" page** shows up once after each update.
 
 ### 2.6
 
@@ -157,7 +169,8 @@ Without the release key, your build is signed with the debug key.
 | yt-dlp downloads (in the Library): video, MP3, FLAC, Opus, M4A, sponsors cut out | `data/Downloads.kt`, `ui/screens/DownloadsScreen.kt` |
 | Settings: language, region, playback, SponsorBlock, history, bedtime reminder, backup, updates | `ui/screens/SettingsScreen.kt`, `settings/` |
 | Automatic updates from this repository's releases | `update/AppUpdates.kt` |
-| "For you": local algorithm (history + YouTube suggestions + subscriptions) | `data/ForYou.kt`, `data/WatchHistory.kt` |
+| "For you": local algorithm (interest profile, tastes, YouTube suggestions, subscriptions, fatigue) | `data/ForYou.kt`, `data/Interests.kt`, `data/Tastes.kt`, `data/Impressions.kt` |
+| "What's new" page after an update | `update/WhatsNew.kt` |
 
 ### 🔮 The liquid glass ✧･ﾟ
 

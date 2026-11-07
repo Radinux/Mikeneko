@@ -33,4 +33,106 @@
         <item>stand up comedy</item>
         <item>home gardening</item>
     </string-array>
+
+    <!-- Recherches de chaque goût du « Pour toi » (Tastes.kt) -->
+    <string-array name="taste_q_cooking">
+        <item>easy recipes</item>
+        <item>street food tour</item>
+        <item>homemade bread and pastry</item>
+    </string-array>
+    <string-array name="taste_q_gaming">
+        <item>video game review</item>
+        <item>indie games</item>
+        <item>speedrun explained</item>
+    </string-array>
+    <string-array name="taste_q_science">
+        <item>science explained</item>
+        <item>physics experiment</item>
+        <item>biology documentary</item>
+    </string-array>
+    <string-array name="taste_q_tech">
+        <item>tech review</item>
+        <item>how computers work</item>
+        <item>programming tutorial</item>
+    </string-array>
+    <string-array name="taste_q_music">
+        <item>live music session</item>
+        <item>music producer breakdown</item>
+        <item>acoustic cover</item>
+    </string-array>
+    <string-array name="taste_q_comedy">
+        <item>comedy sketch</item>
+        <item>stand up comedy</item>
+        <item>funny short film</item>
+    </string-array>
+    <string-array name="taste_q_sport">
+        <item>sports highlights</item>
+        <item>football tactics explained</item>
+        <item>extreme sports</item>
+    </string-array>
+    <string-array name="taste_q_travel">
+        <item>travel vlog</item>
+        <item>city walking tour</item>
+        <item>road trip</item>
+    </string-array>
+    <string-array name="taste_q_nature">
+        <item>wildlife documentary</item>
+        <item>cute animals</item>
+        <item>ocean life</item>
+    </string-array>
+    <string-array name="taste_q_history">
+        <item>history explained</item>
+        <item>ancient civilizations</item>
+        <item>world war documentary</item>
+    </string-array>
+    <string-array name="taste_q_diy">
+        <item>woodworking project</item>
+        <item>object restoration</item>
+        <item>diy home project</item>
+    </string-array>
+    <string-array name="taste_q_art">
+        <item>drawing timelapse</item>
+        <item>painting tutorial</item>
+        <item>digital art process</item>
+    </string-array>
+    <string-array name="taste_q_cars">
+        <item>car review</item>
+        <item>car restoration</item>
+        <item>motorsport highlights</item>
+    </string-array>
+    <string-array name="taste_q_movies">
+        <item>movie analysis</item>
+        <item>film review</item>
+        <item>behind the scenes movie</item>
+    </string-array>
+    <string-array name="taste_q_anime">
+        <item>anime review</item>
+        <item>manga explained</item>
+        <item>anime opening</item>
+    </string-array>
+    <string-array name="taste_q_fitness">
+        <item>home workout</item>
+        <item>calisthenics</item>
+        <item>running tips</item>
+    </string-array>
+    <string-array name="taste_q_space">
+        <item>space documentary</item>
+        <item>rocket launch</item>
+        <item>astronomy explained</item>
+    </string-array>
+    <string-array name="taste_q_podcasts">
+        <item>long form interview</item>
+        <item>podcast episode</item>
+        <item>debate</item>
+    </string-array>
+    <string-array name="taste_q_fashion">
+        <item>fashion haul</item>
+        <item>makeup tutorial</item>
+        <item>skincare routine</item>
+    </string-array>
+    <string-array name="taste_q_learning">
+        <item>language learning</item>
+        <item>how it\'s made</item>
+        <item>life hacks explained</item>
+    </string-array>
 </resources>

@@ -83,6 +83,11 @@ import app.mikeneko.R
 import app.mikeneko.data.ChannelItem
 import app.mikeneko.data.Feedback
 import app.mikeneko.data.ForYou
+import androidx.compose.runtime.DisposableEffect
+import app.mikeneko.ui.components.TastesPicker
+import app.mikeneko.data.Impressions
+import app.mikeneko.data.WatchHistory
+import app.mikeneko.data.Tastes
 import app.mikeneko.data.SearchHistory
 import app.mikeneko.data.VideoItem
 import app.mikeneko.data.YouTubeRepository
@@ -295,8 +300,19 @@ fun HomeContent(state: HomeState, onOpen: (VideoItem) -> Unit) {
         SearchResultsContent(state, feed.query, onOpen)
         return
     }
+    // « Pour toi » d'un téléphone neuf (2.7.0) : d'abord la page des goûts
+    val forYou = feed is HomeFeed.Section && feed.category.id == "for_you"
+    val tastes = remember { Tastes.get(context) }
+    val chosenTastes by tastes.chosen.collectAsState()
+    val tastesSkipped by tastes.skipped.collectAsState()
+    val watchHistory = remember { WatchHistory.get(context) }
+    val historyLoaded by watchHistory.loaded.collectAsState()
+    val historyEmpty = watchHistory.entries.collectAsState().value.isEmpty()
+    val needsTastes = forYou && historyLoaded && historyEmpty && chosenTastes.isEmpty() && !tastesSkipped
+
     var videos by remember(feed) { mutableStateOf(cachedFeed(context, feed) ?: state.lastShown[feed]) }
-    LaunchedEffect(feed) {
+    LaunchedEffect(feed, chosenTastes, tastesSkipped, needsTastes) {
+        if (needsTastes) return@LaunchedEffect // pas de requête tant que les goûts ne sont pas choisis
         val cached = cachedFeed(context, feed)
         if (cached != null) {
             videos = cached
@@ -319,6 +335,8 @@ fun HomeContent(state: HomeState, onOpen: (VideoItem) -> Unit) {
         videos?.let { list -> if (feed is HomeFeed.Search) list else list.filter(feedback::allows) }
     }
     SideEffect { Shorts.offer(shownVideos) } // un short ouvert d'ici : on glisse vers les shorts de cette liste
+    val impressions = remember { Impressions.get(context) }
+    DisposableEffect(Unit) { onDispose { impressions.save() } }
 
     // Nouvelle rubrique : on repart du haut
     val list = rememberLazyListState()
@@ -365,6 +383,17 @@ fun HomeContent(state: HomeState, onOpen: (VideoItem) -> Unit) {
     }
 
     val cardColumns = columnsFor(300.dp) // une colonne en portrait, plusieurs en paysage
+    // La fatigue (2.7.0) : les cartes du « Pour toi » qui passent à l'écran sont comptées
+    if (forYou) {
+        LaunchedEffect(list, shownVideos, cardColumns) {
+            val shown = shownVideos ?: return@LaunchedEffect
+            snapshotFlow { list.layoutInfo.visibleItemsInfo.map { it.index - 1 }.filter { it >= 0 } }.collect { rows ->
+                rows.forEach { row ->
+                    shown.drop(row * cardColumns).take(cardColumns).forEach { impressions.shown(it.url) }
+                }
+            }
+        }
+    }
     PullToRefreshBox(
         isRefreshing = refreshing,
         onRefresh = ::refresh,
@@ -385,6 +414,20 @@ fun HomeContent(state: HomeState, onOpen: (VideoItem) -> Unit) {
                 Column(Modifier.statusBarSpacePadding().padding(top = 62.dp)) { Spacer(Modifier.height(CATEGORIES_HEIGHT)) }
             }
             when {
+                needsTastes -> item(key = "gouts") {
+                    TastesPicker(
+                        Modifier.padding(top = 18.dp),
+                        onDone = { picked ->
+                            videos = null
+                            tastes.set(picked)
+                            ForYou.clearCache()
+                        },
+                        onSkip = {
+                            videos = null
+                            tastes.skip()
+                        },
+                    )
+                }
                 items == null -> item { Loading(Modifier.padding(top = 80.dp)) }
                 items.isEmpty() -> item {
                     EmptyCat(stringResource(R.string.nothing_found), stringResource(R.string.nothing_found_text), Modifier.padding(top = 60.dp))
