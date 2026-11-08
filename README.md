@@ -69,6 +69,8 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
     rest of the time (songs moved by accident).
 - A **Video** button in the music player: the song switches to its YouTube video, at the same moment.
 - 2.11.1: texts cleaned up (no other app names in the app).
+- 2.11.5: the music window's background is only the cover's color (the stretched cover image looked
+  pixelated); the play button no longer stutters when the page bar appears during a fast scroll.
 - 2.11.4: the playlist pill is **Add | Edit | Details**, under the play button: **Edit** is for the
   songs (⊖ to remove, ≡ to move), **Details** for the playlist itself (name, cover, delete). A
   **search** in the playlist replaces the ⋮ at the top right. While moving a song, it stays between

@@ -161,14 +161,11 @@ private fun MusicHeader(state: MusicState, backdrop: Backdrop) {
                         if (filtering) {
                             PlaylistFilterField(state, backdrop)
                         } else if (bar != null) {
-                            val active by remember { androidx.compose.runtime.derivedStateOf { state.barProgress > 0.5f } }
                             LiquidGlass(
                                 backdrop,
                                 Modifier
                                     .fillMaxWidth()
                                     .height(50.dp)
-                                    // Visible, elle arrête les taps (sinon ils traversent jusqu'au morceau dessous)
-                                    .then(if (active) Modifier.pointerInput(Unit) { detectTapGestures { } } else Modifier)
                                     .graphicsLayer {
                                         val p = state.barProgress
                                         alpha = p
@@ -199,6 +196,10 @@ private fun MusicHeader(state: MusicState, backdrop: Backdrop) {
                                     if (bar.onPlay != null) Spacer(Modifier.padding(start = 8.dp).size(PLAY_SMALL))
                                 }
                             }
+                            // Visible, elle arrête les taps (sinon ils traversent jusqu'au morceau dessous) : un
+                            // bloqueur à part (2.11.5). Avant, le détecteur était ajouté / retiré sur la vitre
+                            // elle-même, qui était reconstruite à mi-course, en plein défilement (un petit arrêt).
+                            PillTapBlocker(state, Modifier.matchParentSize())
                         }
                     }
                     // Playlist perso : une loupe pour chercher dedans (2.11.3, à la place du ⋮ : renommer et
@@ -303,6 +304,13 @@ private fun MusicSearchField(state: MusicState, backdrop: Backdrop, focus: Focus
             },
         )
     }
+}
+
+/** Arrête les taps sur la pilule du haut une fois visible ; seul à se recomposer quand elle le devient. */
+@Composable
+private fun PillTapBlocker(state: MusicState, modifier: Modifier) {
+    val active by remember(state) { androidx.compose.runtime.derivedStateOf { state.barProgress > 0.5f } }
+    if (active) Box(modifier.pointerInput(Unit) { detectTapGestures { } })
 }
 
 /** Le champ de recherche dans une playlist perso, en verre, dans la barre du haut (2.11.3). */

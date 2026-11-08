@@ -163,10 +163,9 @@ internal fun PlayerWindowContent(
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     Box(Modifier.fillMaxSize()) {
-        // Ce que réfractent les boutons : la pochette floutée sur un voile sombre (la page reste
-        // devinable derrière, à travers la vitre)
-        // Le fond : un dégradé de la couleur de la pochette vers la nuit (il change avec le morceau),
-        // avec un soupçon de la pochette très floutée pour la matière
+        // Le fond, que réfractent les boutons : un dégradé de la couleur de la pochette vers la nuit (il
+        // change avec le morceau). Plus d'image de la pochette dessous (2.11.5) : la couleur suffit, et
+        // l'image agrandie se voyait en pixels
         val coverColor by rememberCoverColor(now?.thumbnail)
         Box(
             Modifier
@@ -181,19 +180,7 @@ internal fun PlayerWindowContent(
                         1f to Pelage.Nuit.copy(alpha = 0.8f),
                     ),
                 ),
-        ) {
-            // La pochette « floutée » : chargée en 48 px et étirée (2.10.3). Avant, un flou de 60 dp
-            // recalculé à chaque image (deux fois : il est aussi enregistré pour le verre), qui faisait
-            // accrocher l'ouverture de la fenêtre.
-            val tiny = remember(now?.thumbnail) { ImageRequest.Builder(context).data(now?.thumbnail).size(48, 48).build() }
-            AsyncImage(
-                tiny,
-                null,
-                contentScale = ContentScale.Crop,
-                filterQuality = FilterQuality.Low,
-                modifier = Modifier.fillMaxSize().graphicsLayer { alpha = 0.14f },
-            )
-        }
+        )
 
         // Sous les commandes : l'artiste et l'album (on fait défiler la fenêtre)
         val scroll = rememberScrollState()
