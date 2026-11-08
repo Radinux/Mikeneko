@@ -97,6 +97,7 @@ fun MusicContent(state: MusicState, onPlayStations: (List<VideoItem>, Int) -> Un
         is MusicPage.Artist -> ArtistContent(state, page.artist)
         is MusicPage.MyPlaylist -> MyPlaylistContent(state, page.id)
         is MusicPage.AddSongs -> AddSongsContent(state, page.id)
+        is MusicPage.EditSongs -> EditSongsContent(state, page.id)
         MusicPage.Downloads -> DownloadsLibraryContent(state)
         MusicPage.Library -> MusicLibraryContent(state)
         is MusicPage.Generated -> GeneratedMixContent(state, page.mix)
@@ -271,34 +272,14 @@ private fun MyPlaylistContent(state: MusicState, id: String) {
     val now by PlayerHolder.nowPlaying.collectAsState()
     val list = rememberLazyListState()
     var details by rememberSaveable(id) { mutableStateOf(false) }
-    var songsEdit by rememberSaveable(id) { mutableStateOf(false) }
     // La recherche dans la playlist (loupe en haut à droite, 2.11.3) : fermée en quittant la page
     DisposableEffect(id) { onDispose { state.playlistFilter = null } }
     val filter = state.playlistFilter?.trim().orEmpty()
-    LaunchedEffect(filter.isNotEmpty()) { if (filter.isNotEmpty()) songsEdit = false } // pas de déplacement sur une liste filtrée
     val shown = remember(playlist.items, filter) {
         val wanted = filter.lowercase()
         playlist.items.withIndex().filter { (_, t) -> wanted.isEmpty() || wanted in t.title.lowercase() || wanted in t.channel.lowercase() }
     }
-    BackHandler(enabled = details || songsEdit) {
-        details = false
-        songsEdit = false
-    }
-    val scope = rememberCoroutineScope()
-    val density = LocalDensity.current
-    val topInset = with(density) { pageTop().toPx() }
-    val bottomInset = with(density) { (BOTTOM_SPACE - 40.dp).toPx() }
-    val reorder = remember(id, topInset, bottomInset) {
-        ReorderState(
-            list,
-            firstIndex = 1,
-            count = { store.get(id)?.items?.size ?: 0 },
-            scope = scope,
-            topInset = topInset,
-            bottomInset = bottomInset,
-            edge = with(density) { 110.dp.toPx() },
-        ) { from, to -> store.move(id, from, to) }
-    }
+    BackHandler(enabled = details) { details = false }
     val play = PageBarEffect(state, list, playlist.name, playInOrder(context, playlist.items))
     LazyColumn(Modifier.fillMaxSize(), state = list, contentPadding = PaddingValues(bottom = BOTTOM_SPACE)) {
         item(key = "entete") {
@@ -306,19 +287,15 @@ private fun MyPlaylistContent(state: MusicState, id: String) {
                 playlist.name,
                 tracksSummary(playlist.items),
                 playlist.coverModel(),
-                onPlay = if (details || songsEdit) null else playInOrder(context, playlist.items),
+                onPlay = if (details) null else playInOrder(context, playlist.items),
                 play = play,
                 actions = {
                 when {
                     details -> PlaylistEditPanel(
                         playlist,
                         onDone = { details = false },
-                        onDeleted = { state.pages.removeAll { it == MusicPage.MyPlaylist(id) || it == MusicPage.AddSongs(id) } },
+                        onDeleted = { state.pages.removeAll { it == MusicPage.MyPlaylist(id) || it == MusicPage.AddSongs(id) || it == MusicPage.EditSongs(id) } },
                     )
-                    songsEdit -> Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Text(stringResource(R.string.playlist_reorder_hint), Modifier.weight(1f), color = Pelage.Gris, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                        Button(onClick = { songsEdit = false }) { Text(stringResource(R.string.playlist_done), fontWeight = FontWeight.ExtraBold) }
-                    }
                     else -> {
                         PlaylistDownloadCircle(PlaylistDownloads.music, id, playlist.items)
                         ShuffleButton(playlist.items)
@@ -326,7 +303,7 @@ private fun MyPlaylistContent(state: MusicState, id: String) {
                 }
                 },
                 below = below@{
-                if (details || songsEdit) return@below
+                if (details) return@below
                 // Ajouter | Modifier | Réordonner : une pilule découpée, sous le bouton lecture (2.11.3),
                 // sur toute la largeur
                 Row(Modifier.fillMaxWidth().padding(bottom = 6.dp), horizontalArrangement = Arrangement.spacedBy(CONNECTED_GAP)) {
@@ -334,7 +311,9 @@ private fun MyPlaylistContent(state: MusicState, id: String) {
                         state.open(MusicPage.AddSongs(id))
                     }
                     // Modifier : les morceaux (retirer, réordonner) ; Infos : nom, pochette, supprimer la playlist (2.11.3)
-                    ConnectedChip(stringResource(R.string.playlist_edit), selected = false, first = false, last = false, modifier = Modifier.weight(1f), icon = MkIcons.Pencil, sidePadding = 8.dp) { songsEdit = true }
+                    ConnectedChip(stringResource(R.string.playlist_edit), selected = false, first = false, last = false, modifier = Modifier.weight(1f), icon = MkIcons.Pencil, sidePadding = 8.dp) {
+                        state.open(MusicPage.EditSongs(id))
+                    }
                     ConnectedChip(stringResource(R.string.playlist_details), selected = false, first = false, last = true, modifier = Modifier.weight(1f), icon = MkIcons.Info, sidePadding = 8.dp) { details = true }
                 }
                 },
@@ -344,33 +323,109 @@ private fun MyPlaylistContent(state: MusicState, id: String) {
             item(key = "vide") { EmptyCat(stringResource(R.string.playlist_empty), stringResource(R.string.playlist_empty_text), Modifier.padding(top = 20.dp)) }
         }
         items(shown, key = { it.value.url }) { (index, track) ->
-            val dragged = reorder.dragging == track.url
             TrackRow(
                 track,
-                modifier = if (dragged) {
-                    Modifier.zIndex(1f).graphicsLayer { translationY = reorder.offset }.background(Pelage.Coussin)
-                } else {
-                    Modifier.animateItem()
-                },
+                modifier = Modifier.animateItem(),
                 playing = sameTrack(now?.url, track.url),
-                onMore = if (details || songsEdit) null else ({ MusicSheet.open.value = MusicSheet.Track(track, playlistId = id, index = index) }),
-                leading = if (songsEdit) {
-                    {
-                        // Retirer en un clic
-                        IconButton(onClick = { store.remove(id, index) }, modifier = Modifier.size(36.dp)) {
+                onMore = if (details) null else ({ MusicSheet.open.value = MusicSheet.Track(track, playlistId = id, index = index) }),
+                trailing = { if (!details) DownloadedMark(PlaylistDownloads.music, track.url) },
+            ) { if (!details) playTracks(context, playlist.items, index) }
+        }
+    }
+}
+
+/**
+ * Modifier les morceaux d'une playlist perso (2.11.13) : une page à elle, comme l'ajout. Le titre et
+ * « Terminé » restent en haut, hors de la liste : un morceau tiré ne passe plus sur la pochette et le
+ * titre de la playlist, et la liste défile dès que le doigt monte vers eux. ⊖ retire en un clic,
+ * ≡ déplace. Pendant un déplacement, l'ordre change dans une liste locale, enregistré une seule fois
+ * au lâcher (avant : toutes les playlists réécrites à chaque échange, la ligne prenait du retard sur
+ * le doigt).
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun EditSongsContent(state: MusicState, id: String) {
+    val context = LocalContext.current
+    val store = remember { Playlists.get(context) }
+    val playlists by store.items.collectAsState()
+    val playlist = playlists.firstOrNull { it.id == id } ?: return
+    val now by PlayerHolder.nowPlaying.collectAsState()
+    val songs = remember(id) { androidx.compose.runtime.mutableStateListOf<VideoItem>().apply { addAll(playlist.items) } }
+    val list = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+    val density = LocalDensity.current
+    val bottomInset = with(density) { (BOTTOM_SPACE - 40.dp).toPx() }
+    val reorder = remember(id, bottomInset) {
+        ReorderState(
+            list,
+            firstIndex = 0,
+            count = { songs.size },
+            scope = scope,
+            bottomInset = bottomInset,
+            edge = with(density) { 110.dp.toPx() },
+            onDrop = { store.setItems(id, songs.toList()) },
+        ) { from, to -> if (from in songs.indices && to in songs.indices) songs.add(to, songs.removeAt(from)) }
+    }
+    // La playlist changée ailleurs (un ajout depuis le lecteur…), hors déplacement : on se recale
+    LaunchedEffect(playlist.items) {
+        if (reorder.dragging == null && songs.toList() != playlist.items) {
+            songs.clear()
+            songs.addAll(playlist.items)
+        }
+    }
+    Column(Modifier.fillMaxSize().padding(top = pageTop())) {
+        Row(Modifier.fillMaxWidth().padding(start = 18.dp, end = 14.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                stringResource(R.string.edit_songs_title, playlist.name),
+                Modifier.weight(1f),
+                color = Pelage.Texte,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.ExtraBold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Button(onClick = { state.goBack() }, modifier = Modifier.padding(start = 10.dp)) {
+                Text(stringResource(R.string.playlist_done), fontWeight = FontWeight.ExtraBold)
+            }
+        }
+        Text(
+            stringResource(R.string.playlist_reorder_hint),
+            Modifier.padding(horizontal = 18.dp).padding(bottom = 8.dp),
+            color = Pelage.Gris,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+        )
+        if (songs.isEmpty()) {
+            EmptyCat(stringResource(R.string.playlist_empty), stringResource(R.string.playlist_empty_text), Modifier.padding(top = 20.dp))
+            return@Column
+        }
+        LazyColumn(Modifier.fillMaxWidth().weight(1f), state = list, contentPadding = PaddingValues(bottom = BOTTOM_SPACE)) {
+            itemsIndexed(songs, key = { _, it -> it.url }) { index, track ->
+                val dragged = reorder.dragging == track.url
+                TrackRow(
+                    track,
+                    modifier = if (dragged) {
+                        Modifier.zIndex(1f).graphicsLayer { translationY = reorder.offset }.background(Pelage.Coussin)
+                    } else {
+                        Modifier.animateItem()
+                    },
+                    playing = sameTrack(now?.url, track.url),
+                    leading = {
+                        IconButton(
+                            onClick = {
+                                if (index in songs.indices) {
+                                    songs.removeAt(index)
+                                    store.remove(id, index)
+                                }
+                            },
+                            modifier = Modifier.size(36.dp),
+                        ) {
                             Icon(MkIcons.MinusCircle, stringResource(R.string.playlist_remove_song, track.title), tint = Color(0xFFFF8A80), modifier = Modifier.size(24.dp))
                         }
-                    }
-                } else {
-                    null
-                },
-                trailing = {
-                    when {
-                        songsEdit -> DragHandle(reorder, track.url)
-                        !details -> DownloadedMark(PlaylistDownloads.music, track.url)
-                    }
-                },
-            ) { if (!details && !songsEdit) playTracks(context, playlist.items, index) }
+                    },
+                    trailing = { DragHandle(reorder, track.url) },
+                ) { }
+            }
         }
     }
 }

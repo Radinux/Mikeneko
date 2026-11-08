@@ -69,6 +69,9 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
     rest of the time (songs moved by accident).
 - A **Video** button in the music player: the song switches to its YouTube video, at the same moment.
 - 2.11.1: texts cleaned up (no other app names in the app).
+- 2.11.13: editing a playlist's songs has its own page (like Add): the title and Done stay at the
+  top, a moved song no longer slides over the cover and title, stays under the finger, and the list
+  scrolls up properly when you drag toward the top.
 - 2.11.12: playlist downloads redone. A song that can't be downloaded (removed, private, blocked)
   no longer keeps the button "in progress" forever: after a few tries it gets a small grey cross and
   the playlist counts as downloaded ("Downloaded · 1 unavailable"). Failed songs are retried later

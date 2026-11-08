@@ -631,6 +631,7 @@
     <string name="playlist_done">Terminé</string>
     <string name="playlist_name_label">Nom</string>
     <string name="playlist_remove_song">Retirer %1$s</string>
+    <string name="edit_songs_title">Modifier %1$s</string>
     <string name="add_songs_title">Ajouter à %1$s</string>
     <string name="add_songs_search">Chercher des morceaux</string>
     <string name="add_songs_suggested">Suggestions d’après cette playlist</string>

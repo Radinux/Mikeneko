@@ -64,6 +64,9 @@ class Playlists private constructor(context: Context, file: String) {
         if (index !in p.items.indices) p else p.copy(items = p.items.toMutableList().apply { removeAt(index) })
     }
 
+    /** Remplace les morceaux (le nouvel ordre après un déplacement, 2.11.13). */
+    fun setItems(id: String, items: List<VideoItem>) = change(id) { it.copy(items = items) }
+
     fun move(id: String, from: Int, to: Int) = change(id) { p ->
         if (from !in p.items.indices || to !in p.items.indices) p
         else p.copy(items = p.items.toMutableList().apply { add(to, removeAt(from)) })

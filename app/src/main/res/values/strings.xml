@@ -630,6 +630,7 @@
     <string name="playlist_done">Done</string>
     <string name="playlist_name_label">Name</string>
     <string name="playlist_remove_song">Remove %1$s</string>
+    <string name="edit_songs_title">Edit %1$s</string>
     <string name="add_songs_title">Add to %1$s</string>
     <string name="add_songs_search">Search songs</string>
     <string name="add_songs_suggested">Suggested from this playlist</string>

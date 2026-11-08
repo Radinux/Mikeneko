@@ -898,6 +898,15 @@ users: the point is to take them from the videos really watched.
   under the requested id (not `info.id`, which could differ and made the entry look unwanted, so it
   was deleted and downloaded again forever). UI: complete = done + unavailable >= total; the ring
   pales while waiting for a retry (`working` flow); unavailable rows get a grey cross.
+- 2.11.13: `MusicPage.EditSongs(id)` / `EditSongsContent`: title row + hint outside the
+  `LazyColumn` (the list clips the dragged row, its viewport starts under them, so `topInset` = 0 and
+  a finger above the list means full scroll speed). Edit mode removed from `MyPlaylistContent`.
+  Moves change a local `mutableStateListOf` and are saved once on drop (`ReorderState.onDrop` →
+  `Playlists.setItems`): before, every swap re-serialized all playlists to JSON on the main thread and
+  re-ran the download sync, so the row lagged behind the finger. `ReorderState.settle`: swapping with
+  the first visible item calls `requestScrollToItem(first, offset)` first, otherwise the LazyList
+  keeps that item's key in place and jumps with it (the "top" bug). Checked on the emulator: song
+  dragged from the middle and held above the list → scrolled to the top, became first, order saved.
 - Emulator tip: if screenshots turn black and the app "isn't responding" while its main thread just
   waits for vsync, the emulator's GPU is stuck: restart it with `-gpu swiftshader_indirect`.
 

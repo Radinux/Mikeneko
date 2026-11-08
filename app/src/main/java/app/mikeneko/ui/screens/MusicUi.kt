@@ -118,6 +118,8 @@ sealed interface MusicPage {
     data class MyPlaylist(val id: String) : MusicPage
     /** Ajouter des morceaux à une playlist perso : suggestions d'après ses morceaux, et recherche (2.11.0). */
     data class AddSongs(val id: String) : MusicPage
+    /** Modifier les morceaux d'une playlist perso : retirer (⊖) et déplacer (≡), sur sa page à elle (2.11.13). */
+    data class EditSongs(val id: String) : MusicPage
     data object Downloads : MusicPage
     /** Ta bibliothèque : playlists, albums et artistes sauvegardés, téléchargés (avec des filtres). */
     data object Library : MusicPage
@@ -441,6 +443,8 @@ class ReorderState(
     private val bottomInset: Float = 0f,
     /** La hauteur (px) des zones de défilement, au-dessus / au-dessous de ce qu'on voit vraiment. */
     private val edge: Float = 160f,
+    /** Le doigt levé : la nouvelle place est à enregistrer (une seule écriture, pas une par échange). */
+    private val onDrop: () -> Unit = {},
     private val onMove: (Int, Int) -> Unit,
 ) {
     var dragging by mutableStateOf<Any?>(null)
@@ -482,6 +486,11 @@ class ReorderState(
             it.key != dragging && it.index - firstIndex in 0 until count() && finger >= it.offset && finger <= it.offset + it.size
         }
         if (target != null) {
+            // Échanger avec la première ligne visible : la liste garde sa position d'après la clé de
+            // cette ligne, et la suivrait à sa nouvelle place (la liste sautait, surtout en remontant
+            // vers le haut, 2.11.13). On lui redemande de rester où elle est.
+            val first = list.firstVisibleItemIndex
+            if (current.index == first || target.index == first) list.requestScrollToItem(first, list.firstVisibleItemScrollOffset)
             onMove(current.index - firstIndex, target.index - firstIndex)
             awaiting = target.index
             awaitingSince = System.nanoTime()
@@ -529,6 +538,7 @@ class ReorderState(
     fun end() {
         autoScroll?.cancel()
         autoScroll = null
+        if (dragging != null) onDrop()
         dragging = null
         awaiting = null
         offset = 0f
