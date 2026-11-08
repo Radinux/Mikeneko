@@ -13,6 +13,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.snap
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -382,9 +383,13 @@ fun PlayerContent(onMinimize: () -> Unit, onDownload: (String) -> Unit, onRadio:
                     Loading()
                 }
 
+                // Pendant le zoom / la rotation qui ramène la vidéo dans la page, les commandes sont cachées,
+                // puis reviennent en fondu (2.11.18)
+                val morphing by remember { androidx.compose.runtime.derivedStateOf { RotationMorph.running } }
+                val controlsAlpha by animateFloatAsState(if (morphing) 0f else 1f, if (morphing) snap() else tween(200), label = "commandes")
                 androidx.compose.animation.AnimatedVisibility( // la version « libre », pas celle de la Column
                     visible = controls,
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize().graphicsLayer { alpha = controlsAlpha },
                     enter = ControlsFadeIn,
                     exit = ControlsFadeOut,
                 ) {
@@ -396,7 +401,10 @@ fun PlayerContent(onMinimize: () -> Unit, onDownload: (String) -> Unit, onRadio:
                         var videoHeight by remember { mutableStateOf(0.dp) }
                         var bottomBar by remember { mutableStateOf(0.dp) }
                         val playSize = 64.dp
-                        val lift = (videoHeight / 2 + playSize / 2 + 6.dp - (videoHeight - bottomBar)).coerceAtLeast(0.dp)
+                        // Pas encore mesurés (première image, par exemple au retour du plein écran) : pas de
+                        // remontée. Avant, les tailles à 0 donnaient 38 dp : les boutons montaient d'un
+                        // coup, puis redescendaient à l'image suivante (2.11.18)
+                        val lift = if (videoHeight == 0.dp || bottomBar == 0.dp) 0.dp else (videoHeight / 2 + playSize / 2 + 6.dp - (videoHeight - bottomBar)).coerceAtLeast(0.dp)
                         Box(
                             Modifier.fillMaxSize().onSizeChanged { videoHeight = with(density) { it.height.toDp() } }.offset(y = -lift),
                             contentAlignment = Alignment.Center,
