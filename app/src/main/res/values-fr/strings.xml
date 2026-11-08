@@ -200,7 +200,7 @@
     <string name="autoplay_on">Lecture automatique activée</string>
     <string name="autoplay_off">Lecture automatique désactivée</string>
     <string name="library_title">Bibliothèque</string>
-    <string name="tab_library">Bibliothèque</string>
+    <string name="tab_library">Biblio</string>
     <string name="library_history">Historique</string>
     <string name="library_later">À regarder plus tard</string>
     <string name="library_liked">Vidéos J\'aime</string>
@@ -349,7 +349,7 @@
     <string name="subtitles_none_video">Aucun pour cette vidéo</string>
     <string name="tab_home">Accueil</string>
     <string name="tab_radio">Musique</string>
-    <string name="tab_subscriptions">Abonnements</string>
+    <string name="tab_subscriptions">Abos</string>
     <string name="unblock">Débloquer</string>
     <string name="undo">Annuler</string>
     <string name="unknown_error">Erreur inconnue</string>
