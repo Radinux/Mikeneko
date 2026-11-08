@@ -157,7 +157,7 @@ Items marked "to check on the phone" are built and published but not confirmed o
 - [ ] 2.11.7: full scroll speed as soon as the finger reaches the top bar / the docks (the top was too slow; the bottom was fine) — to check on the phone
 - [x] 2.11.6: moving a song redone — bottom verified on the phone, top too slow (→ 2.11.7)
 - [ ] 2.11.6 (details): moving a song redone (the song stays under the finger, scroll speed from the finger's position, no double swap) — verified on the emulator (row centred ~25 px from the finger while the list scrolled); to check on the phone
-- [ ] 2.11.13: separate Edit songs page; dragged song stays under the finger, no jump at the top, saved on drop — verified on the emulator; to check on the phone
+- [x] 2.11.13: separate Edit songs page; dragged song stays under the finger, no jump at the top, saved on drop — verified on the emulator and on the phone
 - [ ] 2.11.12: playlist download button stuck "in progress" when everything was downloaded — downloads verified, back-off retries, unavailable songs, retry on return to the app — to check on the phone
 - [ ] 2.11.11: travelling play button back; Material 3 duration / LIVE labels and Moods row; first music window opening after launch warmed up — to check on the phone
 - [ ] 2.11.10: scroll stutter on music pages = never-ending animations (stuck download spinner after quitting mid-download, "playing" bars while paused); download watchdog + determinate ring + still bars when paused — to check on the phone
