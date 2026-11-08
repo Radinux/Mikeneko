@@ -857,6 +857,11 @@ users: the point is to take them from the videos really watched.
   cover stretched since 2.10.3 looked pixelated). The page bar pill's tap blocker is a separate
   `PillTapBlocker` composable shown once the pill is visible: adding / removing a `pointerInput` on
   the `LiquidGlass` itself rebuilt the pane mid-scroll (a short stutter of the travelling play button).
+- 2.11.8: the header play button's `onGloballyPositioned` (called on every scroll frame) rewrote
+  `PlayAnchor.inHeader / left / listTop` every time; `listTop` is a difference of two scrolling
+  positions, so it changed by a rounding each frame and re-laid out the travelling play button. Only
+  written now when it moves by more than half a pixel. Clue: no stutter in Edit mode, where the header
+  has no play button.
 - Emulator tip: if screenshots turn black and the app "isn't responding" while its main thread just
   waits for vsync, the emulator's GPU is stuck: restart it with `-gpu swiftshader_indirect`.
 

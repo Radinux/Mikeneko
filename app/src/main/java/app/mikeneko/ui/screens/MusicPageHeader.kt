@@ -1,6 +1,7 @@
 package app.mikeneko.ui.screens
 
 import androidx.compose.foundation.layout.Spacer
+import kotlin.math.abs
 import app.mikeneko.ui.components.CONNECTED_GAP
 import app.mikeneko.ui.components.ConnectedChip
 import kotlinx.coroutines.delay
@@ -142,9 +143,18 @@ internal fun PageHeader(
                                         val header = headerCoords?.takeIf { it.isAttached } ?: return@onGloballyPositioned
                                         val inHeader = header.localPositionOf(c, Offset.Zero)
                                         val root = c.positionInRoot()
-                                        play.inHeader = inHeader
-                                        play.left = root.x
-                                        play.headerTop.value?.let { top -> play.listTop = root.y - top - inHeader.y }
+                                        // Des valeurs fixes, appelées à chaque image du défilement : on ne les
+                                        // réécrit que si elles bougent vraiment (2.11.8). Recalculées par différence
+                                        // de deux positions qui défilent, elles changeaient d'un arrondi à chaque
+                                        // image et relançaient la mise en page du bouton qui voyage (un lag au
+                                        // défilement rapide, absent en mode Modifier, sans ce bouton).
+                                        val known = play.inHeader
+                                        if (known == null || abs(known.x - inHeader.x) > 0.5f || abs(known.y - inHeader.y) > 0.5f) play.inHeader = inHeader
+                                        if (abs(play.left - root.x) > 0.5f) play.left = root.x
+                                        play.headerTop.value?.let { top ->
+                                            val listTop = root.y - top - inHeader.y
+                                            if (abs(play.listTop - listTop) > 0.5f) play.listTop = listTop
+                                        }
                                     }
                                     // Parti vers la barre : c'est le bouton de MusicOverlay qui est dessiné
                                     .graphicsLayer { alpha = if ((play.spot(density)?.t ?: 0f) > 0f) 0f else 1f }
