@@ -69,6 +69,9 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
     rest of the time (songs moved by accident).
 - A **Video** button in the music player: the song switches to its YouTube video, at the same moment.
 - 2.11.1: texts cleaned up (no other app names in the app).
+- 2.11.9: the play button of music pages has two states only, both tappable: in the header, or in
+  the top pill once the header has scrolled under the bar (it appears there with a short fade). No
+  more travelling animation between the two.
 - 2.11.8: no more stutter of the play button on music pages during a fast scroll.
 - 2.11.7: moving a song scrolls at full speed as soon as the finger reaches the top bar (too slow at
   the top).

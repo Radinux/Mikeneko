@@ -862,6 +862,10 @@ users: the point is to take them from the videos really watched.
   positions, so it changed by a rounding each frame and re-laid out the travelling play button. Only
   written now when it moves by more than half a pixel. Clue: no stutter in Edit mode, where the header
   has no play button.
+- 2.11.9: no more travelling play button (`TravellingPlayButton` removed, `PlayAnchor` no longer
+  used by the header). Two states: the header button (plain, scrolls with the page) and
+  `PillPlayButton` in the top pill (`AnimatedVisibility` fade + scale, shown when
+  `barProgress > 0.6`, in its own composable so only it recomposes).
 - Emulator tip: if screenshots turn black and the app "isn't responding" while its main thread just
   waits for vsync, the emulator's GPU is stuck: restart it with `-gpu swiftshader_indirect`.
 
