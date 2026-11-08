@@ -866,6 +866,19 @@ users: the point is to take them from the videos really watched.
   used by the header). Two states: the header button (plain, scrolls with the page) and
   `PillPlayButton` in the top pill (`AnimatedVisibility` fade + scale, shown when
   `barProgress > 0.6`, in its own composable so only it recomposes).
+- 2.11.10: the real cause of the music pages' scroll stutter (found by the user): any never-ending
+  animation inside the page redraws it every frame, and the glass pill above with it. Two of them:
+  `DownloadedMark`'s indeterminate `CircularProgressIndicator` (stuck forever when the app was
+  removed from recents mid-download: the process stays alive for the download, gets frozen by the
+  system, and the connection hangs without finishing or failing) and `PlayingBars`, which animated
+  even while paused (hence "only with a song loaded"). Now: `PlaylistDownloads` exposes `progress`
+  (2 % steps from `CacheWriter`'s progress listener), the mark is a determinate ring read at draw
+  time in its own composable; `PlayingBars` draws still bars when `PlayerHolder.isPlaying` is false.
+  Downloads have a watchdog: no byte for 45 s → `CacheWriter.cancel()` + closing the data source
+  from a separate thread; still stuck 20 s later → the work is abandoned (`generation` bumped so the
+  old one stops if it wakes up, item retried 10 min later) and a new worker starts.
+  `MainActivity.onStart` calls `PlaylistDownloads.resume()` so a frozen download is detected within
+  ~10 s. HTTP connect/read timeouts set to 15 s.
 - Emulator tip: if screenshots turn black and the app "isn't responding" while its main thread just
   waits for vsync, the emulator's GPU is stuck: restart it with `-gpu swiftshader_indirect`.
 

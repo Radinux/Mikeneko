@@ -297,18 +297,36 @@ private fun failed(context: Context) =
 // ---------------------------------------------------------------------------------------------
 
 /** Un morceau en ligne : pochette carrée, titre, artiste · durée, et le menu ⋮. */
-/** Trois petites barres qui montent et descendent : « ça joue ». */
+/**
+ * Trois petites barres qui montent et descendent : « ça joue ». En pause, elles s'arrêtent : une
+ * animation sans fin dans une page redessine la page à chaque image (et le verre de la barre du
+ * haut avec), ce qui faisait accrocher le défilement dès qu'un morceau était chargé.
+ */
 @Composable
 fun PlayingBars(modifier: Modifier = Modifier, color: Color = Pelage.RouxClair) {
     val playingLabel = stringResource(R.string.playing_now)
+    val running by PlayerHolder.isPlaying.collectAsState()
+    val m = modifier.size(16.dp, 14.dp).semantics { contentDescription = playingLabel }
+    if (running) MovingBars(m, color) else Bars(m, color) { i -> PAUSED_BARS[i] }
+}
+
+private val PAUSED_BARS = floatArrayOf(0.45f, 0.8f, 0.6f)
+
+@Composable
+private fun MovingBars(modifier: Modifier, color: Color) {
     val motion = rememberInfiniteTransition(label = "égalisation")
     val bars = listOf(380, 520, 440).mapIndexed { i, period ->
         motion.animateFloat(0.25f, 1f, infiniteRepeatable(tween(period, delayMillis = i * 90), RepeatMode.Reverse), label = "barre $i")
     }
-    Canvas(modifier.size(16.dp, 14.dp).semantics { contentDescription = playingLabel }) {
+    Bars(modifier, color) { i -> bars[i].value }
+}
+
+@Composable
+private fun Bars(modifier: Modifier, color: Color, height: (Int) -> Float) {
+    Canvas(modifier) {
         val w = size.width / 5f
-        bars.forEachIndexed { i, bar ->
-            val h = size.height * bar.value
+        repeat(3) { i ->
+            val h = size.height * height(i)
             drawRoundRect(color, topLeft = Offset(i * 2 * w, size.height - h), size = Size(w, h), cornerRadius = CornerRadius(w / 2))
         }
     }

@@ -141,6 +141,25 @@ fun DownloadedMark(downloads: PlaylistDownloads, url: String, modifier: Modifier
     val id = videoIdOf(url) ?: return
     when {
         id in saved -> Icon(MkIcons.Download, stringResource(R.string.track_downloaded), tint = Pelage.Roux, modifier = modifier.size(16.dp))
-        id == current -> CircularProgressIndicator(modifier.size(14.dp), color = Pelage.Roux, strokeWidth = 2.dp)
+        id == current -> DownloadRing(downloads, modifier)
     }
+}
+
+/**
+ * L'anneau du morceau en cours de téléchargement : il se remplit avec la progression. Plus de roue
+ * qui tourne sans fin : elle redessinait la page à chaque image (et le verre de la barre du haut
+ * avec), ce qui faisait accrocher le défilement, pour toujours si le téléchargement restait coincé.
+ * La progression n'est lue qu'au dessin, et seulement sur cette ligne.
+ */
+@Composable
+private fun DownloadRing(downloads: PlaylistDownloads, modifier: Modifier) {
+    val progress = downloads.progress.collectAsState()
+    CircularProgressIndicator(
+        progress = { progress.value },
+        modifier = modifier.size(14.dp),
+        color = Pelage.Roux,
+        trackColor = Pelage.Roux.copy(alpha = 0.25f),
+        strokeWidth = 2.dp,
+        gapSize = 0.dp,
+    )
 }

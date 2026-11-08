@@ -157,6 +157,7 @@ Items marked "to check on the phone" are built and published but not confirmed o
 - [ ] 2.11.7: full scroll speed as soon as the finger reaches the top bar / the docks (the top was too slow; the bottom was fine) — to check on the phone
 - [x] 2.11.6: moving a song redone — bottom verified on the phone, top too slow (→ 2.11.7)
 - [ ] 2.11.6 (details): moving a song redone (the song stays under the finger, scroll speed from the finger's position, no double swap) — verified on the emulator (row centred ~25 px from the finger while the list scrolled); to check on the phone
+- [ ] 2.11.10: scroll stutter on music pages = never-ending animations (stuck download spinner after quitting mid-download, "playing" bars while paused); download watchdog + determinate ring + still bars when paused — to check on the phone
 - [ ] 2.11.9: play button with two states (header / top pill, appearing with a fade), no travelling animation — to check on the phone
 - [ ] 2.11.8: play button stutter during fast scroll on music pages (no stutter in Edit mode, where the header has no play button) — fixed by not rewriting its anchor values every frame; to check on the phone
 - [ ] 2.11.4: Add | Edit (songs: remove + move) | Details (name, cover, delete) under the play button, search in the playlist (top right), dragged song kept below the top bar — verified on the emulator (drag held at the very top: list scrolled up, song became first; search "david"); to check on the phone
