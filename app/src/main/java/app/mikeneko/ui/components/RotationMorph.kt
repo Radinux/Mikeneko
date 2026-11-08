@@ -1,5 +1,8 @@
 package app.mikeneko.ui.components
 
+import androidx.compose.runtime.withFrameNanos
+import kotlinx.coroutines.withTimeoutOrNull
+
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -70,7 +73,9 @@ object RotationMorph {
      * depuis sa place dans la page paysage jusqu'au plein écran, ou y revient en rétrécissant.
      */
     fun startZoom(toFullscreen: Boolean) {
-        if (landscapeVideo == null) return
+        // Entrer : il faut la place de départ. Sortir : la page paysage la donne à sa première mise en
+        // page (2.11.16 : au premier retour, elle n'avait encore jamais été affichée et le zoom était sauté)
+        if (toFullscreen && landscapeVideo == null) return
         zoom = true
         from = 0f
         this.toFullscreen = toFullscreen
@@ -81,6 +86,12 @@ object RotationMorph {
     /** À lancer depuis un `LaunchedEffect(token)` toujours présent (MikenekoRoot). */
     suspend fun animate() {
         if (!pending) return
+        // La page d'arrivée se met en page pendant ses premières images (lourdes, la première fois
+        // surtout) : on attend qu'elle ait donné sa place et soit dessinée, la vidéo tenue à son point
+        // de départ. Sinon l'animation se jouait pendant ces images et paraissait instantanée.
+        if (zoom && !toFullscreen) withTimeoutOrNull(400) { while (landscapeVideo == null) withFrameNanos { } }
+        withFrameNanos { }
+        withFrameNanos { }
         progress.snapTo(0f)
         pending = false
         // ~350 ms en vrai (ANIMATION_SPEED = 2)

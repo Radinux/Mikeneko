@@ -908,6 +908,10 @@ users: the point is to take them from the videos really watched.
   keeps that item's key in place and jumps with it (the "top" bug). Checked on the emulator: song
   dragged from the middle and held above the list → scrolled to the top, became first, order saved.
 - 2.11.14: music player Video button removed (`onWatchVideo` gone from `PlayerWindowContent`, `MusicDockWindow` and the root; `watch_video` string removed). `openVideo(url, startAtMs)` kept.
+- 2.11.16: `RotationMorph.startZoom(toFullscreen = false)` no longer needs `landscapeVideo` up front:
+  the first time, the landscape player page had never been laid out, so the zoom was skipped. `animate()`
+  now waits (video held at its start) for `landscapeVideo` (400 ms max) and two frames before running,
+  so the page's heavy first layout frames don't eat the animation.
 - Emulator tip: if screenshots turn black and the app "isn't responding" while its main thread just
   waits for vsync, the emulator's GPU is stuck: restart it with `-gpu swiftshader_indirect`.
 
