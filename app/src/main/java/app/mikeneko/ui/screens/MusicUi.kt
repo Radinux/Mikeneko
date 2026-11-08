@@ -405,60 +405,76 @@ fun MusicSectionTitle(text: String, modifier: Modifier = Modifier) {
 // ---------------------------------------------------------------------------------------------
 
 /**
- * Réordonner une LazyColumn en tenant la poignée ≡ d'une ligne. [firstIndex] : nombre d'éléments
- * avant la liste (en-têtes) ; [onMove] reçoit des positions dans la liste elle-même.
+ * Réordonner une liste en tirant la poignée ≡ (2.11.6 : refait). Le morceau tiré reste **sous le
+ * doigt**, au pixel près : on suit la position du doigt dans la liste ([finger]), et la ligne est
+ * dessinée centrée dessus. C'est aussi la position du doigt qui décide de sa place (échange avec la
+ * ligne sous le doigt) et de la vitesse de défilement près des bords : nulle hors des zones du haut
+ * et du bas, puis de plus en plus rapide en approchant du bord. Avant, la ligne pouvait se décaler du
+ * doigt (et on la bloquait sous la barre du haut), d'où des places fausses et des arrêts.
  */
 class ReorderState(
     private val list: LazyListState,
     private val firstIndex: Int,
     private val count: () -> Int,
-    /** Pour faire défiler la liste quand on tire une ligne près d'un bord (2.11.2) ; null : jamais. */
+    /** Pour faire défiler la liste quand le doigt approche d'un bord ; null : jamais. */
     private val scope: CoroutineScope? = null,
-    /** Les bords (px) cachés par la barre du haut / les docks du bas : la zone de défilement commence après. */
+    /** Les bords (px) cachés par la barre du haut / les docks du bas : les zones de défilement commencent avant. */
     private val topInset: Float = 0f,
     private val bottomInset: Float = 0f,
+    /** La hauteur (px) des zones de défilement, au-dessus / au-dessous de ce qu'on voit vraiment. */
     private val edge: Float = 160f,
     private val onMove: (Int, Int) -> Unit,
 ) {
     var dragging by mutableStateOf<Any?>(null)
         private set
+    /** Le décalage de dessin de la ligne tirée par rapport à sa place dans la liste. */
     var offset by mutableFloatStateOf(0f)
         private set
+    /** Où est le doigt, dans la liste (même repère que les `offset` des lignes visibles). */
+    private var finger = 0f
+    /** Après un échange : la place attendue, tant que la liste n'a pas été remise en page. */
+    private var awaiting: Int? = null
+    private var awaitingSince = 0L
     private var autoScroll: Job? = null
 
     fun start(key: Any) {
         dragging = key
         offset = 0f
+        awaiting = null
+        val current = list.layoutInfo.visibleItemsInfo.firstOrNull { it.key == key }
+        finger = current?.let { it.offset + it.size / 2f } ?: 0f
     }
 
     fun drag(dy: Float) {
-        offset += dy
-        keepInside()
-        swap()
+        finger += dy
+        settle()
         followEdges()
     }
 
-    /**
-     * La ligne tirée reste entre la barre du haut et les docks du bas (2.11.3) : plus besoin de monter
-     * le doigt jusque dans la bande noire de la barre d'état (le système y reprenait parfois le geste,
-     * qui s'arrêtait net). Contre un bord, elle fait défiler la liste à pleine vitesse.
-     */
-    private fun keepInside() {
-        if (scope == null) return
-        val info = list.layoutInfo
-        val current = info.visibleItemsInfo.firstOrNull { it.key == dragging } ?: return
-        val top = current.offset + offset
-        val min = info.viewportStartOffset + topInset
-        val max = info.viewportEndOffset - bottomInset - current.size
-        if (max <= min) return
-        if (top < min) offset += min - top
-        if (top > max) offset -= top - max
+    /** La ligne prend la place de celle qui est sous le doigt, et se dessine centrée sur le doigt. */
+    private fun settle() {
+        val visible = list.layoutInfo.visibleItemsInfo
+        val current = visible.firstOrNull { it.key == dragging } ?: return
+        // L'échange d'avant n'est pas encore mis en page : pas de nouvel échange (il le défairait)
+        awaiting?.let { expected ->
+            if (current.index != expected && System.nanoTime() - awaitingSince < 100_000_000L) return
+            awaiting = null
+        }
+        val target = visible.firstOrNull {
+            it.key != dragging && it.index - firstIndex in 0 until count() && finger >= it.offset && finger <= it.offset + it.size
+        }
+        if (target != null) {
+            onMove(current.index - firstIndex, target.index - firstIndex)
+            awaiting = target.index
+            awaitingSince = System.nanoTime()
+            // La place de l'autre ligne (la mise en page suit à l'image d'après)
+            offset = finger - (target.offset + current.size / 2f)
+            return
+        }
+        offset = finger - (current.offset + current.size / 2f)
     }
 
-    /**
-     * Près du haut ou du bas de ce qu'on voit, la liste défile toute seule, d'autant plus vite qu'on
-     * approche du bord ; la ligne tirée reste sous le doigt et prend sa nouvelle place au passage.
-     */
+    /** Le défilement près des bords, tant que le doigt y reste (la ligne reste sous le doigt). */
     private fun followEdges() {
         val scope = scope ?: return
         if (speed() == 0f || autoScroll?.isActive == true) return
@@ -469,50 +485,39 @@ class ReorderState(
                 withFrameNanos { }
                 val used = list.scrollBy(step)
                 if (used == 0f) break // au bout de la liste
-                offset += used
-                swap()
+                // Le doigt ne bouge pas à l'écran : dans la liste, il a avancé de ce qui a défilé
+                settle()
             }
         }
     }
 
-    /** px par image : négatif vers le haut, 0 hors des bords. */
+    /** px par image d'après la position du doigt : négatif vers le haut, 0 hors des zones des bords. */
     private fun speed(): Float {
         val info = list.layoutInfo
-        val current = info.visibleItemsInfo.firstOrNull { it.key == dragging } ?: return 0f
-        val top = current.offset + offset
-        val bottom = top + current.size
-        val start = info.viewportStartOffset + topInset
-        val end = info.viewportEndOffset - bottomInset
+        val top = info.viewportStartOffset + topInset
+        val bottom = info.viewportEndOffset - bottomInset
         val push = when {
-            top < start + edge -> -((start + edge - top) / edge)
-            bottom > end - edge -> (bottom - (end - edge)) / edge
+            finger < top + edge -> -((top + edge - finger) / edge)
+            finger > bottom - edge -> (finger - (bottom - edge)) / edge
             else -> 0f
         }
-        return push.coerceIn(-1.5f, 1.5f) * MAX_AUTO_SCROLL
-    }
-
-    private fun swap() {
-        val visible = list.layoutInfo.visibleItemsInfo
-        val current = visible.firstOrNull { it.key == dragging } ?: return
-        val center = current.offset + offset + current.size / 2f
-        val target = visible.firstOrNull {
-            it.key != dragging && it.index - firstIndex in 0 until count() && center >= it.offset && center <= it.offset + it.size
-        } ?: return
-        onMove(current.index - firstIndex, target.index - firstIndex)
-        // La ligne prend la place de l'autre : on garde l'endroit où elle est dessinée sous le doigt
-        offset += current.offset - target.offset
+        // Plus le doigt est près du bord (ou dedans), plus ça va vite
+        val sign = if (push < 0) -1f else 1f
+        val p = kotlin.math.abs(push).coerceAtMost(1.6f)
+        return sign * p * p * MAX_AUTO_SCROLL
     }
 
     fun end() {
         autoScroll?.cancel()
         autoScroll = null
         dragging = null
+        awaiting = null
         offset = 0f
     }
 }
 
-/** Vitesse maximale du défilement automatique en tirant une ligne (px par image). */
-private const val MAX_AUTO_SCROLL = 22f
+/** Vitesse maximale du défilement automatique en tirant une ligne (px par image, doigt tout au bord). */
+private const val MAX_AUTO_SCROLL = 26f
 
 /** La poignée ≡ : la tenir et glisser déplace la ligne. */
 @Composable

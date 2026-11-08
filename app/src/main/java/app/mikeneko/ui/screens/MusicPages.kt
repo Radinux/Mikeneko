@@ -296,7 +296,7 @@ private fun MyPlaylistContent(state: MusicState, id: String) {
             scope = scope,
             topInset = topInset,
             bottomInset = bottomInset,
-            edge = with(density) { 96.dp.toPx() },
+            edge = with(density) { 110.dp.toPx() },
         ) { from, to -> store.move(id, from, to) }
     }
     val play = PageBarEffect(state, list, playlist.name, playInOrder(context, playlist.items))

@@ -843,9 +843,14 @@ users: the point is to take them from the videos really watched.
   `MusicState.playlistFilter`: the top-right ⋮ of a playlist became a search (`PlaylistFilterField`,
   glass, in place of the title pill); the list shows matching titles / artists with their original
   indices; editing is turned off while filtering; back closes the search first.
-  `ReorderState.keepInside` keeps the dragged row between the top bar and the docks: the finger no
-  longer needs to reach the status bar (the system sometimes took the gesture over there and the
-  move stopped dead); against an edge the list scrolls at full speed (`edge` 96 dp).
+  (2.11.6: replaced, see below.)
+- 2.11.6: `ReorderState` follows the finger: `finger` (viewport coordinates, set to the row's centre
+  on start, + every drag delta; unchanged by auto-scroll since the finger doesn't move on screen),
+  the row drawn centred on it (`offset = finger − (slot + size/2)`), the swap target = the row under
+  the finger, and the auto-scroll speed from the finger's position in zones of `edge` (110 dp) before
+  the top bar / docks, quadratic up to 26 px per frame. After a swap, `awaiting` blocks new swaps until
+  the list is laid out again (or 100 ms): two drag events in the same frame used to swap twice and
+  undo the move.
 - 2.11.5: the music window background has no image any more, only the cover-color gradient (the 48 px
   cover stretched since 2.10.3 looked pixelated). The page bar pill's tap blocker is a separate
   `PillTapBlocker` composable shown once the pill is visible: adding / removing a `pointerInput` on
