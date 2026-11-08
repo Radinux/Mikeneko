@@ -638,7 +638,6 @@
     <string name="add_songs_empty_hint">Cherche des morceaux pour commencer cette playlist</string>
     <string name="add_songs_add">Ajouter %1$s</string>
     <string name="add_songs_added">Retirer %1$s de la playlist</string>
-    <string name="watch_video">Vidéo</string>
     <string name="playlist_reorder">Réordonner</string>
     <string name="playlist_reorder_hint">Touche ⊖ pour retirer un morceau, tiens ≡ pour le déplacer</string>
     <string name="playlist_search">Chercher dans cette playlist</string>

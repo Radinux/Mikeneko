@@ -907,6 +907,7 @@ users: the point is to take them from the videos really watched.
   the first visible item calls `requestScrollToItem(first, offset)` first, otherwise the LazyList
   keeps that item's key in place and jumps with it (the "top" bug). Checked on the emulator: song
   dragged from the middle and held above the list → scrolled to the top, became first, order saved.
+- 2.11.14: music player Video button removed (`onWatchVideo` gone from `PlayerWindowContent`, `MusicDockWindow` and the root; `watch_video` string removed). `openVideo(url, startAtMs)` kept.
 - Emulator tip: if screenshots turn black and the app "isn't responding" while its main thread just
   waits for vsync, the emulator's GPU is stuck: restart it with `-gpu swiftshader_indirect`.
 

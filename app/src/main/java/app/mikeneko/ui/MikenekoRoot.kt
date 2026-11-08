@@ -495,11 +495,6 @@ fun MikenekoRoot(
                 // Depuis le lecteur : la page de l'artiste / de l'album s'ouvre dans Musique, la fenêtre se rabat
                 onOpenArtist = { musicPages.pages.add(MusicPage.Artist(it)); music.collapse() },
                 onOpenAlbum = { musicPages.pages.add(MusicPage.Album(it)); music.collapse() },
-                // Le morceau en vidéo (2.11.0) : la fenêtre se rabat, la vidéo reprend au même endroit
-                onWatchVideo = { url, position ->
-                    music.collapse()
-                    openVideo(url, position)
-                },
             )
         }
 
