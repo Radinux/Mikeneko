@@ -154,7 +154,9 @@ Items marked "to check on the phone" are built and published but not confirmed o
 - [x] 2.1.1: automatic download from GitHub — seen on the phone ("Mikeneko 2.1.1 is ready")
 - [ ] 2.1.2 (arrived on its own on the phone): "Update" pill as soon as the APK is downloaded; Settings › About buttons no longer squashed ("What's new" letter by letter)
 - [ ] 2.11.5: music window background = cover color only (no pixelated image); no stutter of the play button when the page bar appears — to check on the phone
-- [ ] 2.11.6: moving a song redone (the song stays under the finger, scroll speed from the finger's position, no double swap) — verified on the emulator (row centred ~25 px from the finger while the list scrolled); to check on the phone
+- [ ] 2.11.7: full scroll speed as soon as the finger reaches the top bar / the docks (the top was too slow; the bottom was fine) — to check on the phone
+- [x] 2.11.6: moving a song redone — bottom verified on the phone, top too slow (→ 2.11.7)
+- [ ] 2.11.6 (details): moving a song redone (the song stays under the finger, scroll speed from the finger's position, no double swap) — verified on the emulator (row centred ~25 px from the finger while the list scrolled); to check on the phone
 - [ ] Play button stutter during fast scroll on music pages, only when the music pill has a track loaded — to measure on the phone (gfxinfo)
 - [ ] 2.11.4: Add | Edit (songs: remove + move) | Details (name, cover, delete) under the play button, search in the playlist (top right), dragged song kept below the top bar — verified on the emulator (drag held at the very top: list scrolled up, song became first; search "david"); to check on the phone
 - [ ] 2.11.2: Reorder as its own mode, added songs at the top, auto-scroll while dragging near the edges — verified on the emulator (drag held at the bottom: the list scrolled to the end, the song moved there); to check on the phone

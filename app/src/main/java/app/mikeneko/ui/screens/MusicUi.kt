@@ -501,9 +501,10 @@ class ReorderState(
             finger > bottom - edge -> (finger - (bottom - edge)) / edge
             else -> 0f
         }
-        // Plus le doigt est près du bord (ou dedans), plus ça va vite
+        // Plus le doigt approche du bord, plus ça va vite ; vitesse maximale dès la barre du haut / les
+        // docks (2.11.7 : en haut, le doigt s'arrête vers la barre, où ça n'allait qu'au tiers)
         val sign = if (push < 0) -1f else 1f
-        val p = kotlin.math.abs(push).coerceAtMost(1.6f)
+        val p = kotlin.math.abs(push).coerceAtMost(1f)
         return sign * p * p * MAX_AUTO_SCROLL
     }
 
@@ -517,7 +518,7 @@ class ReorderState(
 }
 
 /** Vitesse maximale du défilement automatique en tirant une ligne (px par image, doigt tout au bord). */
-private const val MAX_AUTO_SCROLL = 26f
+private const val MAX_AUTO_SCROLL = 64f
 
 /** La poignée ≡ : la tenir et glisser déplace la ligne. */
 @Composable

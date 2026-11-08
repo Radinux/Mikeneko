@@ -848,7 +848,9 @@ users: the point is to take them from the videos really watched.
   on start, + every drag delta; unchanged by auto-scroll since the finger doesn't move on screen),
   the row drawn centred on it (`offset = finger − (slot + size/2)`), the swap target = the row under
   the finger, and the auto-scroll speed from the finger's position in zones of `edge` (110 dp) before
-  the top bar / docks, quadratic up to 26 px per frame. After a swap, `awaiting` blocks new swaps until
+  the top bar / docks, quadratic up to 26 px per frame (2.11.7: the maximum, 64 px per frame, is
+  reached when the finger gets to the top bar / docks line; at the top the finger stops around the
+  bar, where the speed was only a third of the maximum). After a swap, `awaiting` blocks new swaps until
   the list is laid out again (or 100 ms): two drag events in the same frame used to swap twice and
   undo the move.
 - 2.11.5: the music window background has no image any more, only the cover-color gradient (the 48 px
