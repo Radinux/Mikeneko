@@ -912,6 +912,11 @@ users: the point is to take them from the videos really watched.
   the first time, the landscape player page had never been laid out, so the zoom was skipped. `animate()`
   now waits (video held at its start) for `landscapeVideo` (400 ms max) and two frames before running,
   so the page's heavy first layout frames don't eat the animation.
+- 2.11.17: `RotationMorph.landscapeVideo` / `portraitVideo` are snapshot state: the video's
+  `graphicsLayer` re-runs as soon as the page reports its place. As plain vars, on the first exit
+  the layer ran once with `null` (video drawn small at its page place during the hold frames), then
+  jumped to fullscreen size when the progress started. While the place is still unknown the video is
+  hidden (alpha 0) instead.
 - Emulator tip: if screenshots turn black and the app "isn't responding" while its main thread just
   waits for vsync, the emulator's GPU is stuck: restart it with `-gpu swiftshader_indirect`.
 

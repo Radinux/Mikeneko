@@ -39,10 +39,15 @@ object RotationMorph {
     private val progress = Animatable(1f)
 
     /** Où est la vidéo du lecteur portrait (root, px). Gardé même quand le lecteur portrait n'est plus affiché. */
-    var portraitVideo: Rect? = null
+    var portraitVideo by mutableStateOf<Rect?>(null)
 
-    /** Où est la vidéo de la page lecteur en paysage (root, px), pour le zoom (2.0.4). */
-    var landscapeVideo: Rect? = null
+    /**
+     * Où est la vidéo de la page lecteur en paysage (root, px), pour le zoom (2.0.4). Un état
+     * (2.11.17) : la transformation de la vidéo se recalcule dès que la page donne sa place ; avant,
+     * au premier retour du plein écran, la vidéo restait quelques images à sa petite place puis
+     * sautait en grand avant de rétrécir (les boutons « se levaient » d'un coup).
+     */
+    var landscapeVideo by mutableStateOf<Rect?>(null)
 
     /** Entrer / sortir du plein écran sans tourner (téléphone tenu en paysage) : un zoom, pas une rotation. */
     private var zoom by mutableStateOf(false)
@@ -152,7 +157,11 @@ object RotationMorph {
      */
     fun GraphicsLayerScope.landscapeVideo(screenWidth: Float, screenHeight: Float) {
         if (toFullscreen || !running || !zoom) return
-        val page = landscapeVideo ?: return
+        // Place pas encore connue (première mise en page) : cachée une image plutôt que montrée petite
+        val page = landscapeVideo ?: run {
+            alpha = 0f
+            return
+        }
         val t = p
         val u = 1f - t
         val image = minOf(screenWidth, screenHeight * 16f / 9f)

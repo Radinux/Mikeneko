@@ -68,6 +68,7 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
     every song to remove it in one tap, and the handle to reorder. Reordering is no longer active the
     rest of the time (songs moved by accident).
 - 2.11.1: texts cleaned up (no other app names in the app).
+- 2.11.17: no more jump of the video and its buttons at the start of that zoom.
 - 2.11.16: in landscape, leaving fullscreen for the first time zooms smoothly too (it was instant).
 - 2.11.15: shorter dock labels: Follow (English), Abos and Biblio (French).
 - 2.11.14: the Video button of the music player is gone (little used, and it didn't work well).
