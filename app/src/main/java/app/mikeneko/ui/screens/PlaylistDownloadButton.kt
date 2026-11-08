@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -36,17 +37,32 @@ import app.mikeneko.ui.icons.MkIcons
 import app.mikeneko.ui.theme.Pelage
 import app.mikeneko.ui.theme.jellyClickable
 
-/** Où en est le téléchargement d'une playlist. */
-private class DownloadState(val on: Boolean, val done: Int, val total: Int) {
-    val complete get() = on && done >= total
+/**
+ * Où en est le téléchargement d'une playlist. Terminé quand chaque morceau est soit téléchargé, soit
+ * indisponible (2.11.12 : avant, un seul morceau impossible à télécharger laissait le bouton « en
+ * cours » pour toujours).
+ */
+private class DownloadState(val on: Boolean, val done: Int, val failed: Int, val total: Int, val working: Boolean) {
+    val complete get() = on && done + failed >= total
 }
 
 @Composable
 private fun rememberDownloadState(downloads: PlaylistDownloads, id: String, items: List<VideoItem>): DownloadState {
     val playlists by downloads.playlists.collectAsState()
     val saved by downloads.saved.collectAsState()
-    val ids = items.filter { !it.isLive }.mapNotNull { videoIdOf(it.url) }.distinct()
-    return DownloadState(id in playlists, ids.count { it in saved }, ids.size)
+    val unavailable by downloads.unavailable.collectAsState()
+    val working by downloads.working.collectAsState()
+    val ids = remember(items) { items.filter { !it.isLive }.mapNotNull { videoIdOf(it.url) }.distinct() }
+    val done = ids.count { it in saved }
+    return DownloadState(id in playlists, done, ids.count { it in unavailable && it !in saved }, ids.size, working)
+}
+
+@Composable
+private fun DownloadState.label(): String = when {
+    complete && failed > 0 -> pluralStringResource(R.plurals.playlist_downloaded_partial, failed, failed)
+    complete -> stringResource(R.string.playlist_downloaded)
+    on -> stringResource(R.string.playlist_downloading, done, total)
+    else -> stringResource(R.string.playlist_download)
 }
 
 /** Télécharger / retirer : un premier tap télécharge ; téléchargée, un tap demande avant de retirer. */
@@ -82,11 +98,7 @@ private fun DownloadToggle(downloads: PlaylistDownloads, id: String, state: Down
 fun PlaylistDownloadCircle(downloads: PlaylistDownloads, id: String, items: List<VideoItem>) {
     if (items.isEmpty()) return
     val state = rememberDownloadState(downloads, id, items)
-    val label = when {
-        state.complete -> stringResource(R.string.playlist_downloaded)
-        state.on -> stringResource(R.string.playlist_downloading, state.done, state.total)
-        else -> stringResource(R.string.playlist_download)
-    }
+    val label = state.label()
     DownloadToggle(downloads, id, state, videos = false) { onClick ->
         Box(
             Modifier
@@ -102,9 +114,10 @@ fun PlaylistDownloadCircle(downloads: PlaylistDownloads, id: String, items: List
         ) {
             if (state.on && !state.complete) {
                 CircularProgressIndicator(
-                    progress = { if (state.total == 0) 0f else state.done.toFloat() / state.total },
+                    progress = { if (state.total == 0) 0f else (state.done + state.failed).toFloat() / state.total },
                     modifier = Modifier.fillMaxSize(),
-                    color = Pelage.Roux,
+                    // En attente d'un nouvel essai (pas de réseau…) : l'anneau pâlit
+                    color = if (state.working) Pelage.Roux else Pelage.Roux.copy(alpha = 0.45f),
                     trackColor = Pelage.Roux.copy(alpha = 0.2f),
                     strokeWidth = 3.dp,
                 )
@@ -121,11 +134,7 @@ fun PlaylistDownloadCapsule(downloads: PlaylistDownloads, id: String, items: Lis
     val state = rememberDownloadState(downloads, id, items)
     DownloadToggle(downloads, id, state, videos = true) { onClick ->
         Capsule(
-            when {
-                state.complete -> stringResource(R.string.playlist_downloaded)
-                state.on -> stringResource(R.string.playlist_downloading, state.done, state.total)
-                else -> stringResource(R.string.playlist_download)
-            },
+            state.label(),
             selected = state.complete,
             icon = if (state.complete) MkIcons.Check else MkIcons.Download,
             onClick = onClick,
@@ -138,10 +147,13 @@ fun PlaylistDownloadCapsule(downloads: PlaylistDownloads, id: String, items: Lis
 fun DownloadedMark(downloads: PlaylistDownloads, url: String, modifier: Modifier = Modifier) {
     val saved by downloads.saved.collectAsState()
     val current by downloads.current.collectAsState()
+    val unavailable by downloads.unavailable.collectAsState()
     val id = videoIdOf(url) ?: return
     when {
         id in saved -> Icon(MkIcons.Download, stringResource(R.string.track_downloaded), tint = Pelage.Roux, modifier = modifier.size(16.dp))
         id == current -> DownloadRing(downloads, modifier)
+        // Impossible à télécharger (supprimé, privé, bloqué…) : une petite croix grise
+        id in unavailable -> Icon(MkIcons.Close, stringResource(R.string.track_download_unavailable), tint = Pelage.Gris, modifier = modifier.size(14.dp))
     }
 }
 

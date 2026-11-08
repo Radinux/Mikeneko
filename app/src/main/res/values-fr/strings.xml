@@ -430,6 +430,12 @@
     <string name="playlist_download_remove_title">Retirer le téléchargement ?</string>
     <string name="playlist_download_remove_text">Les morceaux de cette playlist ne se liront plus hors ligne.</string>
     <string name="playlist_download_remove_text_videos">Les vidéos de cette playlist ne se liront plus hors ligne.</string>
+    <plurals name="playlist_downloaded_partial">
+        <item quantity="one">Téléchargée · %d indisponible</item>
+        <item quantity="many">Téléchargée · %d indisponibles</item>
+        <item quantity="other">Téléchargée · %d indisponibles</item>
+    </plurals>
+    <string name="track_download_unavailable">Impossible à télécharger</string>
     <string name="playlist_download_remove">Retirer</string>
     <string name="track_downloaded">Téléchargé</string>
     <string name="playlist_tab">Playlist</string>

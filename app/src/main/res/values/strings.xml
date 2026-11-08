@@ -431,6 +431,11 @@
     <string name="playlist_download_remove_title">Remove the download?</string>
     <string name="playlist_download_remove_text">The tracks of this playlist won\'t play offline anymore.</string>
     <string name="playlist_download_remove_text_videos">The videos of this playlist won\'t play offline anymore.</string>
+    <plurals name="playlist_downloaded_partial">
+        <item quantity="one">Downloaded · %d unavailable</item>
+        <item quantity="other">Downloaded · %d unavailable</item>
+    </plurals>
+    <string name="track_download_unavailable">Can\'t be downloaded</string>
     <string name="playlist_download_remove">Remove</string>
     <string name="track_downloaded">Downloaded</string>
     <string name="playlist_tab">Playlist</string>

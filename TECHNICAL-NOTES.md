@@ -887,6 +887,17 @@ users: the point is to take them from the videos really watched.
   warms the window up 1.5 s after launch: `liquidWaveSupported` touched (wave shader compiled) and
   `PlayerWindowContent` placed for 4 frames at alpha 0.004 (at 0 the renderer skips it), so its first
   real draw (display lists, image uploads, shader pipelines) no longer happens mid-animation.
+- 2.11.12: `PlaylistDownloads` checks and fallbacks. `saved` = index entries whose streams are
+  whole in the store (`OfflineCache.entry`), checked at start and on every sync; listed-but-broken
+  entries are forgotten and downloaded again. Every download is checked the same way before counting.
+  Failures: back-off 30 s / 2 min / 10 min / 30 min (`retryJob` comes back at the earliest retry, the
+  worker itself stops so the app can still idle-clear); `ExtractionException` 3 times, or 5 failures
+  that aren't network errors (cause chain: UnknownHost, Connect, SocketTimeout, SSL, stall…) →
+  `unavailable` (persisted). Network errors never exhaust the tries. `resume()` clears `retryAt`.
+  Turning a playlist's download off and on again retries its unavailable songs. The entry is stored
+  under the requested id (not `info.id`, which could differ and made the entry look unwanted, so it
+  was deleted and downloaded again forever). UI: complete = done + unavailable >= total; the ring
+  pales while waiting for a retry (`working` flow); unavailable rows get a grey cross.
 - Emulator tip: if screenshots turn black and the app "isn't responding" while its main thread just
   waits for vsync, the emulator's GPU is stuck: restart it with `-gpu swiftshader_indirect`.
 

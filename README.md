@@ -69,6 +69,10 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
     rest of the time (songs moved by accident).
 - A **Video** button in the music player: the song switches to its YouTube video, at the same moment.
 - 2.11.1: texts cleaned up (no other app names in the app).
+- 2.11.12: playlist downloads redone. A song that can't be downloaded (removed, private, blocked)
+  no longer keeps the button "in progress" forever: after a few tries it gets a small grey cross and
+  the playlist counts as downloaded ("Downloaded · 1 unavailable"). Failed songs are retried later
+  and later, and right away when you come back to the app; downloaded songs are checked again.
 - 2.11.11: the play button of music pages travels again from the header to the top pill (it could
   vanish from the pill). Duration and LIVE labels on thumbnails and the music Moods row now use the
   Material 3 style. The first opening of the music window after launch no longer stutters.
