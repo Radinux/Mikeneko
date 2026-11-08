@@ -13,7 +13,6 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.snap
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -383,13 +382,9 @@ fun PlayerContent(onMinimize: () -> Unit, onDownload: (String) -> Unit, onRadio:
                     Loading()
                 }
 
-                // Pendant le zoom / la rotation qui ramène la vidéo dans la page, les commandes sont cachées,
-                // puis reviennent en fondu (2.11.18)
-                val morphing by remember { androidx.compose.runtime.derivedStateOf { RotationMorph.running } }
-                val controlsAlpha by animateFloatAsState(if (morphing) 0f else 1f, if (morphing) snap() else tween(200), label = "commandes")
                 androidx.compose.animation.AnimatedVisibility( // la version « libre », pas celle de la Column
                     visible = controls,
-                    modifier = Modifier.fillMaxSize().graphicsLayer { alpha = controlsAlpha },
+                    modifier = Modifier.fillMaxSize(),
                     enter = ControlsFadeIn,
                     exit = ControlsFadeOut,
                 ) {

@@ -159,7 +159,7 @@ Items marked "to check on the phone" are built and published but not confirmed o
 - [ ] 2.11.6 (details): moving a song redone (the song stays under the finger, scroll speed from the finger's position, no double swap) — verified on the emulator (row centred ~25 px from the finger while the list scrolled); to check on the phone
 - [x] 2.11.16: landscape, first exit from fullscreen zooms smoothly (was instant) — confirmed on the phone, but the video buttons jumped at the start (→ 2.11.17)
 - [x] 2.11.17: no jump of the video at the start of the landscape fullscreen exit zoom — the centre buttons still jumped (→ 2.11.18)
-- [ ] 2.11.18: centre buttons no longer jump on fullscreen exit (first-frame lift fixed, controls hidden during the morph) — to check on the phone
+- [ ] 2.11.19: centre buttons no longer jump on fullscreen exit (first-frame lift fixed; controls visible during the morph, the 2.11.18 fade removed) — to check on the phone
 - [x] 2.11.13: separate Edit songs page; dragged song stays under the finger, no jump at the top, saved on drop — verified on the emulator and on the phone
 - [x] 2.11.12: playlist download button stuck "in progress" when everything was downloaded — downloads verified, back-off retries, unavailable songs, retry on return to the app — confirmed on the phone
 - [x] 2.11.11: travelling play button back; Material 3 duration / LIVE labels and Moods row; first music window opening after launch warmed up — confirmed on the phone

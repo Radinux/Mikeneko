@@ -922,6 +922,7 @@ users: the point is to take them from the videos really watched.
   were 0, giving a 38 dp lift, corrected one frame later (buttons jumped up and back). `lift` is now 0
   until both are measured. The controls overlay is also at alpha 0 while `RotationMorph.running`
   (`derivedStateOf`), fading back in over 200 ms.
+- 2.11.19: the 2.11.18 controls fade during `RotationMorph` removed, so the `lift` fix can be seen on its own.
 - Emulator tip: if screenshots turn black and the app "isn't responding" while its main thread just
   waits for vsync, the emulator's GPU is stuck: restart it with `-gpu swiftshader_indirect`.
 
