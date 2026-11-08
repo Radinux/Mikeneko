@@ -145,16 +145,25 @@ fun Capsule(text: String, modifier: Modifier = Modifier, selected: Boolean = fal
     else FilledTonalButton(onClick, modifier, contentPadding = padding, content = content)
 }
 
-/** Petite étiquette (durée, EN DIRECT…). */
+/**
+ * Petite étiquette (durée, EN DIRECT…) : une surface Material 3 plate aux coins de 8 dp, dans les
+ * couleurs du thème (2.11.11 ; avant, une pastille « pâte à modeler » avec son ombre).
+ */
 @Composable
-fun Tag(text: String, modifier: Modifier = Modifier, background: Color = Pelage.Creme, color: Color = Pelage.Encre) {
-    Text(
-        text,
-        modifier = modifier.clay(background, RoundedCornerShape(9.dp), elevation = 3.dp).padding(horizontal = 8.dp, vertical = 3.dp),
-        color = color,
-        fontSize = 12.sp,
-        fontWeight = FontWeight.Bold,
-    )
+fun Tag(
+    text: String,
+    modifier: Modifier = Modifier,
+    background: Color = MaterialTheme.colorScheme.secondaryContainer,
+    color: Color = MaterialTheme.colorScheme.onSecondaryContainer,
+) {
+    androidx.compose.material3.Surface(modifier, shape = RoundedCornerShape(8.dp), color = background, contentColor = color) {
+        Text(
+            text,
+            Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold,
+        )
+    }
 }
 
 @Composable

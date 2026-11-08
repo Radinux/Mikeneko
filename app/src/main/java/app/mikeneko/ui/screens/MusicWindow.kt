@@ -26,6 +26,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.withFrameNanos
+import kotlinx.coroutines.delay
+import app.mikeneko.ui.glass.liquidWaveSupported
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -157,6 +160,20 @@ fun MusicDockWindow(
                 PlayerHolder.launchPlayback { PlayerHolder.restoreParkedMusic(context) }
             }
         }
+        // Le premier dessin de la fenêtre, fait en avance (2.11.11) : sans ça, la première ouverture
+        // après le lancement accrochait un peu (toute la fenêtre dessinée pour la première fois, ses
+        // images envoyées au GPU, le shader de la vague compilé, au milieu de l'animation). Un peu
+        // après le lancement, elle est posée quelques images, invisible (alpha presque nul : à 0, le
+        // système ne la dessinerait pas du tout), puis retirée.
+        var warm by remember { mutableStateOf(false) }
+        LaunchedEffect(Unit) {
+            delay(1_500)
+            liquidWaveSupported // compile le shader de la vague maintenant, pas à la première ouverture
+            if (state.open || state.expand.value != 0f) return@LaunchedEffect
+            warm = true
+            repeat(4) { withFrameNanos { } }
+            warm = false
+        }
         LiquidGlass(
             backdrop,
             Modifier
@@ -202,7 +219,7 @@ fun MusicDockWindow(
                         val h = (geometry.bottom - geometry.windowTop).roundToInt()
                         val placeable = measurable.measure(Constraints.fixed(w, h))
                         layout(constraints.maxWidth, constraints.maxHeight) {
-                            if (state.expand.value > 0.3f || state.pulling) placeable.place((constraints.maxWidth - w) / 2, constraints.maxHeight - h)
+                            if (state.expand.value > 0.3f || state.pulling || warm) placeable.place((constraints.maxWidth - w) / 2, constraints.maxHeight - h)
                         }
                     }
                     // Regarde seulement quand le doigt se lève (ou que le geste est annulé), sans rien consommer
@@ -215,7 +232,7 @@ fun MusicDockWindow(
                             state.endPull()
                         }
                     }
-                    .graphicsLayer { alpha = ((state.expand.value - 0.3f) / 0.45f).coerceIn(0f, 1f) },
+                    .graphicsLayer { alpha = if (warm && state.expand.value <= 0.3f) 0.004f else ((state.expand.value - 0.3f) / 0.45f).coerceIn(0f, 1f) },
             ) {
                 PlayerWindowContent(state, backdrop, onDownload, onWatchVideo, onOpenArtist, onOpenAlbum)
             }

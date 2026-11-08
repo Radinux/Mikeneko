@@ -879,6 +879,14 @@ users: the point is to take them from the videos really watched.
   old one stops if it wakes up, item retried 10 min later) and a new worker starts.
   `MainActivity.onStart` calls `PlaylistDownloads.resume()` so a frozen download is detected within
   ~10 s. HTTP connect/read timeouts set to 15 s.
+- 2.11.11: the travelling play button is back (2.11.8 code: `TravellingPlayButton` + the header's
+  anchor with 0.5 px thresholds); the 2.11.9 `PillPlayButton` sometimes left the pill empty, and the
+  stutter it was meant to fix came from the never-ending animations (2.11.10). `Tag` is a flat
+  Material 3 `Surface` (8 dp corners, secondaryContainer colors) instead of `clay`. Music Moods: a
+  `ConnectedChip` group (`Shelf(gap = CONNECTED_GAP)`) instead of gradient cards. `MusicDockWindow`
+  warms the window up 1.5 s after launch: `liquidWaveSupported` touched (wave shader compiled) and
+  `PlayerWindowContent` placed for 4 frames at alpha 0.004 (at 0 the renderer skips it), so its first
+  real draw (display lists, image uploads, shader pipelines) no longer happens mid-animation.
 - Emulator tip: if screenshots turn black and the app "isn't responding" while its main thread just
   waits for vsync, the emulator's GPU is stuck: restart it with `-gpu swiftshader_indirect`.
 

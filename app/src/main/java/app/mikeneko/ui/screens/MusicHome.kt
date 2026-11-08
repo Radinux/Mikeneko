@@ -1,5 +1,11 @@
 package app.mikeneko.ui.screens
 
+import androidx.compose.ui.unit.Dp
+
+import app.mikeneko.ui.components.CONNECTED_GAP
+
+import app.mikeneko.ui.components.ConnectedChip
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -69,7 +75,6 @@ import app.mikeneko.ui.components.coverModel
 import app.mikeneko.ui.icons.MkIcons
 import app.mikeneko.ui.theme.Pelage
 import app.mikeneko.ui.theme.jellyClickable
-import app.mikeneko.ui.theme.plopOnSelect
 import app.mikeneko.ui.theme.statusBarSpace
 import coil3.compose.AsyncImage
 import java.time.LocalTime
@@ -203,9 +208,12 @@ internal fun MusicHome(state: MusicState, onPlayStations: (List<VideoItem>, Int)
             }
         }
         item(key = "ambiances") {
-            Shelf(stringResource(R.string.music_moods)) {
+            // Un groupe connecté Material 3, comme les autres rangées de choix (2.11.11 ; avant, des cartes en dégradé)
+            Shelf(stringResource(R.string.music_moods), gap = CONNECTED_GAP) {
                 itemsIndexed(Music.AMBIANCES, key = { _, it -> "ambiance:" + it.id }) { index, a ->
-                    MoodCard(stringResource(a.label), index, selected = a.id == ambiance.id) { state.chooseAmbiance(a.id) }
+                    ConnectedChip(stringResource(a.label), selected = a.id == ambiance.id, first = index == 0, last = index == Music.AMBIANCES.lastIndex) {
+                        state.chooseAmbiance(a.id)
+                    }
                 }
             }
         }
@@ -261,7 +269,7 @@ private fun QuickTileView(tile: QuickTile, modifier: Modifier = Modifier) {
 
 /** Une rangée : son titre, puis des cartes qui défilent de côté. */
 @Composable
-private fun Shelf(title: String, onMore: (() -> Unit)? = null, content: LazyListScope.() -> Unit) {
+private fun Shelf(title: String, onMore: (() -> Unit)? = null, gap: Dp = 14.dp, content: LazyListScope.() -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         if (onMore == null) {
             Text(title, Modifier.padding(horizontal = 20.dp), color = Pelage.Texte, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
@@ -275,7 +283,7 @@ private fun Shelf(title: String, onMore: (() -> Unit)? = null, content: LazyList
                 Icon(MkIcons.ChevronRight, null, tint = Pelage.Gris, modifier = Modifier.padding(start = 4.dp).size(20.dp))
             }
         }
-        LazyRow(contentPadding = PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(14.dp), content = content)
+        LazyRow(contentPadding = PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(gap), content = content)
     }
 }
 
@@ -328,34 +336,3 @@ private fun FavoriteBadge(modifier: Modifier) {
     }
 }
 
-/** Les teintes des cartes d'ambiance (dans l'ordre de Music.AMBIANCES, en boucle). */
-private val MOOD_COLORS = listOf(
-    Color(0xFF8E5BD8) to Color(0xFF3B2A6B),
-    Color(0xFF3FA7A0) to Color(0xFF1E4C52),
-    Color(0xFFD08A3C) to Color(0xFF6A3A1C),
-    Color(0xFF5C7FD6) to Color(0xFF243A6E),
-    Color(0xFFD45D7A) to Color(0xFF6B2338),
-    Color(0xFF6DB46A) to Color(0xFF2C5530),
-    Color(0xFFCF6A4E) to Color(0xFF5E2A1F),
-    Color(0xFF8C8F3E) to Color(0xFF3F4120),
-)
-
-/** Une ambiance : une carte colorée ; touchée, la rangée « En direct » montre ses lives. */
-@Composable
-private fun MoodCard(label: String, index: Int, selected: Boolean, onClick: () -> Unit) {
-    val (light, dark) = MOOD_COLORS[index % MOOD_COLORS.size]
-    val shape = RoundedCornerShape(16.dp)
-    Box(
-        Modifier
-            .size(150.dp, 84.dp)
-            .plopOnSelect(selected)
-            .clip(shape)
-            .background(Brush.linearGradient(listOf(light, dark)))
-            .then(if (selected) Modifier.border(3.dp, Pelage.Creme, shape) else Modifier)
-            .jellyClickable(role = Role.Tab, strength = 0.4f, onClick = onClick)
-            .padding(12.dp),
-        contentAlignment = Alignment.BottomStart,
-    ) {
-        Text(label, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-    }
-}

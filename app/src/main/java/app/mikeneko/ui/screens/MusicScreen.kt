@@ -1,6 +1,5 @@
 package app.mikeneko.ui.screens
 
-import androidx.compose.animation.core.tween
 import app.mikeneko.ui.components.CONNECTED_GAP
 import app.mikeneko.ui.components.ConnectedChip
 import androidx.compose.foundation.background
@@ -83,33 +82,49 @@ import kotlin.math.roundToInt
 fun MusicOverlay(state: MusicState, backdrop: Backdrop) {
     Box(Modifier.fillMaxSize()) {
         MusicHeader(state, backdrop)
+        TravellingPlayButton(state)
     }
 }
 
 /**
- * Le bouton lecture dans la pilule du haut (2.11.9) : il apparaît (fondu, léger grossissement) quand
- * l'en-tête est passé sous la barre, et part quand il revient. Deux états seulement, tous deux
- * cliquables : dans l'en-tête, ou ici. Avant, un bouton voyageait de l'un à l'autre en suivant le
- * défilement à chaque image (il accrochait au défilement rapide). Seul à se recomposer quand il change.
+ * Le bouton lecture d'une page (album, playlist…) quand il a quitté l'en-tête : il glisse et rétrécit
+ * jusqu'à sa place dans la pilule de la barre du haut, et y reste (voir [PlayAnchor]).
  */
 @Composable
-private fun PillPlayButton(state: MusicState, onPlay: () -> Unit) {
-    val shown by remember(state) { androidx.compose.runtime.derivedStateOf { state.barProgress > 0.6f } }
-    androidx.compose.animation.AnimatedVisibility(
-        shown,
-        enter = androidx.compose.animation.fadeIn(tween(160)) + androidx.compose.animation.scaleIn(tween(200), initialScale = 0.6f),
-        exit = androidx.compose.animation.fadeOut(tween(120)) + androidx.compose.animation.scaleOut(tween(140), targetScale = 0.6f),
-    ) {
+private fun TravellingPlayButton(state: MusicState) {
+    val bar = state.bar ?: return
+    val anchor = bar.play ?: return
+    val onPlay = bar.onPlay ?: return
+    if (state.page == null) return
+    var origin by remember { mutableStateOf(Offset.Zero) }
+    Box(Modifier.fillMaxSize().onGloballyPositioned { origin = it.positionInRoot() }) {
         Box(
             Modifier
-                .padding(start = 8.dp)
-                .size(PLAY_SMALL)
-                .clip(CircleShape)
+                .layout { measurable, _ ->
+                    val big = PLAY_BIG.roundToPx()
+                    val placeable = measurable.measure(Constraints.fixed(big, big))
+                    layout(big, big) {
+                        // Posé seulement une fois parti de l'en-tête (sinon il arrêterait les taps dessous)
+                        val spot = anchor.spot(this@layout)
+                        if (spot != null && spot.t > 0f) {
+                            placeable.place((spot.center.x - origin.x - big / 2f).roundToInt(), (spot.center.y - origin.y - big / 2f).roundToInt())
+                        }
+                    }
+                }
+                .graphicsLayer {
+                    val t = anchor.spot(this)?.t ?: 0f
+                    val scale = 1f + (PLAY_SMALL / PLAY_BIG - 1f) * t
+                    scaleX = scale
+                    scaleY = scale
+                    shadowElevation = (1f - t) * 10.dp.toPx()
+                    shape = CircleShape
+                    clip = true
+                }
                 .background(Pelage.Roux)
                 .jellyClickable(role = Role.Button, onClickLabel = stringResource(R.string.play_all), onClick = onPlay),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(MkIcons.Play, stringResource(R.string.play_all), tint = Pelage.Encre, modifier = Modifier.size(20.dp))
+            Icon(MkIcons.Play, stringResource(R.string.play_all), tint = Pelage.Encre, modifier = Modifier.size(28.dp))
         }
     }
 }
@@ -178,7 +193,7 @@ private fun MusicHeader(state: MusicState, backdrop: Backdrop) {
                                     )
                                     // La place du bouton lecture : c'est celui de l'en-tête qui vient s'y ranger
                                     // (dessiné par TravellingPlayButton, au-dessus de la pilule)
-                                    bar.onPlay?.let { PillPlayButton(state, it) }
+                                    if (bar.onPlay != null) Spacer(Modifier.padding(start = 8.dp).size(PLAY_SMALL))
                                 }
                             }
                             // Visible, elle arrête les taps (sinon ils traversent jusqu'au morceau dessous) : un

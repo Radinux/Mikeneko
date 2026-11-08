@@ -132,10 +132,34 @@ internal fun PageHeader(
             // En plusieurs lignes s'il le faut (téléchargement, aléatoire, pochette…) : rien ne s'écrase
             FlowRow(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) { actions() }
             if (onPlay != null) {
-                // Le bouton lecture de l'en-tête : il défile avec la page ; une fois passé sous la barre,
-                // c'est celui de la pilule du haut qui prend le relais (2.11.9, deux états, sans trajet)
                 Box(
                     Modifier
+                        .then(
+                            if (play == null) {
+                                Modifier
+                            } else {
+                                Modifier
+                                    .onGloballyPositioned { c ->
+                                        val header = headerCoords?.takeIf { it.isAttached } ?: return@onGloballyPositioned
+                                        val inHeader = header.localPositionOf(c, Offset.Zero)
+                                        val root = c.positionInRoot()
+                                        // Des valeurs fixes, appelées à chaque image du défilement : on ne les
+                                        // réécrit que si elles bougent vraiment (2.11.8). Recalculées par différence
+                                        // de deux positions qui défilent, elles changeaient d'un arrondi à chaque
+                                        // image et relançaient la mise en page du bouton qui voyage (un lag au
+                                        // défilement rapide, absent en mode Modifier, sans ce bouton).
+                                        val known = play.inHeader
+                                        if (known == null || abs(known.x - inHeader.x) > 0.5f || abs(known.y - inHeader.y) > 0.5f) play.inHeader = inHeader
+                                        if (abs(play.left - root.x) > 0.5f) play.left = root.x
+                                        play.headerTop.value?.let { top ->
+                                            val listTop = root.y - top - inHeader.y
+                                            if (abs(play.listTop - listTop) > 0.5f) play.listTop = listTop
+                                        }
+                                    }
+                                    // Parti vers la barre : c'est le bouton de MusicOverlay qui est dessiné
+                                    .graphicsLayer { alpha = if ((play.spot(density)?.t ?: 0f) > 0f) 0f else 1f }
+                            },
+                        )
                         .size(PLAY_BIG).shadow(10.dp, CircleShape).clip(CircleShape).background(Pelage.Roux).jellyClickable(role = Role.Button, onClickLabel = stringResource(R.string.play_all), onClick = onPlay),
                     contentAlignment = Alignment.Center,
                 ) {
