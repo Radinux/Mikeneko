@@ -10,6 +10,7 @@ import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
@@ -272,6 +273,11 @@ object PlayerHolder {
 
                 override fun onTracksChanged(tracks: Tracks) {
                     if (nowPlaying.value?.live == true) qualities.value = liveQualities(tracks)
+                }
+
+                override fun onPlayerError(error: PlaybackException) {
+                    // Une seule relance automatique par lecture ; ensuite, le bouton lecture relance
+                    if (retriedTicket != ticket) retry(automatic = true)
                 }
 
                 override fun onAudioSessionIdChanged(audioSessionId: Int) {
@@ -1140,10 +1146,44 @@ object PlayerHolder {
         prefetchMix()
     }
 
+    /** La lecture (numéro [ticket]) déjà relancée une fois après une erreur. */
+    private var retriedTicket = -1
+
+    /**
+     * La lecture a échoué (« Source error » : flux expiré, réseau coupé, fichier gardé qui ne
+     * correspond plus…) : le lecteur s'est arrêté, image noire, et « lecture » n'y faisait plus
+     * rien. On redemande des flux tout neufs à YouTube (sans ce qui en a été gardé) et on repart
+     * au même endroit.
+     */
+    private fun retry(automatic: Boolean) {
+        val p = player ?: return
+        val context = appContext ?: return
+        val now = nowPlaying.value ?: return
+        if (LocalMusic.isLocal(now.url)) {
+            p.prepare()
+            p.play()
+            return
+        }
+        // La position d'un lecteur en erreur n'est pas fiable : elle ne doit pas écraser la reprise
+        positionOwner = null
+        val resumeVideo = if (now.audioOnly || now.live || playingShort) null else WatchPositions.get(context, now.videoId)
+        val position = if (now.live) 0L else p.currentPosition.takeIf { it > 0L } ?: resumeVideo ?: 0L
+        val autoPlay = !automatic || p.playWhenReady
+        val short = playingShort
+        // Joué depuis la sauvegarde de lecture (info gardée) : on l'oublie, elle a pu causer l'erreur
+        if (info != null) runCatching { OfflineCache.forgetPlayed(context, now.audioOnly, now.videoId) }
+        launchPlayback {
+            retriedTicket = ticket + 1 // le numéro que [play] va prendre
+            play(context, now.url, now.audioOnly, rememberPrevious = false, startAtMs = position, autoPlay = autoPlay, short = short)
+        }
+    }
+
     /** Pause si la lecture est demandée (même pendant un chargement), sinon lecture ; vidéo finie : on la relance. */
     fun togglePlay() {
         val p = player ?: return
         when {
+            // En erreur, le lecteur est arrêté : « lecture » recharge la vidéo
+            p.playbackState == Player.STATE_IDLE && p.playerError != null -> retry(automatic = false)
             p.playbackState == Player.STATE_ENDED -> { p.seekTo(0); p.play() }
             p.playWhenReady -> p.pause()
             else -> p.play()

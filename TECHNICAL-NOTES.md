@@ -923,6 +923,18 @@ users: the point is to take them from the videos really watched.
   until both are measured. The controls overlay is also at alpha 0 while `RotationMorph.running`
   (`derivedStateOf`), fading back in over 200 ms.
 - 2.11.19: the 2.11.18 controls fade during `RotationMorph` removed, so the `lift` fix can be seen on its own.
+- 2.11.20: resumed videos stayed black (`Source error`, player IDLE) and play did nothing. Cause:
+  the playback cache key was `id:kind+itag`, but YouTube serves different files under one itag
+  (the "DRC" audio variant of itag 140/251, re-encodes). Resuming mid-video read the cached start
+  of one file and fetched the rest of another (different length). Fixes: `OfflineCache.key` now
+  appends the content length (`ItagItem.contentLength`, else the `clen=` URL parameter), so old
+  partial entries are simply not reused; `bestAudio` drops `isDrc` tracks unless nothing else is
+  left; `PlayerHolder.onPlayerError` calls `retry()` once per playback (forgets the video's played
+  cache via `OfflineCache.forgetPlayed`, asks YouTube for fresh streams, same position, without
+  letting the errored player's position overwrite the resume point); `togglePlay` on an errored
+  (IDLE) player calls `retry()` too, since `play()` alone does nothing there. Checked on the
+  emulator: resume at 11 min plays; Wi-Fi off + seek far ahead → `Source error`; Wi-Fi on + play →
+  plays again at the same position.
 - Emulator tip: if screenshots turn black and the app "isn't responding" while its main thread just
   waits for vsync, the emulator's GPU is stuck: restart it with `-gpu swiftshader_indirect`.
 

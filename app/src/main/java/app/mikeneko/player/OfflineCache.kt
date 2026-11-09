@@ -91,7 +91,9 @@ object OfflineCache {
             .setUpstreamDataSourceFactory(upstream)
             .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
 
-    fun key(videoId: String, kind: Char, itag: Int) = "$videoId:$kind$itag"
+    /** [length] : la taille du fichier (-1 si inconnue), pour ne jamais mélanger deux fichiers du même itag. */
+    fun key(videoId: String, kind: Char, itag: Int, length: Long = -1L) =
+        if (length > 0) "$videoId:$kind$itag:$length" else "$videoId:$kind$itag"
 
     /** Le flux est entier dans le cache (sa taille est connue dès la première requête). */
     fun complete(cache: SimpleCache, key: String): Boolean = runCatching {
@@ -172,6 +174,17 @@ object OfflineCache {
         val entry = read(context, store, videoId)
         val cache = cache(context, store)
         listOfNotNull(entry?.audioKey, entry?.videoKey).forEach { runCatching { cache.removeResource(it) } }
+        prefs(context, store).edit().remove(videoId).apply()
+    }
+
+    /**
+     * Oublie ce qui a été gardé de [videoId] dans la sauvegarde de lecture (pas les playlists
+     * téléchargées) : après une erreur de lecture, la vidéo repart de flux tout neufs.
+     */
+    fun forgetPlayed(context: Context, audioOnly: Boolean, videoId: String) {
+        val store = if (audioOnly) Store.Music else Store.Videos
+        val cache = cache(context, store)
+        cache.keys.filter { it.startsWith("$videoId:") }.forEach { runCatching { cache.removeResource(it) } }
         prefs(context, store).edit().remove(videoId).apply()
     }
 

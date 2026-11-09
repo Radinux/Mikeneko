@@ -27,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap
 import org.schabi.newpipe.extractor.MediaFormat
 import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.AudioTrackType
+import org.schabi.newpipe.extractor.stream.Stream
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.StreamType
 import org.schabi.newpipe.extractor.stream.SubtitlesStream
@@ -140,8 +141,8 @@ object MediaSources {
         val chunked = if (cache != null) OfflineCache.factory(cache, plain) else plain
         val progressive = ProgressiveMediaSource.Factory(chunked)
         val audio = bestAudio(info.audioStreams)
-        fun keyOf(kind: Char, itag: Int) = if (cache != null) OfflineCache.key(info.id, kind, itag) else null
-        val audioKey = audio?.let { keyOf('a', it.itag) }
+        fun keyOf(kind: Char, stream: Stream) = if (cache != null) cacheKey(info, kind, stream) else null
+        val audioKey = audio?.let { keyOf('a', it) }
 
         if (audioOnly && audio != null) {
             return Built(progressive.createMediaSource(item(audio.content, key = audioKey)), 0, audioKey)
@@ -156,7 +157,7 @@ object MediaSources {
             muxed != null -> Triple(muxed.content, muxed.shortSide, false)
             else -> error(AppLocale.string(R.string.no_playable_stream))
         }
-        val videoKey = if (needsAudio) videoOnly?.let { keyOf('v', it.itag) } else muxed?.let { keyOf('m', it.itag) }
+        val videoKey = if (needsAudio) videoOnly?.let { keyOf('v', it) } else muxed?.let { keyOf('m', it) }
 
         // La vidéo (+ ses sous-titres, ajoutés par DefaultMediaSourceFactory qui sait les lire)
         val videoItem = MediaItem.Builder()
@@ -207,21 +208,42 @@ object MediaSources {
 
     fun downloadPlan(info: StreamInfo, audioOnly: Boolean, maxHeight: Int?): Plan {
         val audio = bestAudio(info.audioStreams)
-        fun key(kind: Char, itag: Int) = OfflineCache.key(info.id, kind, itag)
+        fun key(kind: Char, stream: Stream) = cacheKey(info, kind, stream)
         if (audioOnly) {
             audio ?: error(AppLocale.string(R.string.no_playable_stream))
-            return Plan(key('a', audio.itag), audio.content, null, null, 0)
+            return Plan(key('a', audio), audio.content, null, null, 0)
         }
         val limit = maxHeight ?: autoMaxHeight
         val muxed = bestVideo(playableMuxed(info), limit)
         val videoOnly = audio?.let { bestVideo(playableVideoOnly(info), limit) }
         return when {
             videoOnly != null && audio != null && videoOnly.shortSide > (muxed?.shortSide ?: 0) ->
-                Plan(key('a', audio.itag), audio.content, key('v', videoOnly.itag), videoOnly.content, videoOnly.shortSide)
-            muxed != null -> Plan(key('m', muxed.itag), muxed.content, null, null, muxed.shortSide)
+                Plan(key('a', audio), audio.content, key('v', videoOnly), videoOnly.content, videoOnly.shortSide)
+            muxed != null -> Plan(key('m', muxed), muxed.content, null, null, muxed.shortSide)
             else -> error(AppLocale.string(R.string.no_playable_stream))
         }
     }
+
+    /**
+     * La clé d'un flux dans la sauvegarde ([OfflineCache]) : l'id, l'itag et la taille du fichier.
+     * YouTube sert parfois des fichiers différents sous le même itag (son « DRC » au volume
+     * compressé, autre encodage) : sans la taille, une vidéo reprise au milieu mélangeait le
+     * début gardé d'un fichier et la suite d'un autre, et la lecture échouait (« Source error »).
+     */
+    private fun cacheKey(info: StreamInfo, kind: Char, stream: Stream): String {
+        val itag = when (stream) {
+            is AudioStream -> stream.itag
+            is VideoStream -> stream.itag
+            else -> stream.itagItem?.id ?: 0
+        }
+        return OfflineCache.key(info.id, kind, itag, contentLength(stream))
+    }
+
+    /** La taille du fichier, donnée par NewPipe ou par le paramètre « clen » de l'adresse ; -1 si inconnue. */
+    private fun contentLength(stream: Stream): Long =
+        stream.itagItem?.contentLength?.takeIf { it > 0 }
+            ?: stream.content.substringAfter("clen=", "").substringBefore('&').toLongOrNull()?.takeIf { it > 0 }
+            ?: -1L
 
     /** Le palier YouTube du flux (1080 pour du 1920×1078, du 1920×800 ou du 1080×1920). */
     private val VideoStream.shortSide: Int
@@ -315,7 +337,8 @@ object MediaSources {
      * comme l'audiodescription.
      */
     private fun bestAudio(streams: List<AudioStream>): AudioStream? {
-        val playable = streams.filter { it.isUrl }
+        // Le son « DRC » (volume compressé par YouTube) seulement s'il n'y a rien d'autre
+        val playable = streams.filter { it.isUrl }.let { all -> all.filter { it.itagItem?.isDrc != true }.ifEmpty { all } }
         val original = playable.filter { it.audioTrackType == AudioTrackType.ORIGINAL }
             // Vidéo à une seule piste : rien n'est étiqueté
             .ifEmpty { playable.filter { it.audioTrackType == null } }
