@@ -508,7 +508,7 @@
     <string name="sync_not_here">%1$s n’est pas sur ce réseau en ce moment</string>
     <string name="sync_unlink">Arrêter la synchro</string>
     <string name="sync_unlink_confirm">Touche encore pour arrêter</string>
-    <string name="sync_auto_text">Les appareils liés se synchronisent tout seuls dès qu’ils sont sur le même réseau privé (quand Mikeneko est ouvert), puis toutes les 15 minutes.</string>
+    <string name="sync_auto_text">Les appareils liés se synchronisent tout seuls dès que quelque chose change, quand ils sont sur le même réseau privé (et Mikeneko ouvert).</string>
     <string name="backup_export">Exporter dans un fichier</string>
     <string name="backup_export_text">Abonnements, playlists musique et vidéo, albums et artistes sauvegardés, radios favorites, À regarder plus tard, vidéos aimées, tes sujets et ton historique, dans un fichier .xml.</string>
     <string name="backup_import">Importer un fichier</string>

@@ -1074,6 +1074,17 @@ users: the point is to take them from the videos really watched.
   paused on the receiving device. `WatchHistory.ensureLoaded()` (synchronized) because a sync can
   arrive before the background file read. Limit: merge never deletes, so a history cleared on one
   device comes back from a linked device that still has it.
+- 2.19.2: `data/AutoSync.kt` (started in `MikenekoApp`). It merges every StateFlow the backup carries
+  (`drop(1)` each) and, on a change, starts one countdown per target: 30 s → `LocalSync.syncPresent`
+  (linked peers seen on the network, 15 s gap per peer), 60 s → `GitHubSync.syncNow`. Changes during a
+  countdown ride along (the watched part moves every 10 s during a video: one sync a minute, not six).
+  No ping-pong: each target keeps the SHA-256 of the full export (`fingerprint`, version left empty) of
+  what it last synced; an import changes the flows but not the fingerprint, so nothing leaves again. For
+  GitHub the fingerprint is taken right before the export that gets written (a change during the upload
+  is then seen as new); the export holds today's date, so one extra sync can happen after midnight.
+  `GitHubSync.foreground(visible)` from `onStart/onStop` polls `syncIfDue` every 3 min (gap now 1 min),
+  `AutoSync.leaving` sends what is still waiting. A poll that finds the locker byte-identical to our
+  export doesn't PATCH it (no useless Gist revisions).
 - Emulator tip (2026-11-10): with `-gpu swiftshader_indirect` the emulator itself crashes when the
   music window opens; `-gpu host` works again.
 - Emulator tip: if screenshots turn black and the app "isn't responding" while its main thread just

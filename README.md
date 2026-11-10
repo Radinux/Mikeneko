@@ -72,6 +72,10 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 - 2.19.1: sync (PIN or GitHub) and the backup file now also carry your **watch history**, your **resume
   points** and your **For you topics**: a freshly synced device skips the topics page and its For you
   starts from what you watch elsewhere.
+- 2.19.2: **sync as you go**. A new subscription, a playlist change, a watched video… reaches your
+  linked devices on the same network about 30 seconds later and your GitHub locker about a minute
+  later, without touching Sync. While the app is open the locker is checked every 3 minutes for what
+  your other devices sent, and whatever is still waiting leaves when you quit the app.
 
 ### 2.18
 

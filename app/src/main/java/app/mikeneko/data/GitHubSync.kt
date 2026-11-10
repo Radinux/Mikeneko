@@ -61,8 +61,10 @@ object GitHubSync {
     private const val FILE = "mikeneko-sync.json"
     private const val DESCRIPTION = "Mikeneko sync (encrypted)"
     private const val API = "https://api.github.com"
-    /** Pas plus d'une synchro automatique toutes les 10 min. */
-    private const val MIN_GAP_MS = 10 * 60_000L
+    /** Au retour dans l'appli : une synchro si la dernière date de plus d'une minute. */
+    private const val MIN_GAP_MS = 60_000L
+    /** Appli ouverte : on va voir toutes les 3 min ce que les autres appareils ont envoyé (2.19.2). */
+    private const val POLL_MS = 3 * 60_000L
     private const val VAULT_ALIAS = "mikeneko-github"
     /** L'alphabet de la clé de synchro : sans 0/O ni 1/I/L, pour la recopier sans erreur. */
     private const val KEY_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
@@ -192,7 +194,26 @@ object GitHubSync {
 
     // ------------------------------------------------------------------ la synchro
 
-    /** Au retour dans l'appli et en la quittant : une synchro si la dernière date de plus de 10 min. */
+    private var pollJob: Job? = null
+
+    /**
+     * L'appli est à l'écran ([visible]) : on relève le coffre régulièrement, pour recevoir ce que les
+     * autres appareils y mettent (ce qu'on change ici part tout seul, voir [AutoSync]).
+     */
+    fun foreground(context: Context, visible: Boolean) {
+        val app = context.applicationContext
+        pollJob?.cancel()
+        pollJob = null
+        if (!visible) return
+        pollJob = scope.launch {
+            while (true) {
+                syncIfDue(app)
+                delay(POLL_MS)
+            }
+        }
+    }
+
+    /** Au retour dans l'appli, puis régulièrement : une synchro si la dernière date de plus d'une minute. */
     fun syncIfDue(context: Context) {
         load(context)
         if (_login.value !is Login.In || _status.value is Status.NeedKey) return
@@ -263,20 +284,30 @@ object GitHubSync {
         }
 
         var added = MikenekoBackup.Added(0, 0, 0, 0)
+        var theirs: ByteArray? = null
         if (remote != null) {
             val code = key(context) ?: return Status.NeedKey(wrong = false)
             val plain = open(code, remote) ?: return Status.NeedKey(wrong = true)
+            theirs = plain
             val content = MikenekoBackup.read(String(plain, Charsets.UTF_8))
             added = withContext(Dispatchers.Main) { MikenekoBackup.import(context, content) }
         }
         // Le premier appareil tire la clé
         val code = key(context) ?: newKey().also { saveKey(context, it) }
+        // L'empreinte est prise avec ce qu'on écrit : un changement qui arrive pendant l'envoi repartira
+        val print = AutoSync.fingerprint(context)
         val ours = ByteArrayOutputStream().also { MikenekoBackup.export(context, it, appVersion(context)) }.toByteArray()
-        val body = seal(code, ours)
-        val written = if (gistId != null && writeGistOrMissing(token, gistId, body)) gistId else createGist(token, body)
+        // Le coffre contient déjà exactement ça (un simple relevé, 2.19.2) : on ne le réécrit pas
+        val written = if (gistId != null && theirs != null && theirs.contentEquals(ours)) {
+            gistId
+        } else {
+            val body = seal(code, ours)
+            if (gistId != null && writeGistOrMissing(token, gistId, body)) gistId else createGist(token, body)
+        }
         val now = System.currentTimeMillis()
         p.edit().putString("gist", written).putLong("derniere", now).apply()
         _lastSync.value = now
+        AutoSync.markGitHub(print)
         return Status.Done(added, now)
     }
 

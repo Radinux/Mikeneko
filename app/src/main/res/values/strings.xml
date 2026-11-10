@@ -490,7 +490,7 @@
     <string name="sync_not_here">%1$s isn\'t on this network right now</string>
     <string name="sync_unlink">Stop syncing</string>
     <string name="sync_unlink_confirm">Tap again to stop</string>
-    <string name="sync_auto_text">Linked devices sync by themselves whenever they are on the same private network (while Mikeneko is open), then every 15 minutes.</string>
+    <string name="sync_auto_text">Linked devices sync by themselves as soon as something changes, whenever they are on the same private network (while Mikeneko is open).</string>
     <string name="update_title">Updates</string>
     <string name="update_idle">New versions are checked every 4 hours.</string>
     <string name="update_checking">Checking for a new version…</string>

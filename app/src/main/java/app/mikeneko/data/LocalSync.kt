@@ -293,6 +293,19 @@ object LocalSync {
         return true
     }
 
+    /**
+     * Quelque chose a changé ici (2.19.2, [AutoSync]) : une synchro avec chaque appareil lié présent sur le
+     * réseau (pas plus d'une toutes les 15 s avec le même).
+     */
+    fun syncPresent(context: Context) {
+        val app = context.applicationContext
+        val now = System.currentTimeMillis()
+        _peers.value.forEach { peer ->
+            val link = _links.value.firstOrNull { it.id == peer.id } ?: return@forEach
+            if (now - link.lastSync > 15_000) scope.launch { syncLinked(app, peer) }
+        }
+    }
+
     /** Les appareils liés vus sur le réseau : une synchro quand on les retrouve, puis toutes les 15 min. */
     private suspend fun autoLoop(context: Context) {
         while (true) {
@@ -655,6 +668,8 @@ object LocalSync {
         } else {
             touchLink(context, peer.id, via?.first, via?.second ?: 0)
         }
+        // Ce qu'on a maintenant, l'autre l'a aussi : pas de synchro « en retour » pour ce qu'on vient de recevoir
+        AutoSync.markLocal(context)
         return Outcome.Synced(added, peer.name, byPin)
     }
 

@@ -174,8 +174,8 @@ class MainActivity : ComponentActivity() {
         PlaylistDownloads.resume()
         // Une nouvelle version sur GitHub ? (au lancement et au retour dans l'appli, toutes les 4 h au plus)
         AppUpdates.checkIfDue(this)
-        // Le coffre GitHub (2.19.0), si on est connecté : toutes les 10 min au plus
-        app.mikeneko.data.GitHubSync.syncIfDue(this)
+        // Le coffre GitHub (2.19.0), si on est connecté : relevé au retour, puis toutes les 3 min (2.19.2)
+        app.mikeneko.data.GitHubSync.foreground(this, visible = true)
         // Se connecter au service : c'est ce qui affiche les contrôles dans la notification
         val token = SessionToken(this, ComponentName(this, PlaybackService::class.java))
         controller = MediaController.Builder(this, token).buildAsync()
@@ -191,8 +191,9 @@ class MainActivity : ComponentActivity() {
             // joue en fond (les vidéos viennent d'être mises en pause juste au-dessus)
             val musicPlaying = PlayerHolder.nowPlaying.value?.audioOnly == true && PlayerHolder.isPlaying.value
             AppUpdates.installIfReady(this, playing = musicPlaying)
-            // Ce qu'on vient de faire part dans le coffre GitHub (si connecté, 10 min au plus)
-            app.mikeneko.data.GitHubSync.syncIfDue(this)
+            // Ce qui n'est pas encore parti dans le coffre GitHub part maintenant (2.19.2)
+            app.mikeneko.data.GitHubSync.foreground(this, visible = false)
+            app.mikeneko.data.AutoSync.leaving(this)
         }
         controller?.let { MediaController.releaseFuture(it) }
         controller = null

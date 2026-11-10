@@ -33,6 +33,7 @@ class MikenekoApp : Application(), SingletonImageLoader.Factory {
         Notifier.schedule(this)
         TrackAnalyzer.watch(this) // tempo et tonalité des morceaux écoutés (2.15.0)
         LocalSync.start(this) // les appareils liés se resynchronisent sur le même réseau (2.17.0)
+        app.mikeneko.data.AutoSync.start(this) // et dès qu'on change quelque chose (2.19.2)
     }
 
     /**
