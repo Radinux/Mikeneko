@@ -62,6 +62,8 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 - **Automatic sort for your playlists**: My order, A–Z, Artist, Album, BPM or **Camelot** (the
   harmonic mixing wheel: 1A, 1B, 2A…), kept as songs are added. Play all follows the sort.
+- 2.15.3: pulling the lyrics down no longer slides them as a block: they stay in place and shrink
+  towards the button capsule under your finger (like the music dock), then fold into it.
 - 2.15.2: the **lyrics** grow out of the player's button capsule and fold back into it when closed
   (they used to slide down as one solid block); the song's **album** is only shown when it is by the
   same artist (a single could open another artist's album with the same name).

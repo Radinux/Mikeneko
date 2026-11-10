@@ -143,16 +143,25 @@ fun LyricsSheet(backdrop: Backdrop, visible: Boolean, anchor: Rect?, onClose: ()
     }
 
     // Tirer le panneau vers le bas le ferme (2.4.0) : par la barre du haut, ou en continuant de tirer
-    // quand les paroles sont déjà en haut. Il suit le doigt, et revient en place si on lâche trop tôt.
+    // quand les paroles sont déjà en haut. 2.15.3 : il ne glisse plus d'un bloc ; il reste en place et
+    // rapetisse vers la capsule des boutons sous le doigt (comme le dock de la musique), puis finit de
+    // s'y refermer si on lâche assez loin (ou vite), sinon il se rouvre.
     val density = LocalDensity.current
     val closeAt = with(density) { 120.dp.toPx() }
     val scope = rememberCoroutineScope()
     val drag = remember { Animatable(0f) }
-    LaunchedEffect(visible) { if (visible) drag.snapTo(0f) }
+    /** La course du doigt (en px) qui referme tout le panneau : la différence de hauteur avec la capsule. */
+    val travel = remember { floatArrayOf(1f) }
+    /** La vitesse du doigt au lâcher, pour que la fermeture la continue. */
+    val flung = remember { floatArrayOf(0f) }
     fun release(velocity: Float) {
         scope.launch {
-            if (drag.value > closeAt || (velocity > 1_500f && drag.value > 0f)) onClose()
-            else drag.animateTo(0f, spring(dampingRatio = 0.75f, stiffness = 500f))
+            if (drag.value > closeAt || (velocity > 1_500f && drag.value > 0f)) {
+                flung[0] = velocity
+                onClose()
+            } else {
+                drag.animateTo(0f, spring(dampingRatio = 0.8f, stiffness = 500f))
+            }
         }
     }
     val pullDown = remember {
@@ -185,28 +194,38 @@ fun LyricsSheet(backdrop: Backdrop, visible: Boolean, anchor: Rect?, onClose: ()
     // L'ouverture : 0 = la capsule des boutons, 1 = le panneau ouvert. On reste affiché tant qu'il se referme.
     val progress = remember { Animatable(0f) }
     LaunchedEffect(visible) {
-        progress.animateTo(
-            if (visible) 1f else 0f,
-            if (visible) spring(dampingRatio = 0.82f, stiffness = 260f) else spring(dampingRatio = 1f, stiffness = 380f),
-        )
+        if (visible) {
+            drag.snapTo(0f)
+            progress.animateTo(1f, spring(dampingRatio = 0.82f, stiffness = 260f))
+        } else {
+            // On repart d'où le doigt l'a laissé (déjà en partie refermé), à sa vitesse
+            val from = progress.value * (1f - (drag.value / travel[0]).coerceIn(0f, 1f))
+            val speed = -flung[0] / travel[0]
+            flung[0] = 0f
+            progress.snapTo(from)
+            drag.snapTo(0f)
+            progress.animateTo(0f, spring(dampingRatio = 1f, stiffness = 380f), initialVelocity = speed)
+        }
     }
     if (!visible && progress.value == 0f) return
 
     var origin by remember { mutableStateOf(Offset.Zero) }
     BoxWithConstraints(Modifier.fillMaxSize().onGloballyPositioned { origin = it.positionInWindow() }) {
-        val p = progress.value
+        val pulled = (drag.value / travel[0]).coerceIn(0f, 1f)
+        val p = progress.value * (1f - pulled)
         val margin = with(density) { 10.dp.toPx() }
         val bottomInset = WindowInsets.navigationBars.getBottom(density).toFloat()
         val fullW = constraints.maxWidth.toFloat()
         val fullH = constraints.maxHeight.toFloat()
-        // Le panneau ouvert : en bas, 78 % de la hauteur, 10 dp du bord (et tiré vers le bas : [drag])
+        // Le panneau ouvert : en bas, 78 % de la hauteur, 10 dp du bord
         val openW = fullW - 2 * margin
         val openH = (fullH - bottomInset - 2 * margin) * 0.78f
         val openLeft = margin
-        val openTop = fullH - bottomInset - margin - openH + drag.value
+        val openTop = fullH - bottomInset - margin - openH
         // La capsule d'où il sort (sans elle : une capsule en bas de l'écran)
         val from = anchor?.translate(-origin.x, -origin.y)
             ?: Rect(margin, fullH - bottomInset - margin - with(density) { 54.dp.toPx() }, fullW - margin, fullH - bottomInset - margin)
+        travel[0] = (openH - from.height).coerceAtLeast(1f)
         fun mix(a: Float, b: Float) = a + (b - a) * p
         val left = mix(from.left, openLeft)
         val top = mix(from.top, openTop)

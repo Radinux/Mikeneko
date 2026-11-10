@@ -1009,6 +1009,11 @@ users: the point is to take them from the videos really watched.
   over the second half. `Music.albumOf` now keeps only albums whose artist matches the song's artist
   or one credited in the description (`creditedArtistsFrom`, `folded`): a single shares the song's
   name and the album search could return another artist's album.
+- 2.15.3: the lyrics drag no longer translates the panel: `drag` / `travel` (open height minus the
+  capsule's) is subtracted from the morph progress (`p = progress × (1 − pulled)`), so the panel shrinks
+  in place towards the capsule under the finger. On release past 120 dp (or a fling > 1500 px/s)
+  `onClose` → the close effect snaps `progress` to the shrunk value, resets `drag`, and springs to 0
+  with the finger's velocity; otherwise `drag` springs back to 0.
 - Emulator tip (2026-11-10): with `-gpu swiftshader_indirect` the emulator itself crashes when the
   music window opens; `-gpu host` works again.
 - Emulator tip: if screenshots turn black and the app "isn't responding" while its main thread just
