@@ -935,7 +935,7 @@ users: the point is to take them from the videos really watched.
   (IDLE) player calls `retry()` too, since `play()` alone does nothing there. Checked on the
   emulator: resume at 11 min plays; Wi-Fi off + seek far ahead → `Source error`; Wi-Fi on + play →
   plays again at the same position.
-- 2.11.21: bell notifications. Before, `Notifier.checkNewVideos` kept only the newest publish date
+- 2.12.0: bell notifications. Before, `Notifier.checkNewVideos` kept only the newest publish date
   per channel (`cloches_vues`) and announced anything newer. When RSS failed (even for one channel,
   `SubscriptionFeed.rssDownUntil` switches every channel to the Videos tab for 30 min), the tab's
   dates are approximations computed from "1 year ago" / "12 days ago" *at fetch time*, so they move
@@ -947,7 +947,7 @@ users: the point is to take them from the videos really watched.
   with the old 2 h schedule switch). Testing tip: WorkManager ignores a forced JobScheduler run of
   a periodic job that isn't due; delete `no_backup/androidx.work.workdb*` (debug build, run-as)
   and relaunch to get an immediate first run.
-- 2.11.21: updates: `AppUpdates.CHECK_EVERY_MS` = 4 h, checked from `MainActivity.onStart` (launch
+- 2.12.0: updates: `AppUpdates.CHECK_EVERY_MS` = 4 h, checked from `MainActivity.onStart` (launch
   and every return to the app) instead of a `LaunchedEffect` at launch; the background check
   (`Notifier.checkUpdate`) uses the same interval.
 - Emulator tip: if screenshots turn black and the app "isn't responding" while its main thread just

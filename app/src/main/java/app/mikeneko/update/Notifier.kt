@@ -64,7 +64,7 @@ object Notifier {
         manager.createNotificationChannel(NotificationChannel(CHANNEL_VIDEOS, context.getString(R.string.notif_channel_videos), NotificationManager.IMPORTANCE_DEFAULT))
     }
 
-    /** La vérification en fond toutes les heures (2 h avant 2.11.21), avec du réseau (une seule, gardée d'un lancement à l'autre). */
+    /** La vérification en fond toutes les heures (2 h avant 2.12.0), avec du réseau (une seule, gardée d'un lancement à l'autre). */
     fun schedule(context: Context) {
         val request = PeriodicWorkRequestBuilder<WatchWorker>(1, TimeUnit.HOURS)
             .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
@@ -124,7 +124,7 @@ object Notifier {
      * [FRESH_MS] (3 au plus par chaîne). La première fois pour une chaîne, on note seulement ses
      * vidéos (pas d'avalanche).
      *
-     * 2.11.21 : on retient les vidéos elles-mêmes (leurs identifiants), plus seulement la date de
+     * 2.12.0 : on retient les vidéos elles-mêmes (leurs identifiants), plus seulement la date de
      * la plus récente. Avant, quand le flux RSS ne répondait pas, l'onglet « Vidéos » prenait le
      * relais avec des dates approximatives (« il y a 1 an » = aujourd'hui moins un an), plus
      * récentes que la vraie date retenue : une vieille vidéo passait pour nouvelle, et une date
@@ -135,7 +135,7 @@ object Notifier {
         val bells = store.bells.value
         if (bells.isEmpty() || !allowed(context)) return
         val known = context.getSharedPreferences("cloches_videos", Context.MODE_PRIVATE)
-        context.deleteSharedPreferences("cloches_vues") // l'ancien suivi par date (avant 2.11.21)
+        context.deleteSharedPreferences("cloches_vues") // l'ancien suivi par date (avant 2.12.0)
         val now = System.currentTimeMillis()
         store.items.value.filter { it.channelId in bells }.forEach { sub ->
             val videos = runCatching { SubscriptionFeed.latest(listOf(sub)) }.getOrDefault(emptyList()).filterNot { it.video.isLive }

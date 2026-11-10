@@ -579,7 +579,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">What’s new in Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Nice!</string>
-    <string name="whats_new_body">🎧 Easier playlists\n\n• Under your playlist: Add and Edit.\n• Add: songs suggested from the ones already in the playlist, and a search, with a + on each song.\n• Edit: the name, the cover, delete, a ⊖ to remove a song in one tap, and the handle to reorder (no more moving songs by accident).\n\n🎬 A Video button in the music player: the song switches to its YouTube video, at the same moment.\n\n🔔 Since 2.10: a bell next to Subscribe for new videos, and update notifications.</string>
+    <string name="whats_new_body">🔔 Notifications redone\n\n• The bell next to Subscribe only announces videos that really just came out (no more alerts for videos from months or years ago).\n• Channels with a bell are checked every hour.\n\n⬆️ New versions of Mikeneko are looked for every 4 hours, also when you come back to the app.\n\n▶️ A video resumed where you left it no longer stays black: if playback fails, it reloads by itself, and the play button reloads it too.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Import playlists</string>

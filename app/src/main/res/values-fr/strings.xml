@@ -580,7 +580,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">Quoi de neuf dans Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Super !</string>
-    <string name="whats_new_body">🎧 Des playlists plus simples\n\n• Sous ta playlist : Ajouter et Modifier.\n• Ajouter : des morceaux suggérés d’après ceux de la playlist, et une recherche, avec un + sur chaque morceau.\n• Modifier : le nom, la pochette, supprimer, un ⊖ pour retirer un morceau d’un seul tap, et la poignée pour réordonner (fini les morceaux déplacés sans le vouloir).\n\n🎬 Un bouton Vidéo dans le lecteur musique : le morceau passe sur sa vidéo YouTube, au même moment.\n\n🔔 Depuis la 2.10 : une cloche à côté de S’abonner pour les nouvelles vidéos, et les notifications de mise à jour.</string>
+    <string name="whats_new_body">🔔 Notifications refaites\n\n• La cloche à côté de S’abonner n’annonce plus que les vidéos qui viennent vraiment de sortir (fini les alertes pour des vidéos d’il y a des mois ou des années).\n• Les chaînes à cloche sont vérifiées toutes les heures.\n\n⬆️ Les nouvelles versions de Mikeneko sont cherchées toutes les 4 heures, aussi quand tu reviens dans l’appli.\n\n▶️ Une vidéo reprise là où tu l’avais laissée ne reste plus noire : si la lecture échoue, elle se recharge toute seule, et le bouton lecture la relance aussi.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Importer des playlists</string>

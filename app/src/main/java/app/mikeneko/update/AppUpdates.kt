@@ -32,7 +32,7 @@ import org.json.JSONObject
  */
 object AppUpdates {
     private const val LATEST = "https://api.github.com/repos/Radinux/Mikeneko/releases/latest"
-    /** Une vérification toutes les 4 h au plus (une par jour avant 2.11.21). */
+    /** Une vérification toutes les 4 h au plus (une par jour avant 2.12.0). */
     const val CHECK_EVERY_MS = 4 * 60 * 60_000L
 
     data class Release(val version: String, val notes: String, val page: String, val apkUrl: String)
