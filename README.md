@@ -58,6 +58,16 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ## 🎌 What's new ⸜(｡˃ ᵕ ˂ )⸝♡
 
+### 2.20
+
+- **Shorts tab** in the dock: a feed of shorts from the channels you follow, mixed with shorts on the
+  topics you watch most, already seen ones last. The dock stays on screen; leaving the tab stops the
+  short. The tab disappears with Settings › Playback › **No Shorts**.
+- **Shorts start right away**: the next 3 are prepared while you watch (their page is read and the
+  start of the video is already stored), and the previous 2 stay ready when you swipe back.
+- **Settings in tabs**: General, Playback, For you, Sync, About, instead of one very long page. The
+  title and the tabs stay at the top.
+
 ### 2.19
 
 - **Optional GitHub account** (Settings › GitHub account) to sync your devices **anywhere**, not only

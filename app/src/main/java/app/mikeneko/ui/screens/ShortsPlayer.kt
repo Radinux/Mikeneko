@@ -1,5 +1,6 @@
 package app.mikeneko.ui.screens
 
+import android.content.res.Configuration
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -44,17 +45,20 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.mikeneko.R
 import app.mikeneko.data.ChannelItem
 import app.mikeneko.data.Comments
+import app.mikeneko.data.ShortsFeed
 import app.mikeneko.data.VideoItem
 import app.mikeneko.data.VideoLibrary
 import app.mikeneko.data.channelIdFrom
@@ -62,6 +66,7 @@ import app.mikeneko.data.formatCount
 import app.mikeneko.data.sameTrack
 import app.mikeneko.player.NowPlaying
 import app.mikeneko.player.PlayerHolder
+import app.mikeneko.player.ShortsPreload
 import app.mikeneko.ui.components.GlassCircleButton
 import app.mikeneko.ui.components.Loading
 import app.mikeneko.ui.components.VideoSurface
@@ -93,7 +98,12 @@ object Shorts {
         private set
 
     @Stable
-    class Session(val items: SnapshotStateList<VideoItem>, start: Int) {
+    class Session(
+        val items: SnapshotStateList<VideoItem>,
+        start: Int,
+        /** L'onglet Shorts du dock (2.20.0) : le dock reste affiché, pas de bouton pour fermer. */
+        val tab: Boolean = false,
+    ) {
         var index by mutableIntStateOf(start)
     }
 
@@ -142,8 +152,41 @@ object Shorts {
         }
     }
 
+    /** L'onglet Shorts s'ouvre sur son fil ([app.mikeneko.data.ShortsFeed]). */
+    fun startFeed(list: List<VideoItem>) {
+        session = Session(mutableStateListOf<VideoItem>().apply { addAll(list) }, 0, tab = true)
+    }
+
     fun end() {
         session = null
+        ShortsPreload.clear()
+    }
+}
+
+/**
+ * L'onglet Shorts du dock (2.20.0) : son fil se charge, puis le lecteur Shorts joue le premier.
+ * Quitter l'onglet arrête la lecture (voir MikenekoRoot).
+ */
+@Composable
+fun ShortsTab(onOpenChannel: (ChannelItem) -> Unit) {
+    val context = LocalContext.current
+    var empty by remember { mutableStateOf(false) }
+    val ready = Shorts.session?.tab == true
+    LaunchedEffect(Unit) {
+        if (Shorts.session?.tab == true) return@LaunchedEffect
+        val list = ShortsFeed.load(context)
+        if (list.isEmpty()) empty = true else Shorts.startFeed(list)
+    }
+    if (ready) {
+        ShortsPlayer(onClose = {}, onOpenChannel = onOpenChannel)
+    } else {
+        Box(Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
+            if (empty) {
+                Text(stringResource(R.string.shorts_empty), Modifier.padding(32.dp), style = ShortText.copy(fontSize = 15.sp, textAlign = TextAlign.Center))
+            } else {
+                Loading()
+            }
+        }
     }
 }
 
@@ -151,16 +194,18 @@ object Shorts {
 @Composable
 fun ShortsPlayer(onClose: () -> Unit, onOpenChannel: (ChannelItem) -> Unit) {
     val session = Shorts.session ?: return
+    val tab = session.tab
     val context = LocalContext.current
     val items = session.items
     val pager = rememberPagerState(initialPage = session.index) { items.size }
     val now by PlayerHolder.nowPlaying.collectAsState()
 
-    BackHandler(onBack = onClose)
+    if (!tab) BackHandler(onBack = onClose)
 
     // Le short posé à l'écran est celui qui joue (en boucle, depuis le début)
     // (le premier, lui, est déjà lancé par l'ouverture : pas de deuxième demande à YouTube)
-    val opened = remember { intArrayOf(session.index) }
+    // (dans l'onglet Shorts, rien n'est encore lancé : le premier part d'ici)
+    val opened = remember { intArrayOf(if (tab) -1 else session.index) }
     LaunchedEffect(pager.settledPage) {
         val item = items.getOrNull(pager.settledPage) ?: return@LaunchedEffect
         session.index = pager.settledPage
@@ -172,10 +217,12 @@ fun ShortsPlayer(onClose: () -> Unit, onOpenChannel: (ChannelItem) -> Unit) {
         runCatching { PlayerHolder.play(context, item.url, audioOnly = false, short = true) }
             .onFailure { Toast.makeText(context, context.getString(R.string.error_play_video, it.message.orEmpty()), Toast.LENGTH_SHORT).show() }
     }
+    // Les 3 suivants se préparent, les 2 précédents restent prêts (2.20.0)
+    LaunchedEffect(pager.settledPage, items.size) { ShortsPreload.window(context, items.toList(), pager.settledPage) }
     // Presque au bout de la liste : les shorts suggérés à partir de celui en cours viennent derrière
     LaunchedEffect(now?.url, pager.settledPage, items.size) {
         val info = now ?: return@LaunchedEffect
-        if (pager.settledPage < items.size - 2) return@LaunchedEffect
+        if (pager.settledPage < items.size - 1 - ShortsPreload.AHEAD) return@LaunchedEffect
         if (!sameTrack(info.url, items.getOrNull(pager.settledPage)?.url)) return@LaunchedEffect
         items += info.related.filter { r -> r.isShort && items.none { sameTrack(it.url, r.url) } }
     }
@@ -197,12 +244,12 @@ fun ShortsPlayer(onClose: () -> Unit, onOpenChannel: (ChannelItem) -> Unit) {
     ) { page ->
         val item = items.getOrNull(page) ?: return@VerticalPager
         val playing = page == pager.settledPage && sameTrack(now?.url, item.url)
-        ShortPage(item, playing, onClose, onOpenChannel)
+        ShortPage(item, playing, current = page == pager.settledPage, tab, onClose, onOpenChannel)
     }
 }
 
 @Composable
-private fun ShortPage(item: VideoItem, playing: Boolean, onClose: () -> Unit, onOpenChannel: (ChannelItem) -> Unit) {
+private fun ShortPage(item: VideoItem, playing: Boolean, current: Boolean, tab: Boolean, onClose: () -> Unit, onOpenChannel: (ChannelItem) -> Unit) {
     val context = LocalContext.current
     val video = rememberBackdrop()
     val now by PlayerHolder.nowPlaying.collectAsState()
@@ -222,7 +269,8 @@ private fun ShortPage(item: VideoItem, playing: Boolean, onClose: () -> Unit, on
         Box(
             Modifier.fillMaxSize().pointerTap(enabled = playing) { PlayerHolder.togglePlay() },
         )
-        AnimatedVisibility(playing && (loading || buffering), Modifier.align(Alignment.Center), enter = fadeIn(), exit = fadeOut()) {
+        // (le short à l'écran qui se charge encore : la roue aussi, pas seulement la miniature figée)
+        AnimatedVisibility((playing && buffering) || (current && loading), Modifier.align(Alignment.Center), enter = fadeIn(), exit = fadeOut()) {
             Loading()
         }
         AnimatedVisibility(playing && !wantsToPlay && !loading, Modifier.align(Alignment.Center), enter = fadeIn() + scaleIn(initialScale = 1.3f), exit = fadeOut()) {
@@ -239,7 +287,7 @@ private fun ShortPage(item: VideoItem, playing: Boolean, onClose: () -> Unit, on
                 .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f)))),
         )
 
-        GlassCircleButton(
+        if (!tab) GlassCircleButton(
             video,
             MkIcons.ChevronDown,
             stringResource(R.string.player_minimize),
@@ -248,7 +296,9 @@ private fun ShortPage(item: VideoItem, playing: Boolean, onClose: () -> Unit, on
             onClick = onClose,
         )
 
-        Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().windowInsetsPadding(WindowInsets.navigationBars)) {
+        // Dans l'onglet Shorts, en portrait : au-dessus du dock (en paysage, il est sur le côté)
+        val aboveDock = if (tab && LocalConfiguration.current.orientation != Configuration.ORIENTATION_LANDSCAPE) 92.dp else 0.dp
+        Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().windowInsetsPadding(WindowInsets.navigationBars).padding(bottom = aboveDock)) {
             Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 12.dp, bottom = 14.dp), verticalAlignment = Alignment.Bottom) {
                 // En bas à gauche : la chaîne (vers sa page) et le titre
                 Column(Modifier.weight(1f).padding(end = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {

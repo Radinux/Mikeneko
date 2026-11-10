@@ -1085,6 +1085,24 @@ users: the point is to take them from the videos really watched.
   `GitHubSync.foreground(visible)` from `onStart/onStop` polls `syncIfDue` every 3 min (gap now 1 min),
   `AutoSync.leaving` sends what is still waiting. A poll that finds the locker byte-identical to our
   export doesn't PATCH it (no useless Gist revisions).
+- 2.20.0, Shorts tab: `Route.Shorts` (second in the enum, so the slide direction follows the dock).
+  `FloatingDock` builds its tab list from `AppSettings.hideShorts` (rail height = 73 dp per tab).
+  `ShortsTab` (in `ShortsPlayer.kt`) loads `data/ShortsFeed` (RSS shorts of the subscriptions + searches
+  "<top topic> shorts" and "#shorts" kept when `looksShort`, interleaved, watched ones last) and starts a
+  `Shorts.Session(tab = true)`: no close button, no BackHandler, texts 92 dp higher in portrait (above
+  the dock), nothing is playing yet so the first page starts playback itself. In `MikenekoRoot`, one
+  `LaunchedEffect(route, hideShorts)` ends the session and stops playback when the tab is left; the mini
+  player and the parked-video restore skip `Route.Shorts`; the dock hides under the comments panel.
+- 2.20.0, shorts preloading: `player/ShortsPreload`. `window(items, index)` on every settled page keeps
+  the StreamInfo of `index-2..index+3` (map id → Deferred, loads are NOT cancelled by a swipe: the one
+  being fetched is often the short just reached) and a worker writes the first 2 MB of video + 384 KB
+  of audio of the next 3 into the Videos cache with `CacheWriter`, using `MediaSources.downloadPlan`
+  (same stream choice and same cache keys as `build`, so playback reads them back). `PlayerHolder.play`
+  asks `ShortsPreload.info(url)` first when `short`, and `remember(info)` keeps the current one for
+  going back (its media is already in the cache since it just played). Cleared by `Shorts.end()`.
+  Related shorts are appended when fewer than 3 remain ahead.
+- 2.20.0, settings tabs: fixed header (title + chip row) above the `LazyColumn`, `SettingsTab` enum
+  picks the sections; a sticky header inside the list would have slid under the status bar.
 - Emulator tip (2026-11-10): with `-gpu swiftshader_indirect` the emulator itself crashes when the
   music window opens; `-gpu host` works again.
 - Emulator tip: if screenshots turn black and the app "isn't responding" while its main thread just

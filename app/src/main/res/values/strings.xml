@@ -227,7 +227,7 @@
     <string name="mix_kept">Playlist “%1$s” created</string>
     <string name="library_shorts">Your shorts</string>
     <string name="settings_hide_shorts">No Shorts</string>
-    <string name="settings_hide_shorts_text">Hide every short: home, search, subscriptions, suggestions and channel tabs.</string>
+    <string name="settings_hide_shorts_text">Hide every short: the Shorts tab, home, search, subscriptions, suggestions and channel tabs.</string>
     <string name="library_shorts_empty">Tap the bookmark in the Shorts player to keep a short here.</string>
     <string name="short_save">Keep this short</string>
     <string name="short_unsave">Remove from your shorts</string>
@@ -750,4 +750,11 @@
     <string name="github_failed_denied">Access refused on GitHub.</string>
     <string name="github_failed_timeout">The code expired: sign in again.</string>
     <string name="github_profile_import">Use my GitHub name and photo</string>
+    <string name="tab_shorts">Shorts</string>
+    <string name="shorts_empty">No shorts to show right now. Follow a few channels or check your connection.</string>
+    <string name="settings_tab_general">General</string>
+    <string name="settings_tab_playback">Playback</string>
+    <string name="settings_tab_foryou">For you</string>
+    <string name="settings_tab_sync">Sync</string>
+    <string name="settings_tab_about">About</string>
 </resources>

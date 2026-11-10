@@ -498,7 +498,8 @@ object PlayerHolder {
         loading.value = true
         try {
             val info = try {
-                YouTubeRepository.stream(url)
+                // Un short préparé d'avance (2.20.0) : sa fiche est déjà là, ou presque
+                (if (playingShort) ShortsPreload.info(url) else null) ?: YouTubeRepository.stream(url)
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 // Pas de réseau, ou YouTube refuse : la vidéo, si elle est entière hors ligne
@@ -518,6 +519,7 @@ object PlayerHolder {
             val live = MediaSources.isLive(info)
             val leavingInfo = this.info // pour garder le morceau qu'on quitte avec ses infos
             this.info = info
+            if (playingShort) ShortsPreload.remember(info)
             val tracks = if (audioOnly || live) emptyList() else MediaSources.captions(info)
             captionTracks.value = tracks
             caption.value = captionLanguage?.let { pickCaption(tracks, listOf(it)) }

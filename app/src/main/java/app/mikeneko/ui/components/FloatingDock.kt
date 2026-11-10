@@ -29,7 +29,9 @@ import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,6 +46,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.mikeneko.R
+import app.mikeneko.settings.AppSettings
 import app.mikeneko.ui.Route
 import app.mikeneko.ui.glass.Backdrop
 import app.mikeneko.ui.glass.LiquidGlass
@@ -56,8 +59,10 @@ import app.mikeneko.ui.theme.jellyClickable
 import app.mikeneko.ui.theme.plopOnSelect
 import kotlin.math.abs
 
-/** Les onglets du dock, dans l'ordre. */
-private val TABS = listOf(Route.Accueil, Route.Abonnements, Route.Musique, Route.Bibliotheque)
+/** Les onglets du dock, dans l'ordre. L'onglet Shorts (2.20.0) disparaît avec le réglage « Pas de shorts ». */
+private fun tabs(shorts: Boolean) =
+    if (shorts) listOf(Route.Accueil, Route.Shorts, Route.Abonnements, Route.Musique, Route.Bibliotheque)
+    else listOf(Route.Accueil, Route.Abonnements, Route.Musique, Route.Bibliotheque)
 
 /** Largeur du dock en colonne (paysage). */
 val DOCK_RAIL_WIDTH = 78.dp
@@ -80,8 +85,10 @@ fun FloatingDock(
     vertical: Boolean = false,
     onSelect: (Route) -> Unit,
 ) {
+    val hideShorts by AppSettings.hideShorts.collectAsState()
+    val tabs = remember(hideShorts) { tabs(shorts = !hideShorts) }
     if (vertical) {
-        DockRail(backdrop, current, visible, modifier, onSelect)
+        DockRail(backdrop, tabs, current, visible, modifier, onSelect)
         return
     }
     AnimatedVisibility(
@@ -93,8 +100,8 @@ fun FloatingDock(
         LiquidGlass(backdrop, Modifier.fillMaxWidth().height(68.dp), cornerRadius = 34.dp, bezel = 24.dp, refraction = 24.dp) {
             BoxWithConstraints(Modifier.fillMaxSize().padding(6.dp)) {
                 val gap = 4.dp
-                val itemWidth = (maxWidth - gap * (TABS.size - 1)) / TABS.size
-                val index = TABS.indexOf(current).coerceAtLeast(0)
+                val itemWidth = (maxWidth - gap * (tabs.size - 1)) / tabs.size
+                val index = tabs.indexOf(current).coerceAtLeast(0)
                 // La position de la goutte, en onglets (0, 1, 2…) ; sa vitesse l'étire
                 val position = remember { Animatable(index.toFloat()) }
                 // Raideur 197 : 15 % plus lent que 260 (la durée d'un ressort varie comme 1/√raideur)
@@ -111,36 +118,42 @@ fun FloatingDock(
                         .clay(Pelage.Creme.copy(alpha = 0.92f), RoundedCornerShape(28.dp), elevation = 4.dp),
                 )
                 Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(gap)) {
-                    DockItems(current, Modifier.weight(1f).fillMaxHeight(), onSelect)
+                    DockItems(tabs, current, Modifier.weight(1f).fillMaxHeight(), onSelect)
                 }
             }
         }
     }
 }
 
-/** Les quatre onglets, avec le modificateur de place donné par la rangée ou la colonne. */
+/** Les onglets, avec le modificateur de place donné par la rangée ou la colonne. */
 @Composable
-private fun DockItems(current: Route, itemModifier: Modifier, onSelect: (Route) -> Unit) {
-    DockItem(stringResource(R.string.tab_home), MkIcons.Home, current == Route.Accueil, itemModifier) { onSelect(Route.Accueil) }
-    DockItem(stringResource(R.string.tab_subscriptions), MkIcons.Subscriptions, current == Route.Abonnements, itemModifier) { onSelect(Route.Abonnements) }
-    DockItem(stringResource(R.string.tab_radio), MkIcons.Radio, current == Route.Musique, itemModifier) { onSelect(Route.Musique) }
-    DockItem(stringResource(R.string.tab_library), MkIcons.Library, current == Route.Bibliotheque, itemModifier) { onSelect(Route.Bibliotheque) }
+private fun DockItems(tabs: List<Route>, current: Route, itemModifier: Modifier, onSelect: (Route) -> Unit) {
+    tabs.forEach { tab ->
+        val (label, icon) = when (tab) {
+            Route.Shorts -> R.string.tab_shorts to MkIcons.Shorts
+            Route.Abonnements -> R.string.tab_subscriptions to MkIcons.Subscriptions
+            Route.Musique -> R.string.tab_radio to MkIcons.Radio
+            Route.Bibliotheque -> R.string.tab_library to MkIcons.Library
+            else -> R.string.tab_home to MkIcons.Home
+        }
+        key(tab) { DockItem(stringResource(label), icon, current == tab, itemModifier) { onSelect(tab) } }
+    }
 }
 
 /** Le dock en colonne (paysage) : même verre, même goutte, qui glisse de haut en bas. */
 @Composable
-private fun DockRail(backdrop: Backdrop, current: Route, visible: Boolean, modifier: Modifier, onSelect: (Route) -> Unit) {
+private fun DockRail(backdrop: Backdrop, tabs: List<Route>, current: Route, visible: Boolean, modifier: Modifier, onSelect: (Route) -> Unit) {
     AnimatedVisibility(
         visible = visible,
         modifier = modifier,
         enter = slideInHorizontally(spring(dampingRatio = 0.62f, stiffness = Spring.StiffnessLow)) { -it * 2 },
         exit = slideOutHorizontally(tween(300)) { -it * 2 },
     ) {
-        LiquidGlass(backdrop, Modifier.width(DOCK_RAIL_WIDTH).heightIn(max = 292.dp).fillMaxHeight(), cornerRadius = 34.dp, bezel = 24.dp, refraction = 24.dp) {
+        LiquidGlass(backdrop, Modifier.width(DOCK_RAIL_WIDTH).heightIn(max = 73.dp * tabs.size).fillMaxHeight(), cornerRadius = 34.dp, bezel = 24.dp, refraction = 24.dp) {
             BoxWithConstraints(Modifier.fillMaxSize().padding(6.dp)) {
                 val gap = 4.dp
-                val itemHeight = (maxHeight - gap * (TABS.size - 1)) / TABS.size
-                val index = TABS.indexOf(current).coerceAtLeast(0)
+                val itemHeight = (maxHeight - gap * (tabs.size - 1)) / tabs.size
+                val index = tabs.indexOf(current).coerceAtLeast(0)
                 val position = remember { Animatable(index.toFloat()) }
                 LaunchedEffect(index) { position.animateTo(index.toFloat(), spring(dampingRatio = 0.55f, stiffness = 197f)) }
                 Box(
@@ -155,7 +168,7 @@ private fun DockRail(backdrop: Backdrop, current: Route, visible: Boolean, modif
                         .clay(Pelage.Creme.copy(alpha = 0.92f), RoundedCornerShape(28.dp), elevation = 4.dp),
                 )
                 Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(gap)) {
-                    DockItems(current, Modifier.weight(1f).fillMaxWidth(), onSelect)
+                    DockItems(tabs, current, Modifier.weight(1f).fillMaxWidth(), onSelect)
                 }
             }
         }

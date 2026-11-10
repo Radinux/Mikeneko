@@ -30,6 +30,11 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
@@ -110,41 +115,92 @@ private val SLEEP_DELAYS = listOf(30, 45, 60, 90, 120)
 @Composable
 fun SettingsContent(onBack: () -> Unit) {
     val context = LocalContext.current
+    var tab by rememberSaveable { mutableStateOf(SettingsTab.General) }
+    val list = rememberLazyListState()
+    // Un autre onglet : son contenu repart du haut
+    LaunchedEffect(tab) { list.scrollToItem(0) }
+    Column(Modifier.fillMaxSize()) {
+        // Le titre et les onglets (2.20.0 : la page entière était trop longue) restent en haut
+        Row(Modifier.padding(horizontal = 20.dp).statusBarSpacePadding().padding(top = 12.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier.size(44.dp).clip(CircleShape).clickable(role = Role.Button, onClickLabel = stringResource(R.string.back), onClick = onBack),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(MkIcons.ChevronLeft, stringResource(R.string.back), tint = Pelage.Texte, modifier = Modifier.size(26.dp))
+            }
+            Text(
+                stringResource(R.string.settings),
+                Modifier.padding(start = 6.dp).semantics { heading() },
+                color = Pelage.Texte,
+                fontSize = 30.sp,
+                fontWeight = FontWeight.ExtraBold,
+            )
+        }
+        Row(
+            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(top = 2.dp, bottom = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            SettingsTab.entries.forEach { SettingsTabChip(stringResource(it.label), tab == it) { tab = it } }
+        }
+        SettingsTabContent(tab, list, context)
+    }
+}
+
+@Composable
+private fun ColumnScope.SettingsTabContent(tab: SettingsTab, list: LazyListState, context: Context) {
     LazyColumn(
-        Modifier.fillMaxSize(),
+        Modifier.fillMaxWidth().weight(1f),
+        state = list,
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 150.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        item {
-            Row(Modifier.statusBarSpacePadding().padding(top = 12.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    Modifier.size(44.dp).clip(CircleShape).clickable(role = Role.Button, onClickLabel = stringResource(R.string.back), onClick = onBack),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(MkIcons.ChevronLeft, stringResource(R.string.back), tint = Pelage.Texte, modifier = Modifier.size(26.dp))
-                }
-                Text(
-                    stringResource(R.string.settings),
-                    Modifier.padding(start = 6.dp).semantics { heading() },
-                    color = Pelage.Texte,
-                    fontSize = 30.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                )
+        when (tab) {
+            SettingsTab.General -> {
+                item { ProfileCard(Modifier.padding(horizontal = 16.dp).padding(top = 8.dp, bottom = 8.dp)) } // le profil (2.18.0)
+                item { AppearanceSection() }
+                item { LanguageSection(context) }
+                item { WellbeingSection() }
             }
+            SettingsTab.Playback -> {
+                item { PlaybackSection() }
+                item { SponsorBlockSection() }
+                item { OfflineSection(context) }
+            }
+            SettingsTab.ForYou -> item { HistorySection(context) }
+            SettingsTab.Sync -> {
+                item { SyncSection() }
+                item { GitHubSection() }
+                item { BackupSection(context) }
+            }
+            SettingsTab.About -> item { AboutSection(context) }
         }
-        item { ProfileCard(Modifier.padding(horizontal = 16.dp).padding(bottom = 8.dp)) } // le profil (2.18.0)
-        item { AppearanceSection() }
-        item { LanguageSection(context) }
-        item { PlaybackSection() }
-        item { SponsorBlockSection() }
-        item { HistorySection(context) }
-        item { OfflineSection(context) }
-        item { SyncSection() }
-        item { GitHubSection() }
-        item { BackupSection(context) }
-        item { WellbeingSection() }
-        item { AboutSection(context) }
     }
+}
+
+/** Les onglets des réglages, dans l'ordre. */
+private enum class SettingsTab(val label: Int) {
+    General(R.string.settings_tab_general),
+    Playback(R.string.settings_tab_playback),
+    ForYou(R.string.settings_tab_foryou),
+    Sync(R.string.settings_tab_sync),
+    About(R.string.settings_tab_about),
+}
+
+@Composable
+private fun SettingsTabChip(text: String, selected: Boolean, onClick: () -> Unit) {
+    Text(
+        text,
+        Modifier
+            .clip(RoundedCornerShape(18.dp))
+            .background(if (selected) Pelage.Roux else Pelage.Coussin)
+            .border(1.5.dp, if (selected) Pelage.Roux else Pelage.Bord, RoundedCornerShape(18.dp))
+            .clickable(role = Role.Tab, onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 9.dp),
+        color = if (selected) Pelage.Encre else Pelage.Texte,
+        fontSize = 14.sp,
+        fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Bold,
+        maxLines = 1,
+    )
 }
 
 // ---------------------------------------------------------------- sections

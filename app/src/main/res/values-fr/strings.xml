@@ -226,7 +226,7 @@
     <string name="mix_kept">Playlist « %1$s » créée</string>
     <string name="library_shorts">Tes shorts</string>
     <string name="settings_hide_shorts">Pas de shorts</string>
-    <string name="settings_hide_shorts_text">Cache tous les shorts : accueil, recherche, abonnements, suggestions et onglet des chaînes.</string>
+    <string name="settings_hide_shorts_text">Cache tous les shorts : l’onglet Shorts, accueil, recherche, abonnements, suggestions et onglet des chaînes.</string>
     <string name="library_shorts_empty">Touche le signet dans le lecteur Shorts pour garder un short ici.</string>
     <string name="short_save">Garder ce short</string>
     <string name="short_unsave">Retirer de tes shorts</string>
@@ -751,4 +751,11 @@
     <string name="github_failed_denied">Accès refusé sur GitHub.</string>
     <string name="github_failed_timeout">Le code a expiré : reconnecte-toi.</string>
     <string name="github_profile_import">Prendre mon nom et ma photo GitHub</string>
+    <string name="tab_shorts">Shorts</string>
+    <string name="shorts_empty">Pas de shorts à montrer pour l’instant. Suis quelques chaînes ou vérifie ta connexion.</string>
+    <string name="settings_tab_general">Général</string>
+    <string name="settings_tab_playback">Lecture</string>
+    <string name="settings_tab_foryou">Pour toi</string>
+    <string name="settings_tab_sync">Synchro</string>
+    <string name="settings_tab_about">À propos</string>
 </resources>

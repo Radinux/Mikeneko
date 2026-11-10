@@ -102,6 +102,7 @@ import app.mikeneko.ui.screens.PlayerContent
 import app.mikeneko.ui.screens.SettingsContent
 import app.mikeneko.ui.screens.Shorts
 import app.mikeneko.ui.screens.ShortsPlayer
+import app.mikeneko.ui.screens.ShortsTab
 import app.mikeneko.ui.screens.SleepReminder
 import app.mikeneko.ui.screens.SubscriptionsContent
 import app.mikeneko.ui.screens.onUserScroll
@@ -207,8 +208,25 @@ fun MikenekoRoot(
         route = beforePlayer
     }
 
+    // L'onglet Shorts (2.20.0) : en le quittant, la lecture s'arrête (pas de mini-lecteur pour un short).
+    // Et si « Pas de shorts » est mis alors qu'on y était resté, retour à l'accueil.
+    val hideShorts by AppSettings.hideShorts.collectAsState()
+    LaunchedEffect(route, hideShorts) {
+        if (route == Route.Shorts && hideShorts) route = Route.Accueil
+        if (route != Route.Shorts && Shorts.session?.tab == true) {
+            Shorts.end()
+            Comments.open.value = false
+            PlayerHolder.stop()
+        }
+    }
+
     /** Depuis un short : sa chaîne s'ouvre (là où on était : abonnements ou accueil). */
     fun openChannelFromShorts(channel: ChannelItem) {
+        if (Shorts.session?.tab == true) {
+            home.channel = channel
+            route = Route.Accueil
+            return
+        }
         val back = beforePlayer
         closeShorts()
         if (back == Route.Abonnements) {
@@ -391,7 +409,7 @@ fun MikenekoRoot(
         if (route == Route.Musique) PlayerHolder.parkVideo()
     }
     LaunchedEffect(route, parkedVideo, anyPlaying) {
-        if (route != Route.Musique && route != Route.Lecteur && parkedVideo != null && !(anyPlaying && now?.audioOnly == true)) {
+        if (route != Route.Musique && route != Route.Lecteur && route != Route.Shorts && parkedVideo != null && !(anyPlaying && now?.audioOnly == true)) {
             PlayerHolder.launchPlayback { PlayerHolder.restoreParkedVideo(context) }
         }
     }
@@ -441,6 +459,7 @@ fun MikenekoRoot(
                         music.expand() // une station touchée : la fenêtre s'ouvre
                     }) }
                     Route.Bibliotheque -> LibraryContent(library, downloadLink, onOpen = { openVideo(it.url) })
+                    Route.Shorts -> ShortsTab(onOpenChannel = ::openChannelFromShorts)
                     Route.Reglages -> SettingsContent(onBack = { go(Route.Accueil) })
                     Route.Lecteur -> if (Shorts.session != null) {
                         ShortsPlayer(onClose = ::closeShorts, onOpenChannel = ::openChannelFromShorts)
@@ -473,6 +492,7 @@ fun MikenekoRoot(
                 Route.Musique -> MusicOverlay(state = musicPages, backdrop = backdrop)
                 Route.Abonnements -> subsChannel?.let { ChannelOverlay(it, backdrop, onBack = { subsChannel = null }) }
                 Route.Bibliotheque -> LibraryOverlay(library, backdrop)
+                Route.Shorts -> CommentsPanel(backdrop)
                 Route.Lecteur -> if (Shorts.session != null) {
                     CommentsPanel(backdrop)
                 } else {
@@ -488,7 +508,9 @@ fun MikenekoRoot(
         // On le tire vers le haut (ou on le touche) : il s'étire en fenêtre, sans changer d'onglet
         val showMusic = route == Route.Musique
         // Le dock principal : partout sauf sur le lecteur et les réglages
-        val showDock = route != Route.Lecteur && route != Route.Reglages
+        // (ni sous les commentaires d'un short, dans l'onglet Shorts : ils descendent jusqu'en bas)
+        val shortComments by Comments.open.collectAsState()
+        val showDock = route != Route.Lecteur && route != Route.Reglages && !(route == Route.Shorts && shortComments)
         LaunchedEffect(showMusic) { if (!showMusic) music.collapse() }
         if (showMusic) {
             MusicDockWindow(
@@ -529,7 +551,7 @@ fun MikenekoRoot(
         }
 
         val pipBottom by animateDpAsState(if (dockVisible && !landscape) 106.dp else 28.dp, label = "pip") // au-dessus du dock
-        if (now?.audioOnly == false && route != Route.Lecteur && route != Route.Musique) { // pas dans Musique
+        if (now?.audioOnly == false && route != Route.Lecteur && route != Route.Musique && route != Route.Shorts) { // pas dans Musique ni Shorts
             FloatingMiniPip(
                 placement = pipPlacement,
                 bottomMargin = pipBottom,
