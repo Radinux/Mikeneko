@@ -57,15 +57,17 @@ import app.mikeneko.player.PlayerHolder
 import app.mikeneko.ui.glass.Backdrop
 import app.mikeneko.ui.glass.LiquidGlass
 import app.mikeneko.ui.icons.MkIcons
+import androidx.compose.ui.geometry.Rect
+import app.mikeneko.ui.components.MorphSheet
 import app.mikeneko.ui.theme.Pelage
 import kotlinx.coroutines.launch
 
 /**
- * La file, en verre, qui monte du bas. Un tap lance l'élément ; la poignée ≡ le déplace ; la croix
+ * La file, en verre, qui sort de la capsule des boutons du lecteur. Un tap lance l'élément ; la poignée ≡ le déplace ; la croix
  * le retire. En haut, « Mix auto » : la file se remplit toute seule de titres proches.
  */
 @Composable
-internal fun QueueSheet(backdrop: Backdrop, visible: Boolean, onClose: () -> Unit) {
+internal fun QueueSheet(backdrop: Backdrop, visible: Boolean, anchor: Rect?, onClose: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val queue by PlayerHolder.queue.collectAsState()
@@ -76,99 +78,82 @@ internal fun QueueSheet(backdrop: Backdrop, visible: Boolean, onClose: () -> Uni
     BackHandler(enabled = visible, onBack = onClose)
     LaunchedEffect(visible) { if (visible && current > 0) list.scrollToItem((current - 1).coerceAtLeast(0)) }
 
-    Box(Modifier.fillMaxSize()) {
-        AnimatedVisibility(visible, enter = fadeIn(tween(200)), exit = fadeOut(tween(200))) {
-            Box(
-                Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.4f))
-                    .clickable(interactionSource = null, indication = null, onClickLabel = stringResource(R.string.queue_close), onClick = onClose),
-            )
-        }
-        AnimatedVisibility(
-            visible,
-            modifier = Modifier.align(Alignment.BottomCenter),
-            enter = slideInVertically(tween(320)) { it } + fadeIn(tween(200)),
-            exit = slideOutVertically(tween(260)) { it } + fadeOut(tween(200)),
-        ) {
-            LiquidGlass(
-                backdrop = backdrop,
-                modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(10.dp).fillMaxHeight(0.7f),
-                cornerRadius = 30.dp,
-                bezel = 26.dp,
-                refraction = 26.dp,
-                tint = Color(0xC71A1613),
-                frost = 28.dp,
-            ) {
-                Column(Modifier.fillMaxSize()) {
-                    Row(Modifier.fillMaxWidth().padding(start = 22.dp, end = 8.dp, top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text(stringResource(R.string.queue), Modifier.weight(1f).semantics { heading() }, color = Pelage.Texte, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
-                        // Mix auto : une petite pastille qui s'allume
-                        Row(
-                            Modifier.clip(RoundedCornerShape(18.dp))
-                                .background(if (mix) Pelage.Roux else Color.White.copy(alpha = 0.1f))
-                                .clickable(role = Role.Switch, onClickLabel = stringResource(R.string.mix_auto)) {
-                                    PlayerHolder.setAutoMix(!mix)
-                                    if (!mix) Toast.makeText(context, context.getString(R.string.mix_auto_on), Toast.LENGTH_SHORT).show()
-                                }
-                                .semantics { stateDescription = if (mix) "✓" else "" }
-                                .padding(horizontal = 12.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        ) {
-                            Icon(MkIcons.Mix, null, tint = if (mix) Pelage.Encre else Color.White, modifier = Modifier.size(18.dp))
-                            Text(stringResource(R.string.mix_auto), color = if (mix) Pelage.Encre else Color.White, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
-                        }
-                        Box(Modifier.size(44.dp).clip(CircleShape).clickable(role = Role.Button, onClick = onClose), contentAlignment = Alignment.Center) {
-                            Icon(MkIcons.Close, stringResource(R.string.queue_close), tint = Color.White, modifier = Modifier.size(22.dp))
-                        }
+    // Comme les paroles (2.21.1) : la file sort de la capsule des boutons du lecteur et s'y referme
+    MorphSheet(
+        backdrop, visible, anchor, onClose,
+        closeLabel = stringResource(R.string.queue_close),
+        heightFraction = 0.7f,
+        tint = Color(0xC71A1613),
+        frost = 28.dp,
+        canPull = { reorder.dragging == null }, // pas pendant qu'on déplace un morceau
+    ) { handle ->
+        Row(Modifier.fillMaxWidth().then(handle).padding(start = 22.dp, end = 8.dp, top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.queue), Modifier.weight(1f).semantics { heading() }, color = Pelage.Texte, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
+            // Mix auto : une petite pastille qui s'allume
+            Row(
+                Modifier.clip(RoundedCornerShape(18.dp))
+                    .background(if (mix) Pelage.Roux else Color.White.copy(alpha = 0.1f))
+                    .clickable(role = Role.Switch, onClickLabel = stringResource(R.string.mix_auto)) {
+                        PlayerHolder.setAutoMix(!mix)
+                        if (!mix) Toast.makeText(context, context.getString(R.string.mix_auto_on), Toast.LENGTH_SHORT).show()
                     }
-                    LazyColumn(Modifier.fillMaxSize(), state = list, contentPadding = PaddingValues(vertical = 6.dp)) {
-                        itemsIndexed(queue, key = { _, it -> it.url }) { index, station ->
-                            val playing = index == current
-                            val dragged = reorder.dragging == station.url
-                            Row(
-                                Modifier
-                                    .then(
-                                        if (dragged) Modifier.zIndex(1f).graphicsLayer { translationY = reorder.offset }.background(Pelage.Bord)
-                                        else Modifier.animateItem(),
-                                    )
-                                    .fillMaxWidth()
-                                    .clickable(role = Role.Button) {
-                                        if (!playing) scope.launch {
-                                            runCatching { PlayerHolder.playAt(context, index) }
-                                                .onFailure { Toast.makeText(context, context.getString(R.string.radio_station_failed), Toast.LENGTH_SHORT).show() }
-                                        }
-                                    }
-                                    .background(if (playing) Color.White.copy(alpha = 0.08f) else Color.Transparent)
-                                    .padding(start = 18.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            ) {
-                                Cover(station.thumbnail, 50.dp, 12.dp)
-                                Column(Modifier.weight(1f)) {
-                                    Text(
-                                        station.title,
-                                        color = if (playing) Pelage.RouxClair else Pelage.Texte,
-                                        fontSize = 14.sp,
-                                        fontWeight = if (playing) FontWeight.ExtraBold else FontWeight.Bold,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                    Text(station.channel, color = Pelage.Gris, fontSize = 12.sp, maxLines = 1)
-                                }
-                                if (playing) {
-                                    Icon(MkIcons.Waves, stringResource(R.string.playing_now), tint = Pelage.RouxClair, modifier = Modifier.size(22.dp))
-                                } else {
-                                    Box(
-                                        Modifier.size(36.dp).clip(CircleShape).clickable(role = Role.Button) { PlayerHolder.removeFromQueue(index) },
-                                        contentAlignment = Alignment.Center,
-                                    ) {
-                                        Icon(MkIcons.Close, stringResource(R.string.queue_remove), tint = Pelage.Gris, modifier = Modifier.size(18.dp))
-                                    }
-                                }
-                                DragHandle(reorder, station.url)
+                    .semantics { stateDescription = if (mix) "✓" else "" }
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Icon(MkIcons.Mix, null, tint = if (mix) Pelage.Encre else Color.White, modifier = Modifier.size(18.dp))
+                Text(stringResource(R.string.mix_auto), color = if (mix) Pelage.Encre else Color.White, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
+            }
+            Box(Modifier.size(44.dp).clip(CircleShape).clickable(role = Role.Button, onClick = onClose), contentAlignment = Alignment.Center) {
+                Icon(MkIcons.Close, stringResource(R.string.queue_close), tint = Color.White, modifier = Modifier.size(22.dp))
+            }
+        }
+        LazyColumn(Modifier.fillMaxSize(), state = list, contentPadding = PaddingValues(vertical = 6.dp)) {
+            itemsIndexed(queue, key = { _, it -> it.url }) { index, station ->
+                val playing = index == current
+                val dragged = reorder.dragging == station.url
+                Row(
+                    Modifier
+                        .then(
+                            if (dragged) Modifier.zIndex(1f).graphicsLayer { translationY = reorder.offset }.background(Pelage.Bord)
+                            else Modifier.animateItem(),
+                        )
+                        .fillMaxWidth()
+                        .clickable(role = Role.Button) {
+                            if (!playing) scope.launch {
+                                runCatching { PlayerHolder.playAt(context, index) }
+                                    .onFailure { Toast.makeText(context, context.getString(R.string.radio_station_failed), Toast.LENGTH_SHORT).show() }
                             }
                         }
+                        .background(if (playing) Color.White.copy(alpha = 0.08f) else Color.Transparent)
+                        .padding(start = 18.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Cover(station.thumbnail, 50.dp, 12.dp)
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            station.title,
+                            color = if (playing) Pelage.RouxClair else Pelage.Texte,
+                            fontSize = 14.sp,
+                            fontWeight = if (playing) FontWeight.ExtraBold else FontWeight.Bold,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(station.channel, color = Pelage.Gris, fontSize = 12.sp, maxLines = 1)
                     }
+                    if (playing) {
+                        Icon(MkIcons.Waves, stringResource(R.string.playing_now), tint = Pelage.RouxClair, modifier = Modifier.size(22.dp))
+                    } else {
+                        Box(
+                            Modifier.size(36.dp).clip(CircleShape).clickable(role = Role.Button) { PlayerHolder.removeFromQueue(index) },
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(MkIcons.Close, stringResource(R.string.queue_remove), tint = Pelage.Gris, modifier = Modifier.size(18.dp))
+                        }
+                    }
+                    DragHandle(reorder, station.url)
                 }
             }
         }

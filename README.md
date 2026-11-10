@@ -67,6 +67,9 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 - A short that was deleted or made private is skipped instead of staying frozen on its thumbnail.
 - Fixed: with a default quality higher than what a video offers, the player now shows the quality
   that is really playing (the best available), not the one asked for.
+- 2.21.1: the **queue**, the **Add to playlist** menu (and the other music menus) and the **comments
+  of a short** now open like the lyrics: the glass panel grows out of the button you touched and
+  folds back into it, and you can pull it down to close it.
 
 ### 2.20
 

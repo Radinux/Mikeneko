@@ -73,6 +73,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.geometry.Rect
 import app.mikeneko.R
 import app.mikeneko.data.Comment
 import app.mikeneko.data.Comments
@@ -176,7 +177,7 @@ fun CommentsCard(resetKey: Any?, modifier: Modifier = Modifier) {
 }
 
 /**
- * Le panneau des commentaires, en verre, sous la vidéo (qui continue de jouer au-dessus). Lecture seule.
+ * Le panneau des commentaires, en verre, par-dessus le bas du short (qui continue de jouer). Lecture seule.
  * Seulement pour le lecteur de shorts (pas de page sous la vidéo) ; le lecteur normal a [CommentsCard].
  */
 @Composable
@@ -187,44 +188,29 @@ fun CommentsPanel(backdrop: Backdrop) {
         Comments.open.value = false
     }
 
-    BoxWithConstraints(Modifier.fillMaxSize()) {
-        // Juste sous la vidéo : barre d'état + « Lecture en cours » + image en 16:9
-        val density = LocalDensity.current
-        val statusBar = with(density) { WindowInsets.statusBarSpace.getTop(density).toDp() }
-        val top = statusBar + 56.dp + maxWidth * 9f / 16f + 6.dp
-
-        AnimatedVisibility(
-            visible = open,
-            enter = slideInVertically(tween(320)) { it } + fadeIn(tween(200)),
-            exit = slideOutVertically(tween(260)) { it } + fadeOut(tween(200)),
-        ) {
-            LiquidGlass(
-                backdrop = backdrop,
-                modifier = Modifier
-                    .padding(top = top)
-                    .fillMaxSize()
-                    .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars))
-                    .padding(start = 8.dp, end = 8.dp, bottom = 8.dp),
-                cornerRadius = 28.dp,
-                bezel = 26.dp,
-                refraction = 26.dp,
-                tint = Color(0x801A1613), // assez clair pour voir le verre, le flou garde le texte lisible
-                frost = 32.dp,
-            ) {
-                Column(Modifier.fillMaxSize()) {
-                    PanelHeader()
-                    CommentList(Modifier.weight(1f))
-                }
-            }
-        }
+    // Comme les paroles (2.21.1) : le panneau sort du bouton des commentaires du short et s'y referme
+    MorphSheet(
+        backdrop, open, ShortComments.anchor, { Comments.open.value = false },
+        closeLabel = stringResource(R.string.comments_close),
+        heightFraction = 0.66f,
+        tint = Color(0x801A1613), // assez clair pour voir le verre, le flou garde le texte lisible
+        frost = 32.dp,
+    ) { handle ->
+        PanelHeader(handle)
+        CommentList(Modifier.weight(1f))
     }
 }
 
+/** Où est le bouton des commentaires du short à l'écran (en coordonnées de fenêtre) : le panneau en sort. */
+object ShortComments {
+    var anchor by mutableStateOf<Rect?>(null)
+}
+
 @Composable
-private fun PanelHeader() {
+private fun PanelHeader(handle: Modifier) {
     val state by Comments.state.collectAsState()
     Row(
-        Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 8.dp, bottom = 4.dp),
+        Modifier.fillMaxWidth().then(handle).padding(start = 20.dp, end = 8.dp, top = 8.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(stringResource(R.string.comments), Modifier.semantics { heading() }, color = Pelage.Texte, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)

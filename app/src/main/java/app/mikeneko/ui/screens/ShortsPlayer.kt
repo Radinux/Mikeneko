@@ -47,6 +47,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import app.mikeneko.ui.components.HoldSpeedBadge
+import app.mikeneko.ui.components.ShortComments
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -385,7 +388,10 @@ private fun ShortActions(video: Backdrop, url: String, title: String, channel: S
         ) {
             library.toggleLiked(VideoItem(url, title, channel, thumbnail, channelId = channelUrl?.let(::channelIdFrom), isShort = true))
         }
-        ShortAction(video, MkIcons.Bubble, stringResource(R.string.comments_open), if (comments.count > 0) formatCount(comments.count.toLong()) else null) {
+        ShortAction(
+            video, MkIcons.Bubble, stringResource(R.string.comments_open), if (comments.count > 0) formatCount(comments.count.toLong()) else null,
+            buttonModifier = Modifier.onGloballyPositioned { ShortComments.anchor = it.boundsInWindow() }, // le panneau sort d'ici
+        ) {
             Comments.open.value = true
         }
         // Garder : dans « Tes shorts » de la Bibliothèque (à part des vidéos)
@@ -406,9 +412,17 @@ private fun ShortActions(video: Backdrop, url: String, title: String, channel: S
 }
 
 @Composable
-private fun ShortAction(video: Backdrop, icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, count: String?, active: Boolean = false, onClick: () -> Unit) {
+private fun ShortAction(
+    video: Backdrop,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    count: String?,
+    active: Boolean = false,
+    buttonModifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        GlassCircleButton(video, icon, label, size = 48.dp, tint = if (active) Pelage.Roux.copy(alpha = 0.75f) else Color(0x40100D0B), onClick = onClick)
+        GlassCircleButton(video, icon, label, buttonModifier, size = 48.dp, tint = if (active) Pelage.Roux.copy(alpha = 0.75f) else Color(0x40100D0B), onClick = onClick)
         if (count != null) Text(count, Modifier.padding(top = 3.dp), style = ShortText.copy(fontSize = 12.sp, fontWeight = FontWeight.ExtraBold))
     }
 }

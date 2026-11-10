@@ -1113,6 +1113,14 @@ users: the point is to take them from the videos really watched.
   page ticks the row that plays when the asked one isn't offered. A short whose page throws
   `ContentNotAvailableException` is removed from the session list (the play effect is also keyed on
   the URL of the settled page, so the next one starts on the same page).
+- 2.21.1: the lyrics morph (2.15.2/2.15.3) moved to `ui/components/MorphSheet` (anchor rect in window
+  coordinates → open panel, veil, pull-down to close with the nested-scroll connection, content kept at
+  its open size and clipped). `heightFraction = null` wraps the content (its height is measured with
+  `onSizeChanged`), `maxWidth` centres a narrower panel, the IME counts in the bottom inset, `canPull`
+  blocks the pull while a queue row is being moved (the auto-scroll of a reorder would drag the panel).
+  Users: `LyricsSheet`, `QueueSheet` (same anchor: the player's button capsule), `MusicSheetHost`
+  (anchor = that capsule when the music window is open, else a capsule at the bottom of the screen) and
+  `CommentsPanel` (anchor = the bubble button of the short, published through `ShortComments.anchor`).
 - Emulator tip (2026-11-10): with `-gpu swiftshader_indirect` the emulator itself crashes when the
   music window opens; `-gpu host` works again.
 - Emulator tip: if screenshots turn black and the app "isn't responding" while its main thread just

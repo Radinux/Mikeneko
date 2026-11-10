@@ -85,6 +85,7 @@ import app.mikeneko.data.guessSong
 import app.mikeneko.player.PlayerHolder
 import app.mikeneko.ui.components.EmptyCat
 import app.mikeneko.ui.components.Loading
+import app.mikeneko.ui.components.MorphSheet
 import app.mikeneko.ui.glass.Backdrop
 import app.mikeneko.ui.glass.LiquidGlass
 import app.mikeneko.ui.icons.MkIcons
@@ -142,136 +143,11 @@ fun LyricsSheet(backdrop: Backdrop, visible: Boolean, anchor: Rect?, onClose: ()
         state = if (found == null || found.isEmpty) LyricsState.NotFound else LyricsState.Found(found)
     }
 
-    // Tirer le panneau vers le bas le ferme (2.4.0) : par la barre du haut, ou en continuant de tirer
-    // quand les paroles sont déjà en haut. 2.15.3 : il ne glisse plus d'un bloc ; il reste en place et
-    // rapetisse vers la capsule des boutons sous le doigt (comme le dock de la musique), puis finit de
-    // s'y refermer si on lâche assez loin (ou vite), sinon il se rouvre.
-    val density = LocalDensity.current
-    val closeAt = with(density) { 120.dp.toPx() }
-    val scope = rememberCoroutineScope()
-    val drag = remember { Animatable(0f) }
-    /** La course du doigt (en px) qui referme tout le panneau : la différence de hauteur avec la capsule. */
-    val travel = remember { floatArrayOf(1f) }
-    /** La vitesse du doigt au lâcher, pour que la fermeture la continue. */
-    val flung = remember { floatArrayOf(0f) }
-    fun release(velocity: Float) {
-        scope.launch {
-            if (drag.value > closeAt || (velocity > 1_500f && drag.value > 0f)) {
-                flung[0] = velocity
-                onClose()
-            } else {
-                drag.animateTo(0f, spring(dampingRatio = 0.8f, stiffness = 500f))
-            }
-        }
-    }
-    val pullDown = remember {
-        object : NestedScrollConnection {
-            // Le panneau descendu remonte d'abord avant que les paroles ne défilent
-            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                if (available.y < 0f && drag.value > 0f) {
-                    val used = maxOf(available.y, -drag.value)
-                    scope.launch { drag.snapTo(drag.value + used) }
-                    return Offset(0f, used)
-                }
-                return Offset.Zero
-            }
-            // Les paroles sont en haut et on tire encore : c'est le panneau qui descend
-            override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
-                if (available.y > 0f && source == NestedScrollSource.UserInput) {
-                    scope.launch { drag.snapTo(drag.value + available.y) }
-                    return Offset(0f, available.y)
-                }
-                return Offset.Zero
-            }
-            override suspend fun onPreFling(available: Velocity): Velocity {
-                if (drag.value <= 0f) return Velocity.Zero
-                release(available.y)
-                return available
-            }
-        }
-    }
-
-    // L'ouverture : 0 = la capsule des boutons, 1 = le panneau ouvert. On reste affiché tant qu'il se referme.
-    val progress = remember { Animatable(0f) }
-    LaunchedEffect(visible) {
-        if (visible) {
-            drag.snapTo(0f)
-            progress.animateTo(1f, spring(dampingRatio = 0.82f, stiffness = 260f))
-        } else {
-            // On repart d'où le doigt l'a laissé (déjà en partie refermé), à sa vitesse
-            val from = progress.value * (1f - (drag.value / travel[0]).coerceIn(0f, 1f))
-            val speed = -flung[0] / travel[0]
-            flung[0] = 0f
-            progress.snapTo(from)
-            drag.snapTo(0f)
-            progress.animateTo(0f, spring(dampingRatio = 1f, stiffness = 380f), initialVelocity = speed)
-        }
-    }
-    if (!visible && progress.value == 0f) return
-
-    var origin by remember { mutableStateOf(Offset.Zero) }
-    BoxWithConstraints(Modifier.fillMaxSize().onGloballyPositioned { origin = it.positionInWindow() }) {
-        val pulled = (drag.value / travel[0]).coerceIn(0f, 1f)
-        val p = progress.value * (1f - pulled)
-        val margin = with(density) { 10.dp.toPx() }
-        val bottomInset = WindowInsets.navigationBars.getBottom(density).toFloat()
-        val fullW = constraints.maxWidth.toFloat()
-        val fullH = constraints.maxHeight.toFloat()
-        // Le panneau ouvert : en bas, 78 % de la hauteur, 10 dp du bord
-        val openW = fullW - 2 * margin
-        val openH = (fullH - bottomInset - 2 * margin) * 0.78f
-        val openLeft = margin
-        val openTop = fullH - bottomInset - margin - openH
-        // La capsule d'où il sort (sans elle : une capsule en bas de l'écran)
-        val from = anchor?.translate(-origin.x, -origin.y)
-            ?: Rect(margin, fullH - bottomInset - margin - with(density) { 54.dp.toPx() }, fullW - margin, fullH - bottomInset - margin)
-        travel[0] = (openH - from.height).coerceAtLeast(1f)
-        fun mix(a: Float, b: Float) = a + (b - a) * p
-        val left = mix(from.left, openLeft)
-        val top = mix(from.top, openTop)
-        val width = mix(from.width, openW).coerceAtLeast(1f)
-        val height = mix(from.height, openH).coerceAtLeast(1f)
-        val corner = with(density) { mix(from.height / 2f, 30.dp.toPx()).toDp() }
-
-        // Le voile derrière, qui suit l'ouverture
-        Box(
-            Modifier.fillMaxSize().graphicsLayer { alpha = p.coerceIn(0f, 1f) }.background(Color.Black.copy(alpha = 0.4f))
-                .then(if (visible) Modifier.clickable(interactionSource = null, indication = null, onClickLabel = stringResource(R.string.lyrics_close), onClick = onClose) else Modifier),
-        )
-        LiquidGlass(
-            backdrop = backdrop,
-            modifier = Modifier
-                .offset { IntOffset(left.roundToInt(), top.roundToInt()) }
-                .size(with(density) { width.toDp() }, with(density) { height.toDp() })
-                .nestedScroll(pullDown),
-            cornerRadius = corner,
-            bezel = 26.dp,
-            refraction = 26.dp,
-            tint = Color(0xD01A1613),
-            frost = 30.dp,
-        ) {
-            // Le contenu garde la taille du panneau ouvert (pas de texte qui se réarrange à chaque image),
-            // coupé par la vitre ; il apparaît dans la seconde moitié de l'ouverture
-            Box(Modifier.fillMaxSize().clipToBounds().graphicsLayer { alpha = ((p - 0.45f) / 0.55f).coerceIn(0f, 1f) }) {
-                Box(Modifier.align(Alignment.TopCenter).wrapContentSize(Alignment.TopCenter, unbounded = true)) {
-                    Box(Modifier.size(with(density) { openW.toDp() }, with(density) { openH.toDp() })) {
-                Column(Modifier.fillMaxSize()) {
-                    // La barre du haut : on l'attrape pour tirer le panneau vers le bas
-                    Box(Modifier.align(Alignment.CenterHorizontally).padding(top = 8.dp).size(40.dp, 4.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.3f)))
+    // Le panneau sort de la capsule des boutons et s'y referme ; on le tire vers le bas pour le fermer
+    // (2.4.0, 2.15.2, 2.15.3 : tout ça vit maintenant dans MorphSheet, partagé avec la file et les menus)
+    MorphSheet(backdrop, visible, anchor, onClose, closeLabel = stringResource(R.string.lyrics_close)) { handle ->
                     Row(
-                        Modifier.fillMaxWidth()
-                            .pointerInput(Unit) {
-                                val tracker = VelocityTracker()
-                                detectVerticalDragGestures(
-                                    onDragStart = { tracker.resetTracking() },
-                                    onDragEnd = { release(tracker.calculateVelocity().y) },
-                                    onDragCancel = { release(0f) },
-                                ) { change, amount ->
-                                    tracker.addPosition(change.uptimeMillis, change.position)
-                                    scope.launch { drag.snapTo((drag.value + amount).coerceAtLeast(0f)) }
-                                }
-                            }
-                            .padding(start = 22.dp, end = 8.dp, top = 6.dp),
+                        Modifier.fillMaxWidth().then(handle).padding(start = 22.dp, end = 8.dp, top = 6.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Column(Modifier.weight(1f)) {
@@ -310,11 +186,6 @@ fun LyricsSheet(backdrop: Backdrop, visible: Boolean, anchor: Rect?, onClose: ()
                         color = Pelage.Gris.copy(alpha = 0.7f),
                         fontSize = 11.sp,
                     )
-                }
-                    }
-                }
-            }
-        }
     }
 }
 

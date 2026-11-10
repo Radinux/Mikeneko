@@ -332,7 +332,7 @@ private suspend fun PointerInputScope.stretchGesture(state: MusicPlayerState, ge
  */
 @Composable
 fun MusicPlayerSheets(state: MusicPlayerState, backdrop: Backdrop) {
-    QueueSheet(backdrop, visible = state.queueOpen, onClose = { state.queueOpen = false })
+    QueueSheet(backdrop, visible = state.queueOpen, anchor = state.lyricsAnchor, onClose = { state.queueOpen = false })
     LyricsSheet(backdrop, visible = state.lyricsOpen, anchor = state.lyricsAnchor, onClose = { state.lyricsOpen = false })
     if (state.open) PlayerSettingsSheet(backdrop, audioOnly = true)
 }

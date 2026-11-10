@@ -586,7 +586,7 @@ fun MikenekoRoot(
         // après le dock, pour passer au-dessus
         if (showMusic) MusicPlayerSheets(music, backdrop)
         if (route == Route.Musique || music.open) {
-            MusicSheetHost(backdrop, onPlaylistDeleted = { id -> musicPages.pages.removeAll { it == MusicPage.MyPlaylist(id) } })
+            MusicSheetHost(backdrop, anchor = music.lyricsAnchor.takeIf { music.open }, onPlaylistDeleted = { id -> musicPages.pages.removeAll { it == MusicPage.MyPlaylist(id) } })
         }
 
         // Menu ⋮ des vidéos (accueil, chaînes, Bibliothèque, lecteur) et sa barre « Annuler » : après le

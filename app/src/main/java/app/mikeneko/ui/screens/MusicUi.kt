@@ -86,6 +86,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.mikeneko.ui.components.MorphSheet
 import app.mikeneko.R
 import app.mikeneko.data.GeneratedMix
 import app.mikeneko.data.ChannelItem
@@ -595,11 +596,11 @@ sealed interface MusicSheet {
 }
 
 /**
- * Le panneau qui monte du bas pour [MusicSheet] : à poser par-dessus l'écran qui a un [backdrop]
+ * Le panneau de [MusicSheet] (il sort de [anchor], le bouton touché, ou du bas de l'écran) : à poser par-dessus l'écran qui a un [backdrop]
  * (la Musique, ou le grand lecteur).
  */
 @Composable
-fun MusicSheetHost(backdrop: Backdrop, onPlaylistDeleted: (String) -> Unit = {}) {
+fun MusicSheetHost(backdrop: Backdrop, anchor: Rect? = null, onPlaylistDeleted: (String) -> Unit = {}) {
     val context = LocalContext.current
     val request by MusicSheet.open.collectAsState()
     var shown by remember { mutableStateOf<MusicSheet?>(null) }
@@ -611,54 +612,40 @@ fun MusicSheetHost(backdrop: Backdrop, onPlaylistDeleted: (String) -> Unit = {})
 
     BackHandler(enabled = request != null, onBack = ::close)
 
-    Box(Modifier.fillMaxSize()) {
-        AnimatedVisibility(request != null, enter = fadeIn(tween(200)), exit = fadeOut(tween(200))) {
-            Box(
-                Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.45f))
-                    .clickable(interactionSource = null, indication = null, onClickLabel = stringResource(R.string.menu_close), onClick = ::close),
-            )
-        }
-        AnimatedVisibility(
-            request != null,
-            modifier = Modifier.align(Alignment.BottomCenter),
-            enter = slideInVertically(tween(300)) { it } + fadeIn(tween(200)),
-            exit = slideOutVertically(tween(240)) { it } + fadeOut(tween(200)),
-        ) {
-            val sheet = shown ?: return@AnimatedVisibility
-            LiquidGlass(
-                backdrop = backdrop,
-                modifier = Modifier.widthIn(max = 520.dp).fillMaxWidth().navigationBarsPadding().imePadding().padding(10.dp),
-                cornerRadius = 30.dp,
-                bezel = 26.dp,
-                refraction = 26.dp,
-                tint = Color(0xC71A1613),
-                frost = 28.dp,
-            ) {
-                Column(Modifier.fillMaxWidth().heightIn(max = 560.dp).padding(vertical = 10.dp)) {
-                    when (sheet) {
-                        is MusicSheet.Track -> TrackMenu(context, sheet, ::close)
-                        is MusicSheet.AddToPlaylist -> PlaylistPicker(context, sheet.track, ::close)
-                        is MusicSheet.NewPlaylist -> NameEditor(
-                            title = stringResource(R.string.playlist_new),
-                            initial = "",
-                            action = stringResource(R.string.playlist_create),
-                        ) { name ->
-                            val playlist = Playlists.get(context).create(name, sheet.first)
-                            toast(context, if (sheet.first != null) context.getString(R.string.playlist_added_to, playlist.name) else context.getString(R.string.playlist_created))
-                            close()
-                        }
-                        is MusicSheet.Rename -> NameEditor(
-                            title = stringResource(R.string.playlist_rename),
-                            initial = Playlists.get(context).get(sheet.id)?.name.orEmpty(),
-                            action = stringResource(R.string.save),
-                        ) { name ->
-                            Playlists.get(context).rename(sheet.id, name)
-                            close()
-                        }
-                        is MusicSheet.PlaylistOptions -> PlaylistOptions(context, sheet.id, ::close, onPlaylistDeleted)
-                        is MusicSheet.SortPlaylist -> SortMenu(context, sheet.id, ::close)
-                    }
+    // Comme les paroles (2.21.1) : le menu sort du bouton touché quand on le connaît (la capsule des
+    // boutons du lecteur), sinon d'une capsule en bas de l'écran, et s'y referme
+    MorphSheet(
+        backdrop, request != null, anchor, ::close,
+        closeLabel = stringResource(R.string.menu_close),
+        heightFraction = null,
+        maxWidth = 520.dp,
+        tint = Color(0xC71A1613),
+        frost = 28.dp,
+    ) { _ ->
+        val sheet = shown ?: return@MorphSheet
+        Column(Modifier.fillMaxWidth().heightIn(max = 560.dp).padding(top = 2.dp, bottom = 10.dp)) {
+            when (sheet) {
+                is MusicSheet.Track -> TrackMenu(context, sheet, ::close)
+                is MusicSheet.AddToPlaylist -> PlaylistPicker(context, sheet.track, ::close)
+                is MusicSheet.NewPlaylist -> NameEditor(
+                    title = stringResource(R.string.playlist_new),
+                    initial = "",
+                    action = stringResource(R.string.playlist_create),
+                ) { name ->
+                    val playlist = Playlists.get(context).create(name, sheet.first)
+                    toast(context, if (sheet.first != null) context.getString(R.string.playlist_added_to, playlist.name) else context.getString(R.string.playlist_created))
+                    close()
                 }
+                is MusicSheet.Rename -> NameEditor(
+                    title = stringResource(R.string.playlist_rename),
+                    initial = Playlists.get(context).get(sheet.id)?.name.orEmpty(),
+                    action = stringResource(R.string.save),
+                ) { name ->
+                    Playlists.get(context).rename(sheet.id, name)
+                    close()
+                }
+                is MusicSheet.PlaylistOptions -> PlaylistOptions(context, sheet.id, ::close, onPlaylistDeleted)
+                is MusicSheet.SortPlaylist -> SortMenu(context, sheet.id, ::close)
             }
         }
     }
