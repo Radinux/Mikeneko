@@ -66,6 +66,8 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -280,7 +282,13 @@ internal fun PlayerWindowContent(
                     ) { PlayerHolder.cycleRepeat() }
                 }
                 Spacer(Modifier.height(16.dp))
-                LiquidGlass(glass, Modifier.fillMaxWidth().height(54.dp), cornerRadius = 27.dp, bezel = 18.dp, refraction = 18.dp) {
+                LiquidGlass(
+                    glass,
+                    Modifier.fillMaxWidth().height(54.dp).onGloballyPositioned { state.lyricsAnchor = it.boundsInWindow() },
+                    cornerRadius = 27.dp,
+                    bezel = 18.dp,
+                    refraction = 18.dp,
+                ) {
                     Row(Modifier.fillMaxSize().padding(horizontal = 6.dp)) {
                         ActionSlot(MkIcons.Queue, stringResource(R.string.queue)) {
                             if (PlayerHolder.queue.value.isEmpty()) toast(context.getString(R.string.queue_empty)) else state.queueOpen = true

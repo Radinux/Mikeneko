@@ -1,6 +1,17 @@
 package app.mikeneko.ui.screens
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.unit.IntOffset
+import kotlin.math.roundToInt
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
@@ -89,11 +100,14 @@ private sealed interface LyricsState {
 }
 
 /**
- * Les paroles du morceau en cours, en verre, qui montent du bas. Synchronisées : la ligne chantée
- * s'allume et reste au milieu, un tap sur une ligne y saute. Sinon, le texte brut.
+ * Les paroles du morceau en cours, en verre. Synchronisées : la ligne chantée s'allume et reste au
+ * milieu, un tap sur une ligne y saute. Sinon, le texte brut.
+ *
+ * 2.15.2 : le panneau sort de la barre de boutons du lecteur ([anchor], la capsule File · Paroles ·
+ * Ajouter…) en s'étirant, et s'y referme sur lui-même. Avant, il glissait d'un bloc vers le bas.
  */
 @Composable
-fun LyricsSheet(backdrop: Backdrop, visible: Boolean, onClose: () -> Unit) {
+fun LyricsSheet(backdrop: Backdrop, visible: Boolean, anchor: Rect?, onClose: () -> Unit) {
     val now by PlayerHolder.nowPlaying.collectAsState()
     val queue by PlayerHolder.queue.collectAsState()
     val queueIndex by PlayerHolder.queueIndex.collectAsState()
@@ -168,30 +182,60 @@ fun LyricsSheet(backdrop: Backdrop, visible: Boolean, onClose: () -> Unit) {
         }
     }
 
-    Box(Modifier.fillMaxSize()) {
-        AnimatedVisibility(visible, enter = fadeIn(tween(200)), exit = fadeOut(tween(200))) {
-            Box(
-                Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.4f))
-                    .clickable(interactionSource = null, indication = null, onClickLabel = stringResource(R.string.lyrics_close), onClick = onClose),
-            )
-        }
-        AnimatedVisibility(
-            visible,
-            modifier = Modifier.align(Alignment.BottomCenter),
-            enter = slideInVertically(tween(320)) { it } + fadeIn(tween(200)),
-            exit = slideOutVertically(tween(260)) { it } + fadeOut(tween(200)),
+    // L'ouverture : 0 = la capsule des boutons, 1 = le panneau ouvert. On reste affiché tant qu'il se referme.
+    val progress = remember { Animatable(0f) }
+    LaunchedEffect(visible) {
+        progress.animateTo(
+            if (visible) 1f else 0f,
+            if (visible) spring(dampingRatio = 0.82f, stiffness = 260f) else spring(dampingRatio = 1f, stiffness = 380f),
+        )
+    }
+    if (!visible && progress.value == 0f) return
+
+    var origin by remember { mutableStateOf(Offset.Zero) }
+    BoxWithConstraints(Modifier.fillMaxSize().onGloballyPositioned { origin = it.positionInWindow() }) {
+        val p = progress.value
+        val margin = with(density) { 10.dp.toPx() }
+        val bottomInset = WindowInsets.navigationBars.getBottom(density).toFloat()
+        val fullW = constraints.maxWidth.toFloat()
+        val fullH = constraints.maxHeight.toFloat()
+        // Le panneau ouvert : en bas, 78 % de la hauteur, 10 dp du bord (et tiré vers le bas : [drag])
+        val openW = fullW - 2 * margin
+        val openH = (fullH - bottomInset - 2 * margin) * 0.78f
+        val openLeft = margin
+        val openTop = fullH - bottomInset - margin - openH + drag.value
+        // La capsule d'où il sort (sans elle : une capsule en bas de l'écran)
+        val from = anchor?.translate(-origin.x, -origin.y)
+            ?: Rect(margin, fullH - bottomInset - margin - with(density) { 54.dp.toPx() }, fullW - margin, fullH - bottomInset - margin)
+        fun mix(a: Float, b: Float) = a + (b - a) * p
+        val left = mix(from.left, openLeft)
+        val top = mix(from.top, openTop)
+        val width = mix(from.width, openW).coerceAtLeast(1f)
+        val height = mix(from.height, openH).coerceAtLeast(1f)
+        val corner = with(density) { mix(from.height / 2f, 30.dp.toPx()).toDp() }
+
+        // Le voile derrière, qui suit l'ouverture
+        Box(
+            Modifier.fillMaxSize().graphicsLayer { alpha = p.coerceIn(0f, 1f) }.background(Color.Black.copy(alpha = 0.4f))
+                .then(if (visible) Modifier.clickable(interactionSource = null, indication = null, onClickLabel = stringResource(R.string.lyrics_close), onClick = onClose) else Modifier),
+        )
+        LiquidGlass(
+            backdrop = backdrop,
+            modifier = Modifier
+                .offset { IntOffset(left.roundToInt(), top.roundToInt()) }
+                .size(with(density) { width.toDp() }, with(density) { height.toDp() })
+                .nestedScroll(pullDown),
+            cornerRadius = corner,
+            bezel = 26.dp,
+            refraction = 26.dp,
+            tint = Color(0xD01A1613),
+            frost = 30.dp,
         ) {
-            LiquidGlass(
-                backdrop = backdrop,
-                modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(10.dp).fillMaxHeight(0.78f)
-                    .graphicsLayer { translationY = drag.value }
-                    .nestedScroll(pullDown),
-                cornerRadius = 30.dp,
-                bezel = 26.dp,
-                refraction = 26.dp,
-                tint = Color(0xD01A1613),
-                frost = 30.dp,
-            ) {
+            // Le contenu garde la taille du panneau ouvert (pas de texte qui se réarrange à chaque image),
+            // coupé par la vitre ; il apparaît dans la seconde moitié de l'ouverture
+            Box(Modifier.fillMaxSize().clipToBounds().graphicsLayer { alpha = ((p - 0.45f) / 0.55f).coerceIn(0f, 1f) }) {
+                Box(Modifier.align(Alignment.TopCenter).wrapContentSize(Alignment.TopCenter, unbounded = true)) {
+                    Box(Modifier.size(with(density) { openW.toDp() }, with(density) { openH.toDp() })) {
                 Column(Modifier.fillMaxSize()) {
                     // La barre du haut : on l'attrape pour tirer le panneau vers le bas
                     Box(Modifier.align(Alignment.CenterHorizontally).padding(top = 8.dp).size(40.dp, 4.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.3f)))
@@ -247,6 +291,8 @@ fun LyricsSheet(backdrop: Backdrop, visible: Boolean, onClose: () -> Unit) {
                         color = Pelage.Gris.copy(alpha = 0.7f),
                         fontSize = 11.sp,
                     )
+                }
+                    }
                 }
             }
         }

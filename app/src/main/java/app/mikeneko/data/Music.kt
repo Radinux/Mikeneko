@@ -108,9 +108,17 @@ object Music {
      */
     suspend fun albumOf(artist: String, description: String): MusicCollection? {
         val name = albumNameFrom(description) ?: return null
-        val found = collections("$name $artist", MusicKind.Albums)
-        return found.firstOrNull { it.title.equals(name, ignoreCase = true) }
-            ?: found.firstOrNull { it.title.contains(name, ignoreCase = true) || name.contains(it.title, ignoreCase = true) }
+        // 2.15.2 : seulement un album du même artiste. Avant, le premier album au même nom suffisait :
+        // un single porte le nom du morceau, et la recherche ramenait parfois l'album homonyme d'un autre.
+        val artists = (listOf(artist) + creditedArtistsFrom(description)).map(::folded).filter { it.isNotEmpty() }.distinct()
+        fun sameArtist(c: MusicCollection): Boolean {
+            val by = folded(c.artist)
+            return by.isNotEmpty() && artists.any { it in by || by in it }
+        }
+        val found = collections("$name $artist", MusicKind.Albums).filter(::sameArtist)
+        val wanted = folded(name)
+        return found.firstOrNull { folded(it.title) == wanted }
+            ?: found.firstOrNull { folded(it.title).let { t -> wanted in t || t in wanted } }
     }
 
     fun cachedAlbum(url: String): TrackPage? = albums.peek(url)
@@ -191,6 +199,20 @@ internal fun albumNameFrom(description: String): String? {
     if (album.startsWith("℗") || album.startsWith("©") || album.startsWith("Released on", ignoreCase = true) || album.startsWith("Auto-generated", ignoreCase = true)) return null
     return album.ifEmpty { null }
 }
+
+/** Les artistes crédités dans une description générée par YouTube (« Titre · Artiste · Artiste 2 »). */
+internal fun creditedArtistsFrom(description: String): List<String> {
+    val text = HtmlCompat.fromHtml(description.replace("\n", "<br>"), HtmlCompat.FROM_HTML_MODE_LEGACY).toString()
+    val line = text.lineSequence().map { it.trim() }.firstOrNull { " · " in it } ?: return emptyList()
+    return line.split(" · ").drop(1).map { it.trim() }.filter { it.isNotEmpty() }
+}
+
+/** Pour comparer des noms sans tenir compte des majuscules, des accents ni de la ponctuation. */
+internal fun folded(text: String): String =
+    java.text.Normalizer.normalize(text.lowercase(), java.text.Normalizer.Form.NFD)
+        .replace(Regex("\\p{Mn}+"), "")
+        .replace(Regex("[^\\p{L}\\p{N}]+"), " ")
+        .trim()
 
 /** « Artiste - Topic » (chaînes automatiques de YouTube) → « Artiste ». */
 fun cleanArtist(name: String): String = name.removeSuffix(" - Topic").removeSuffix(" – Topic").trim()

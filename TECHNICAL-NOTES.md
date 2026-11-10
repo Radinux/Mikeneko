@@ -1001,6 +1001,16 @@ users: the point is to take them from the videos really watched.
 - 2.15.1: the sort capsule row became `SortButton` (Capsule, next to Shuffle and in Edit mode) opening
   `MusicSheet.SortPlaylist` → `SortMenu` in `MusicSheetHost` (check on the current sort, a
   description per option, the "not analysed yet / albums" note at the bottom). New icon `MkIcons.Sort`.
+- 2.15.2: `LyricsSheet(anchor)`: `MusicPlayerState.lyricsAnchor` = window bounds of the player's
+  button capsule (`onGloballyPositioned` in `MusicPlayerContent`). One `Animatable` (0 = capsule, 1 =
+  open; spring) lerps the glass rect (left / top / size / corner radius) from the anchor to the open
+  panel (bottom, 78 %, pulled down by `drag`); the sheet stays composed until it is back to 0. The
+  content is laid out at the open size (no reflow), top-aligned, clipped by the glass and faded in
+  over the second half. `Music.albumOf` now keeps only albums whose artist matches the song's artist
+  or one credited in the description (`creditedArtistsFrom`, `folded`): a single shares the song's
+  name and the album search could return another artist's album.
+- Emulator tip (2026-11-10): with `-gpu swiftshader_indirect` the emulator itself crashes when the
+  music window opens; `-gpu host` works again.
 - Emulator tip: if screenshots turn black and the app "isn't responding" while its main thread just
   waits for vsync, the emulator's GPU is stuck: restart it with `-gpu swiftshader_indirect`.
 
