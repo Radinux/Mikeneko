@@ -142,7 +142,8 @@ internal fun PageHeader(
                                     .onGloballyPositioned { c ->
                                         val header = headerCoords?.takeIf { it.isAttached } ?: return@onGloballyPositioned
                                         val inHeader = header.localPositionOf(c, Offset.Zero)
-                                        val root = c.positionInRoot()
+                                        // Dans le repère de la barre du haut (pas l'écran : voir PlayAnchor.space)
+                                        val root = play.space()?.takeIf { it.isAttached }?.localPositionOf(c, Offset.Zero) ?: c.positionInRoot()
                                         // Des valeurs fixes, appelées à chaque image du défilement : on ne les
                                         // réécrit que si elles bougent vraiment (2.11.8). Recalculées par différence
                                         // de deux positions qui défilent, elles changeaient d'un arrondi à chaque
@@ -198,7 +199,7 @@ internal fun PageBarEffect(state: MusicState, list: LazyListState, title: String
     val headerTop = remember(list) {
         androidx.compose.runtime.derivedStateOf { list.layoutInfo.visibleItemsInfo.firstOrNull { it.index == 0 }?.offset?.toFloat() }
     }
-    val anchor = remember(headerTop, passed) { PlayAnchor(headerTop, passed) { state.barPill } }
+    val anchor = remember(headerTop, passed, density) { PlayAnchor(headerTop, passed, { state.barPill }, { state.overlayRoot }, density) }
     SideEffect {
         state.bar = PageBar(title, onPlay, owner, passed, anchor)
     }

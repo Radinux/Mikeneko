@@ -205,7 +205,7 @@ fun MusicDockWindow(
                     .fillMaxWidth()
                     .height(MUSIC_DOCK_HEIGHT)
                     .placeWhile { state.expand.value < 0.35f }
-                    .graphicsLayer { alpha = (1f - state.expand.value * 3f).coerceIn(0f, 1f) },
+                    .graphicsLayer { alpha = (1f - state.expand.value * 2.8f).coerceIn(0f, 1f) },
             ) {
                 MusicDockRow()
             }
@@ -231,7 +231,7 @@ fun MusicDockWindow(
                             state.endPull()
                         }
                     }
-                    .graphicsLayer { alpha = if (warm && state.expand.value <= 0.3f) 0.004f else ((state.expand.value - 0.3f) / 0.45f).coerceIn(0f, 1f) },
+                    .graphicsLayer { alpha = if (warm && state.expand.value <= 0.3f) 0.004f else ((state.expand.value - 0.3f) / 0.4f).coerceIn(0f, 1f) },
             ) {
                 PlayerWindowContent(state, backdrop, onDownload, onOpenArtist, onOpenAlbum)
             }
@@ -300,6 +300,10 @@ private suspend fun PointerInputScope.stretchGesture(state: MusicPlayerState, ge
         }
         if (start == null || !vertical) return@awaitEachGesture
         state.stop()
+        // Le geste coupé en route (2.22.0 : rotation, vitre reconstruite…) ne posait jamais la vitre :
+        // elle restait à mi-course, pilule effacée et fenêtre pas encore là. On la pose quoi qu'il arrive.
+        var settled = false
+        try {
         val tracker = VelocityTracker()
         fun screenY(position: Offset) = coordinates()?.localToRoot(position)?.y ?: position.y
         var lastY = screenY(start.position)
@@ -324,6 +328,10 @@ private suspend fun PointerInputScope.stretchGesture(state: MusicPlayerState, ge
             else -> p > 0.25f
         }
         state.settle(open, velocity = -vy / geometry.travel)
+        settled = true
+        } finally {
+            if (!settled) state.settle(state.expand.value > 0.5f)
+        }
     }
 }
 

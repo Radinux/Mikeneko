@@ -1,6 +1,8 @@
 package app.mikeneko.ui.theme
 
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.annotation.StringRes
@@ -161,6 +163,8 @@ fun MikenekoTheme(content: @Composable () -> Unit) {
             outlineVariant = Pelage.Bord,
         ),
         typography = MikenekoTypography,
-        content = content,
-    )
+    ) {
+        // Tout ce qui se touche réagit sous le doigt (2.22.0), voir PressIndication
+        CompositionLocalProvider(LocalIndication provides PressIndication, content = content)
+    }
 }

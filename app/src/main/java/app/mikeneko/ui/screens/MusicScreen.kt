@@ -60,6 +60,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.layout.onPlaced
 import app.mikeneko.R
 import app.mikeneko.data.MusicKind
 import app.mikeneko.data.SearchHistory
@@ -80,7 +81,7 @@ import kotlin.math.roundToInt
  */
 @Composable
 fun MusicOverlay(state: MusicState, backdrop: Backdrop) {
-    Box(Modifier.fillMaxSize()) {
+    Box(Modifier.fillMaxSize().onPlaced { state.overlayRoot = it }) {
         MusicHeader(state, backdrop)
         TravellingPlayButton(state)
     }
@@ -96,8 +97,8 @@ private fun TravellingPlayButton(state: MusicState) {
     val anchor = bar.play ?: return
     val onPlay = bar.onPlay ?: return
     if (state.page == null) return
-    var origin by remember { mutableStateOf(Offset.Zero) }
-    Box(Modifier.fillMaxSize().onGloballyPositioned { origin = it.positionInRoot() }) {
+    // (cette couche remplit celle de la barre du haut : les positions du bouton sont déjà dans son repère)
+    Box(Modifier.fillMaxSize()) {
         Box(
             Modifier
                 .layout { measurable, _ ->
@@ -107,7 +108,7 @@ private fun TravellingPlayButton(state: MusicState) {
                         // Posé seulement une fois parti de l'en-tête (sinon il arrêterait les taps dessous)
                         val spot = anchor.spot(this@layout)
                         if (spot != null && spot.t > 0f) {
-                            placeable.place((spot.center.x - origin.x - big / 2f).roundToInt(), (spot.center.y - origin.y - big / 2f).roundToInt())
+                            placeable.place((spot.center.x - big / 2f).roundToInt(), (spot.center.y - big / 2f).roundToInt())
                         }
                     }
                 }
@@ -157,7 +158,10 @@ private fun MusicHeader(state: MusicState, backdrop: Backdrop) {
                     // Une pilule en verre avec le titre de la page et le bouton lecture : elle arrive à mesure
                     // que l'en-tête passe sous la barre (la liste se déforme dessous en défilant)
                     val filtering = page is MusicPage.MyPlaylist && state.playlistFilter != null
-                    Box(Modifier.weight(1f).padding(horizontal = 10.dp).onGloballyPositioned { state.barPill = it.boundsInRoot() }) {
+                    Box(Modifier.weight(1f).padding(horizontal = 10.dp).onGloballyPositioned { c ->
+                        // Dans le repère de cette couche (pas l'écran : voir PlayAnchor.space)
+                        state.overlayRoot?.takeIf { it.isAttached }?.let { state.barPill = it.localBoundingBoxOf(c, clipBounds = false) }
+                    }) {
                         if (filtering) {
                             PlaylistFilterField(state, backdrop)
                         } else if (bar != null) {

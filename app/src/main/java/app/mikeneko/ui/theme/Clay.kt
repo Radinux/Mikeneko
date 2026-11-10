@@ -1,5 +1,12 @@
 package app.mikeneko.ui.theme
 
+import kotlinx.coroutines.launch
+import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.drawscope.ContentDrawScope
+import androidx.compose.ui.node.DrawModifierNode
+import androidx.compose.ui.node.DelegatableNode
+import androidx.compose.foundation.interaction.InteractionSource
+import androidx.compose.foundation.IndicationNodeFactory
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -129,5 +136,51 @@ fun Modifier.plopOnSelect(selected: Boolean): Modifier = composed {
         val p = plop.value
         scaleX = 1f + 0.08f * p
         scaleY = 1f - 0.06f * p
+    }
+}
+
+/**
+ * Le retour visuel de tout ce qui se touche (2.22.0) : sous le doigt, l'élément rétrécit un peu et
+ * s'éclaire, puis reprend sa taille avec un petit rebond. Posé une fois pour toute l'appli
+ * ([MikenekoTheme]) à la place de l'onde de Material, peu visible sur le fond sombre : lignes de
+ * listes, boutons ronds, capsules, cartes… Les éléments qui ont déjà leur propre effet
+ * ([jellyClickable], ou `indication = null`) gardent le leur.
+ */
+object PressIndication : IndicationNodeFactory {
+    override fun create(interactionSource: InteractionSource): DelegatableNode = PressNode(interactionSource)
+    override fun equals(other: Any?) = other === this
+    override fun hashCode() = 0x6d696b65
+}
+
+private class PressNode(private val source: InteractionSource) : Modifier.Node(), DrawModifierNode {
+    private val press = Animatable(0f) // 0 au repos, 1 sous le doigt ; un peu sous 0 pendant le rebond
+
+    override fun onAttach() {
+        coroutineScope.launch {
+            source.interactions.collectLatest { event ->
+                when (event) {
+                    is PressInteraction.Press -> press.animateTo(1f, spring(stiffness = Spring.StiffnessHigh))
+                    is PressInteraction.Release, is PressInteraction.Cancel -> {
+                        // Même un tap très court se voit
+                        if (press.value < 0.7f) press.animateTo(1f, tween(70))
+                        press.animateTo(0f, spring(dampingRatio = 0.42f, stiffness = 420f))
+                    }
+                }
+            }
+        }
+    }
+
+    override fun ContentDrawScope.draw() {
+        val p = press.value
+        if (p == 0f) {
+            drawContent()
+            return
+        }
+        // Jamais plus de 5 dp de moins par côté : une ligne large ne « saute » pas, un petit bouton se voit
+        val shrink = minOf(0.07f, 10.dp.toPx() / maxOf(size.width, size.height, 1f))
+        val s = 1f - shrink * p
+        scale(s, s) { this@draw.drawContent() }
+        val light = (p * 0.1f).coerceIn(0f, 0.1f)
+        if (light > 0f) scale(s, s) { drawRect(Color.White.copy(alpha = light)) }
     }
 }

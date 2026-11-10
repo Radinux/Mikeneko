@@ -87,6 +87,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.mikeneko.ui.components.MorphSheet
+import androidx.compose.ui.layout.LayoutCoordinates
 import app.mikeneko.R
 import app.mikeneko.data.GeneratedMix
 import app.mikeneko.data.ChannelItem
@@ -144,8 +145,13 @@ class PageBar(
     /** Le gros bouton lecture de l'en-tête, qui vient se ranger dans la pilule (null = pas de bouton). */
     val play: PlayAnchor? = null,
 ) {
-    /** 0 : l'en-tête est encore là ; 1 : il est passé sous la barre. Suit le défilement, au pixel près. */
-    val progress: Float get() = passed.value
+    /**
+     * 0 : l'en-tête est encore là ; 1 : il est passé sous la barre. Suit le défilement, au pixel près.
+     * Avec un bouton lecture (2.22.0), la pilule arrive au plus tard avec lui : avant, sur une playlist
+     * (une rangée de boutons sous le bouton lecture), il se rangeait en haut alors que la pilule était
+     * encore invisible, et restait seul à flotter.
+     */
+    val progress: Float get() = play?.progress ?: passed.value
 }
 
 /** Le gros bouton lecture de l'en-tête (58 dp) et sa place dans la pilule de la barre (42 dp). */
@@ -172,6 +178,13 @@ class PlayAnchor(
     private val passed: State<Float>,
     /** La pilule de la barre du haut, sans son animation (null tant qu'elle n'est pas posée). */
     private val pill: () -> Rect?,
+    /**
+     * Le repère de toutes ces positions : la couche de la barre du haut ([MusicOverlay]). Pas l'écran
+     * (2.22.0) : une position « à l'écran » prise pendant l'arrivée de l'onglet (il glisse et grandit)
+     * restait fausse ensuite, et le bouton se rangeait à côté de sa place.
+     */
+    val space: () -> LayoutCoordinates?,
+    private val density: Density,
 ) {
     /** Le coin haut-gauche du bouton dans l'en-tête (fixe). */
     var inHeader by mutableStateOf<Offset?>(null)
@@ -179,22 +192,39 @@ class PlayAnchor(
     var left by mutableFloatStateOf(0f)
     var listTop by mutableFloatStateOf(0f)
 
-    fun spot(density: Density): PlaySpot? = with(density) {
+    /** Le centre du bouton tant qu'il est dans l'en-tête (null : l'en-tête est sorti de la liste, ou pas encore mesuré). */
+    private fun free(): Offset? = with(density) {
         val inHeader = inHeader ?: return null
+        val top = headerTop.value ?: return null
+        val half = PLAY_BIG.toPx() / 2f
+        Offset(left + half, listTop + top + inHeader.y + half)
+    }
+
+    /** Le trajet du bouton : 0 = dans l'en-tête, 1 = rangé dans la pilule. Ne dépend que du défilement. */
+    private fun travelled(): Float = with(density) {
+        if (inHeader == null) return 0f
+        val pill = pill() ?: return 0f
+        val free = free() ?: return 1f
+        val travel = PLAY_TRAVEL.toPx()
+        ((pill.center.y + travel - free.y) / travel).coerceIn(0f, 1f)
+    }
+
+    /** L'arrivée de la pilule de la barre : avec l'en-tête qui passe dessous, et au plus tard avec le bouton. */
+    val progress: Float get() = maxOf(passed.value, travelled())
+
+    fun spot(density: Density = this.density): PlaySpot? = with(density) {
+        if (inHeader == null) return null
         val pill = pill() ?: return null
         // La place dans la pilule, avec l'animation d'arrivée de la pilule (voir MusicHeader)
-        val p = passed.value
+        val p = progress
         val scale = 0.9f + 0.1f * p
         val c = pill.center
         val slot = Offset(
             c.x + (pill.right - (4.dp + PLAY_SMALL / 2).toPx() - c.x) * scale,
             c.y + (1f - p) * 14.dp.toPx(),
         )
-        val top = headerTop.value ?: return PlaySpot(slot, 1f)
-        val half = PLAY_BIG.toPx() / 2f
-        val free = Offset(left + half, listTop + top + inHeader.y + half)
-        val travel = PLAY_TRAVEL.toPx()
-        val t = ((slot.y + travel - free.y) / travel).coerceIn(0f, 1f)
+        val free = free() ?: return PlaySpot(slot, 1f)
+        val t = travelled()
         // Linéaire en t : le bouton ralentit en arrivant (y = place + travel·(1−t)²)
         PlaySpot(androidx.compose.ui.geometry.lerp(free, slot, t), t)
     }
@@ -220,8 +250,10 @@ class MusicState(context: Context) {
     var playlistFilter by mutableStateOf<String?>(null)
     /** Le titre et le bouton lecture de la page ouverte, pour la barre du haut. */
     var bar by mutableStateOf<PageBar?>(null)
-    /** La pilule de la barre du haut à l'écran, sans son animation : la place du bouton lecture. */
+    /** La pilule de la barre du haut dans [overlayRoot], sans son animation : la place du bouton lecture. */
     var barPill by mutableStateOf<Rect?>(null)
+    /** La couche de la barre du haut : le repère des positions du bouton lecture (voir [PlayAnchor.space]). */
+    var overlayRoot: LayoutCoordinates? = null
     /** Où en est l'en-tête de la page sous la barre (0 → 1, voir [PageBar.progress]). */
     val barProgress: Float get() = if (page == null) 0f else bar?.progress ?: 0f
     /** Le filtre choisi dans la bibliothèque (gardé en revenant d'un album). */
