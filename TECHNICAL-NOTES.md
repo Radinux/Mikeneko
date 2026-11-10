@@ -1021,6 +1021,30 @@ users: the point is to take them from the videos really watched.
   hues (clockwise, like the finger angle with y down) + radial fade to grey at the centre; tap or drag
   sets hue (angle) and saturation (distance, at least 0.12); the value is fixed at 0.92 so the dark text
   of selected buttons stays readable; the "Use it" button previews the color.
+- 2.17.0: local sync (`data/LocalSync.kt`, UI `ui/screens/SyncDialog.kt` + `SyncSection`). No account,
+  no server; idea from LocalSend (announce on the LAN, talk directly), simpler. Payload = the
+  `MikenekoBackup` XML both ways, merged with `MikenekoBackup.import` (merge-only). Transport: one TCP
+  connection, length-prefixed frames; door = `ServerSocket(53318)` (random port if taken), announced
+  with NSD/mDNS `_mikeneko._tcp` (TXT `id`, `nom`, `pin` = showing a PIN). Handshake: hello (protocol,
+  `pin` / `lien`, device id, base64 name, ephemeral P-256 public key) both ways → ECDH → HKDF-SHA256
+  (salt = SHA-256 of both public keys, host first; info = `mikeneko-sync|pin|<PIN>` or
+  `…|lien|<secret>`) → AES-GCM with per-direction counter nonces. The joiner sends an encrypted
+  proof; the host answers `ok` encrypted, or `non` / `inconnu` in clear. Wrong PIN = GCM failure; 5
+  failures → new PIN. After a PIN sync both store a link (peer id, name, 32-byte secret = HKDF of the
+  same exchange, last sync, last host:port reached). `LocalSync.start` (app start) keeps the door,
+  the announce and the discovery running while links exist (or the sync screen is open), restarts them
+  on network changes, and `autoLoop` (every 30 s) syncs a linked peer seen on the network: the smaller
+  device id initiates, at most every 5 min, again every 15 min (the other one as a fallback after
+  30 min). `syncNow` uses the discovered address or the last one reached. `unlink` sends a `Goodbye` right away
+  when the peer is reachable (link handshake, then the sealed `mikeneko-adieu` instead of the backup:
+  only the real partner can say it) and the peer forgets the link; otherwise the peer gets `inconnu`
+  at the next meeting (if this device still has its door open) and unlinks too. The host side doesn't take the outgoing-sync mutex
+  (two devices starting at once would wait for each other until the timeout). Pitfall: the join must
+  run in `LocalSync`'s own scope: in the PIN screen's scope it was cancelled as soon as the screen
+  switched to "Syncing…", so the joiner never imported. Known limit: a short PIN without PAKE lets an
+  active man-in-the-middle present during the pairing minute guess it offline. Test setup: two
+  emulators (Pixel_10 + Medium_Phone) share the virtual Wi-Fi 10.0.2.0/24, so mDNS works between them;
+  `adb forward` + "Type its address" also works.
 - Emulator tip (2026-11-10): with `-gpu swiftshader_indirect` the emulator itself crashes when the
   music window opens; `-gpu host` works again.
 - Emulator tip: if screenshots turn black and the app "isn't responding" while its main thread just

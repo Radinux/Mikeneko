@@ -95,6 +95,7 @@ import androidx.compose.ui.semantics.contentDescription
 import app.mikeneko.ui.theme.Appearance
 import app.mikeneko.ui.theme.Accent
 import app.mikeneko.ui.components.ColorWheelDialog
+import app.mikeneko.ui.components.Capsule
 import app.mikeneko.ui.theme.statusBarSpacePadding
 import app.mikeneko.update.AppUpdates
 import java.time.LocalDate
@@ -137,6 +138,7 @@ fun SettingsContent(onBack: () -> Unit) {
         item { SponsorBlockSection() }
         item { HistorySection(context) }
         item { OfflineSection(context) }
+        item { SyncSection() }
         item { BackupSection(context) }
         item { WellbeingSection() }
         item { AboutSection(context) }
@@ -144,6 +146,52 @@ fun SettingsContent(onBack: () -> Unit) {
 }
 
 // ---------------------------------------------------------------- sections
+
+/** La synchro entre deux appareils sur le même Wi-Fi (2.17.0) : un PIN, et les deux ont tout. */
+@Composable
+private fun SyncSection() {
+    val context = LocalContext.current
+    var open by remember { mutableStateOf(false) }
+    val links by app.mikeneko.data.LocalSync.links.collectAsState()
+    val peers by app.mikeneko.data.LocalSync.peers.collectAsState()
+    if (open) SyncDialog { open = false }
+    Section(stringResource(R.string.settings_section_sync)) {
+        ActionRow(MkIcons.Repeat, stringResource(R.string.sync_title), stringResource(R.string.sync_text), Pelage.Texte) { open = true }
+        // Les appareils liés (2.17.0) : ils se resynchronisent tout seuls sur le même réseau privé
+        links.forEach { link ->
+            Divider()
+            val here = peers.any { it.id == link.id }
+            var confirm by remember(link.id) { mutableStateOf(false) }
+            LaunchedEffect(confirm) {
+                if (confirm) {
+                    kotlinx.coroutines.delay(3_000)
+                    confirm = false
+                }
+            }
+            Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
+                Text(link.name, color = Pelage.Texte, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    (if (link.lastSync > 0) stringResource(R.string.sync_last, app.mikeneko.data.formatAgo(java.time.Instant.ofEpochMilli(link.lastSync))) else stringResource(R.string.sync_never)) +
+                        " · " + stringResource(if (here) R.string.sync_here else R.string.sync_away),
+                    color = Pelage.Gris,
+                    fontSize = 13.sp,
+                )
+                Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Capsule(stringResource(R.string.sync_now), icon = MkIcons.Repeat) {
+                        val started = app.mikeneko.data.LocalSync.syncNow(context, link.id)
+                        Toast.makeText(context, context.getString(if (started) R.string.sync_now_started else R.string.sync_not_here, link.name), Toast.LENGTH_SHORT).show()
+                    }
+                    Capsule(stringResource(if (confirm) R.string.sync_unlink_confirm else R.string.sync_unlink), selected = confirm, icon = MkIcons.Close) {
+                        if (confirm) app.mikeneko.data.LocalSync.unlink(context, link.id) else confirm = true
+                    }
+                }
+            }
+        }
+        if (links.isNotEmpty()) {
+            Text(stringResource(R.string.sync_auto_text), Modifier.padding(horizontal = 16.dp).padding(bottom = 12.dp), color = Pelage.Gris, fontSize = 12.sp)
+        }
+    }
+}
 
 /** Le fichier de sauvegarde Mikeneko (.xml) : l'exporter, ou en importer un (sans rien effacer). */
 @Composable

@@ -462,6 +462,34 @@
     <string name="update_now">Installer</string>
     <string name="update_later">Plus tard</string>
     <string name="settings_section_backup">Sauvegarde</string>
+    <string name="settings_section_sync">Synchro</string>
+    <string name="sync_title">Synchroniser avec un autre appareil</string>
+    <string name="sync_text">Les deux sur le même Wi-Fi : l’un montre un PIN, l’autre le tape</string>
+    <string name="sync_show">Montrer un PIN</string>
+    <string name="sync_show_text">Cet appareil attend l’autre</string>
+    <string name="sync_enter">Taper un PIN</string>
+    <string name="sync_enter_text">Le PIN affiché sur l’autre appareil</string>
+    <string name="sync_waiting">Sur l’autre appareil, ouvre Réglages › Synchro › Taper un PIN, et tape celui-ci</string>
+    <string name="sync_searching">Recherche de Mikeneko sur ce Wi-Fi…</string>
+    <string name="sync_manual">Pas dans la liste ? Tape son adresse</string>
+    <string name="sync_address_hint">Adresse (sous son PIN)</string>
+    <string name="sync_pin_hint">PIN</string>
+    <string name="sync_running">Synchro en cours…</string>
+    <string name="sync_done">Synchronisé avec %1$s</string>
+    <string name="sync_nothing">Rien de nouveau : les deux appareils avaient déjà tout</string>
+    <string name="sync_wrong_pin">Mauvais PIN, réessaie</string>
+    <string name="sync_network">Impossible de joindre l’autre appareil. Les deux sont sur le même Wi-Fi ?</string>
+    <string name="sync_close">Fermer</string>
+    <string name="sync_last">Synchronisé %1$s</string>
+    <string name="sync_never">Pas encore synchronisé</string>
+    <string name="sync_here">sur ce réseau</string>
+    <string name="sync_away">pas sur ce réseau</string>
+    <string name="sync_now">Synchroniser</string>
+    <string name="sync_now_started">Synchro avec %1$s…</string>
+    <string name="sync_not_here">%1$s n’est pas sur ce réseau en ce moment</string>
+    <string name="sync_unlink">Arrêter la synchro</string>
+    <string name="sync_unlink_confirm">Touche encore pour arrêter</string>
+    <string name="sync_auto_text">Les appareils liés se synchronisent tout seuls dès qu’ils sont sur le même réseau privé (quand Mikeneko est ouvert), puis toutes les 15 minutes.</string>
     <string name="backup_export">Exporter dans un fichier</string>
     <string name="backup_export_text">Abonnements, playlists musique et vidéo, albums et artistes sauvegardés, radios favorites, À regarder plus tard et vidéos aimées, dans un fichier .xml.</string>
     <string name="backup_import">Importer un fichier</string>
@@ -584,7 +612,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">Quoi de neuf dans Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Super !</string>
-    <string name="whats_new_body">🎨 Ta propre couleur de thème\n\n• Réglages › Apparence : la bulle + ouvre un cercle de couleurs. Glisse autour pour la teinte, vers le centre pour une couleur plus douce.\n• Ta couleur a sa propre bulle ; touche-la à nouveau pour la changer.\n• Trois couleurs de plus : Sora, Yuzu et Hojicha.\n\n🎚️ Depuis la 2.15 : trie tes playlists (A–Z, artiste, album, BPM, Camelot) depuis le menu Trier.</string>
+    <string name="whats_new_body">🔄 Synchronise tes appareils, sans compte\n\n• Réglages › Synchro : un appareil montre un PIN, l’autre le tape, et les deux ont tout (abonnements, playlists, bibliothèque…).\n• Ensuite ils restent liés : ils se resynchronisent tout seuls dès qu’ils sont sur le même réseau.\n• Arrête quand tu veux avec « Arrêter la synchro ».\n\n🎨 Depuis la 2.16 : ta propre couleur de thème, et trois couleurs de plus.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Importer des playlists</string>

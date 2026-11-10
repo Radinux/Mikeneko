@@ -444,6 +444,34 @@
     <string name="track_downloaded">Downloaded</string>
     <string name="playlist_tab">Playlist</string>
     <string name="settings_section_backup">Backup</string>
+    <string name="settings_section_sync">Sync</string>
+    <string name="sync_title">Sync with another device</string>
+    <string name="sync_text">Both on the same Wi-Fi: one shows a PIN, the other types it</string>
+    <string name="sync_show">Show a PIN</string>
+    <string name="sync_show_text">This device waits for the other one</string>
+    <string name="sync_enter">Enter a PIN</string>
+    <string name="sync_enter_text">Type the PIN shown on the other device</string>
+    <string name="sync_waiting">On the other device, open Settings › Sync › Enter a PIN, and type this one</string>
+    <string name="sync_searching">Looking for Mikeneko on this Wi-Fi…</string>
+    <string name="sync_manual">Not in the list? Type its address</string>
+    <string name="sync_address_hint">Address (shown under its PIN)</string>
+    <string name="sync_pin_hint">PIN</string>
+    <string name="sync_running">Syncing…</string>
+    <string name="sync_done">Synced with %1$s</string>
+    <string name="sync_nothing">Nothing new: both devices already had everything</string>
+    <string name="sync_wrong_pin">Wrong PIN, try again</string>
+    <string name="sync_network">Couldn\'t reach the other device. Are both on the same Wi-Fi?</string>
+    <string name="sync_close">Close</string>
+    <string name="sync_last">Synced %1$s</string>
+    <string name="sync_never">Not synced yet</string>
+    <string name="sync_here">on this network</string>
+    <string name="sync_away">not on this network</string>
+    <string name="sync_now">Sync now</string>
+    <string name="sync_now_started">Syncing with %1$s…</string>
+    <string name="sync_not_here">%1$s isn\'t on this network right now</string>
+    <string name="sync_unlink">Stop syncing</string>
+    <string name="sync_unlink_confirm">Tap again to stop</string>
+    <string name="sync_auto_text">Linked devices sync by themselves whenever they are on the same private network (while Mikeneko is open), then every 15 minutes.</string>
     <string name="update_title">Updates</string>
     <string name="update_idle">New versions are checked every 4 hours.</string>
     <string name="update_checking">Checking for a new version…</string>
@@ -583,7 +611,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">What’s new in Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Nice!</string>
-    <string name="whats_new_body">🎨 Your own theme color\n\n• Settings › Appearance: the + bubble opens a color wheel. Slide around it for the hue, towards the middle for a softer color.\n• Your color gets its own bubble; tap it again to change it.\n• Three more colors: Sora, Yuzu and Hojicha.\n\n🎚️ Since 2.15: sort your playlists (A–Z, artist, album, BPM, Camelot) from the Sort menu.</string>
+    <string name="whats_new_body">🔄 Sync your devices, without an account\n\n• Settings › Sync: one device shows a PIN, the other types it, and both have everything (subscriptions, playlists, library…).\n• Then they stay linked: they sync again by themselves whenever they’re on the same network.\n• Stop it anytime with “Stop syncing”.\n\n🎨 Since 2.16: your own theme color, and three more colors.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Import playlists</string>

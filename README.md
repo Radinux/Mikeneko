@@ -58,6 +58,18 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ## 🎌 What's new ⸜(｡˃ ᵕ ˂ )⸝♡
 
+### 2.17
+
+- **Sync between your devices, without an account or a server**: in Settings › Sync, one device shows
+  a PIN made up on the spot, the other types it (6th digit = go). Both then have everything:
+  subscriptions, playlists, music library, favorites, watch later, likes, shorts (nothing is erased,
+  everything is merged).
+- **Linked for good**: after that, the two devices sync again **by themselves** whenever they are on
+  the same private network (any of them: home, a hotspot…) while Mikeneko is open, then every 15
+  minutes. Each linked device has **Sync now** and **Stop syncing** in Settings.
+- Private: the devices talk directly on the local network, encrypted (one-time keys + the PIN, then a
+  shared secret). The idea comes from LocalSend.
+
 ### 2.16
 
 - **Your own theme color**: in Settings › Appearance, the **+** bubble opens a color wheel (hue around
