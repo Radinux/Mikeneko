@@ -58,6 +58,16 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ## 🎌 What's new ⸜(｡˃ ᵕ ˂ )⸝♡
 
+### 2.15
+
+- **Automatic sort for your playlists**: My order, A–Z, Artist, Album, BPM or **Camelot** (the
+  harmonic mixing wheel: 1A, 1B, 2A…), kept as songs are added. Play all follows the sort.
+- **BPM and key tags** in Edit mode (and at the end of each row when sorted by BPM or Camelot),
+  the key coloured like its slot on the Camelot wheel.
+- Tempo and key are **computed in the app from the sound itself** (no outside service, no extra
+  YouTube request): downloaded songs and songs already played are analysed; the others after their
+  first listen. Albums are read from each song's YouTube page, slowly in the background.
+
 ### 2.14
 
 - **Search your subscriptions**: a magnifier next to the Subscriptions title filters the channels

@@ -1,5 +1,14 @@
 package app.mikeneko.ui.screens
 
+import app.mikeneko.data.TrackTag
+import app.mikeneko.data.TrackTags
+import app.mikeneko.data.camelotParts
+import app.mikeneko.data.trackKey
+import app.mikeneko.player.TrackAnalyzer
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalDensity
@@ -272,22 +281,31 @@ private fun MyPlaylistContent(state: MusicState, id: String) {
     val now by PlayerHolder.nowPlaying.collectAsState()
     val list = rememberLazyListState()
     var details by rememberSaveable(id) { mutableStateOf(false) }
+    // Le tri automatique (2.15.0) : la liste affichée, et l'ordre de lecture
+    val tags by remember { TrackTags.load(context) }.collectAsState()
+    val sort = TrackTags.Sort.of(playlist.sort)
+    val ordered = remember(playlist.items, sort, tags) { TrackTags.sorted(playlist.items, sort, tags) }
+    // Tempo et tonalité des morceaux sur le téléphone, albums lus doucement en fond
+    LaunchedEffect(playlist.items) {
+        TrackAnalyzer.request(context, playlist.items.map { it.url })
+        TrackTags.fillAlbums(context, playlist.items)
+    }
     // La recherche dans la playlist (loupe en haut à droite, 2.11.3) : fermée en quittant la page
     DisposableEffect(id) { onDispose { state.playlistFilter = null } }
     val filter = state.playlistFilter?.trim().orEmpty()
-    val shown = remember(playlist.items, filter) {
+    val shown = remember(ordered, filter) {
         val wanted = filter.lowercase()
-        playlist.items.withIndex().filter { (_, t) -> wanted.isEmpty() || wanted in t.title.lowercase() || wanted in t.channel.lowercase() }
+        ordered.withIndex().filter { (_, t) -> wanted.isEmpty() || wanted in t.title.lowercase() || wanted in t.channel.lowercase() }
     }
     BackHandler(enabled = details) { details = false }
-    val play = PageBarEffect(state, list, playlist.name, playInOrder(context, playlist.items))
+    val play = PageBarEffect(state, list, playlist.name, playInOrder(context, ordered))
     LazyColumn(Modifier.fillMaxSize(), state = list, contentPadding = PaddingValues(bottom = BOTTOM_SPACE)) {
         item(key = "entete") {
             PageHeader(
                 playlist.name,
                 tracksSummary(playlist.items),
                 playlist.coverModel(),
-                onPlay = if (details) null else playInOrder(context, playlist.items),
+                onPlay = if (details) null else playInOrder(context, ordered),
                 play = play,
                 actions = {
                 when {
@@ -316,6 +334,7 @@ private fun MyPlaylistContent(state: MusicState, id: String) {
                     }
                     ConnectedChip(stringResource(R.string.playlist_details), selected = false, first = false, last = true, modifier = Modifier.weight(1f), icon = MkIcons.Info, sidePadding = 8.dp) { details = true }
                 }
+                SortChips(sort, playlist.items, tags) { store.setSort(id, it?.id) }
                 },
             )
         }
@@ -327,9 +346,18 @@ private fun MyPlaylistContent(state: MusicState, id: String) {
                 track,
                 modifier = Modifier.animateItem(),
                 playing = sameTrack(now?.url, track.url),
-                onMore = if (details) null else ({ MusicSheet.open.value = MusicSheet.Track(track, playlistId = id, index = index) }),
-                trailing = { if (!details) DownloadedMark(PlaylistDownloads.music, track.url) },
-            ) { if (!details) playTracks(context, playlist.items, index) }
+                // (le menu retire le morceau par sa place dans la playlist, pas dans la liste triée)
+                onMore = if (details) null else ({ MusicSheet.open.value = MusicSheet.Track(track, playlistId = id, index = playlist.items.indexOfFirst { it.url == track.url }) }),
+                trailing = {
+                    if (!details) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            // Trié par tempo ou tonalité : la valeur qui sert au tri, au bout de la ligne
+                            if (sort == TrackTags.Sort.Bpm || sort == TrackTags.Sort.Camelot) TrackTagChips(tags[trackKey(track.url)], compact = true)
+                            DownloadedMark(PlaylistDownloads.music, track.url)
+                        }
+                    }
+                },
+            ) { if (!details) playTracks(context, ordered, index) }
         }
     }
 }
@@ -350,7 +378,12 @@ private fun EditSongsContent(state: MusicState, id: String) {
     val playlists by store.items.collectAsState()
     val playlist = playlists.firstOrNull { it.id == id } ?: return
     val now by PlayerHolder.nowPlaying.collectAsState()
-    val songs = remember(id) { androidx.compose.runtime.mutableStateListOf<VideoItem>().apply { addAll(playlist.items) } }
+    // Les morceaux dans l'ordre affiché (le tri automatique s'il y en a un) ; les tags BPM et Camelot à droite (2.15.0)
+    val tags by remember { TrackTags.load(context) }.collectAsState()
+    val sort = TrackTags.Sort.of(playlist.sort)
+    val ordered = remember(playlist.items, sort, tags) { TrackTags.sorted(playlist.items, sort, tags) }
+    LaunchedEffect(playlist.items) { TrackAnalyzer.request(context, playlist.items.map { it.url }) }
+    val songs = remember(id) { androidx.compose.runtime.mutableStateListOf<VideoItem>().apply { addAll(ordered) } }
     val list = rememberLazyListState()
     val scope = rememberCoroutineScope()
     val density = LocalDensity.current
@@ -363,14 +396,18 @@ private fun EditSongsContent(state: MusicState, id: String) {
             scope = scope,
             bottomInset = bottomInset,
             edge = with(density) { 110.dp.toPx() },
-            onDrop = { store.setItems(id, songs.toList()) },
+            // Déplacer un morceau, c'est choisir son ordre : le tri automatique s'arrête, avec cet ordre-là
+            onDrop = {
+                store.setItems(id, songs.toList())
+                if (playlist.sort != null) store.setSort(id, null)
+            },
         ) { from, to -> if (from in songs.indices && to in songs.indices) songs.add(to, songs.removeAt(from)) }
     }
     // La playlist changée ailleurs (un ajout depuis le lecteur…), hors déplacement : on se recale
-    LaunchedEffect(playlist.items) {
-        if (reorder.dragging == null && songs.toList() != playlist.items) {
+    LaunchedEffect(ordered) {
+        if (reorder.dragging == null && songs.toList() != ordered) {
             songs.clear()
-            songs.addAll(playlist.items)
+            songs.addAll(ordered)
         }
     }
     Column(Modifier.fillMaxSize().padding(top = pageTop())) {
@@ -389,12 +426,15 @@ private fun EditSongsContent(state: MusicState, id: String) {
             }
         }
         Text(
-            stringResource(R.string.playlist_reorder_hint),
+            stringResource(R.string.playlist_reorder_hint) + if (sort != null) "\n" + stringResource(R.string.sort_reorder_custom) else "",
             Modifier.padding(horizontal = 18.dp).padding(bottom = 8.dp),
             color = Pelage.Gris,
             fontSize = 14.sp,
             fontWeight = FontWeight.Bold,
         )
+        Box(Modifier.padding(horizontal = 18.dp)) {
+            SortChips(sort, playlist.items, tags) { store.setSort(id, it?.id) }
+        }
         if (songs.isEmpty()) {
             EmptyCat(stringResource(R.string.playlist_empty), stringResource(R.string.playlist_empty_text), Modifier.padding(top = 20.dp))
             return@Column
@@ -415,7 +455,7 @@ private fun EditSongsContent(state: MusicState, id: String) {
                             onClick = {
                                 if (index in songs.indices) {
                                     songs.removeAt(index)
-                                    store.remove(id, index)
+                                    store.removeTrack(id, track.url) // (par son adresse : la liste peut être triée)
                                 }
                             },
                             modifier = Modifier.size(36.dp),
@@ -423,7 +463,12 @@ private fun EditSongsContent(state: MusicState, id: String) {
                             Icon(MkIcons.MinusCircle, stringResource(R.string.playlist_remove_song, track.title), tint = Color(0xFFFF8A80), modifier = Modifier.size(24.dp))
                         }
                     },
-                    trailing = { DragHandle(reorder, track.url) },
+                    trailing = {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            TrackTagChips(tags[trackKey(track.url)])
+                            DragHandle(reorder, track.url)
+                        }
+                    },
                 ) { }
             }
         }
@@ -674,5 +719,75 @@ private fun MusicLibraryContent(state: MusicState) {
                 )
             }
         }
+    }
+}
+
+
+/**
+ * Le tri automatique d'une playlist perso (2.15.0) : Mon ordre, A–Z, Artiste, Album, BPM, Camelot.
+ * Sous la rangée, ce qu'il manque encore pour le tri choisi (morceaux pas analysés, albums cherchés).
+ */
+@Composable
+private fun SortChips(sort: TrackTags.Sort?, items: List<VideoItem>, tags: Map<String, TrackTag>, onPick: (TrackTags.Sort?) -> Unit) {
+    val options = listOf<TrackTags.Sort?>(null) + TrackTags.Sort.entries
+    Column(Modifier.fillMaxWidth().padding(bottom = 6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(CONNECTED_GAP)) {
+            items(options.size) { i ->
+                val option = options[i]
+                ConnectedChip(stringResource(sortLabel(option)), option == sort, first = i == 0, last = i == options.lastIndex) { onPick(option) }
+            }
+        }
+        val missing = when (sort) {
+            TrackTags.Sort.Bpm, TrackTags.Sort.Camelot -> items.count { tags[trackKey(it.url)]?.analyzed != true }
+            else -> 0
+        }
+        val albums = if (sort == TrackTags.Sort.Album) items.count { !LocalMusic.isLocal(it.url) && tags[trackKey(it.url)]?.albumChecked != true } else 0
+        when {
+            missing > 0 -> Text(pluralStringResource(R.plurals.tags_pending, missing, missing), color = Pelage.Gris, fontSize = 12.sp)
+            albums > 0 -> Text(pluralStringResource(R.plurals.albums_pending, albums, albums), color = Pelage.Gris, fontSize = 12.sp)
+        }
+    }
+}
+
+private fun sortLabel(sort: TrackTags.Sort?) = when (sort) {
+    null -> R.string.sort_custom
+    TrackTags.Sort.Title -> R.string.sort_title
+    TrackTags.Sort.Artist -> R.string.sort_artist
+    TrackTags.Sort.Album -> R.string.sort_album
+    TrackTags.Sort.Bpm -> R.string.sort_bpm
+    TrackTags.Sort.Camelot -> R.string.sort_camelot
+}
+
+/**
+ * Les tags d'un morceau : son tempo (« 128 BPM ») et sa case de la roue Camelot (« 8A »), dans la
+ * couleur de sa case (la roue va du rouge au rose, case par case ; mineur plus sombre que majeur).
+ * [compact] : une seule ligne, pour la liste de la playlist.
+ */
+@Composable
+internal fun TrackTagChips(tag: TrackTag?, compact: Boolean = false) {
+    val bpm = tag?.bpm
+    val camelot = tag?.camelot
+    if (bpm == null && camelot == null) return
+    @Composable
+    fun Chip(text: String, background: Color, color: Color) {
+        Box(
+            Modifier.clip(RoundedCornerShape(8.dp)).background(background).padding(horizontal = 6.dp, vertical = 2.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(text, color = color, fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1)
+        }
+    }
+    val content: @Composable () -> Unit = {
+        if (bpm != null) Chip("$bpm BPM", Color.White.copy(alpha = 0.10f), Pelage.Texte)
+        camelotParts(camelot)?.let { (number, letter) ->
+            val hue = ((number - 1) * 30f + 0f) % 360f
+            val base = Color.hsv(hue, 0.55f, if (letter == 'A') 0.75f else 0.92f)
+            Chip("$number$letter", base, Color(0xFF15110E))
+        }
+    }
+    if (compact) {
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) { content() }
+    } else {
+        Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(3.dp)) { content() }
     }
 }

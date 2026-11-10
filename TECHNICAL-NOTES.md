@@ -978,6 +978,26 @@ users: the point is to take them from the videos really watched.
   back closes it, from `MikenekoRoot`); `POPULAR` is a pseudo tab kind after Videos. Subscriptions:
   magnifier next to the title, `folded()` (lowercase, accents removed) filters the avatars row and
   the feed. Checked on the emulator.
+- 2.15.0: playlist sort and BPM / Camelot. The user chose local analysis (no outside database) and
+  albums read in the background. `data/TrackTags.kt`: per track (`trackKey` = video id, or the file
+  URL) bpm, camelot, album, `analyzed`, `albumChecked`, in prefs `tags_morceaux`; `TrackTags.sorted`
+  (Collator, unknown values last, stable); `fillAlbums` reads `YouTubeRepository.stream` one song every
+  4 s (30 s after an error, not marked) and `albumNameFrom` on its description; `PlayerHolder.play`
+  also stores the album of a song it plays (the StreamInfo is already there). `Playlist.sort` (JSON
+  `sort`) = `TrackTags.Sort.id`; dragging in Edit mode saves that order and switches back to My order;
+  removal is by URL (the shown list can be sorted). `player/TrackAnalysis.kt` (`TrackAnalyzer`): one
+  low-priority thread; a song is analysed only if it is whole on the phone (local file, or
+  `OfflineCache` SavedMusic / Music entry, copied to a temp file), so a song played gets analysed
+  ~40 s / 120 s after it starts (`watch`, the whole track is cached by `MusicLoadControl`).
+  MediaExtractor + MediaCodec → mono, box-decimated to ~11 kHz, 90 s from the middle (intro skipped).
+  `player/TrackDsp.kt` (pure Kotlin, JUnit tests in `app/src/test`, `./gradlew testDebugUnitTest`):
+  tempo = log spectral flux (1024 / hop 128), local-mean removal, autocorrelation, every 0.1 BPM from
+  60 to 200 scored on its 4 first multiples × a log-Gaussian prior around 120, then the double tempo
+  if it explains ≥ 70 % as well (174 not 87); key = chromagram 55 Hz–1.76 kHz (8192 / hop 4096,
+  triangular weight around each semitone, each frame normalised) correlated with KeyFinder's major /
+  minor profiles, mapped to Camelot. Real check on the emulator: Get Lucky 116 BPM (10A: its Bm–D–F♯m–E
+  is listed as F♯ minor 11A or B dorian), Uptown Funk 115 BPM 7B (D minor 7A is the usual answer:
+  relative major / minor is the typical miss, same wheel number).
 - Emulator tip: if screenshots turn black and the app "isn't responding" while its main thread just
   waits for vsync, the emulator's GPU is stuck: restart it with `-gpu swiftshader_indirect`.
 

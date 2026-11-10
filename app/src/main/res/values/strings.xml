@@ -583,7 +583,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">What’s new in Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Nice!</string>
-    <string name="whats_new_body">🔍 Search everywhere\n\n• Subscriptions: a magnifier next to the title finds a channel or a video as you type.\n• On a channel page: a magnifier at the top searches only that channel’s videos.\n\n🔥 A Popular tab on channel pages: their most viewed videos.\n\n💬 Since 2.13: comments stretch right inside the video page.</string>
+    <string name="whats_new_body">🎚️ Sort your playlists automatically\n\n• My order, A–Z, Artist, Album, BPM or Camelot (the harmonic mixing wheel).\n• Edit mode shows each song’s BPM and key on the Camelot wheel.\n• Tempo and key are worked out in the app from the sound itself: downloaded songs and songs you’ve played, the others after their first listen.\n\n🔍 Since 2.14: search your subscriptions and inside a channel, and a Popular tab on channel pages.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Import playlists</string>
@@ -645,4 +645,19 @@
     <string name="playlist_reorder_hint">Tap ⊖ to remove a song, hold ≡ to move it</string>
     <string name="playlist_search">Search in this playlist</string>
     <string name="playlist_details">Details</string>
+    <string name="sort_custom">My order</string>
+    <string name="sort_title">A–Z</string>
+    <string name="sort_artist">Artist</string>
+    <string name="sort_album">Album</string>
+    <string name="sort_bpm">BPM</string>
+    <string name="sort_camelot">Camelot</string>
+    <plurals name="tags_pending">
+        <item quantity="one">%d song not analysed yet: songs are analysed once downloaded or played</item>
+        <item quantity="other">%d songs not analysed yet: songs are analysed once downloaded or played</item>
+    </plurals>
+    <plurals name="albums_pending">
+        <item quantity="one">Looking for the album of %d song…</item>
+        <item quantity="other">Looking for the albums of %d songs…</item>
+    </plurals>
+    <string name="sort_reorder_custom">Moving a song switches to My order</string>
 </resources>

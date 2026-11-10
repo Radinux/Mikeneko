@@ -1,5 +1,6 @@
 package app.mikeneko
 
+import app.mikeneko.player.TrackAnalyzer
 import app.mikeneko.update.Notifier
 import android.app.Application
 import app.mikeneko.data.NewPipeDownloader
@@ -29,6 +30,7 @@ class MikenekoApp : Application(), SingletonImageLoader.Factory {
         PlaylistDownloads.init(this) // reprend les playlists à télécharger
         Notifier.createChannels(this) // notifications : mises à jour, nouvelles vidéos (2.10.0)
         Notifier.schedule(this)
+        TrackAnalyzer.watch(this) // tempo et tonalité des morceaux écoutés (2.15.0)
     }
 
     /**

@@ -584,7 +584,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">Quoi de neuf dans Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Super !</string>
-    <string name="whats_new_body">🔍 Chercher partout\n\n• Abonnements : une loupe à côté du titre trouve une chaîne ou une vidéo pendant que tu tapes.\n• Sur la page d’une chaîne : une loupe en haut cherche seulement dans ses vidéos.\n\n🔥 Un onglet Populaires sur les pages de chaîne : leurs vidéos les plus vues.\n\n💬 Depuis la 2.13 : les commentaires s’étirent directement dans la page de la vidéo.</string>
+    <string name="whats_new_body">🎚️ Trie tes playlists automatiquement\n\n• Mon ordre, A–Z, Artiste, Album, BPM ou Camelot (la roue pour mixer en harmonie).\n• Le mode Modifier montre le BPM et la tonalité de chaque morceau sur la roue Camelot.\n• Le tempo et la tonalité sont calculés dans l’appli à partir du son : les morceaux téléchargés et ceux déjà écoutés, les autres après leur première écoute.\n\n🔍 Depuis la 2.14 : la recherche dans tes abonnements et dans une chaîne, et un onglet Populaires sur les chaînes.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Importer des playlists</string>
@@ -646,4 +646,19 @@
     <string name="playlist_reorder_hint">Touche ⊖ pour retirer un morceau, tiens ≡ pour le déplacer</string>
     <string name="playlist_search">Chercher dans cette playlist</string>
     <string name="playlist_details">Infos</string>
+    <string name="sort_custom">Mon ordre</string>
+    <string name="sort_title">A–Z</string>
+    <string name="sort_artist">Artiste</string>
+    <string name="sort_album">Album</string>
+    <string name="sort_bpm">BPM</string>
+    <string name="sort_camelot">Camelot</string>
+    <plurals name="tags_pending">
+        <item quantity="one">%d morceau pas encore analysé : un morceau est analysé une fois téléchargé ou écouté</item>
+        <item quantity="other">%d morceaux pas encore analysés : un morceau est analysé une fois téléchargé ou écouté</item>
+    </plurals>
+    <plurals name="albums_pending">
+        <item quantity="one">Recherche de l’album de %d morceau…</item>
+        <item quantity="other">Recherche des albums de %d morceaux…</item>
+    </plurals>
+    <string name="sort_reorder_custom">Déplacer un morceau repasse en « Mon ordre »</string>
 </resources>

@@ -25,6 +25,8 @@ import app.mikeneko.data.ReturnDislike
 import app.mikeneko.data.Segment
 import app.mikeneko.data.SponsorBlock
 import app.mikeneko.data.SubscriptionStore
+import app.mikeneko.data.TrackTags
+import app.mikeneko.data.albumNameFrom
 import app.mikeneko.data.VideoItem
 import app.mikeneko.data.WatchHistory
 import app.mikeneko.data.WatchPositions
@@ -537,6 +539,10 @@ object PlayerHolder {
                 now.channelUrl?.let(::channelIdFrom)?.let { id -> SubscriptionStore.get(context).setAvatar(id, now.channelAvatar) }
             }
             if (!live) rememberOffline(context, info, audioOnly, built)
+            // Un morceau : son album est dans sa fiche, déjà lue (pour le tri par album, 2.15.0)
+            if (audioOnly && !live && TrackTags.get(context, info.url)?.albumChecked != true) {
+                TrackTags.setAlbum(context, info.url, albumNameFrom(info.description?.content.orEmpty()))
+            }
             SubscriptionStore.get(context).markWatched(info.url)
             // Le « Pour toi » apprend des vidéos (pas de la radio, qui tourne en fond)
             if (!audioOnly && !live) WatchHistory.get(context).add(info)

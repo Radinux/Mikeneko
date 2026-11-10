@@ -8,8 +8,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Une playlist faite à la main (musique ou vidéos). [cover] : la photo choisie comme pochette (fichier de l'appli). */
-data class Playlist(val id: String, val name: String, val items: List<VideoItem>, val cover: String? = null)
+/**
+ * Une playlist faite à la main (musique ou vidéos). [cover] : la photo choisie comme pochette (fichier de
+ * l'appli). [sort] : son tri automatique ([TrackTags.Sort], 2.15.0 ; null : l'ordre choisi à la main).
+ */
+data class Playlist(val id: String, val name: String, val items: List<VideoItem>, val cover: String? = null, val sort: String? = null)
 
 /**
  * Les playlists perso, gardées sur le téléphone (comme les favoris). Deux carnets séparés : celles
@@ -64,6 +67,12 @@ class Playlists private constructor(context: Context, file: String) {
         if (index !in p.items.indices) p else p.copy(items = p.items.toMutableList().apply { removeAt(index) })
     }
 
+    /** Le tri automatique (null : retour à l'ordre fait à la main). */
+    fun setSort(id: String, sort: String?) = change(id) { it.copy(sort = sort) }
+
+    /** Retire le morceau [url] (où qu'il soit : la liste affichée peut être triée autrement). */
+    fun removeTrack(id: String, url: String) = change(id) { p -> p.copy(items = p.items.filterNot { it.url == url }) }
+
     /** Remplace les morceaux (le nouvel ordre après un déplacement, 2.11.13). */
     fun setItems(id: String, items: List<VideoItem>) = change(id) { it.copy(items = items) }
 
@@ -84,7 +93,7 @@ class Playlists private constructor(context: Context, file: String) {
         (0 until array.length()).map { i ->
             val o = array.getJSONObject(i)
             val tracks = o.getJSONArray("items")
-            Playlist(o.getString("id"), o.optString("name"), (0 until tracks.length()).map { trackFromJson(tracks.getJSONObject(it)) }, o.optString("cover").ifEmpty { null })
+            Playlist(o.getString("id"), o.optString("name"), (0 until tracks.length()).map { trackFromJson(tracks.getJSONObject(it)) }, o.optString("cover").ifEmpty { null }, o.optString("sort").ifEmpty { null })
         }
     }.getOrDefault(emptyList())
 
@@ -93,7 +102,7 @@ class Playlists private constructor(context: Context, file: String) {
         _items.value.forEach { p ->
             val tracks = JSONArray()
             p.items.forEach { tracks.put(it.toTrackJson()) }
-            array.put(JSONObject().put("id", p.id).put("name", p.name).put("items", tracks).put("cover", p.cover ?: ""))
+            array.put(JSONObject().put("id", p.id).put("name", p.name).put("items", tracks).put("cover", p.cover ?: "").put("sort", p.sort ?: ""))
         }
         prefs.edit().putString("liste", array.toString()).apply()
     }

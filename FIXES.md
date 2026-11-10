@@ -159,6 +159,7 @@ Items marked "to check on the phone" are built and published but not confirmed o
 - [ ] 2.11.6 (details): moving a song redone (the song stays under the finger, scroll speed from the finger's position, no double swap) — verified on the emulator (row centred ~25 px from the finger while the list scrolled); to check on the phone
 - [x] 2.11.16: landscape, first exit from fullscreen zooms smoothly (was instant) — confirmed on the phone, but the video buttons jumped at the start (→ 2.11.17)
 - [x] 2.11.17: no jump of the video at the start of the landscape fullscreen exit zoom — the centre buttons still jumped (→ 2.11.18)
+- [ ] 2.15.0: playlist auto sort (My order, A–Z, Artist, Album, BPM, Camelot) + BPM / Camelot tags in Edit mode, analysed in the app — verified on the emulator (Get Lucky 116 BPM 10A, Uptown Funk 115 BPM 7B, albums found, BPM sort saved); to check on the phone
 - [ ] 2.14.0: search in Subscriptions (channels + videos, live filter), search inside a channel, Popular tab (most viewed) on channel pages — verified on the emulator; to check on the phone
 - [ ] 2.13.0: comments in the video page: the card stretches in place to a fixed height, scrolling inside it (no more window) — verified on the emulator; to check on the phone
 - [ ] 2.12.0: bell notifications for year-old videos while brand new ones were missing — redone (known video ids per channel, nothing older than 3 days, hourly check); verified on the emulator (3 fresh videos notified, none for a channel whose videos are 12+ days old); to check on the phone
