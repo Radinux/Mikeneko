@@ -631,7 +631,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">Quoi de neuf dans Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Super !</string>
-    <string name="whats_new_body">🐱 Ton profil\n\n• En haut des Réglages : un pseudo, une photo, une bannière.\n• Un cadre autour de ta photo : Calico (oreilles de chat), Sakura, Or, Halo, Étoilé…\n• Toujours sans compte ni serveur : il reste sur ton téléphone, et tes appareils liés voient ton pseudo.\n\n🔄 Depuis la 2.17 : synchronise tes appareils avec un PIN, ils restent liés ensuite.</string>
+    <string name="whats_new_body">☁️ La synchro partout (facultatif)\n\n• Réglages › Compte GitHub : connexion avec un code, sans mot de passe.\n• Tes données vont dans un Gist secret de ton compte, chiffrées d\'abord sur le téléphone : GitHub ne voit que du charabia.\n• Tes autres appareils ont besoin de la clé de synchro : un appareil lié par PIN la reçoit tout seul.\n• Profil : reprends ton nom et ta photo GitHub d\'un tap.\n\n🐱 Depuis la 2.18 : ton profil en haut des Réglages, avec un cadre autour de ta photo.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Importer des playlists</string>
@@ -725,4 +725,29 @@
         <item quantity="other">Recherche des albums de %d morceaux…</item>
     </plurals>
     <string name="sort_reorder_custom">Déplacer un morceau repasse en « Mon ordre »</string>
+    <!-- Compte GitHub (2.19.0) -->
+    <string name="settings_section_github">Compte GitHub</string>
+    <string name="github_sign_in">Se connecter avec GitHub</string>
+    <string name="github_sign_in_text">Facultatif : synchronise tes appareils partout, pas seulement sur le même Wi-Fi. Chiffré avant de quitter le téléphone.</string>
+    <string name="github_code_text">Tape ce code sur la page de GitHub (il est déjà copié), puis autorise Mikeneko.</string>
+    <string name="github_open_page">Ouvrir la page GitHub</string>
+    <string name="github_waiting">En attente de GitHub…</string>
+    <string name="github_signed_in">Connecté en tant que @%1$s</string>
+    <string name="github_sign_out">Se déconnecter</string>
+    <string name="github_private_text">Tes données vont dans un Gist secret de ton compte, chiffrées d\'abord sur ce téléphone : GitHub ne voit que du charabia. Mikeneko ne peut toucher qu\'à tes Gists. Tu peux retirer l\'accès à tout moment dans GitHub › Settings › Applications.</string>
+    <string name="github_key">Clé de synchro</string>
+    <string name="github_key_none">Pas encore de clé : elle est créée à la première synchro.</string>
+    <string name="github_key_text">Tes autres appareils ont besoin de cette clé pour lire tes données synchronisées. Un appareil lié par PIN la reçoit tout seul ; sinon tape-la dessus. Garde-la pour toi.</string>
+    <string name="github_key_copy">Copier la clé</string>
+    <string name="github_key_copied">Clé copiée</string>
+    <string name="github_need_key">Un autre appareil synchronise déjà ici : tape sa clé de synchro</string>
+    <string name="github_key_enter">Taper la clé de synchro</string>
+    <string name="github_key_enter_text">Sur ton autre appareil : Réglages › Compte GitHub › Clé de synchro.</string>
+    <string name="github_key_wrong">Cette clé n\'ouvre pas tes données synchronisées</string>
+    <string name="github_key_use">Utiliser cette clé</string>
+    <string name="github_failed_network">Impossible de joindre GitHub. Réessaie plus tard.</string>
+    <string name="github_failed_expired">L\'accès GitHub a été retiré ou a expiré : reconnecte-toi.</string>
+    <string name="github_failed_denied">Accès refusé sur GitHub.</string>
+    <string name="github_failed_timeout">Le code a expiré : reconnecte-toi.</string>
+    <string name="github_profile_import">Prendre mon nom et ma photo GitHub</string>
 </resources>

@@ -638,6 +638,13 @@ object LocalSync {
             channel.send(crypto.seal(ours))
             received = crypto.open(channel.receive()) ?: return Outcome.Error
         }
+        // En plus (2.19.0) : la clé du coffre GitHub, pour que l'autre synchronise aussi hors du réseau.
+        // Un Mikeneko plus ancien ne l'envoie ni ne la lit : on passe sans rien dire.
+        runCatching {
+            channel.send(crypto.seal(JSONObject().put("cle", GitHubSync.keyToShare(context) ?: "").toString().toByteArray()))
+            val extras = crypto.open(channel.receive())?.let { JSONObject(String(it)) }
+            GitHubSync.receiveKey(context, extras?.optString("cle")?.ifEmpty { null })
+        }
         val content = MikenekoBackup.read(String(received, Charsets.UTF_8))
         val added = withContext(Dispatchers.Main) { MikenekoBackup.import(context, content) }
 

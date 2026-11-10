@@ -140,6 +140,7 @@ fun SettingsContent(onBack: () -> Unit) {
         item { HistorySection(context) }
         item { OfflineSection(context) }
         item { SyncSection() }
+        item { GitHubSection() }
         item { BackupSection(context) }
         item { WellbeingSection() }
         item { AboutSection(context) }
@@ -192,6 +193,89 @@ private fun SyncSection() {
             Text(stringResource(R.string.sync_auto_text), Modifier.padding(horizontal = 16.dp).padding(bottom = 12.dp), color = Pelage.Gris, fontSize = 12.sp)
         }
     }
+}
+
+/**
+ * Le compte GitHub (2.19.0), facultatif : la synchro partout (chiffrée, dans un Gist secret du compte),
+ * en plus de celle par PIN sur le même réseau. Voir [app.mikeneko.data.GitHubSync].
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun GitHubSection() {
+    val context = LocalContext.current
+    val github = app.mikeneko.data.GitHubSync
+    LaunchedEffect(Unit) { github.load(context) }
+    val login by github.login.collectAsState()
+    val status by github.status.collectAsState()
+    val lastSync by github.lastSync.collectAsState()
+    var signingIn by remember { mutableStateOf(false) }
+    var showKey by remember { mutableStateOf(false) }
+    var enterKey by remember { mutableStateOf(false) }
+    if (signingIn) GitHubSignInDialog { signingIn = false }
+    if (showKey) SyncKeyDialog { showKey = false }
+    if (enterKey) EnterSyncKeyDialog { enterKey = false }
+    Section(stringResource(R.string.settings_section_github)) {
+        when (val state = login) {
+            is app.mikeneko.data.GitHubSync.Login.In -> {
+                var confirm by remember { mutableStateOf(false) }
+                LaunchedEffect(confirm) {
+                    if (confirm) {
+                        kotlinx.coroutines.delay(3_000)
+                        confirm = false
+                    }
+                }
+                Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
+                    Text(stringResource(R.string.github_signed_in, state.account.login), color = Pelage.Texte, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        when (val s = status) {
+                            app.mikeneko.data.GitHubSync.Status.Running -> stringResource(R.string.sync_running)
+                            is app.mikeneko.data.GitHubSync.Status.NeedKey -> stringResource(R.string.github_need_key)
+                            is app.mikeneko.data.GitHubSync.Status.Failed -> stringResource(githubFailure(s.reason))
+                            is app.mikeneko.data.GitHubSync.Status.Done ->
+                                if (s.added.total == 0) stringResource(R.string.sync_last, app.mikeneko.data.formatAgo(java.time.Instant.ofEpochMilli(s.at)))
+                                else stringResource(R.string.backup_imported, s.added.channels, s.added.playlists, s.added.library, s.added.videos)
+                            app.mikeneko.data.GitHubSync.Status.Idle ->
+                                if (lastSync > 0) stringResource(R.string.sync_last, app.mikeneko.data.formatAgo(java.time.Instant.ofEpochMilli(lastSync))) else stringResource(R.string.sync_never)
+                        },
+                        color = if (status is app.mikeneko.data.GitHubSync.Status.Failed || status is app.mikeneko.data.GitHubSync.Status.NeedKey) Pelage.Rose else Pelage.Gris,
+                        fontSize = 13.sp,
+                    )
+                    androidx.compose.foundation.layout.FlowRow(
+                        Modifier.padding(top = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        if (status is app.mikeneko.data.GitHubSync.Status.NeedKey) {
+                            Capsule(stringResource(R.string.github_key_enter), selected = true, icon = MkIcons.Pencil) { enterKey = true }
+                        } else {
+                            Capsule(stringResource(R.string.sync_now), icon = MkIcons.Repeat) { github.syncNow(context) }
+                            Capsule(stringResource(R.string.github_key), icon = MkIcons.Info) { showKey = true }
+                        }
+                        Capsule(stringResource(if (confirm) R.string.sync_unlink_confirm else R.string.github_sign_out), selected = confirm, icon = MkIcons.Close) {
+                            if (confirm) github.signOut(context) else confirm = true
+                        }
+                    }
+                }
+                Text(stringResource(R.string.github_private_text), Modifier.padding(horizontal = 16.dp).padding(bottom = 12.dp), color = Pelage.Gris, fontSize = 12.sp)
+            }
+            else -> {
+                ActionRow(MkIcons.Globe, stringResource(R.string.github_sign_in), stringResource(R.string.github_sign_in_text), Pelage.Texte) {
+                    github.signIn(context)
+                    signingIn = true
+                }
+                (status as? app.mikeneko.data.GitHubSync.Status.Failed)?.let { failed ->
+                    Text(stringResource(githubFailure(failed.reason)), Modifier.padding(horizontal = 16.dp).padding(bottom = 12.dp), color = Pelage.Rose, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
+}
+
+private fun githubFailure(reason: app.mikeneko.data.GitHubSync.Reason) = when (reason) {
+    app.mikeneko.data.GitHubSync.Reason.Network -> R.string.github_failed_network
+    app.mikeneko.data.GitHubSync.Reason.Expired -> R.string.github_failed_expired
+    app.mikeneko.data.GitHubSync.Reason.Denied -> R.string.github_failed_denied
+    app.mikeneko.data.GitHubSync.Reason.TimedOut -> R.string.github_failed_timeout
 }
 
 /** Le fichier de sauvegarde Mikeneko (.xml) : l'exporter, ou en importer un (sans rien effacer). */

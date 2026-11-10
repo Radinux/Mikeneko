@@ -630,7 +630,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">What’s new in Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Nice!</string>
-    <string name="whats_new_body">🐱 Your profile\n\n• At the top of Settings: a nickname, a photo, a banner.\n• A frame around your photo: Calico (cat ears), Sakura, Gold, Halo, Starry…\n• Still no account and no server: it stays on your phone, and your linked devices see your nickname.\n\n🔄 Since 2.17: sync your devices with a PIN, then they stay linked.</string>
+    <string name="whats_new_body">☁️ Sync anywhere (optional)\n\n• Settings › GitHub account: sign in with a code, no password.\n• Your data goes to a secret Gist on your account, encrypted on the phone first: GitHub only sees scrambled text.\n• Your other devices need the sync key: a device linked by PIN gets it by itself.\n• Profile: use your GitHub name and photo in one tap.\n\n🐱 Since 2.18: your profile at the top of Settings, with a frame around your photo.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Import playlists</string>
@@ -724,4 +724,29 @@
         <item quantity="other">Looking for the albums of %d songs…</item>
     </plurals>
     <string name="sort_reorder_custom">Moving a song switches to My order</string>
+    <!-- Compte GitHub (2.19.0) -->
+    <string name="settings_section_github">GitHub account</string>
+    <string name="github_sign_in">Sign in with GitHub</string>
+    <string name="github_sign_in_text">Optional: sync your devices anywhere, not only on the same Wi-Fi. Encrypted before it leaves the phone.</string>
+    <string name="github_code_text">Type this code on the GitHub page (it\'s already copied), then allow Mikeneko.</string>
+    <string name="github_open_page">Open the GitHub page</string>
+    <string name="github_waiting">Waiting for GitHub…</string>
+    <string name="github_signed_in">Signed in as @%1$s</string>
+    <string name="github_sign_out">Sign out</string>
+    <string name="github_private_text">Your data goes to a secret Gist on your account, encrypted on this phone first: GitHub only sees scrambled text. Mikeneko can only touch your Gists. Revoke access anytime in GitHub › Settings › Applications.</string>
+    <string name="github_key">Sync key</string>
+    <string name="github_key_none">No key yet: it is created on the first sync.</string>
+    <string name="github_key_text">Your other devices need this key to read your synced data. A device linked by PIN gets it by itself; otherwise type it there. Keep it to yourself.</string>
+    <string name="github_key_copy">Copy the key</string>
+    <string name="github_key_copied">Key copied</string>
+    <string name="github_need_key">Another device already syncs here: type its sync key</string>
+    <string name="github_key_enter">Type the sync key</string>
+    <string name="github_key_enter_text">On your other device: Settings › GitHub account › Sync key.</string>
+    <string name="github_key_wrong">This key doesn\'t open your synced data</string>
+    <string name="github_key_use">Use this key</string>
+    <string name="github_failed_network">Couldn\'t reach GitHub. Try again later.</string>
+    <string name="github_failed_expired">GitHub access was removed or expired: sign in again.</string>
+    <string name="github_failed_denied">Access refused on GitHub.</string>
+    <string name="github_failed_timeout">The code expired: sign in again.</string>
+    <string name="github_profile_import">Use my GitHub name and photo</string>
 </resources>

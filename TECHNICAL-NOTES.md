@@ -1052,6 +1052,20 @@ users: the point is to take them from the videos really watched.
   stroke swallowed a small ear): own rounded triangle, contour proportional to the radius, smaller pink
   inside. `ProfileCard` (top of Settings, the photo overlaps the banner through a `layout` that removes
   the gap) and `ProfileEditor` (dialog). `LocalSync.deviceName()` = the nickname, else the model.
+- 2.19.0: GitHub account (`data/GitHubSync.kt`, UI `ui/screens/GitHubUi.kt` + `GitHubSection` in
+  Settings). OAuth **device flow** with the public client ID of the "Mikeneko" OAuth app (no client
+  secret in the app, so the app's "Expire user access tokens" must stay off: refreshing needs the
+  secret). Scope `gist`. Token and sync key are sealed with an AndroidKeyStore AES-GCM key
+  (`mikeneko-github`), prefs `github`; a restored backup on another phone can't open them and simply
+  looks signed out. Locker = secret Gist with file `mikeneko-sync.json` = JSON
+  `{mikeneko, version, updated, data}`, `data` = base64(nonce 12 + AES-GCM(gzip(backup XML)))`, AAD
+  `mikeneko-gist|1`, AES key = HKDF-SHA256 of the 20-char sync key (alphabet without 0/O/1/I/L). Sync =
+  read, decrypt, `MikenekoBackup.import`, export, encrypt, PATCH (POST when there is no Gist; a 404
+  makes it look again / recreate). Content over 1 MB comes `truncated`: read `raw_url`. 401 → signed
+  out, "sign in again". `MainActivity.onStart/onStop` → `syncIfDue` (10 min gap). A device that finds
+  the Gist without the key shows "type the sync key". `LocalSync.exchange` now sends one more sealed
+  frame after the backups (`{"cle": …}`) and adopts the peer's key when it has none; wrapped in
+  `runCatching` so 2.17/2.18 peers (which neither send nor read it) still sync.
 - Emulator tip (2026-11-10): with `-gpu swiftshader_indirect` the emulator itself crashes when the
   music window opens; `-gpu host` works again.
 - Emulator tip: if screenshots turn black and the app "isn't responding" while its main thread just

@@ -166,6 +166,19 @@ fun ProfileEditor(onDismiss: () -> Unit) {
                 Capsule(stringResource(R.string.profile_photo_change), icon = MkIcons.Image) { pickAvatar.launch(image) }
                 Capsule(stringResource(R.string.profile_banner_change), icon = MkIcons.Image) { pickBanner.launch(image) }
             }
+            // Connecté à GitHub (2.19.0) : reprendre son nom et sa photo d'un tap
+            val github by app.mikeneko.data.GitHubSync.login.collectAsState()
+            if (github is app.mikeneko.data.GitHubSync.Login.In) {
+                Row(Modifier.padding(top = 8.dp)) {
+                    Capsule(stringResource(R.string.github_profile_import), icon = MkIcons.Globe) {
+                        scope.launch {
+                            val ok = app.mikeneko.data.GitHubSync.importProfile(context)
+                            ProfileStore.profile.value.pseudo.let { pseudo = it }
+                            if (!ok) failed()
+                        }
+                    }
+                }
+            }
             if (profile.avatar != null || profile.banner != null) {
                 Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (profile.avatar != null) Capsule(stringResource(R.string.profile_photo_remove), icon = MkIcons.Close) {

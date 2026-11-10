@@ -58,6 +58,18 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ## 🎌 What's new ⸜(｡˃ ᵕ ˂ )⸝♡
 
+### 2.19
+
+- **Optional GitHub account** (Settings › GitHub account) to sync your devices **anywhere**, not only
+  on the same Wi-Fi. Sign in with a code typed on github.com/login/device: no password, nothing secret
+  in the app, and Mikeneko can only touch your Gists.
+- Your backup goes to a **secret Gist** on your account, **encrypted on the phone first** (AES-GCM with
+  a 20-character sync key): GitHub only sees scrambled text. Sync on opening and leaving the app (at
+  most every 10 minutes) and with **Sync now**; nothing is erased, everything is merged.
+- Another device needs the sync key: a device **linked by PIN gets it by itself**, otherwise type it
+  (Settings › GitHub account › Sync key).
+- In the profile editor: **Use my GitHub name and photo**.
+
 ### 2.18
 
 - **Your profile**, at the top of Settings, still without an account or a server: a nickname, a photo,
@@ -398,6 +410,7 @@ Code: `data/Backup.kt` (`MikenekoBackup`).
 
 There is no Google sign-in: subscriptions are imported from NewPipe (.json), FreeTube (.db), Google
 Takeout (.csv) or a Mikeneko backup (Settings › Backup), and comments are read without an account.
+The only account Mikeneko knows is an optional GitHub one, used as an encrypted locker for sync (2.19).
 
 ## 🎋 Structure
 
