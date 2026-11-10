@@ -90,6 +90,10 @@ import app.mikeneko.R
 import app.mikeneko.data.GeneratedMix
 import app.mikeneko.data.ChannelItem
 import app.mikeneko.data.LocalMusic
+import app.mikeneko.data.TrackTags
+import app.mikeneko.data.trackKey
+import app.mikeneko.ui.components.Capsule
+import androidx.compose.ui.res.pluralStringResource
 import app.mikeneko.data.MusicCollection
 import app.mikeneko.data.MusicKind
 import app.mikeneko.data.Playlists
@@ -581,6 +585,8 @@ sealed interface MusicSheet {
     data class AddToPlaylist(val track: VideoItem) : MusicSheet
     data class NewPlaylist(val first: VideoItem? = null) : MusicSheet
     data class PlaylistOptions(val id: String) : MusicSheet
+    /** Le menu Trier d'une playlist perso (2.15.1). */
+    data class SortPlaylist(val id: String) : MusicSheet
     data class Rename(val id: String) : MusicSheet
 
     companion object {
@@ -650,6 +656,7 @@ fun MusicSheetHost(backdrop: Backdrop, onPlaylistDeleted: (String) -> Unit = {})
                             close()
                         }
                         is MusicSheet.PlaylistOptions -> PlaylistOptions(context, sheet.id, ::close, onPlaylistDeleted)
+                        is MusicSheet.SortPlaylist -> SortMenu(context, sheet.id, ::close)
                     }
                 }
             }
@@ -723,6 +730,100 @@ private fun TrackMenu(context: Context, sheet: MusicSheet.Track, close: () -> Un
             shareLink(context, track.title, track.url)
         }
     }
+}
+
+/**
+ * Le menu Trier d'une playlist perso (2.15.1 ; en 2.15.0, une rangée de capsules) : Mon ordre, A–Z,
+ * Artiste, Album, BPM, Camelot, une coche sur le tri choisi. En bas, ce qu'il manque encore pour lui.
+ */
+@Composable
+private fun SortMenu(context: Context, id: String, close: () -> Unit) {
+    val playlists by remember { Playlists.get(context) }.items.collectAsState()
+    val playlist = playlists.firstOrNull { it.id == id } ?: return
+    val tags by remember { TrackTags.load(context) }.collectAsState()
+    val current = TrackTags.Sort.of(playlist.sort)
+    Text(
+        stringResource(R.string.sort_menu),
+        Modifier.padding(horizontal = 18.dp, vertical = 6.dp).semantics { heading() },
+        color = Pelage.Texte,
+        fontSize = 18.sp,
+        fontWeight = FontWeight.ExtraBold,
+    )
+    Column(Modifier.heightIn(max = 440.dp).verticalScroll(rememberScrollState())) {
+        (listOf<TrackTags.Sort?>(null) + TrackTags.Sort.entries).forEach { option ->
+            val selected = option == current
+            Row(
+                Modifier.fillMaxWidth()
+                    .clickable(role = Role.RadioButton, onClick = {
+                        Playlists.get(context).setSort(id, option?.id)
+                        close()
+                    })
+                    .padding(horizontal = 18.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(sortIcon(option), null, tint = if (selected) Pelage.RouxClair else Color.White, modifier = Modifier.size(22.dp))
+                Spacer(Modifier.width(16.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        stringResource(sortLabel(option)),
+                        color = if (selected) Pelage.RouxClair else Pelage.Texte,
+                        fontSize = 15.sp,
+                        fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Bold,
+                    )
+                    Text(stringResource(sortDescription(option)), color = Pelage.Gris, fontSize = 12.sp)
+                }
+                if (selected) Icon(MkIcons.Check, stringResource(R.string.sort_selected), tint = Pelage.RouxClair, modifier = Modifier.size(22.dp))
+            }
+        }
+    }
+    val missing = when (current) {
+        TrackTags.Sort.Bpm, TrackTags.Sort.Camelot -> playlist.items.count { tags[trackKey(it.url)]?.analyzed != true }
+        else -> 0
+    }
+    val albums = if (current == TrackTags.Sort.Album) playlist.items.count { !LocalMusic.isLocal(it.url) && tags[trackKey(it.url)]?.albumChecked != true } else 0
+    val note = when {
+        missing > 0 -> pluralStringResource(R.plurals.tags_pending, missing, missing)
+        albums > 0 -> pluralStringResource(R.plurals.albums_pending, albums, albums)
+        else -> null
+    }
+    if (note != null) Text(note, Modifier.padding(horizontal = 18.dp, vertical = 6.dp), color = Pelage.Gris, fontSize = 12.sp)
+}
+
+internal fun sortLabel(sort: TrackTags.Sort?) = when (sort) {
+    null -> R.string.sort_custom
+    TrackTags.Sort.Title -> R.string.sort_title
+    TrackTags.Sort.Artist -> R.string.sort_artist
+    TrackTags.Sort.Album -> R.string.sort_album
+    TrackTags.Sort.Bpm -> R.string.sort_bpm
+    TrackTags.Sort.Camelot -> R.string.sort_camelot
+}
+
+private fun sortDescription(sort: TrackTags.Sort?) = when (sort) {
+    null -> R.string.sort_custom_text
+    TrackTags.Sort.Title -> R.string.sort_title_text
+    TrackTags.Sort.Artist -> R.string.sort_artist_text
+    TrackTags.Sort.Album -> R.string.sort_album_text
+    TrackTags.Sort.Bpm -> R.string.sort_bpm_text
+    TrackTags.Sort.Camelot -> R.string.sort_camelot_text
+}
+
+private fun sortIcon(sort: TrackTags.Sort?) = when (sort) {
+    null -> MkIcons.DragHandle
+    TrackTags.Sort.Title -> MkIcons.Sort
+    TrackTags.Sort.Artist -> MkIcons.Subscriptions
+    TrackTags.Sort.Album -> MkIcons.Album
+    TrackTags.Sort.Bpm -> MkIcons.Speed
+    TrackTags.Sort.Camelot -> MkIcons.Waves
+}
+
+/** Le bouton Trier d'une playlist perso : le tri choisi, ou « Trier ». Ouvre [SortMenu]. */
+@Composable
+internal fun SortButton(id: String, sort: TrackTags.Sort?) {
+    Capsule(
+        stringResource(if (sort == null) R.string.sort_menu else sortLabel(sort)),
+        selected = sort != null,
+        icon = MkIcons.Sort,
+    ) { MusicSheet.open.value = MusicSheet.SortPlaylist(id) }
 }
 
 @Composable

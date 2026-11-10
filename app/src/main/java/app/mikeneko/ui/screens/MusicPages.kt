@@ -317,6 +317,7 @@ private fun MyPlaylistContent(state: MusicState, id: String) {
                     else -> {
                         PlaylistDownloadCircle(PlaylistDownloads.music, id, playlist.items)
                         ShuffleButton(playlist.items)
+                        if (playlist.items.size > 1) SortButton(id, sort)
                     }
                 }
                 },
@@ -334,7 +335,6 @@ private fun MyPlaylistContent(state: MusicState, id: String) {
                     }
                     ConnectedChip(stringResource(R.string.playlist_details), selected = false, first = false, last = true, modifier = Modifier.weight(1f), icon = MkIcons.Info, sidePadding = 8.dp) { details = true }
                 }
-                SortChips(sort, playlist.items, tags) { store.setSort(id, it?.id) }
                 },
             )
         }
@@ -432,9 +432,7 @@ private fun EditSongsContent(state: MusicState, id: String) {
             fontSize = 14.sp,
             fontWeight = FontWeight.Bold,
         )
-        Box(Modifier.padding(horizontal = 18.dp)) {
-            SortChips(sort, playlist.items, tags) { store.setSort(id, it?.id) }
-        }
+        Box(Modifier.padding(horizontal = 18.dp).padding(bottom = 6.dp)) { SortButton(id, sort) }
         if (songs.isEmpty()) {
             EmptyCat(stringResource(R.string.playlist_empty), stringResource(R.string.playlist_empty_text), Modifier.padding(top = 20.dp))
             return@Column
@@ -722,41 +720,6 @@ private fun MusicLibraryContent(state: MusicState) {
     }
 }
 
-
-/**
- * Le tri automatique d'une playlist perso (2.15.0) : Mon ordre, A–Z, Artiste, Album, BPM, Camelot.
- * Sous la rangée, ce qu'il manque encore pour le tri choisi (morceaux pas analysés, albums cherchés).
- */
-@Composable
-private fun SortChips(sort: TrackTags.Sort?, items: List<VideoItem>, tags: Map<String, TrackTag>, onPick: (TrackTags.Sort?) -> Unit) {
-    val options = listOf<TrackTags.Sort?>(null) + TrackTags.Sort.entries
-    Column(Modifier.fillMaxWidth().padding(bottom = 6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(CONNECTED_GAP)) {
-            items(options.size) { i ->
-                val option = options[i]
-                ConnectedChip(stringResource(sortLabel(option)), option == sort, first = i == 0, last = i == options.lastIndex) { onPick(option) }
-            }
-        }
-        val missing = when (sort) {
-            TrackTags.Sort.Bpm, TrackTags.Sort.Camelot -> items.count { tags[trackKey(it.url)]?.analyzed != true }
-            else -> 0
-        }
-        val albums = if (sort == TrackTags.Sort.Album) items.count { !LocalMusic.isLocal(it.url) && tags[trackKey(it.url)]?.albumChecked != true } else 0
-        when {
-            missing > 0 -> Text(pluralStringResource(R.plurals.tags_pending, missing, missing), color = Pelage.Gris, fontSize = 12.sp)
-            albums > 0 -> Text(pluralStringResource(R.plurals.albums_pending, albums, albums), color = Pelage.Gris, fontSize = 12.sp)
-        }
-    }
-}
-
-private fun sortLabel(sort: TrackTags.Sort?) = when (sort) {
-    null -> R.string.sort_custom
-    TrackTags.Sort.Title -> R.string.sort_title
-    TrackTags.Sort.Artist -> R.string.sort_artist
-    TrackTags.Sort.Album -> R.string.sort_album
-    TrackTags.Sort.Bpm -> R.string.sort_bpm
-    TrackTags.Sort.Camelot -> R.string.sort_camelot
-}
 
 /**
  * Les tags d'un morceau : son tempo (« 128 BPM ») et sa case de la roue Camelot (« 8A »), dans la

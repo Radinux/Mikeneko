@@ -998,6 +998,9 @@ users: the point is to take them from the videos really watched.
   minor profiles, mapped to Camelot. Real check on the emulator: Get Lucky 116 BPM (10A: its Bm–D–F♯m–E
   is listed as F♯ minor 11A or B dorian), Uptown Funk 115 BPM 7B (D minor 7A is the usual answer:
   relative major / minor is the typical miss, same wheel number).
+- 2.15.1: the sort capsule row became `SortButton` (Capsule, next to Shuffle and in Edit mode) opening
+  `MusicSheet.SortPlaylist` → `SortMenu` in `MusicSheetHost` (check on the current sort, a
+  description per option, the "not analysed yet / albums" note at the bottom). New icon `MkIcons.Sort`.
 - Emulator tip: if screenshots turn black and the app "isn't responding" while its main thread just
   waits for vsync, the emulator's GPU is stuck: restart it with `-gpu swiftshader_indirect`.
 

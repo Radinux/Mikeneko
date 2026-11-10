@@ -98,6 +98,8 @@ object MkIcons {
     val RepeatOne = stroke("repeter_un", "M17 2l4 4-4 4 M3 11v-1a4 4 0 0 1 4-4h14 M7 22l-4-4 4-4 M21 13v1a4 4 0 0 1-4 4H3 M11 10h1v4")
     val Lyrics = stroke("paroles", "M4 6h16M4 10h16M4 14h10M4 18h7 M18 14v6 M18 20a1.6 1.6 0 1 1-3.2 0a1.6 1.6 0 1 1 3.2 0z")
     val PlaylistAdd = stroke("ajouter_playlist", "M4 6h12M4 11h12M4 16h7 M18 13v7M14.5 16.5h7")
+    /** Trier (2.15.1) : trois traits de plus en plus courts. */
+    val Sort = stroke("trier", "M4 6h16 M7 12h10 M10 18h4")
     val DragHandle = stroke("deplacer", "M5 9h14M5 15h14")
     /** Réordonner (2.11.3) : une flèche vers le haut et une vers le bas, lisibles même petites. */
     val Reorder = stroke("reordonner", "M8 20V5 M4 9l4-4 4 4 M16 4v15 M12 15l4 4 4-4", width = 2.3f)

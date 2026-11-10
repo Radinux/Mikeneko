@@ -645,6 +645,14 @@
     <string name="playlist_reorder_hint">Tap ⊖ to remove a song, hold ≡ to move it</string>
     <string name="playlist_search">Search in this playlist</string>
     <string name="playlist_details">Details</string>
+    <string name="sort_menu">Sort</string>
+    <string name="sort_selected">Selected</string>
+    <string name="sort_custom_text">The order you chose (hold ≡ in Edit to move a song)</string>
+    <string name="sort_title_text">Song titles, A to Z</string>
+    <string name="sort_artist_text">By artist, then by title</string>
+    <string name="sort_album_text">By album, then by artist</string>
+    <string name="sort_bpm_text">From the slowest to the fastest</string>
+    <string name="sort_camelot_text">Around the Camelot wheel (1A, 1B, 2A…): neighbours mix in harmony</string>
     <string name="sort_custom">My order</string>
     <string name="sort_title">A–Z</string>
     <string name="sort_artist">Artist</string>
