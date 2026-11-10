@@ -1,6 +1,15 @@
 package app.mikeneko.ui.components
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.platform.LocalConfiguration
+import kotlinx.coroutines.delay
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -81,42 +90,86 @@ import kotlinx.coroutines.flow.filter
 
 private val Secondary = Color(0xFFCFC6BD)
 
-/** L'aperçu sous la vidéo : nombre de commentaires et le premier. Un tap ouvre le panneau. */
+/**
+ * Les commentaires dans la page de la vidéo. Repliée : le nombre et le premier commentaire. Un tap
+ * l'étire sur place à une hauteur fixe, et on fait défiler les commentaires dedans (la page,
+ * elle, reprend son défilement aux deux bouts de la liste). Un tap sur l'en-tête, ou retour, la
+ * replie. Changer de vidéo ([resetKey]) la replie aussi. (Avant 2.13 : une fenêtre par-dessus.)
+ */
 @Composable
-fun CommentsPreview(modifier: Modifier = Modifier) {
+fun CommentsCard(resetKey: Any?, modifier: Modifier = Modifier) {
     val state by Comments.state.collectAsState()
     val first = state.items.firstOrNull()
-    Column(
-        modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
-            .background(Color.White.copy(alpha = 0.07f))
-            .clickable(enabled = !state.disabled, role = Role.Button, onClickLabel = stringResource(R.string.comments_open)) { Comments.open.value = true }
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.comments), color = Pelage.Texte, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
-            if (state.count > 0) {
-                Text("  ${formatCount(state.count.toLong())}", color = Secondary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-            }
-            Spacer(Modifier.weight(1f))
-            if (!state.disabled) Icon(MkIcons.ChevronRight, null, tint = Secondary, modifier = Modifier.size(18.dp))
+    var expanded by rememberSaveable(resetKey) { mutableStateOf(false) }
+    if (state.disabled) expanded = false
+    val bringIntoView = remember { BringIntoViewRequester() }
+
+    BackHandler(enabled = expanded) { expanded = false }
+    // Étirée : la page défile pour la montrer en entier (une fois la taille finale atteinte)
+    LaunchedEffect(expanded) {
+        if (expanded) {
+            delay(220)
+            bringIntoView.bringIntoView()
         }
-        when {
-            state.disabled -> Text(stringResource(R.string.comments_disabled_video), color = Secondary, fontSize = 13.sp)
-            state.loading -> Text(stringResource(R.string.comments_loading), color = Secondary, fontSize = 13.sp)
-            state.error != null -> Text(stringResource(R.string.comments_error), color = Secondary, fontSize = 13.sp)
-            first == null -> Text(stringResource(R.string.comments_be_first), color = Secondary, fontSize = 13.sp)
-            else -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Avatar(first, 26.dp)
-                Text(
-                    plainText(first),
-                    color = Pelage.Texte,
-                    fontSize = 13.sp,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
+    }
+
+    Box(modifier.fillMaxWidth()) {
+        val screen = LocalConfiguration.current.screenHeightDp.dp
+        val openHeight = (screen * 0.62f).coerceIn(320.dp, 620.dp)
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .bringIntoViewRequester(bringIntoView)
+                .clip(RoundedCornerShape(18.dp))
+                .background(Color.White.copy(alpha = 0.07f))
+                .animateContentSize(tween(320)),
+        ) {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        enabled = !state.disabled,
+                        role = Role.Button,
+                        onClickLabel = stringResource(if (expanded) R.string.comments_close else R.string.comments_open),
+                    ) { expanded = !expanded }
+                    .padding(start = 14.dp, end = 14.dp, top = 12.dp, bottom = if (expanded) 8.dp else 0.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(stringResource(R.string.comments), Modifier.semantics { heading() }, color = Pelage.Texte, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
+                if (state.count > 0) {
+                    Text("  ${formatCount(state.count.toLong())}", color = Secondary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                }
+                Spacer(Modifier.weight(1f))
+                if (!state.disabled) {
+                    val turn by animateFloatAsState(if (expanded) -90f else 90f, tween(320), label = "chevron")
+                    Icon(MkIcons.ChevronRight, null, tint = Secondary, modifier = Modifier.size(18.dp).rotate(turn))
+                }
+            }
+            if (expanded) {
+                CommentList(Modifier.fillMaxWidth().height(openHeight))
+            } else {
+                Box(Modifier.fillMaxWidth().padding(start = 14.dp, end = 14.dp, top = 8.dp, bottom = 12.dp)) {
+                    when {
+                        state.disabled -> Text(stringResource(R.string.comments_disabled_video), color = Secondary, fontSize = 13.sp)
+                        state.loading -> Text(stringResource(R.string.comments_loading), color = Secondary, fontSize = 13.sp)
+                        state.error != null -> Text(stringResource(R.string.comments_error), color = Secondary, fontSize = 13.sp)
+                        first == null -> Text(stringResource(R.string.comments_be_first), color = Secondary, fontSize = 13.sp)
+                        else -> Row(
+                            Modifier.clickable(role = Role.Button, onClickLabel = stringResource(R.string.comments_open)) { expanded = true },
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            Avatar(first, 26.dp)
+                            Text(
+                                plainText(first),
+                                color = Pelage.Texte,
+                                fontSize = 13.sp,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -124,6 +177,7 @@ fun CommentsPreview(modifier: Modifier = Modifier) {
 
 /**
  * Le panneau des commentaires, en verre, sous la vidéo (qui continue de jouer au-dessus). Lecture seule.
+ * Seulement pour le lecteur de shorts (pas de page sous la vidéo) ; le lecteur normal a [CommentsCard].
  */
 @Composable
 fun CommentsPanel(backdrop: Backdrop) {

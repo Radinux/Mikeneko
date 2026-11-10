@@ -123,7 +123,7 @@ import app.mikeneko.player.PlayerHolder
 import app.mikeneko.player.SettingsPage
 import app.mikeneko.settings.AppLocale
 import app.mikeneko.ui.components.Capsule
-import app.mikeneko.ui.components.CommentsPreview
+import app.mikeneko.ui.components.CommentsCard
 import app.mikeneko.ui.components.CompactVideoRow
 import app.mikeneko.ui.components.GlassCircleButton
 import app.mikeneko.ui.components.Loading
@@ -534,7 +534,7 @@ fun PlayerContent(onMinimize: () -> Unit, onDownload: (String) -> Unit, onRadio:
                 DescriptionCard(info)
 
                 LaunchedEffect(info.url) { Comments.load(info.url) }
-                CommentsPreview(Modifier.padding(top = 12.dp))
+                CommentsCard(info.url, Modifier.padding(top = 12.dp))
 
                 if (info.chapters.isNotEmpty()) {
                     Text(stringResource(R.string.chapters), Modifier.padding(top = 12.dp), color = Pelage.Texte, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)

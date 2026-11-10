@@ -579,7 +579,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">What’s new in Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Nice!</string>
-    <string name="whats_new_body">🔔 Notifications redone\n\n• The bell next to Subscribe only announces videos that really just came out (no more alerts for videos from months or years ago).\n• Channels with a bell are checked every hour.\n\n⬆️ New versions of Mikeneko are looked for every 4 hours, also when you come back to the app.\n\n▶️ A video resumed where you left it no longer stays black: if playback fails, it reloads by itself, and the play button reloads it too.</string>
+    <string name="whats_new_body">💬 Comments right in the video page\n\n• Tap Comments: the card stretches in place and you scroll the comments inside it, without leaving the page.\n• Tap its title, or go back, to fold it.\n\n🔔 Since 2.12: bell notifications only for videos that really just came out, checked every hour, and new versions looked for every 4 hours.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Import playlists</string>

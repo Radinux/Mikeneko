@@ -58,6 +58,12 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ## 🎌 What's new ⸜(｡˃ ᵕ ˂ )⸝♡
 
+### 2.13
+
+- **Comments right in the video page**: tapping Comments stretches the card in place to a fixed
+  height, and you scroll the comments inside it (no more window over the page). Tap its title, or
+  go back, to fold it. The Shorts player keeps its comments window.
+
 ### 2.12
 
 - **Bell notifications redone**: no more alerts for videos that are months or years old; a new video

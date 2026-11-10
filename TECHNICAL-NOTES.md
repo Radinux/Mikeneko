@@ -952,6 +952,14 @@ users: the point is to take them from the videos really watched.
 - 2.12.0: updates: `AppUpdates.CHECK_EVERY_MS` = 4 h, checked from `MainActivity.onStart` (launch
   and every return to the app) instead of a `LaunchedEffect` at launch; the background check
   (`Notifier.checkUpdate`) uses the same interval.
+- 2.13.0: comments. `CommentsPreview` + the glass `CommentsPanel` over the page became
+  `CommentsCard(resetKey = info.url)` in the player page: folded it shows the count and the first
+  comment; tapped, it grows (`animateContentSize`) to a fixed height (62% of the screen, 320–620 dp)
+  holding the same `CommentList` (a LazyColumn with a bounded height inside the page's
+  `verticalScroll`, so nested scrolling works: the list scrolls first, the page at its ends).
+  `BringIntoViewRequester` scrolls the page to show the whole card once it has grown; `BackHandler`
+  folds it; a new video folds it. `CommentsPanel` is now only used by the Shorts player
+  (`Comments.open`). Checked on the emulator.
 - Emulator tip: if screenshots turn black and the app "isn't responding" while its main thread just
   waits for vsync, the emulator's GPU is stuck: restart it with `-gpu swiftshader_indirect`.
 

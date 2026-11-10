@@ -580,7 +580,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">Quoi de neuf dans Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Super !</string>
-    <string name="whats_new_body">🔔 Notifications refaites\n\n• La cloche à côté de S’abonner n’annonce plus que les vidéos qui viennent vraiment de sortir (fini les alertes pour des vidéos d’il y a des mois ou des années).\n• Les chaînes à cloche sont vérifiées toutes les heures.\n\n⬆️ Les nouvelles versions de Mikeneko sont cherchées toutes les 4 heures, aussi quand tu reviens dans l’appli.\n\n▶️ Une vidéo reprise là où tu l’avais laissée ne reste plus noire : si la lecture échoue, elle se recharge toute seule, et le bouton lecture la relance aussi.</string>
+    <string name="whats_new_body">💬 Les commentaires dans la page de la vidéo\n\n• Touche Commentaires : la carte s’étire sur place et tu fais défiler les commentaires dedans, sans quitter la page.\n• Touche son titre, ou retour, pour la replier.\n\n🔔 Depuis la 2.12 : la cloche n’annonce que les vidéos qui viennent vraiment de sortir, vérifiées toutes les heures, et les nouvelles versions sont cherchées toutes les 4 heures.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Importer des playlists</string>

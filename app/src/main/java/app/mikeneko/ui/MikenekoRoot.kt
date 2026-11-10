@@ -472,9 +472,9 @@ fun MikenekoRoot(
                 Route.Lecteur -> if (Shorts.session != null) {
                     CommentsPanel(backdrop)
                 } else {
-                    PlaylistDrawer(backdrop, onOpen = { openVideo(it.url) }) // playlist et suggestions, sous les commentaires
-                    CommentsPanel(backdrop)
-                    PlayerSettingsSheet(backdrop) // au-dessus des commentaires
+                    // (les commentaires sont dans la page du lecteur : CommentsCard)
+                    PlaylistDrawer(backdrop, onOpen = { openVideo(it.url) }) // playlist et suggestions
+                    PlayerSettingsSheet(backdrop)
                 }
                 else -> Unit
             }
