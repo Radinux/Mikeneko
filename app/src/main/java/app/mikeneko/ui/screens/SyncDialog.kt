@@ -266,12 +266,17 @@ private fun Result(done: LocalSync.State.Done, onClose: () -> Unit) {
     Text(stringResource(R.string.sync_done, done.peer), color = Pelage.Texte, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center)
     Spacer(Modifier.height(4.dp))
     Text(
-        if (added.total == 0) stringResource(R.string.sync_nothing)
-        else stringResource(R.string.backup_imported, added.channels, added.playlists, added.library, added.videos),
+        if (added.total == 0) stringResource(R.string.sync_nothing) else addedSummary(LocalContext.current, added),
         color = Pelage.Gris,
         fontSize = 13.sp,
         textAlign = TextAlign.Center,
     )
     Spacer(Modifier.height(14.dp))
     Button(onClick = onClose) { Text(stringResource(R.string.sync_close), fontWeight = FontWeight.ExtraBold) }
+}
+
+/** Ce qu'une synchro ou un import a ajouté, en une phrase (et l'historique sur une 2e ligne, 2.19.1). */
+fun addedSummary(context: android.content.Context, added: MikenekoBackup.Added): String {
+    val main = context.getString(R.string.backup_imported, added.channels, added.playlists, added.library, added.videos)
+    return if (added.history > 0) main + "\n" + context.getString(R.string.history_imported, added.history) else main
 }

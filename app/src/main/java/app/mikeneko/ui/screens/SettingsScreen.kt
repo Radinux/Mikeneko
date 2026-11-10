@@ -233,7 +233,7 @@ private fun GitHubSection() {
                             is app.mikeneko.data.GitHubSync.Status.Failed -> stringResource(githubFailure(s.reason))
                             is app.mikeneko.data.GitHubSync.Status.Done ->
                                 if (s.added.total == 0) stringResource(R.string.sync_last, app.mikeneko.data.formatAgo(java.time.Instant.ofEpochMilli(s.at)))
-                                else stringResource(R.string.backup_imported, s.added.channels, s.added.playlists, s.added.library, s.added.videos)
+                                else addedSummary(context, s.added)
                             app.mikeneko.data.GitHubSync.Status.Idle ->
                                 if (lastSync > 0) stringResource(R.string.sync_last, app.mikeneko.data.formatAgo(java.time.Instant.ofEpochMilli(lastSync))) else stringResource(R.string.sync_never)
                         },
@@ -308,7 +308,7 @@ private fun BackupSection(context: Context) {
             val added = MikenekoBackup.import(context, content)
             toast(
                 if (added.total == 0) context.getString(R.string.backup_import_nothing)
-                else context.getString(R.string.backup_imported, added.channels, added.playlists, added.library, added.videos),
+                else addedSummary(context, added),
             )
         }
     }

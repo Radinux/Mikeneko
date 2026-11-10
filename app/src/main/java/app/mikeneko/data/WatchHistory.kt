@@ -44,10 +44,52 @@ class WatchHistory private constructor(context: Context) {
     val loaded: StateFlow<Boolean> = _loaded.asStateFlow()
 
     init {
-        io.launch {
-            _entries.value = load()
-            _loaded.value = true
+        io.launch { ensureLoaded() }
+    }
+
+    /** Lit le fichier s'il ne l'est pas encore (une synchro peut arriver avant la lecture de fond). */
+    @Synchronized
+    private fun ensureLoaded() {
+        if (_loaded.value) return
+        _entries.value = load()
+        _loaded.value = true
+    }
+
+    /** L'historique tel quel (lu s'il ne l'était pas encore) : pour la sauvegarde et la synchro. */
+    fun snapshot(): List<Entry> {
+        ensureLoaded()
+        return _entries.value
+    }
+
+    /**
+     * Ajoute l'historique d'un autre appareil (2.19.1) : une vidéo vue des deux côtés garde la date la
+     * plus récente et la plus grande part regardée. Renvoie le nombre de vidéos nouvelles ici. Rien si
+     * l'historique est en pause sur cet appareil.
+     */
+    @Synchronized
+    fun merge(incoming: List<Entry>): Int {
+        if (incoming.isEmpty() || AppSettings.historyPaused.value) return 0
+        ensureLoaded()
+        val byUrl = LinkedHashMap<String, Entry>()
+        _entries.value.forEach { byUrl[it.url] = it }
+        var added = 0
+        incoming.forEach { theirs ->
+            val ours = byUrl[theirs.url]
+            byUrl[theirs.url] = if (ours == null) {
+                added++
+                theirs
+            } else {
+                (if (theirs.at > ours.at) theirs.copy(related = ours.related) else ours).copy(
+                    watched = maxOf(ours.watched, theirs.watched),
+                    tags = (ours.tags + theirs.tags).distinct().take(MAX_TAGS),
+                )
+            }
         }
+        if (added == 0 && byUrl.values.toList() == _entries.value) return 0
+        _entries.value = byUrl.values.sortedByDescending { it.at }.take(MAX_ENTRIES)
+            .mapIndexed { i, e -> if (i >= MAX_WITH_RELATED && e.related.isNotEmpty()) e.copy(related = emptyList()) else e }
+        save()
+        return added
     }
 
     /** Une vidéo vient d'être ouverte (pas la radio). */

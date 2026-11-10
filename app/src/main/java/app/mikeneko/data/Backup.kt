@@ -22,6 +22,9 @@ import org.xmlpull.v1.XmlSerializer
  *   <playlists kind="videos">…</playlists>
  *   <library><album url="…" title="…" artist="…"/><artist url="…" name="…"/></library>
  *   <favorites>…</favorites> <later>…</later> <liked>…</liked> <shorts>…</shorts>
+ *   <tastes skipped="true"><taste id="cooking"/></tastes>                      (2.19.1)
+ *   <history><watched url="…" title="…" channel="…" at="…" part="0.8" tags="a|b"/></history>
+ *   <positions><position id="…" ms="…" at="…" duration="…"/></positions>
  * </mikeneko>
  * ```
  */
@@ -39,11 +42,18 @@ object MikenekoBackup {
         val later: List<VideoItem> = emptyList(),
         val liked: List<VideoItem> = emptyList(),
         val shorts: List<VideoItem> = emptyList(),
+        /** Les sujets choisis du « Pour toi » (2.19.1), et si la page des sujets a été passée. */
+        val tastes: Set<String> = emptySet(),
+        val tastesSkipped: Boolean = false,
+        /** L'historique des vidéos (2.19.1), sans les suggestions de chacune. */
+        val history: List<WatchHistory.Entry> = emptyList(),
+        /** Où on en était dans les dernières vidéos (2.19.1). */
+        val positions: List<WatchPositions.Saved> = emptyList(),
     )
 
     /** Ce que l'import a ajouté. */
-    class Added(val channels: Int, val playlists: Int, val library: Int, val videos: Int) {
-        val total get() = channels + playlists + library + videos
+    class Added(val channels: Int, val playlists: Int, val library: Int, val videos: Int, val history: Int = 0) {
+        val total get() = channels + playlists + library + videos + history
     }
 
     /** Un fichier de Mikeneko ? (pour l'import des abonnements, qui accepte aussi le reste) */
@@ -99,6 +109,37 @@ object MikenekoBackup {
         xml.videos("liked", videos.liked.value)
         xml.videos("shorts", videos.shorts.value)
 
+        // Le « Pour toi » (2.19.1) : les sujets choisis, l'historique et les positions de reprise
+        val tastes = Tastes.get(context)
+        xml.startTag(null, "tastes")
+        if (tastes.skipped.value) xml.attribute(null, "skipped", "true")
+        tastes.chosen.value.forEach { id ->
+            xml.startTag(null, "taste")
+            xml.attribute(null, "id", id)
+            xml.endTag(null, "taste")
+        }
+        xml.endTag(null, "tastes")
+        xml.startTag(null, "history")
+        WatchHistory.get(context).snapshot().forEach { e ->
+            xml.startTag(null, "watched")
+            xml.attr("url", e.url).attr("title", e.title).attr("channel", e.channel).attr("channelId", e.channelId)
+            xml.attribute(null, "at", e.at.toString())
+            if (e.watched >= 0f) xml.attribute(null, "part", e.watched.toString())
+            xml.attr("tags", e.tags.filter { '|' !in it }.joinToString("|"))
+            xml.endTag(null, "watched")
+        }
+        xml.endTag(null, "history")
+        xml.startTag(null, "positions")
+        WatchPositions.all(context).forEach { p ->
+            xml.startTag(null, "position")
+            xml.attribute(null, "id", p.id)
+            xml.attribute(null, "ms", p.positionMs.toString())
+            xml.attribute(null, "at", p.at.toString())
+            if (p.durationMs > 0) xml.attribute(null, "duration", p.durationMs.toString())
+            xml.endTag(null, "position")
+        }
+        xml.endTag(null, "positions")
+
         xml.endTag(null, "mikeneko")
         xml.endDocument()
         out.flush()
@@ -137,6 +178,10 @@ object MikenekoBackup {
         val later = mutableListOf<VideoItem>()
         val liked = mutableListOf<VideoItem>()
         val shorts = mutableListOf<VideoItem>()
+        val tastes = mutableSetOf<String>()
+        var tastesSkipped = false
+        val history = mutableListOf<WatchHistory.Entry>()
+        val positions = mutableListOf<WatchPositions.Saved>()
 
         var section: String? = null // subscriptions, playlists, library, favorites, later, liked, shorts
         var playlistKind: String? = null
@@ -150,6 +195,25 @@ object MikenekoBackup {
                     "subscriptions", "library", "favorites", "later", "liked", "shorts" -> section = parser.name
                     "playlists" -> { section = "playlists"; playlistKind = a("kind") }
                     "playlist" -> { playlistName = a("name"); playlistItems = mutableListOf() }
+                    "tastes" -> tastesSkipped = a("skipped") == "true"
+                    "taste" -> a("id")?.let { tastes += it }
+                    "watched" -> a("url")?.let { url ->
+                        history += WatchHistory.Entry(
+                            url = url,
+                            title = a("title").orEmpty(),
+                            channel = a("channel").orEmpty(),
+                            channelId = a("channelId"),
+                            at = a("at")?.toLongOrNull() ?: 0L,
+                            related = emptyList(),
+                            watched = a("part")?.toFloatOrNull() ?: -1f,
+                            tags = a("tags")?.split('|')?.filter { it.isNotBlank() }.orEmpty(),
+                        )
+                    }
+                    "position" -> {
+                        val id = a("id")
+                        val ms = a("ms")?.toLongOrNull()
+                        if (id != null && ms != null) positions += WatchPositions.Saved(id, ms, a("at")?.toLongOrNull() ?: 0L, a("duration")?.toLongOrNull() ?: 0L)
+                    }
                     "channel" -> {
                         val id = a("id") ?: a("url")?.let(::channelIdFrom)
                         if (id != null) subscriptions += Subscription(a("name") ?: id, a("url") ?: "https://www.youtube.com/channel/$id", id, a("avatar"))
@@ -189,7 +253,7 @@ object MikenekoBackup {
                 }
             }
         }
-        return Content(subscriptions, music, videosLists, albums, artists, favorites, later, liked, shorts)
+        return Content(subscriptions, music, videosLists, albums, artists, favorites, later, liked, shorts, tastes, tastesSkipped, history, positions)
     }
 
     /** Ajoute le contenu d'un fichier (sans rien effacer). */
@@ -204,6 +268,10 @@ object MikenekoBackup {
         val library = MusicLibrary.get(context).addAll(content.albums, content.artists)
         val videos = VideoLibrary.get(context)
         val added = Favorites.get(context).addAll(content.favorites) + videos.addLater(content.later) + videos.addLiked(content.liked) + videos.addShorts(content.shorts)
-        return Added(channels, playlists, library, added)
+        // Le « Pour toi » (2.19.1) : rien n'est gardé si l'historique est en pause ici
+        Tastes.get(context).merge(content.tastes, content.tastesSkipped)
+        val history = WatchHistory.get(context).merge(content.history)
+        WatchPositions.merge(context, content.positions)
+        return Added(channels, playlists, library, added, history)
     }
 }

@@ -69,6 +69,9 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 - Another device needs the sync key: a device **linked by PIN gets it by itself**, otherwise type it
   (Settings › GitHub account › Sync key).
 - In the profile editor: **Use my GitHub name and photo**.
+- 2.19.1: sync (PIN or GitHub) and the backup file now also carry your **watch history**, your **resume
+  points** and your **For you topics**: a freshly synced device skips the topics page and its For you
+  starts from what you watch elsewhere.
 
 ### 2.18
 

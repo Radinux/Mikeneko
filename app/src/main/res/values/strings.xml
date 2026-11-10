@@ -510,7 +510,7 @@
     <string name="update_now">Install</string>
     <string name="update_later">Later</string>
     <string name="backup_export">Export to a file</string>
-    <string name="backup_export_text">Subscriptions, music and video playlists, saved albums and artists, favorite radios, Watch later and liked videos, in one .xml file.</string>
+    <string name="backup_export_text">Subscriptions, music and video playlists, saved albums and artists, favorite radios, Watch later and liked videos, your topics and watch history, in one .xml file.</string>
     <string name="backup_import">Import a file</string>
     <string name="backup_import_text">A Mikeneko .xml file: what\'s missing is added, nothing is erased.</string>
     <string name="backup_exported">Backup saved</string>
@@ -518,6 +518,7 @@
     <string name="backup_import_failed">This file can\'t be read</string>
     <string name="backup_import_nothing">Nothing new in this file</string>
     <string name="backup_imported">Added: %1$d channels, %2$d playlists, %3$d albums/artists, %4$d videos</string>
+    <string name="history_imported">%1$d videos added to your history</string>
     <string name="music_library">Your library</string>
     <string name="music_library_all">All</string>
     <string name="music_artist">Artist</string>

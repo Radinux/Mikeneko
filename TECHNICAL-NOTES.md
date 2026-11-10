@@ -1066,6 +1066,14 @@ users: the point is to take them from the videos really watched.
   the Gist without the key shows "type the sync key". `LocalSync.exchange` now sends one more sealed
   frame after the backups (`{"cle": …}`) and adopts the peer's key when it has none; wrapped in
   `runCatching` so 2.17/2.18 peers (which neither send nor read it) still sync.
+- 2.19.1: `MikenekoBackup` also writes `<tastes skipped>` + `<taste id>`, `<history>` + `<watched url title
+  channel channelId at part tags="a|b">` (no related videos: the file would grow a lot) and
+  `<positions>` + `<position id ms at duration>`. Import: `Tastes.merge` (union, marks the topics page
+  passed), `WatchHistory.merge` (union by URL, newest date and biggest watched part win, capped at 200),
+  `WatchPositions.merge` (newest wins, capped at 10); history and positions are skipped when history is
+  paused on the receiving device. `WatchHistory.ensureLoaded()` (synchronized) because a sync can
+  arrive before the background file read. Limit: merge never deletes, so a history cleared on one
+  device comes back from a linked device that still has it.
 - Emulator tip (2026-11-10): with `-gpu swiftshader_indirect` the emulator itself crashes when the
   music window opens; `-gpu host` works again.
 - Emulator tip: if screenshots turn black and the app "isn't responding" while its main thread just

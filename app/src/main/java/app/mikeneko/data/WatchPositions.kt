@@ -76,6 +76,28 @@ object WatchPositions {
         return prefs(context).getString(videoId, null)?.substringBefore(';')?.toLongOrNull()?.takeIf { it >= MIN_MS }
     }
 
+    /** Une position gardée (pour la sauvegarde et la synchro, 2.19.1). */
+    data class Saved(val id: String, val positionMs: Long, val at: Long, val durationMs: Long)
+
+    fun all(context: Context): List<Saved> = prefs(context).all.mapNotNull { (id, value) ->
+        val parts = (value as? String)?.split(';') ?: return@mapNotNull null
+        val position = parts.getOrNull(0)?.toLongOrNull() ?: return@mapNotNull null
+        Saved(id, position, parts.getOrNull(1)?.toLongOrNull() ?: 0L, parts.getOrNull(2)?.toLongOrNull() ?: 0L)
+    }
+
+    /** Les positions d'un autre appareil : la plus récente gagne, et on en garde [MAX] (rien si l'historique est en pause). */
+    fun merge(context: Context, incoming: List<Saved>) {
+        if (incoming.isEmpty() || AppSettings.historyPaused.value) return
+        val ours = all(context).associateBy { it.id }
+        val newer = incoming.filter { it.positionMs >= MIN_MS && (ours[it.id]?.at ?: -1L) < it.at }
+        if (newer.isEmpty()) return
+        val kept = (ours + newer.associateBy { it.id }).values.sortedByDescending { it.at }
+        val edit = prefs(context).edit().clear()
+        kept.take(MAX).forEach { edit.putString(it.id, if (it.durationMs > 0) "${it.positionMs};${it.at};${it.durationMs}" else "${it.positionMs};${it.at}") }
+        edit.apply()
+        refresh(context)
+    }
+
     fun clear(context: Context) {
         prefs(context).edit().clear().apply()
         _progress.value = emptyMap()

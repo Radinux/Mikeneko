@@ -510,7 +510,7 @@
     <string name="sync_unlink_confirm">Touche encore pour arrêter</string>
     <string name="sync_auto_text">Les appareils liés se synchronisent tout seuls dès qu’ils sont sur le même réseau privé (quand Mikeneko est ouvert), puis toutes les 15 minutes.</string>
     <string name="backup_export">Exporter dans un fichier</string>
-    <string name="backup_export_text">Abonnements, playlists musique et vidéo, albums et artistes sauvegardés, radios favorites, À regarder plus tard et vidéos aimées, dans un fichier .xml.</string>
+    <string name="backup_export_text">Abonnements, playlists musique et vidéo, albums et artistes sauvegardés, radios favorites, À regarder plus tard, vidéos aimées, tes sujets et ton historique, dans un fichier .xml.</string>
     <string name="backup_import">Importer un fichier</string>
     <string name="backup_import_text">Un fichier .xml de Mikeneko : ce qui manque est ajouté, rien n\'est effacé.</string>
     <string name="backup_exported">Sauvegarde enregistrée</string>
@@ -518,6 +518,7 @@
     <string name="backup_import_failed">Ce fichier ne se lit pas</string>
     <string name="backup_import_nothing">Rien de nouveau dans ce fichier</string>
     <string name="backup_imported">Ajouté : %1$d chaînes, %2$d playlists, %3$d albums/artistes, %4$d vidéos</string>
+    <string name="history_imported">%1$d vidéos ajoutées à ton historique</string>
     <string name="music_library">Ta bibliothèque</string>
     <string name="music_library_all">Tout</string>
     <string name="music_artist">Artiste</string>

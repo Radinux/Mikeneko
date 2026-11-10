@@ -43,6 +43,15 @@ class Tastes private constructor(context: Context) {
 
     fun toggle(id: String) = set(if (id in _chosen.value) _chosen.value - id else _chosen.value + id)
 
+    /** Les sujets d'un autre appareil (2.19.1) : ajoutés aux nôtres ; la page des sujets ne revient plus. */
+    fun merge(ids: Set<String>, skipped: Boolean) {
+        val known = ids.filter { id -> ALL.any { it.id == id } }.toSet()
+        when {
+            (known - _chosen.value).isNotEmpty() -> set(_chosen.value + known)
+            (known.isNotEmpty() || skipped) && !_skipped.value -> skip()
+        }
+    }
+
     fun skip() {
         _skipped.value = true
         prefs.edit().putBoolean("passe", true).apply()
