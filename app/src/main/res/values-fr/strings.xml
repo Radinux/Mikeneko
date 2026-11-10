@@ -462,6 +462,25 @@
     <string name="update_now">Installer</string>
     <string name="update_later">Plus tard</string>
     <string name="settings_section_backup">Sauvegarde</string>
+    <string name="profile_title">Ton profil</string>
+    <string name="profile_local">Gardé sur ce téléphone seulement : aucun compte, aucun serveur. Tes appareils liés voient ton pseudo.</string>
+    <string name="profile_edit">Modifier ton profil</string>
+    <string name="profile_no_pseudo">Choisis un pseudo</string>
+    <string name="profile_pseudo">Pseudo</string>
+    <string name="profile_pseudo_hint">Ton pseudo</string>
+    <string name="profile_pseudo_text">Montré à tes appareils liés (Réglages › Synchro)</string>
+    <string name="profile_photo_change">Photo</string>
+    <string name="profile_banner_change">Bannière</string>
+    <string name="profile_photo_remove">Enlever la photo</string>
+    <string name="profile_banner_remove">Enlever la bannière</string>
+    <string name="profile_image_failed">Impossible d’ouvrir cette image</string>
+    <string name="profile_frame">Cadre</string>
+    <string name="frame_none">Aucun</string>
+    <string name="frame_calico">Calico</string>
+    <string name="frame_sakura">Sakura</string>
+    <string name="frame_gold">Or</string>
+    <string name="frame_halo">Halo</string>
+    <string name="frame_night">Étoilé</string>
     <string name="settings_section_sync">Synchro</string>
     <string name="sync_title">Synchroniser avec un autre appareil</string>
     <string name="sync_text">Les deux sur le même Wi-Fi : l’un montre un PIN, l’autre le tape</string>
@@ -612,7 +631,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">Quoi de neuf dans Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Super !</string>
-    <string name="whats_new_body">🔄 Synchronise tes appareils, sans compte\n\n• Réglages › Synchro : un appareil montre un PIN, l’autre le tape, et les deux ont tout (abonnements, playlists, bibliothèque…).\n• Ensuite ils restent liés : ils se resynchronisent tout seuls dès qu’ils sont sur le même réseau.\n• Arrête quand tu veux avec « Arrêter la synchro ».\n\n🎨 Depuis la 2.16 : ta propre couleur de thème, et trois couleurs de plus.</string>
+    <string name="whats_new_body">🐱 Ton profil\n\n• En haut des Réglages : un pseudo, une photo, une bannière.\n• Un cadre autour de ta photo : Calico (oreilles de chat), Sakura, Or, Halo, Étoilé…\n• Toujours sans compte ni serveur : il reste sur ton téléphone, et tes appareils liés voient ton pseudo.\n\n🔄 Depuis la 2.17 : synchronise tes appareils avec un PIN, ils restent liés ensuite.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Importer des playlists</string>

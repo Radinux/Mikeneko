@@ -132,6 +132,7 @@ fun SettingsContent(onBack: () -> Unit) {
                 )
             }
         }
+        item { ProfileCard(Modifier.padding(horizontal = 16.dp).padding(bottom = 8.dp)) } // le profil (2.18.0)
         item { AppearanceSection() }
         item { LanguageSection(context) }
         item { PlaybackSection() }

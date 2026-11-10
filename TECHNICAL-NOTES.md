@@ -1045,6 +1045,13 @@ users: the point is to take them from the videos really watched.
   active man-in-the-middle present during the pairing minute guess it offline. Test setup: two
   emulators (Pixel_10 + Medium_Phone) share the virtual Wi-Fi 10.0.2.0/24, so mDNS works between them;
   `adb forward` + "Type its address" also works.
+- 2.18.0: profile (`data/Profile.kt` = `ProfileStore`, prefs `profil`; images copied into
+  `filesDir/profil`, photo 512 px, banner 1600 px, new file name each time). Frames are drawn by
+  `ui/components/ProfileAvatar` (Canvas behind the photo for ears / glow, in front for rings, flowers,
+  gems, stars; the whole is the photo × 1.44). The Calico ears don't use `drawEar` (its 6 dp white
+  stroke swallowed a small ear): own rounded triangle, contour proportional to the radius, smaller pink
+  inside. `ProfileCard` (top of Settings, the photo overlaps the banner through a `layout` that removes
+  the gap) and `ProfileEditor` (dialog). `LocalSync.deviceName()` = the nickname, else the model.
 - Emulator tip (2026-11-10): with `-gpu swiftshader_indirect` the emulator itself crashes when the
   music window opens; `-gpu host` works again.
 - Emulator tip: if screenshots turn black and the app "isn't responding" while its main thread just

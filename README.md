@@ -58,6 +58,12 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ## 🎌 What's new ⸜(｡˃ ᵕ ˂ )⸝♡
 
+### 2.18
+
+- **Your profile**, at the top of Settings, still without an account or a server: a nickname, a photo,
+  a banner, and a **frame** around the photo: Calico (the logo's cat ears), Sakura, Gold, Halo (in
+  your theme color), Starry, or none. Your linked devices see your nickname.
+
 ### 2.17
 
 - **Sync between your devices, without an account or a server**: in Settings › Sync, one device shows

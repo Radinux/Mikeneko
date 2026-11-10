@@ -444,6 +444,25 @@
     <string name="track_downloaded">Downloaded</string>
     <string name="playlist_tab">Playlist</string>
     <string name="settings_section_backup">Backup</string>
+    <string name="profile_title">Your profile</string>
+    <string name="profile_local">Kept on this phone only: no account, no server. Your linked devices see your nickname.</string>
+    <string name="profile_edit">Edit your profile</string>
+    <string name="profile_no_pseudo">Choose a nickname</string>
+    <string name="profile_pseudo">Nickname</string>
+    <string name="profile_pseudo_hint">Your nickname</string>
+    <string name="profile_pseudo_text">Shown to your linked devices (Settings › Sync)</string>
+    <string name="profile_photo_change">Photo</string>
+    <string name="profile_banner_change">Banner</string>
+    <string name="profile_photo_remove">Remove the photo</string>
+    <string name="profile_banner_remove">Remove the banner</string>
+    <string name="profile_image_failed">Couldn\'t open this image</string>
+    <string name="profile_frame">Frame</string>
+    <string name="frame_none">None</string>
+    <string name="frame_calico">Calico</string>
+    <string name="frame_sakura">Sakura</string>
+    <string name="frame_gold">Gold</string>
+    <string name="frame_halo">Halo</string>
+    <string name="frame_night">Starry</string>
     <string name="settings_section_sync">Sync</string>
     <string name="sync_title">Sync with another device</string>
     <string name="sync_text">Both on the same Wi-Fi: one shows a PIN, the other types it</string>
@@ -611,7 +630,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">What’s new in Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Nice!</string>
-    <string name="whats_new_body">🔄 Sync your devices, without an account\n\n• Settings › Sync: one device shows a PIN, the other types it, and both have everything (subscriptions, playlists, library…).\n• Then they stay linked: they sync again by themselves whenever they’re on the same network.\n• Stop it anytime with “Stop syncing”.\n\n🎨 Since 2.16: your own theme color, and three more colors.</string>
+    <string name="whats_new_body">🐱 Your profile\n\n• At the top of Settings: a nickname, a photo, a banner.\n• A frame around your photo: Calico (cat ears), Sakura, Gold, Halo, Starry…\n• Still no account and no server: it stays on your phone, and your linked devices see your nickname.\n\n🔄 Since 2.17: sync your devices with a PIN, then they stay linked.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Import playlists</string>

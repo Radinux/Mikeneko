@@ -129,8 +129,10 @@ object LocalSync {
         return p.getString("id", null) ?: UUID.randomUUID().toString().also { p.edit().putString("id", it).apply() }
     }
 
-    /** Le nom de cet appareil, montré à l'autre. */
-    fun deviceName(): String = Build.MODEL?.takeIf { it.isNotBlank() } ?: "Mikeneko"
+    /** Le nom de cet appareil, montré à l'autre : le pseudo du profil (2.18.0), sinon le modèle du téléphone. */
+    fun deviceName(): String =
+        ProfileStore.profile.value.pseudo.takeIf { it.isNotBlank() }
+            ?: Build.MODEL?.takeIf { it.isNotBlank() } ?: "Mikeneko"
 
     private fun loadLinks(context: Context) {
         _links.value = runCatching {
@@ -189,6 +191,7 @@ object LocalSync {
     fun start(context: Context) {
         val app = context.applicationContext
         appContext = app
+        ProfileStore.load(app) // le pseudo est le nom montré aux autres
         loadLinks(app)
         refresh(app)
         // Un autre réseau (une autre box, un partage de connexion…) : on s'y annonce et on y cherche à nouveau
