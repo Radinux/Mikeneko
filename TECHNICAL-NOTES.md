@@ -14,8 +14,8 @@ Code comments are in French.
 
 - **Versioning**: `app/version.properties` holds the version of the next release build; every
   `assembleRelease` / `installRelease` uses it, then prepares the next one (last digit +1,
-  `versionCode` +1). New feature: `minor` +1 and `patch=0` by hand. No x.20: where x.20.0 would come,
-  it's a major version ((x+1).0.0) instead.
+  `versionCode` +1). New feature: `minor` +1 and `patch=0` by hand. No upper limit on `minor` or
+  `patch` (since 2.12: x.20.0 and beyond are fine; until 2.11 the rule was no x.20, so 1.19 → 2.0.0).
 - **ABIs**: one APK per CPU, `arm64-v8a` for phones and `x86_64` for the emulator; no 32-bit.
 - **Release key**: official releases are signed with `~/.config/mikeneko/mikeneko-release.jks`, its
   password in `~/.config/mikeneko/signing.properties` (path can be changed with the
