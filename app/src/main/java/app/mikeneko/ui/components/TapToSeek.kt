@@ -45,6 +45,10 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.input.pointer.PointerEventTimeoutCancellationException
 import app.mikeneko.R
 import app.mikeneko.player.PlayerHolder
 import app.mikeneko.ui.icons.MkIcons
@@ -123,8 +127,25 @@ fun TapToSeekLayer(
                 var lastUpAtPos = Offset.Zero
                 awaitEachGesture {
                     awaitFirstDown(requireUnconsumed = false)
+                    // Le doigt reste posé (2.21.0) : ×2 jusqu'à ce qu'il se lève, et ce n'est pas un tap
+                    var held = false
+                    val quick = try {
+                        withTimeout(viewConfiguration.longPressTimeoutMillis) { waitForUpOrCancellation() }
+                    } catch (_: PointerEventTimeoutCancellationException) {
+                        held = true
+                        null
+                    }
+                    if (held && canSeek) {
+                        PlayerHolder.holdSpeed(true)
+                        try {
+                            waitForUpOrCancellation()?.consume()
+                        } finally {
+                            PlayerHolder.holdSpeed(false)
+                        }
+                        return@awaitEachGesture
+                    }
                     // null : le doigt a glissé (défilement de la page) ou est sorti de la vidéo
-                    val up = waitForUpOrCancellation() ?: return@awaitEachGesture
+                    val up = (if (held) waitForUpOrCancellation() else quick) ?: return@awaitEachGesture
                     up.consume()
                     if (!canSeek) {
                         toggle()
@@ -152,6 +173,7 @@ fun TapToSeekLayer(
                 }
             },
     ) {
+        HoldSpeedBadge(Modifier.align(Alignment.TopCenter).padding(top = 14.dp))
         AnimatedVisibility(
             visible = side != 0,
             modifier = Modifier.fillMaxHeight().fillMaxWidth(0.42f).align(if (shownSide < 0) Alignment.CenterStart else Alignment.CenterEnd),
@@ -159,6 +181,22 @@ fun TapToSeekLayer(
             exit = fadeOut(tween(320)),
         ) {
             SeekBubble(forward = shownSide > 0, seconds = seconds, taps = taps)
+        }
+    }
+}
+
+/** « 2× » en haut de l'image tant que le doigt maintenu accélère la lecture. */
+@Composable
+fun HoldSpeedBadge(modifier: Modifier = Modifier) {
+    val boosted by PlayerHolder.boosted.collectAsState()
+    AnimatedVisibility(boosted, modifier, enter = fadeIn(tween(120)), exit = fadeOut(tween(200))) {
+        Row(
+            Modifier.background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(percent = 50)).padding(horizontal = 14.dp, vertical = 7.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Icon(MkIcons.Speed, null, tint = Color.White, modifier = Modifier.size(18.dp))
+            Text("2×", style = TextStyle(fontFamily = Rounded, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold))
         }
     }
 }

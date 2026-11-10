@@ -1103,6 +1103,16 @@ users: the point is to take them from the videos really watched.
   Related shorts are appended when fewer than 3 remain ahead.
 - 2.20.0, settings tabs: fixed header (title + chip row) above the `LazyColumn`, `SettingsTab` enum
   picks the sections; a sticky header inside the list would have slid under the status bar.
+- 2.21.0: the Shorts tab lost the dock (`showDock` / `railShown` skip `Route.Shorts`); `beforeShorts`
+  (set in `selectTab`) is where the back button and system back return. `PlayerHolder.holdSpeed(on)` +
+  `boosted` flow: 2× while a finger stays down, the chosen speed comes back on release (never on live
+  or music). Videos: `TapToSeekLayer` wraps the first `waitForUpOrCancellation` in
+  `withTimeout(longPressTimeoutMillis)`; a timeout = hold, and that gesture is not a tap. Shorts:
+  `detectTapGestures(onLongPress = on, onPress = { tryAwaitRelease(); off })`. `HoldSpeedBadge` shows
+  "2×". Quality: `qualityLabel` shows `playingQuality` when a fixed quality is asked, and the quality
+  page ticks the row that plays when the asked one isn't offered. A short whose page throws
+  `ContentNotAvailableException` is removed from the session list (the play effect is also keyed on
+  the URL of the settled page, so the next one starts on the same page).
 - Emulator tip (2026-11-10): with `-gpu swiftshader_indirect` the emulator itself crashes when the
   music window opens; `-gpu host` works again.
 - Emulator tip: if screenshots turn black and the app "isn't responding" while its main thread just

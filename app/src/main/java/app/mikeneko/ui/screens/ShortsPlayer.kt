@@ -1,6 +1,5 @@
 package app.mikeneko.ui.screens
 
-import android.content.res.Configuration
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -45,7 +44,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import app.mikeneko.ui.components.HoldSpeedBadge
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -79,6 +80,8 @@ import app.mikeneko.ui.theme.GlassTextShadow
 import app.mikeneko.ui.theme.Pelage
 import app.mikeneko.ui.theme.Rounded
 import coil3.compose.AsyncImage
+import kotlinx.coroutines.CancellationException
+import org.schabi.newpipe.extractor.exceptions.ContentNotAvailableException
 
 /**
  * Les Shorts (2.2.0) : un short s'ouvre en plein écran, en hauteur, et tourne en boucle. Glisser
@@ -101,7 +104,7 @@ object Shorts {
     class Session(
         val items: SnapshotStateList<VideoItem>,
         start: Int,
-        /** L'onglet Shorts du dock (2.20.0) : le dock reste affiché, pas de bouton pour fermer. */
+        /** L'onglet Shorts du dock (2.20.0) : rien n'est encore lancé à l'ouverture, et le bouton en haut est un retour. */
         val tab: Boolean = false,
     ) {
         var index by mutableIntStateOf(start)
@@ -168,7 +171,7 @@ object Shorts {
  * Quitter l'onglet arrête la lecture (voir MikenekoRoot).
  */
 @Composable
-fun ShortsTab(onOpenChannel: (ChannelItem) -> Unit) {
+fun ShortsTab(onClose: () -> Unit, onOpenChannel: (ChannelItem) -> Unit) {
     val context = LocalContext.current
     var empty by remember { mutableStateOf(false) }
     val ready = Shorts.session?.tab == true
@@ -178,9 +181,16 @@ fun ShortsTab(onOpenChannel: (ChannelItem) -> Unit) {
         if (list.isEmpty()) empty = true else Shorts.startFeed(list)
     }
     if (ready) {
-        ShortsPlayer(onClose = {}, onOpenChannel = onOpenChannel)
+        ShortsPlayer(onClose = onClose, onOpenChannel = onOpenChannel)
     } else {
         Box(Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
+            Box(
+                Modifier.align(Alignment.TopStart).windowInsetsPadding(WindowInsets.statusBars).padding(12.dp).size(44.dp).clip(CircleShape)
+                    .clickable(role = Role.Button, onClickLabel = stringResource(R.string.back), onClick = onClose),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(MkIcons.ChevronLeft, stringResource(R.string.back), tint = Color.White, modifier = Modifier.size(26.dp))
+            }
             if (empty) {
                 Text(stringResource(R.string.shorts_empty), Modifier.padding(32.dp), style = ShortText.copy(fontSize = 15.sp, textAlign = TextAlign.Center))
             } else {
@@ -200,22 +210,37 @@ fun ShortsPlayer(onClose: () -> Unit, onOpenChannel: (ChannelItem) -> Unit) {
     val pager = rememberPagerState(initialPage = session.index) { items.size }
     val now by PlayerHolder.nowPlaying.collectAsState()
 
-    if (!tab) BackHandler(onBack = onClose)
+    BackHandler(onBack = onClose)
 
     // Le short posé à l'écran est celui qui joue (en boucle, depuis le début)
     // (le premier, lui, est déjà lancé par l'ouverture : pas de deuxième demande à YouTube)
     // (dans l'onglet Shorts, rien n'est encore lancé : le premier part d'ici)
     val opened = remember { intArrayOf(if (tab) -1 else session.index) }
-    LaunchedEffect(pager.settledPage) {
+    // (la clé compte aussi l'adresse : un short retiré laisse sa place au suivant, sur la même page)
+    LaunchedEffect(pager.settledPage, items.getOrNull(pager.settledPage)?.url) {
         val item = items.getOrNull(pager.settledPage) ?: return@LaunchedEffect
         session.index = pager.settledPage
         if (pager.settledPage == opened[0]) {
             opened[0] = -1
             return@LaunchedEffect
         }
+        opened[0] = -1
         if (sameTrack(PlayerHolder.nowPlaying.value?.url, item.url)) return@LaunchedEffect
-        runCatching { PlayerHolder.play(context, item.url, audioOnly = false, short = true) }
-            .onFailure { Toast.makeText(context, context.getString(R.string.error_play_video, it.message.orEmpty()), Toast.LENGTH_SHORT).show() }
+        try {
+            PlayerHolder.play(context, item.url, audioOnly = false, short = true)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: ContentNotAvailableException) {
+            // Un short supprimé ou privé (2.21.0) : il sort de la liste et le suivant prend sa place,
+            // au lieu de rester figé sur sa miniature. Le dernier de la liste, lui, le dit.
+            if (items.size > 1 && items.getOrNull(pager.settledPage)?.url == item.url) {
+                items.removeAt(pager.settledPage)
+            } else {
+                Toast.makeText(context, context.getString(R.string.error_play_video, e.message.orEmpty()), Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            Toast.makeText(context, context.getString(R.string.error_play_video, e.message.orEmpty()), Toast.LENGTH_SHORT).show()
+        }
     }
     // Les 3 suivants se préparent, les 2 précédents restent prêts (2.20.0)
     LaunchedEffect(pager.settledPage, items.size) { ShortsPreload.window(context, items.toList(), pager.settledPage) }
@@ -265,10 +290,22 @@ private fun ShortPage(item: VideoItem, playing: Boolean, current: Boolean, tab: 
             if (playing) VideoSurface(Modifier.fillMaxSize(), lastFrame = false)
         }
 
-        // Un tap : pause / lecture
-        Box(
-            Modifier.fillMaxSize().pointerTap(enabled = playing) { PlayerHolder.togglePlay() },
-        )
+        // Un tap : pause / lecture ; doigt maintenu : ×2 tant qu'il reste posé (2.21.0)
+        if (playing) {
+            Box(
+                Modifier.fillMaxSize().pointerInput(Unit) {
+                    detectTapGestures(
+                        onPress = {
+                            tryAwaitRelease()
+                            PlayerHolder.holdSpeed(false)
+                        },
+                        onLongPress = { PlayerHolder.holdSpeed(true) },
+                        onTap = { PlayerHolder.togglePlay() },
+                    )
+                },
+            )
+            HoldSpeedBadge(Modifier.align(Alignment.TopCenter).windowInsetsPadding(WindowInsets.statusBars).padding(top = 18.dp))
+        }
         // (le short à l'écran qui se charge encore : la roue aussi, pas seulement la miniature figée)
         AnimatedVisibility((playing && buffering) || (current && loading), Modifier.align(Alignment.Center), enter = fadeIn(), exit = fadeOut()) {
             Loading()
@@ -287,18 +324,16 @@ private fun ShortPage(item: VideoItem, playing: Boolean, current: Boolean, tab: 
                 .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f)))),
         )
 
-        if (!tab) GlassCircleButton(
+        GlassCircleButton(
             video,
-            MkIcons.ChevronDown,
-            stringResource(R.string.player_minimize),
+            if (tab) MkIcons.ChevronLeft else MkIcons.ChevronDown,
+            stringResource(if (tab) R.string.back else R.string.player_minimize),
             Modifier.align(Alignment.TopStart).windowInsetsPadding(WindowInsets.statusBars).padding(12.dp),
             size = 44.dp,
             onClick = onClose,
         )
 
-        // Dans l'onglet Shorts, en portrait : au-dessus du dock (en paysage, il est sur le côté)
-        val aboveDock = if (tab && LocalConfiguration.current.orientation != Configuration.ORIENTATION_LANDSCAPE) 92.dp else 0.dp
-        Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().windowInsetsPadding(WindowInsets.navigationBars).padding(bottom = aboveDock)) {
+        Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().windowInsetsPadding(WindowInsets.navigationBars)) {
             Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 12.dp, bottom = 14.dp), verticalAlignment = Alignment.Bottom) {
                 // En bas à gauche : la chaîne (vers sa page) et le titre
                 Column(Modifier.weight(1f).padding(end = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -386,9 +421,3 @@ private fun ShortProgress() {
         Box(Modifier.fillMaxHeight().fillMaxWidth(progress.fraction.coerceIn(0f, 1f)).background(Pelage.Roux))
     }
 }
-
-/** Un tap simple (sans effet d'appui), seulement quand [enabled]. */
-private fun Modifier.pointerTap(enabled: Boolean, onTap: () -> Unit): Modifier =
-    if (!enabled) this else this.then(
-        Modifier.clickable(interactionSource = null, indication = null, onClick = onTap),
-    )

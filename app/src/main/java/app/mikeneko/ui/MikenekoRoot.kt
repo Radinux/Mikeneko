@@ -133,6 +133,8 @@ fun MikenekoRoot(
     val scope = rememberCoroutineScope()
     var route by rememberSaveable { mutableStateOf(Route.Accueil) }
     var beforePlayer by rememberSaveable { mutableStateOf(Route.Accueil) }
+    /** L'onglet d'où on est entré dans les Shorts : le bouton retour y ramène (2.21.0). */
+    var beforeShorts by rememberSaveable { mutableStateOf(Route.Accueil) }
     var dockVisible by remember { mutableStateOf(true) }
     val keyboard = LocalSoftwareKeyboardController.current
     /** La chaîne ouverte depuis l'onglet Abonnements (null = la liste). */
@@ -169,6 +171,7 @@ fun MikenekoRoot(
                 subsReset++
             }
             Route.Bibliotheque -> library.page = null
+            Route.Shorts -> if (route != Route.Shorts && route != Route.Lecteur && route != Route.Reglages) beforeShorts = route
             // Musique : retour à son accueil (pages d'artiste / d'album / de playlist et recherche fermées)
             Route.Musique -> {
                 musicPages.pages.clear()
@@ -279,7 +282,7 @@ fun MikenekoRoot(
     val orientation = LocalConfiguration.current.orientation
     // Paysage : le dock devient une colonne à gauche, le contenu se décale à sa droite
     val landscape = orientation == Configuration.ORIENTATION_LANDSCAPE
-    val railShown = landscape && route != Route.Lecteur && route != Route.Reglages
+    val railShown = landscape && route != Route.Lecteur && route != Route.Reglages && route != Route.Shorts
     val layoutDirection = LocalLayoutDirection.current
     val safeSides = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal).asPaddingValues()
     val contentInset = if (railShown) {
@@ -372,7 +375,7 @@ fun MikenekoRoot(
     BackHandler(enabled = route != Route.Accueil) {
         if (route == Route.Lecteur) {
             if (Shorts.session != null) closeShorts() else minimizePlayer()
-        } else route = Route.Accueil
+        } else if (route == Route.Shorts) go(beforeShorts) else route = Route.Accueil
     }
     // Sur l'accueil : d'abord fermer la recherche / revenir à « Pour toi » / remonter, puis quitter
     BackHandler(enabled = route == Route.Accueil && home.canGoBack) { home.goBack() }
@@ -459,7 +462,7 @@ fun MikenekoRoot(
                         music.expand() // une station touchée : la fenêtre s'ouvre
                     }) }
                     Route.Bibliotheque -> LibraryContent(library, downloadLink, onOpen = { openVideo(it.url) })
-                    Route.Shorts -> ShortsTab(onOpenChannel = ::openChannelFromShorts)
+                    Route.Shorts -> ShortsTab(onClose = { go(beforeShorts) }, onOpenChannel = ::openChannelFromShorts)
                     Route.Reglages -> SettingsContent(onBack = { go(Route.Accueil) })
                     Route.Lecteur -> if (Shorts.session != null) {
                         ShortsPlayer(onClose = ::closeShorts, onOpenChannel = ::openChannelFromShorts)
@@ -508,9 +511,8 @@ fun MikenekoRoot(
         // On le tire vers le haut (ou on le touche) : il s'étire en fenêtre, sans changer d'onglet
         val showMusic = route == Route.Musique
         // Le dock principal : partout sauf sur le lecteur et les réglages
-        // (ni sous les commentaires d'un short, dans l'onglet Shorts : ils descendent jusqu'en bas)
-        val shortComments by Comments.open.collectAsState()
-        val showDock = route != Route.Lecteur && route != Route.Reglages && !(route == Route.Shorts && shortComments)
+        // (ni dans les Shorts, 2.21.0 : plein écran, avec un bouton retour en haut à gauche)
+        val showDock = route != Route.Lecteur && route != Route.Reglages && route != Route.Shorts
         LaunchedEffect(showMusic) { if (!showMusic) music.collapse() }
         if (showMusic) {
             MusicDockWindow(

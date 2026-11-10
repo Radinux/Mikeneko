@@ -242,7 +242,7 @@ private fun QualityPage(onBack: () -> Unit) {
     PageHeader(stringResource(R.string.quality), onBack)
     OptionRow(if (playing > 0) stringResource(R.string.quality_auto_with, playing) else stringResource(R.string.quality_auto), null, quality == null) { PlayerHolder.setQuality(null) }
     qualities.forEach { q ->
-        OptionRow("${q}p", when { q >= 4320 -> "8K"; q >= 2160 -> "4K"; q >= 1440 -> "QHD"; q >= 1080 -> "FHD"; q >= 720 -> "HD"; else -> null }, quality == q) { PlayerHolder.setQuality(q) }
+        OptionRow("${q}p", when { q >= 4320 -> "8K"; q >= 2160 -> "4K"; q >= 1440 -> "QHD"; q >= 1080 -> "FHD"; q >= 720 -> "HD"; else -> null }, quality == q || (quality != null && quality !in qualities && playing == q)) { PlayerHolder.setQuality(q) }
     }
 }
 
@@ -289,7 +289,8 @@ private fun TimerPage(onBack: () -> Unit) {
 
 @Composable
 private fun qualityLabel(quality: Int?, playing: Int): String = when {
-    quality != null -> "${quality}p"
+    // Une qualité voulue plus haute que ce que la vidéo propose : on montre celle qui joue vraiment (2.21.0)
+    quality != null -> "${if (playing > 0) playing else quality}p"
     playing > 0 -> stringResource(R.string.quality_auto_with, playing)
     else -> stringResource(R.string.quality_auto)
 }

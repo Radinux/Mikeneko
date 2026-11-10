@@ -632,7 +632,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">Quoi de neuf dans Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Super !</string>
-    <string name="whats_new_body">☁️ La synchro partout (facultatif)\n\n• Réglages › Compte GitHub : connexion avec un code, sans mot de passe.\n• Tes données vont dans un Gist secret de ton compte, chiffrées d\'abord sur le téléphone : GitHub ne voit que du charabia.\n• Tes autres appareils ont besoin de la clé de synchro : un appareil lié par PIN la reçoit tout seul.\n• Profil : reprends ton nom et ta photo GitHub d\'un tap.\n\n🐱 Depuis la 2.18 : ton profil en haut des Réglages, avec un cadre autour de ta photo.</string>
+    <string name="whats_new_body">⚡ Shorts et vitesse\n\n• Garde le doigt sur une vidéo ou un short : lecture en 2× tant que tu ne lâches pas.\n• Onglet Shorts dans le dock : plein écran, avec un bouton retour en haut à gauche. Réglages › Lecture › Pas de shorts l’enlève.\n• Les shorts démarrent tout de suite : les 3 suivants sont préparés, les 2 précédents restent prêts.\n• Les réglages sont maintenant en onglets : Général, Lecture, Pour toi, Synchro, À propos.\n\n☁️ Depuis la 2.19 : synchro en continu entre tes appareils liés et ton coffre GitHub.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Importer des playlists</string>

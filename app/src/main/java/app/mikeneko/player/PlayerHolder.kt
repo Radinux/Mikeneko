@@ -1336,6 +1336,20 @@ object PlayerHolder {
         if (nowPlaying.value?.live != true) player?.setPlaybackSpeed(value)
     }
 
+    /** Le doigt maintenu sur la vidéo ou le short (2.21.0) : ×2 tant qu'il reste posé. */
+    val boosted = MutableStateFlow(false)
+
+    /** [on] : passe en ×2 ; relâché : la vitesse choisie revient. Pas pendant un direct. */
+    fun holdSpeed(on: Boolean) {
+        val now = nowPlaying.value
+        val can = on && now != null && !now.live && !now.audioOnly
+        if (boosted.value == can) return
+        boosted.value = can
+        player?.setPlaybackSpeed(if (can) HOLD_SPEED else if (now?.live == true) 1f else speed.value)
+    }
+
+    const val HOLD_SPEED = 2f
+
     fun setLoop(on: Boolean) {
         loop.value = on
         player?.repeatMode = if (on) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF

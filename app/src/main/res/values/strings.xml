@@ -631,7 +631,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">What’s new in Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Nice!</string>
-    <string name="whats_new_body">☁️ Sync anywhere (optional)\n\n• Settings › GitHub account: sign in with a code, no password.\n• Your data goes to a secret Gist on your account, encrypted on the phone first: GitHub only sees scrambled text.\n• Your other devices need the sync key: a device linked by PIN gets it by itself.\n• Profile: use your GitHub name and photo in one tap.\n\n🐱 Since 2.18: your profile at the top of Settings, with a frame around your photo.</string>
+    <string name="whats_new_body">⚡ Shorts and speed\n\n• Hold your finger on a video or a short: it plays at 2× until you let go.\n• Shorts tab in the dock: full screen, with a back button at the top left. Settings › Playback › No Shorts removes it.\n• Shorts start right away: the next 3 are prepared, the previous 2 stay ready.\n• Settings are now in tabs: General, Playback, For you, Sync, About.\n\n☁️ Since 2.19: sync as you go between your linked devices and your GitHub locker.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Import playlists</string>

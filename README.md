@@ -58,6 +58,16 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ## 🎌 What's new ⸜(｡˃ ᵕ ˂ )⸝♡
 
+### 2.21
+
+- **Hold to speed up**: keep a finger on a video or a short and it plays at **2×** until you let go
+  (a small "2×" shows at the top).
+- The **Shorts tab is full screen**: the dock hides, and a back button at the top left brings you
+  back where you were.
+- A short that was deleted or made private is skipped instead of staying frozen on its thumbnail.
+- Fixed: with a default quality higher than what a video offers, the player now shows the quality
+  that is really playing (the best available), not the one asked for.
+
 ### 2.20
 
 - **Shorts tab** in the dock: a feed of shorts from the channels you follow, mixed with shorts on the
