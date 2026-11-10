@@ -3,6 +3,7 @@ package app.mikeneko.settings
 import android.content.Context
 import android.content.SharedPreferences
 import app.mikeneko.ui.theme.Accent
+import androidx.compose.ui.graphics.toArgb
 import app.mikeneko.ui.theme.Appearance
 import java.util.UUID
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -62,12 +63,20 @@ object AppSettings {
         _sleepReminder.value = prefs.getBoolean("dodo", true)
         _sleepMinutes.value = prefs.getInt("dodo_minutes", 60)
         _hideShorts.value = prefs.getBoolean("shorts_masques", false)
-        Appearance.accent = Accent.of(prefs.getString("accent", null))
+        Appearance.custom = prefs.getInt("accent_perso", 0).takeIf { it != 0 }?.let { androidx.compose.ui.graphics.Color(it) }
+        Appearance.accent = Accent.of(prefs.getString("accent", null), Appearance.custom)
         Appearance.amoled = prefs.getBoolean("amoled", false)
     }
 
     /** La couleur d'accent (2.9.0). */
     fun setAccent(value: Accent) = save("accent", value.id) { Appearance.accent = value }
+
+    /** La couleur perso, choisie au cercle (2.16.0) : gardée, et prise comme accent. */
+    fun setCustomAccent(color: androidx.compose.ui.graphics.Color) {
+        prefs.edit().putInt("accent_perso", color.toArgb()).apply()
+        Appearance.custom = color
+        setAccent(Accent.custom(color))
+    }
 
     /** Fond noir pur (2.9.0). */
     fun setAmoled(value: Boolean) = save("amoled", value) { Appearance.amoled = value }

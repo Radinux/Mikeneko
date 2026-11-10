@@ -159,6 +159,7 @@ Items marked "to check on the phone" are built and published but not confirmed o
 - [ ] 2.11.6 (details): moving a song redone (the song stays under the finger, scroll speed from the finger's position, no double swap) — verified on the emulator (row centred ~25 px from the finger while the list scrolled); to check on the phone
 - [x] 2.11.16: landscape, first exit from fullscreen zooms smoothly (was instant) — confirmed on the phone, but the video buttons jumped at the start (→ 2.11.17)
 - [x] 2.11.17: no jump of the video at the start of the landscape fullscreen exit zoom — the centre buttons still jumped (→ 2.11.18)
+- [ ] 2.16.0: custom theme color (+ bubble → color wheel, own bubble, kept after restart) and 3 more presets (Sora, Yuzu, Hojicha) — verified on the emulator; to check on the phone
 - [x] 2.15.3: lyrics pulled down shrink in place towards the button capsule under the finger (like the music dock), fold into it on release (far or fast), else reopen — tested by the user on the emulator
 - [ ] 2.15.2: lyrics panel grows out of / folds back into the player button capsule (was a solid block sliding down); album in the player details only if same artist (a single opened an unrelated album with the same name) — verified on the emulator (-gpu host: swiftshader crashes the emulator when the music window opens); to check on the phone
 - [ ] 2.15.1: the sorts in a Sort menu (glass sheet, a check on the one in use, a line for each) instead of a row of capsules — verified on the emulator; to check on the phone

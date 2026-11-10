@@ -584,7 +584,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">Quoi de neuf dans Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Super !</string>
-    <string name="whats_new_body">🎚️ Trie tes playlists automatiquement\n\n• Mon ordre, A–Z, Artiste, Album, BPM ou Camelot (la roue pour mixer en harmonie).\n• Le mode Modifier montre le BPM et la tonalité de chaque morceau sur la roue Camelot.\n• Le tempo et la tonalité sont calculés dans l’appli à partir du son : les morceaux téléchargés et ceux déjà écoutés, les autres après leur première écoute.\n\n🔍 Depuis la 2.14 : la recherche dans tes abonnements et dans une chaîne, et un onglet Populaires sur les chaînes.</string>
+    <string name="whats_new_body">🎨 Ta propre couleur de thème\n\n• Réglages › Apparence : la bulle + ouvre un cercle de couleurs. Glisse autour pour la teinte, vers le centre pour une couleur plus douce.\n• Ta couleur a sa propre bulle ; touche-la à nouveau pour la changer.\n• Trois couleurs de plus : Sora, Yuzu et Hojicha.\n\n🎚️ Depuis la 2.15 : trie tes playlists (A–Z, artiste, album, BPM, Camelot) depuis le menu Trier.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Importer des playlists</string>
@@ -615,6 +615,15 @@
     <string name="accent_cherry">Cerise</string>
     <string name="accent_mint">Menthe</string>
     <string name="accent_amber">Ambre</string>
+    <string name="accent_sora">Sora</string>
+    <string name="accent_yuzu">Yuzu</string>
+    <string name="accent_hojicha">Hojicha</string>
+    <string name="accent_custom">Ta couleur</string>
+    <string name="accent_add">Choisir ta couleur</string>
+    <string name="accent_picker_title">Ta couleur</string>
+    <string name="accent_picker_text">Fais glisser autour du cercle pour la teinte, vers le centre pour une couleur plus douce</string>
+    <string name="accent_picker_ok">Choisir</string>
+    <string name="accent_picker_cancel">Annuler</string>
 
     <!-- Notifications (Notifier.kt, 2.10.0) -->
     <string name="notif_channel_updates">Mises à jour</string>

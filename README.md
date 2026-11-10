@@ -58,6 +58,13 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ## 🎌 What's new ⸜(｡˃ ᵕ ˂ )⸝♡
 
+### 2.16
+
+- **Your own theme color**: in Settings › Appearance, the **+** bubble opens a color wheel (hue around
+  the circle, softer towards the middle, with a preview on the button itself); your color gets its own
+  bubble, tap it again to change it.
+- **Three more colors**: Sora (sky blue), Yuzu (citrus green) and Hojicha (roasted tea brown).
+
 ### 2.15
 
 - **Automatic sort for your playlists**: My order, A–Z, Artist, Album, BPM or **Camelot** (the

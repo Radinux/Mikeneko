@@ -1014,6 +1014,13 @@ users: the point is to take them from the videos really watched.
   in place towards the capsule under the finger. On release past 120 dp (or a fling > 1500 px/s)
   `onClose` → the close effect snaps `progress` to the shrunk value, resets `drag`, and springs to 0
   with the finger's velocity; otherwise `drag` springs back to 0.
+- 2.16.0: `Accent` is a data class (was an enum): `Accent.presets` (3 new: Sora, Yuzu, Hojicha) and
+  `Accent.custom(color)`, which derives `light` / `dark` / `night` from the color's HSV. Prefs:
+  `accent` = preset id or `perso`, `accent_perso` = ARGB; `Appearance.custom` keeps the custom color
+  even when a preset is chosen (its bubble stays). `ui/components/ColorWheelDialog`: sweep gradient of
+  hues (clockwise, like the finger angle with y down) + radial fade to grey at the centre; tap or drag
+  sets hue (angle) and saturation (distance, at least 0.12); the value is fixed at 0.92 so the dark text
+  of selected buttons stays readable; the "Use it" button previews the color.
 - Emulator tip (2026-11-10): with `-gpu swiftshader_indirect` the emulator itself crashes when the
   music window opens; `-gpu host` works again.
 - Emulator tip: if screenshots turn black and the app "isn't responding" while its main thread just

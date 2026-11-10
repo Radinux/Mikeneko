@@ -94,6 +94,7 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.contentDescription
 import app.mikeneko.ui.theme.Appearance
 import app.mikeneko.ui.theme.Accent
+import app.mikeneko.ui.components.ColorWheelDialog
 import app.mikeneko.ui.theme.statusBarSpacePadding
 import app.mikeneko.update.AppUpdates
 import java.time.LocalDate
@@ -318,6 +319,7 @@ private fun LanguageSection(context: Context) {
 @Composable
 private fun AppearanceSection() {
     val accent = Appearance.accent
+    var picking by remember { mutableStateOf(false) }
     Section(stringResource(R.string.settings_section_appearance)) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
             Text(stringResource(R.string.settings_accent), color = Pelage.Texte, fontSize = 15.sp, fontWeight = FontWeight.Bold)
@@ -327,22 +329,53 @@ private fun AppearanceSection() {
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Accent.entries.forEach { option ->
-                    val selected = option == accent
-                    val label = stringResource(option.label)
+                @Composable
+                fun Bubble(fill: Color, label: String, selected: Boolean, onClick: () -> Unit) {
                     Box(
                         Modifier
                             .size(44.dp)
                             .clip(CircleShape)
-                            .background(option.base)
+                            .background(fill)
                             .border(if (selected) 3.dp else 0.dp, Pelage.Texte, CircleShape)
-                            .clickable(role = Role.RadioButton, onClickLabel = label) { AppSettings.setAccent(option) }
+                            .clickable(role = Role.RadioButton, onClickLabel = label, onClick = onClick)
                             .semantics { contentDescription = label; this.selected = selected },
                         contentAlignment = Alignment.Center,
                     ) {
                         if (selected) Icon(MkIcons.Check, null, tint = Pelage.Encre, modifier = Modifier.size(22.dp))
                     }
                 }
+                Accent.presets.forEach { option ->
+                    Bubble(option.base, stringResource(option.label), option.id == accent.id) { AppSettings.setAccent(option) }
+                }
+                // Ta couleur (2.16.0) : sa pastille une fois choisie ; touchée à nouveau, elle rouvre le cercle
+                val custom = Appearance.custom
+                if (custom != null) {
+                    val selected = accent.id == Accent.CUSTOM
+                    Bubble(custom, stringResource(R.string.accent_custom), selected) {
+                        if (selected) picking = true else AppSettings.setCustomAccent(custom)
+                    }
+                }
+                // Le « + » : le cercle chromatique
+                Box(
+                    Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(Pelage.Bord)
+                        .border(1.5.dp, Pelage.Gris.copy(alpha = 0.6f), CircleShape)
+                        .clickable(role = Role.Button, onClickLabel = stringResource(R.string.accent_add)) { picking = true },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(MkIcons.Plus, stringResource(R.string.accent_add), tint = Pelage.Texte, modifier = Modifier.size(22.dp))
+                }
+            }
+        }
+        if (picking) {
+            ColorWheelDialog(
+                initial = Appearance.custom ?: accent.base,
+                onDismiss = { picking = false },
+            ) {
+                AppSettings.setCustomAccent(it)
+                picking = false
             }
         }
         Divider()

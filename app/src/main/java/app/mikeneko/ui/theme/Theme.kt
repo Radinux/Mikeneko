@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -23,18 +24,42 @@ import app.mikeneko.R
  * barres et liens. Calico (le roux du logo) par défaut ; pas de violet. [night] : le fond très
  * sombre teinté (pochettes absentes, pages sans image).
  */
-enum class Accent(val id: String, @StringRes val label: Int, val base: Color, val light: Color, val dark: Color, val night: Color) {
-    Calico("roux", R.string.accent_calico, Color(0xFFE07A2E), Color(0xFFF5A564), Color(0xFFC45A1C), Color(0xFF3A2418)),
-    Sakura("sakura", R.string.accent_sakura, Color(0xFFE8789A), Color(0xFFF6A9C0), Color(0xFFC4547A), Color(0xFF3A1A26)),
-    Ocean("ocean", R.string.accent_ocean, Color(0xFF3D8FE0), Color(0xFF8CC0F5), Color(0xFF1F6BB8), Color(0xFF14263A)),
-    Matcha("matcha", R.string.accent_matcha, Color(0xFF6DB359), Color(0xFFA5D892), Color(0xFF4A8C38), Color(0xFF1C2E18)),
-    Cherry("cerise", R.string.accent_cherry, Color(0xFFE0484B), Color(0xFFF58C8E), Color(0xFFB8282B), Color(0xFF3A1617)),
-    Mint("menthe", R.string.accent_mint, Color(0xFF2FB5A0), Color(0xFF7DDACB), Color(0xFF1B8C7B), Color(0xFF12302B)),
-    Amber("ambre", R.string.accent_amber, Color(0xFFE0A82E), Color(0xFFF5CF7A), Color(0xFFB8861A), Color(0xFF3A2C12)),
-    ;
-
+data class Accent(val id: String, @StringRes val label: Int, val base: Color, val light: Color, val dark: Color, val night: Color) {
     companion object {
-        fun of(id: String?): Accent = entries.firstOrNull { it.id == id } ?: Calico
+        val Calico = Accent("roux", R.string.accent_calico, Color(0xFFE07A2E), Color(0xFFF5A564), Color(0xFFC45A1C), Color(0xFF3A2418))
+        val Sakura = Accent("sakura", R.string.accent_sakura, Color(0xFFE8789A), Color(0xFFF6A9C0), Color(0xFFC4547A), Color(0xFF3A1A26))
+        val Ocean = Accent("ocean", R.string.accent_ocean, Color(0xFF3D8FE0), Color(0xFF8CC0F5), Color(0xFF1F6BB8), Color(0xFF14263A))
+        val Matcha = Accent("matcha", R.string.accent_matcha, Color(0xFF6DB359), Color(0xFFA5D892), Color(0xFF4A8C38), Color(0xFF1C2E18))
+        val Cherry = Accent("cerise", R.string.accent_cherry, Color(0xFFE0484B), Color(0xFFF58C8E), Color(0xFFB8282B), Color(0xFF3A1617))
+        val Mint = Accent("menthe", R.string.accent_mint, Color(0xFF2FB5A0), Color(0xFF7DDACB), Color(0xFF1B8C7B), Color(0xFF12302B))
+        val Amber = Accent("ambre", R.string.accent_amber, Color(0xFFE0A82E), Color(0xFFF5CF7A), Color(0xFFB8861A), Color(0xFF3A2C12))
+        // 2.16.0 : trois de plus (le ciel, le yuzu, le thé torréfié)
+        val Sora = Accent("sora", R.string.accent_sora, Color(0xFF38B6E8), Color(0xFF8AD6F5), Color(0xFF1C8DBB), Color(0xFF12293A))
+        val Yuzu = Accent("yuzu", R.string.accent_yuzu, Color(0xFFB4CC34), Color(0xFFD5E67E), Color(0xFF8BA21C), Color(0xFF262E12))
+        val Hojicha = Accent("hojicha", R.string.accent_hojicha, Color(0xFFC08A5B), Color(0xFFE0B890), Color(0xFF9A6638), Color(0xFF33241A))
+
+        /** Les couleurs toutes faites, dans l'ordre des pastilles. */
+        val presets = listOf(Calico, Sakura, Ocean, Matcha, Cherry, Mint, Amber, Sora, Yuzu, Hojicha)
+
+        const val CUSTOM = "perso"
+
+        /** La couleur choisie au cercle (2.16.0) : ses nuances plus claire, plus foncée et de nuit s'en déduisent. */
+        fun custom(color: Color): Accent {
+            val hsv = FloatArray(3)
+            android.graphics.Color.colorToHSV(color.toArgb(), hsv)
+            val (h, s, v) = Triple(hsv[0], hsv[1], hsv[2])
+            return Accent(
+                CUSTOM,
+                R.string.accent_custom,
+                base = color,
+                light = Color.hsv(h, s * 0.55f, minOf(1f, v + 0.12f)),
+                dark = Color.hsv(h, minOf(1f, s * 1.05f), v * 0.78f),
+                night = Color.hsv(h, minOf(s, 0.6f) * 0.75f, 0.22f),
+            )
+        }
+
+        fun of(id: String?, custom: Color? = null): Accent =
+            if (id == CUSTOM && custom != null) custom(custom) else presets.firstOrNull { it.id == id } ?: Calico
     }
 }
 
@@ -44,6 +69,8 @@ enum class Accent(val id: String, @StringRes val label: Int, val base: Color, va
  */
 object Appearance {
     var accent by mutableStateOf(Accent.Calico)
+    /** La couleur perso (2.16.0), gardée même quand une autre est choisie (sa pastille reste). */
+    var custom by mutableStateOf<Color?>(null)
     /** Fond noir pur, pour les écrans OLED. */
     var amoled by mutableStateOf(false)
 }

@@ -583,7 +583,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">What’s new in Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Nice!</string>
-    <string name="whats_new_body">🎚️ Sort your playlists automatically\n\n• My order, A–Z, Artist, Album, BPM or Camelot (the harmonic mixing wheel).\n• Edit mode shows each song’s BPM and key on the Camelot wheel.\n• Tempo and key are worked out in the app from the sound itself: downloaded songs and songs you’ve played, the others after their first listen.\n\n🔍 Since 2.14: search your subscriptions and inside a channel, and a Popular tab on channel pages.</string>
+    <string name="whats_new_body">🎨 Your own theme color\n\n• Settings › Appearance: the + bubble opens a color wheel. Slide around it for the hue, towards the middle for a softer color.\n• Your color gets its own bubble; tap it again to change it.\n• Three more colors: Sora, Yuzu and Hojicha.\n\n🎚️ Since 2.15: sort your playlists (A–Z, artist, album, BPM, Camelot) from the Sort menu.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Import playlists</string>
@@ -614,6 +614,15 @@
     <string name="accent_cherry">Cherry</string>
     <string name="accent_mint">Mint</string>
     <string name="accent_amber">Amber</string>
+    <string name="accent_sora">Sora</string>
+    <string name="accent_yuzu">Yuzu</string>
+    <string name="accent_hojicha">Hojicha</string>
+    <string name="accent_custom">Your color</string>
+    <string name="accent_add">Choose your own color</string>
+    <string name="accent_picker_title">Your color</string>
+    <string name="accent_picker_text">Slide around the circle for the hue, towards the middle for a softer color</string>
+    <string name="accent_picker_ok">Use it</string>
+    <string name="accent_picker_cancel">Cancel</string>
 
     <!-- Notifications (Notifier.kt, 2.10.0) -->
     <string name="notif_channel_updates">Updates</string>
