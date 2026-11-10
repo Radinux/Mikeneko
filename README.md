@@ -207,7 +207,7 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
   player.
 
 <details>
-<summary><b>🏮 The clan archives: versions 2.3 → 1.1</b></summary>
+<summary><b>🏮 The clan archives: versions 2.3 → 2.0, and the 1.x beta</b></summary>
 
 - **2.3**: "Your shorts" (bookmarks in the Shorts player, a grid in the Library) and a "No shorts"
   setting.
@@ -218,8 +218,11 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
   Google service).
 - **2.1.0 → 2.1.2**: **automatic updates** from GitHub, installed without a tap (Android 12+) when you
   leave the app.
-- **2.0**: a real **landscape player page**, the progress bar inside the video, a zoom into full
-  screen.
+- **2.0**: **first stable version**. A real **landscape player page**, the progress bar inside the
+  video, a zoom into full screen.
+
+**The beta (1.x)**: everything before 2.0 was the beta.
+
 - **1.19**: only the video rotates into full screen; the mini player becomes a **calico cat head**;
   videos and music no longer get mixed up; mini player controls hide on their own.
 - **1.18**: subscription import moved to Settings › Backup; channel pictures fill in by themselves.
