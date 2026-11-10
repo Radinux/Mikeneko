@@ -323,10 +323,9 @@ fun MikenekoRoot(
         PlayerHolder.skipped.collect { toast(context.getString(R.string.sponsor_skipped)) }
     }
 
-    // Mises à jour depuis GitHub : une vérification par jour au lancement ; une nouvelle version se
-    // télécharge en fond et s'installe toute seule quand on quitte l'appli (voir AppUpdates)
-    // (quand elle est téléchargée, une pilule « Mettre à jour » apparaît en haut : UpdatePill, plus bas)
-    LaunchedEffect(Unit) { AppUpdates.checkIfDue(context) }
+    // Mises à jour depuis GitHub : vérifiées par MainActivity.onStart (toutes les 4 h au plus) ; une
+    // nouvelle version se télécharge en fond et s'installe toute seule quand on quitte l'appli (voir
+    // AppUpdates). Quand elle est téléchargée, une pilule « Mettre à jour » apparaît en haut : UpdatePill, plus bas
 
     val notifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
     LaunchedEffect(Unit) {

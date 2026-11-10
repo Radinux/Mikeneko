@@ -68,6 +68,7 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
     every song to remove it in one tap, and the handle to reorder. Reordering is no longer active the
     rest of the time (songs moved by accident).
 - 2.11.1: texts cleaned up (no other app names in the app).
+- 2.11.21: channel bell notifications redone: no more alerts for year-old videos, checked every hour (was 2 h); new app versions are looked for every 4 hours (was once a day), also when coming back to the app.
 - 2.11.20: a video resumed where you left it no longer stays black: its saved part no longer mixes with a different YouTube file, and a failed playback reloads by itself (or with the play button).
 - 2.11.19: the controls stay visible during that animation again (the jump itself is fixed).
 - 2.11.18: leaving fullscreen, the play / skip buttons no longer jump up: the controls hide during the animation and fade back in.

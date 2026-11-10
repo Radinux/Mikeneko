@@ -24,7 +24,7 @@ import org.json.JSONObject
  * et les APK au même endroit depuis 2.6.7 ; avant, les APK étaient sur Radinux/Mikeneko-releases,
  * archivé). Aucun jeton dans l'APK.
  *
- * Au lancement (une fois par jour au plus), on demande la dernière release. Plus récente que la
+ * Au lancement et au retour dans l'appli (toutes les 4 h au plus), on demande la dernière release. Plus récente que la
  * version installée : son APK se télécharge en fond, puis s'installe **sans appui** (Android 12+,
  * l'appli se met à jour elle-même, même clé de signature) quand on quitte l'appli et que rien ne
  * joue (l'installation ferme l'appli). Il faut seulement avoir autorisé une fois Mikeneko à installer
@@ -32,7 +32,8 @@ import org.json.JSONObject
  */
 object AppUpdates {
     private const val LATEST = "https://api.github.com/repos/Radinux/Mikeneko/releases/latest"
-    private const val DAY_MS = 24 * 60 * 60_000L
+    /** Une vérification toutes les 4 h au plus (une par jour avant 2.11.21). */
+    const val CHECK_EVERY_MS = 4 * 60 * 60_000L
 
     data class Release(val version: String, val notes: String, val page: String, val apkUrl: String)
 
@@ -71,11 +72,11 @@ object AppUpdates {
 
     private fun prefs(context: Context) = context.getSharedPreferences("mises_a_jour", Context.MODE_PRIVATE)
 
-    /** Au lancement : une vérification par jour au plus. */
+    /** Au lancement et au retour dans l'appli : une vérification toutes les 4 h au plus. */
     fun checkIfDue(context: Context) {
         val app = context.applicationContext
         val last = prefs(app).getLong("derniere", 0L)
-        if (System.currentTimeMillis() - last < DAY_MS) return
+        if (System.currentTimeMillis() - last < CHECK_EVERY_MS) return
         check(app)
     }
 

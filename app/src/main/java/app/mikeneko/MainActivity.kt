@@ -172,6 +172,8 @@ class MainActivity : ComponentActivity() {
         if (stopWatchingIdle()) return
         // Un téléchargement de playlist figé pendant que l'appli était quittée repart
         PlaylistDownloads.resume()
+        // Une nouvelle version sur GitHub ? (au lancement et au retour dans l'appli, toutes les 4 h au plus)
+        AppUpdates.checkIfDue(this)
         // Se connecter au service : c'est ce qui affiche les contrôles dans la notification
         val token = SessionToken(this, ComponentName(this, PlaybackService::class.java))
         controller = MediaController.Builder(this, token).buildAsync()

@@ -40,9 +40,9 @@ import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Les notifications de Mikeneko (2.10.0 ; avant, aucune) :
- * - une nouvelle version disponible (vérifiée en fond une fois par jour) ou prête à installer ;
+ * - une nouvelle version disponible (vérifiée en fond toutes les 4 h) ou prête à installer ;
  * - les nouvelles vidéos des chaînes dont on a allumé la cloche (à côté de « S'abonner »), vérifiées
- *   en fond toutes les ~2 h par le flux RSS de chaque chaîne (léger). Cloche éteinte par défaut.
+ *   en fond toutes les heures par le flux RSS de chaque chaîne (léger). Cloche éteinte par défaut.
  * La vérification en fond passe par WorkManager ([WatchWorker]), même appli fermée.
  */
 object Notifier {
@@ -51,6 +51,10 @@ object Notifier {
     private const val UPDATE_ID = 1
     const val EXTRA_UPDATE = "mikeneko.mise_a_jour"
     private const val MAX_PER_CHANNEL = 3
+    /** Une vidéo plus ancienne que ça n'est pas annoncée (même jamais vue). */
+    private const val FRESH_MS = 3 * 24 * 3_600_000L
+    /** Combien de vidéos on retient par chaîne. */
+    private const val MAX_KNOWN = 80
 
     /** Les canaux de notification (réglables dans Android : Mises à jour, Nouvelles vidéos). */
     fun createChannels(context: Context) {
@@ -60,12 +64,13 @@ object Notifier {
         manager.createNotificationChannel(NotificationChannel(CHANNEL_VIDEOS, context.getString(R.string.notif_channel_videos), NotificationManager.IMPORTANCE_DEFAULT))
     }
 
-    /** La vérification en fond toutes les 2 h, avec du réseau (une seule, gardée d'un lancement à l'autre). */
+    /** La vérification en fond toutes les heures (2 h avant 2.11.21), avec du réseau (une seule, gardée d'un lancement à l'autre). */
     fun schedule(context: Context) {
-        val request = PeriodicWorkRequestBuilder<WatchWorker>(2, TimeUnit.HOURS)
+        val request = PeriodicWorkRequestBuilder<WatchWorker>(1, TimeUnit.HOURS)
             .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
             .build()
-        WorkManager.getInstance(context).enqueueUniquePeriodicWork("veille", ExistingPeriodicWorkPolicy.KEEP, request)
+        // UPDATE : la nouvelle fréquence remplace celle déjà programmée
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork("veille", ExistingPeriodicWorkPolicy.UPDATE, request)
     }
 
     /** Android autorise-t-il nos notifications ? (Android 13+ : une permission à accorder.) */
@@ -103,10 +108,10 @@ object Notifier {
         runCatching { NotificationManagerCompat.from(context).notify(UPDATE_ID, notification) }
     }
 
-    /** En fond, une fois par jour au plus : une nouvelle version sur GitHub ? */
+    /** En fond, toutes les 4 h au plus : une nouvelle version sur GitHub ? */
     internal fun checkUpdate(context: Context) {
         val now = System.currentTimeMillis()
-        if (now - prefs(context).getLong("maj_verifiee", 0L) < 20 * 3_600_000L) return
+        if (now - prefs(context).getLong("maj_verifiee", 0L) < AppUpdates.CHECK_EVERY_MS - 10 * 60_000L) return
         prefs(context).edit().putLong("maj_verifiee", now).apply()
         val release = AppUpdates.latest() ?: return
         if (AppUpdates.newer(release.version, AppUpdates.installedVersion(context))) updateAvailable(context, release.version)
@@ -115,28 +120,44 @@ object Notifier {
     // ------------------------------------------------------------------ nouvelles vidéos
 
     /**
-     * Les chaînes à cloche : ce qui est sorti depuis la dernière vérification (3 vidéos au plus par
-     * chaîne). La première fois pour une chaîne, on note seulement où on en est (pas d'avalanche).
+     * Les chaînes à cloche : les vidéos jamais vues dans leur flux, et sorties il y a moins de
+     * [FRESH_MS] (3 au plus par chaîne). La première fois pour une chaîne, on note seulement ses
+     * vidéos (pas d'avalanche).
+     *
+     * 2.11.21 : on retient les vidéos elles-mêmes (leurs identifiants), plus seulement la date de
+     * la plus récente. Avant, quand le flux RSS ne répondait pas, l'onglet « Vidéos » prenait le
+     * relais avec des dates approximatives (« il y a 1 an » = aujourd'hui moins un an), plus
+     * récentes que la vraie date retenue : une vieille vidéo passait pour nouvelle, et une date
+     * trop en avant cachait ensuite les vraies nouveautés.
      */
     internal suspend fun checkNewVideos(context: Context) {
         val store = SubscriptionStore.get(context)
         val bells = store.bells.value
         if (bells.isEmpty() || !allowed(context)) return
-        val seenPrefs = context.getSharedPreferences("cloches_vues", Context.MODE_PRIVATE)
+        val known = context.getSharedPreferences("cloches_videos", Context.MODE_PRIVATE)
+        context.deleteSharedPreferences("cloches_vues") // l'ancien suivi par date (avant 2.11.21)
+        val now = System.currentTimeMillis()
         store.items.value.filter { it.channelId in bells }.forEach { sub ->
             val videos = runCatching { SubscriptionFeed.latest(listOf(sub)) }.getOrDefault(emptyList()).filterNot { it.video.isLive }
-            val newest = videos.maxOfOrNull { it.published.toEpochMilli() } ?: return@forEach
-            val seen = seenPrefs.getLong(sub.channelId, 0L)
-            if (seen > 0L) {
+            if (videos.isEmpty()) return@forEach // flux injoignable : on réessaiera, sans rien oublier
+            val ids = videos.map { videoIdOf(it.video.url) ?: it.video.url }
+            val before = known.getString(sub.channelId, null)?.split(',')?.filter { it.isNotEmpty() }
+            if (before != null) {
+                val seen = before.toSet()
                 val watched = store.watched.value
                 videos
-                    .filter { it.published.toEpochMilli() > seen && it.video.url !in watched }
+                    .filter { (videoIdOf(it.video.url) ?: it.video.url) !in seen }
+                    // Date inconnue (EPOCH) ou trop ancienne : pas une nouveauté
+                    .filter { it.published.toEpochMilli() > now - FRESH_MS }
+                    .filter { it.video.url !in watched }
                     .filterNot { AppSettings.hideShorts.value && it.video.looksShort }
                     .sortedBy { it.published }
                     .takeLast(MAX_PER_CHANNEL)
                     .forEach { newVideo(context, it.video, sub) }
             }
-            if (newest > seen) seenPrefs.edit().putLong(sub.channelId, newest).apply()
+            // Les vidéos du flux d'abord, puis les anciennes retenues (le flux RSS et l'onglet n'ont pas les mêmes)
+            val merged = (ids + before.orEmpty()).distinct().take(MAX_KNOWN)
+            known.edit().putString(sub.channelId, merged.joinToString(",")).apply()
             delay(1_500) // une chaîne à la fois, sans rafale
         }
     }
@@ -169,7 +190,7 @@ object Notifier {
     }
 }
 
-/** La vérification en fond (toutes les ~2 h, avec du réseau) : nouvelles vidéos des chaînes à cloche, mises à jour. */
+/** La vérification en fond (toutes les heures, avec du réseau) : nouvelles vidéos des chaînes à cloche, mises à jour. */
 class WatchWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         runCatching { Notifier.checkNewVideos(applicationContext) }

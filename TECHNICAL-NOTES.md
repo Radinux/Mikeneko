@@ -935,6 +935,21 @@ users: the point is to take them from the videos really watched.
   (IDLE) player calls `retry()` too, since `play()` alone does nothing there. Checked on the
   emulator: resume at 11 min plays; Wi-Fi off + seek far ahead → `Source error`; Wi-Fi on + play →
   plays again at the same position.
+- 2.11.21: bell notifications. Before, `Notifier.checkNewVideos` kept only the newest publish date
+  per channel (`cloches_vues`) and announced anything newer. When RSS failed (even for one channel,
+  `SubscriptionFeed.rssDownUntil` switches every channel to the Videos tab for 30 min), the tab's
+  dates are approximations computed from "1 year ago" / "12 days ago" *at fetch time*, so they move
+  forward on every check and land after the stored real date: old videos were re-announced, and the
+  stored date drifted. Now `cloches_videos` keeps the last 80 video ids per channel (RSS and tab
+  ids merged); a video is announced only if its id was never seen AND its date is less than 3 days
+  old (unknown date = EPOCH = skipped); an empty/failed fetch changes nothing. First check of a
+  channel only records. The worker runs every hour (`ExistingPeriodicWorkPolicy.UPDATE` so phones
+  with the old 2 h schedule switch). Testing tip: WorkManager ignores a forced JobScheduler run of
+  a periodic job that isn't due; delete `no_backup/androidx.work.workdb*` (debug build, run-as)
+  and relaunch to get an immediate first run.
+- 2.11.21: updates: `AppUpdates.CHECK_EVERY_MS` = 4 h, checked from `MainActivity.onStart` (launch
+  and every return to the app) instead of a `LaunchedEffect` at launch; the background check
+  (`Notifier.checkUpdate`) uses the same interval.
 - Emulator tip: if screenshots turn black and the app "isn't responding" while its main thread just
   waits for vsync, the emulator's GPU is stuck: restart it with `-gpu swiftshader_indirect`.
 
