@@ -255,6 +255,10 @@
         <item quantity="other">%d vidéos</item>
     </plurals>
     <string name="channel_tab_videos">Vidéos</string>
+    <string name="channel_tab_popular">Populaires</string>
+    <string name="channel_search">Rechercher dans la chaîne</string>
+    <string name="channel_search_results">Résultats pour « %1$s »</string>
+    <string name="subs_search">Rechercher dans tes abonnements</string>
     <string name="channel_tab_shorts">Shorts</string>
     <string name="channel_tab_live">En direct</string>
     <string name="channel_verified">Chaîne vérifiée</string>
@@ -580,7 +584,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">Quoi de neuf dans Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Super !</string>
-    <string name="whats_new_body">💬 Les commentaires dans la page de la vidéo\n\n• Touche Commentaires : la carte s’étire sur place et tu fais défiler les commentaires dedans, sans quitter la page.\n• Touche son titre, ou retour, pour la replier.\n\n🔔 Depuis la 2.12 : la cloche n’annonce que les vidéos qui viennent vraiment de sortir, vérifiées toutes les heures, et les nouvelles versions sont cherchées toutes les 4 heures.</string>
+    <string name="whats_new_body">🔍 Chercher partout\n\n• Abonnements : une loupe à côté du titre trouve une chaîne ou une vidéo pendant que tu tapes.\n• Sur la page d’une chaîne : une loupe en haut cherche seulement dans ses vidéos.\n\n🔥 Un onglet Populaires sur les pages de chaîne : leurs vidéos les plus vues.\n\n💬 Depuis la 2.13 : les commentaires s’étirent directement dans la page de la vidéo.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Importer des playlists</string>

@@ -129,6 +129,7 @@ dependencies {
     implementation(libs.androidx.media3.ui)
 
     implementation(libs.newpipe.extractor)
+    implementation(libs.nanojson)
     implementation(libs.youtubedl.library)
     implementation(libs.youtubedl.ffmpeg)
 

@@ -41,7 +41,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
+import app.mikeneko.ui.glass.LiquidGlass
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -59,6 +68,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.mikeneko.R
+import app.mikeneko.data.ChannelBrowse
 import app.mikeneko.data.ChannelItem
 import app.mikeneko.data.ChannelPage
 import app.mikeneko.data.PlaylistItem
@@ -170,10 +180,21 @@ fun ChannelContent(channel: ChannelItem, onOpen: (VideoItem) -> Unit) {
     // L'onglet Playlists (des playlists, pas des vidéos)
     var playlists by remember(channel.url) { mutableStateOf<List<PlaylistItem>?>(null) }
     var playlistsNext by remember(channel.url) { mutableStateOf<Page?>(null) }
+    // Les listes lues par ChannelBrowse (Populaires, recherche) : la suite se demande avec un jeton
+    val tokenNext = remember(channel.url) { mutableStateMapOf<String, String>() }
+    // La recherche dans les vidéos de la chaîne (la loupe de l'en-tête, ChannelOverlay)
+    val searched by ChannelSearch.submitted.collectAsState()
+    var searchVideos by remember(channel.url) { mutableStateOf<List<VideoItem>?>(null) }
+    var searchFailed by remember(channel.url) { mutableStateOf(false) }
     val list = rememberLazyListState()
     // Une playlist ouverte s'affiche à la place de la chaîne ; elle se referme avec la chaîne
     val openPlaylist by ChannelPlaylist.open.collectAsState()
-    DisposableEffect(channel.url) { onDispose { ChannelPlaylist.open.value = null } }
+    DisposableEffect(channel.url) {
+        onDispose {
+            ChannelPlaylist.open.value = null
+            ChannelSearch.close()
+        }
+    }
 
     LaunchedEffect(channel.url) {
         val loaded = runCatching { YouTubeRepository.channel(channel.url) }.getOrNull()
@@ -209,6 +230,16 @@ fun ChannelContent(channel: ChannelItem, onOpen: (VideoItem) -> Unit) {
             return@LaunchedEffect
         }
         if (tab in tabVideos) return@LaunchedEffect
+        if (tab == POPULAR) {
+            val result = runCatching { ChannelBrowse.popular(loaded.id, loaded.name) }.getOrNull()
+            if (result == null) {
+                tabFailed[tab] = true
+            } else {
+                tabVideos[tab] = result.videos
+                result.next?.let { tokenNext[tab] = it }
+            }
+            return@LaunchedEffect
+        }
         val handler = handlerOf(tab) ?: return@LaunchedEffect
         val result = runCatching { YouTubeRepository.channelTab(handler, loaded.name) }.getOrNull()
         if (result == null) {
@@ -229,7 +260,7 @@ fun ChannelContent(channel: ChannelItem, onOpen: (VideoItem) -> Unit) {
         snapshotFlow { nearEnd to (if (tab == ChannelTabs.PLAYLISTS) playlistsNext else tabNext[tab]) }.collect { (near, more) ->
             val loaded = page
             val handler = handlerOf(tab)
-            if (!near || more == null || loaded == null || handler == null) return@collect
+            if (!near || more == null || loaded == null || handler == null || ChannelSearch.submitted.value != null) return@collect
             loadingMore = true
             if (tab == ChannelTabs.PLAYLISTS) {
                 val result = runCatching { YouTubeRepository.channelPlaylistsMore(handler, more) }.getOrNull()
@@ -254,6 +285,44 @@ fun ChannelContent(channel: ChannelItem, onOpen: (VideoItem) -> Unit) {
         }
     }
 
+    // Une recherche lancée : ses résultats remplacent les onglets (la liste remonte en haut des résultats)
+    LaunchedEffect(page, searched) {
+        val loaded = page ?: return@LaunchedEffect
+        val query = searched ?: return@LaunchedEffect
+        searchVideos = null
+        searchFailed = false
+        tokenNext.remove(SEARCH)
+        val result = runCatching { ChannelBrowse.search(loaded.id, loaded.name, query) }.getOrNull()
+        if (searched != query) return@LaunchedEffect // une autre recherche est partie entre-temps
+        if (result == null) {
+            searchFailed = true
+        } else {
+            searchVideos = result.videos
+            result.next?.let { tokenNext[SEARCH] = it }
+        }
+        list.scrollToItem(0)
+    }
+    // La suite des listes à jeton (Populaires, recherche), près du bas
+    LaunchedEffect(channel.url, tab, searched) {
+        val kind = if (searched != null) SEARCH else tab
+        snapshotFlow { nearEnd to tokenNext[kind] }.collect { (near, token) ->
+            val loaded = page
+            if (!near || token == null || loaded == null) return@collect
+            loadingMore = true
+            tokenNext.remove(kind)
+            val result = runCatching { ChannelBrowse.more(token, loaded.name) }.getOrNull()
+            if (result != null) {
+                if (kind == SEARCH) {
+                    searchVideos = (searchVideos.orEmpty() + result.videos).distinctBy { it.url }
+                } else {
+                    tabVideos[kind] = (tabVideos[kind].orEmpty() + result.videos).distinctBy { it.url }
+                }
+                result.next?.let { tokenNext[kind] = it }
+            }
+            loadingMore = false
+        }
+    }
+
     openPlaylist?.let {
         PlaylistContent(it, onOpen)
         return
@@ -269,7 +338,8 @@ fun ChannelContent(channel: ChannelItem, onOpen: (VideoItem) -> Unit) {
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         item(key = "haut") { Spacer(Modifier.statusBarSpacePadding().height(72.dp)) }
-        item(key = "chaine") {
+        // (pendant une recherche, les résultats viennent juste sous l'en-tête : pas de bannière ni de description)
+        if (searched == null) item(key = "chaine") {
             val info = page
             val id = info?.id ?: channel.channelId
             val subscribed = id != null && subscriptions.any { it.channelId == id }
@@ -334,7 +404,36 @@ fun ChannelContent(channel: ChannelItem, onOpen: (VideoItem) -> Unit) {
         }
         // Les onglets (seulement s'il y en a plusieurs)
         // Réglage « Pas de shorts » : pas d'onglet Shorts
-        val tabs = page?.tabs.orEmpty().mapNotNull { it.channelTabKind() }.filter { !(AppSettings.hideShorts.value && it == ChannelTabs.SHORTS) }
+        // « Populaires » (2.14.0) : les vidéos les plus vues, juste après « Vidéos »
+        val tabs = page?.tabs.orEmpty().mapNotNull { it.channelTabKind() }
+            .filter { !(AppSettings.hideShorts.value && it == ChannelTabs.SHORTS) }
+            .flatMap { if (it == ChannelTabs.VIDEOS) listOf(it, POPULAR) else listOf(it) }
+        if (searched != null) {
+            // Recherche dans la chaîne : ses résultats à la place des onglets
+            val query = searched.orEmpty()
+            item(key = "recherche") {
+                Text(
+                    stringResource(R.string.channel_search_results, query),
+                    Modifier.padding(horizontal = 20.dp),
+                    color = Pelage.Texte,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            val found = searchVideos
+            when {
+                searchFailed -> item(key = "recherche_rate") { EmptyCat(stringResource(R.string.nothing_found), stringResource(R.string.channel_failed), Modifier.padding(top = 20.dp)) }
+                found == null -> item(key = "recherche_charge") { Loading(Modifier.padding(top = 40.dp)) }
+                found.isEmpty() -> item(key = "recherche_vide") { EmptyCat(stringResource(R.string.nothing_found), stringResource(R.string.nothing_found_text), Modifier.padding(top = 20.dp)) }
+                else -> adaptiveItems(found, cardColumns, key = { "r" + it.url }) { video, modifier ->
+                    VideoCard(video, modifier, onMore = { VideoMenu.open(video) }) { onOpen(video) }
+                }
+            }
+            if (loadingMore) item(key = "suite") { Loading(Modifier.size(64.dp)) }
+            return@LazyColumn
+        }
         if (tabs.size > 1) {
             item(key = "onglets") {
                 LazyRow(
@@ -386,11 +485,30 @@ private fun Modifier.overlapAbove(by: Dp) = layout { measurable, constraints ->
     layout(placeable.width, (placeable.height - shift).coerceAtLeast(0)) { placeable.place(0, -shift) }
 }
 
+/** Les onglets lus par [ChannelBrowse] (pas des onglets NewPipe) : les plus vues, et la recherche. */
+private const val POPULAR = "populaire"
+private const val SEARCH = "recherche"
+
 private fun channelTabLabel(kind: String) = when (kind) {
+    POPULAR -> R.string.channel_tab_popular
     ChannelTabs.SHORTS -> R.string.channel_tab_shorts
     ChannelTabs.LIVESTREAMS -> R.string.channel_tab_live
     ChannelTabs.PLAYLISTS -> R.string.channel_tab_playlists
     else -> R.string.channel_tab_videos
+}
+
+/**
+ * La recherche dans les vidéos de la chaîne ouverte (2.14.0) : la loupe de l'en-tête ouvre le champ
+ * ([query], null = fermé) ; « Rechercher » sur le clavier lance [submitted], dont les résultats
+ * remplacent les onglets. Le retour la ferme.
+ */
+object ChannelSearch {
+    val query = MutableStateFlow<String?>(null)
+    val submitted = MutableStateFlow<String?>(null)
+    fun close() {
+        query.value = null
+        submitted.value = null
+    }
 }
 
 /** La playlist ouverte depuis une page de chaîne (null = la chaîne). Le retour et l'en-tête s'en servent. */
@@ -553,24 +671,75 @@ internal fun ShortCard(video: VideoItem, modifier: Modifier = Modifier, onClick:
     }
 }
 
-/** L'en-tête en verre d'une chaîne : retour et nom. */
+/** L'en-tête en verre d'une chaîne : retour, nom, et la loupe pour chercher dans ses vidéos. */
 @Composable
 fun ChannelOverlay(channel: ChannelItem, backdrop: Backdrop, onBack: () -> Unit) {
     val playlist by ChannelPlaylist.open.collectAsState()
+    val query by ChannelSearch.query.collectAsState()
+    val searching = query != null && playlist == null
     Row(
         Modifier.fillMaxWidth().windowInsetsPadding(WindowInsets.statusBarSpace).padding(start = 16.dp, end = 16.dp, top = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         GlassCircleButton(backdrop, MkIcons.ChevronLeft, stringResource(R.string.back)) {
-            if (ChannelPlaylist.open.value != null) ChannelPlaylist.open.value = null else onBack()
+            when {
+                ChannelPlaylist.open.value != null -> ChannelPlaylist.open.value = null
+                ChannelSearch.query.value != null -> ChannelSearch.close()
+                else -> onBack()
+            }
         }
         Spacer(Modifier.width(12.dp))
-        Text(
-            playlist?.name ?: channel.name,
-            Modifier.weight(1f),
-            style = TextStyle(fontFamily = Rounded, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, shadow = GlassTextShadow),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
+        if (searching) {
+            ChannelSearchField(backdrop, Modifier.weight(1f))
+        } else {
+            Text(
+                playlist?.name ?: channel.name,
+                Modifier.weight(1f),
+                style = TextStyle(fontFamily = Rounded, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, shadow = GlassTextShadow),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        if (playlist == null) {
+            Spacer(Modifier.width(10.dp))
+            if (searching) {
+                GlassCircleButton(backdrop, MkIcons.Close, stringResource(R.string.search_close)) { ChannelSearch.close() }
+            } else {
+                GlassCircleButton(backdrop, MkIcons.Search, stringResource(R.string.channel_search)) { ChannelSearch.query.value = "" }
+            }
+        }
+    }
+}
+
+/** Le champ de recherche dans la chaîne, en verre, à la place de son nom. Le clavier s'ouvre tout de suite. */
+@Composable
+private fun ChannelSearchField(backdrop: Backdrop, modifier: Modifier) {
+    val query by ChannelSearch.query.collectAsState()
+    val focus = remember { FocusRequester() }
+    val keyboard = LocalSoftwareKeyboardController.current
+    LaunchedEffect(Unit) { if (ChannelSearch.submitted.value == null) runCatching { focus.requestFocus() } }
+    LiquidGlass(backdrop, modifier.height(50.dp), cornerRadius = 25.dp, bezel = 16.dp, refraction = 16.dp) {
+        BasicTextField(
+            value = query.orEmpty(),
+            onValueChange = { ChannelSearch.query.value = it },
+            singleLine = true,
+            textStyle = TextStyle(color = Color.White, fontSize = 16.sp, fontFamily = Rounded, fontWeight = FontWeight.Bold, shadow = GlassTextShadow),
+            cursorBrush = SolidColor(Pelage.RouxClair),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            keyboardActions = KeyboardActions(onSearch = {
+                val text = query?.trim().orEmpty()
+                if (text.isNotEmpty()) {
+                    ChannelSearch.submitted.value = text
+                    keyboard?.hide()
+                }
+            }),
+            modifier = Modifier.align(Alignment.CenterStart).fillMaxWidth().padding(horizontal = 18.dp).focusRequester(focus),
+            decorationBox = { inner ->
+                if (query.isNullOrEmpty()) {
+                    Text(stringResource(R.string.channel_search), color = Color.White.copy(alpha = 0.7f), fontSize = 16.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                }
+                inner()
+            },
         )
     }
 }

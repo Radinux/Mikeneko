@@ -256,6 +256,10 @@
         <item quantity="other">%d videos</item>
     </plurals>
     <string name="channel_tab_videos">Videos</string>
+    <string name="channel_tab_popular">Popular</string>
+    <string name="channel_search">Search this channel</string>
+    <string name="channel_search_results">Results for “%1$s”</string>
+    <string name="subs_search">Search your subscriptions</string>
     <string name="channel_tab_shorts">Shorts</string>
     <string name="channel_tab_live">Live</string>
     <string name="channel_verified">Verified channel</string>
@@ -579,7 +583,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">What’s new in Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Nice!</string>
-    <string name="whats_new_body">💬 Comments right in the video page\n\n• Tap Comments: the card stretches in place and you scroll the comments inside it, without leaving the page.\n• Tap its title, or go back, to fold it.\n\n🔔 Since 2.12: bell notifications only for videos that really just came out, checked every hour, and new versions looked for every 4 hours.</string>
+    <string name="whats_new_body">🔍 Search everywhere\n\n• Subscriptions: a magnifier next to the title finds a channel or a video as you type.\n• On a channel page: a magnifier at the top searches only that channel’s videos.\n\n🔥 A Popular tab on channel pages: their most viewed videos.\n\n💬 Since 2.13: comments stretch right inside the video page.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Import playlists</string>

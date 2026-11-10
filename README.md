@@ -58,6 +58,14 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ## 🎌 What's new ⸜(｡˃ ᵕ ˂ )⸝♡
 
+### 2.14
+
+- **Search your subscriptions**: a magnifier next to the Subscriptions title filters the channels
+  (by name) and the videos (by title or channel) as you type, ignoring case and accents.
+- **Search a channel's videos**: a magnifier in the channel page's top bar searches only that
+  channel's videos.
+- **Popular tab** on channel pages: the channel's most viewed videos, right after Videos.
+
 ### 2.13
 
 - **Comments right in the video page**: tapping Comments stretches the card in place to a fixed

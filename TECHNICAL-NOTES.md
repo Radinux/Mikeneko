@@ -960,6 +960,24 @@ users: the point is to take them from the videos really watched.
   `BringIntoViewRequester` scrolls the page to show the whole card once it has grown; `BackHandler`
   folds it; a new video folds it. `CommentsPanel` is now only used by the Shorts player
   (`Comments.open`). Checked on the emulator.
+- 2.14.0: channel search and Popular. NewPipe has neither (no search tab, and its
+  `YoutubeChannelTabExtractor.getPage` only reads `appendContinuationItemsAction`, while the sort
+  chips answer with `reloadContinuationItemsCommand`). `data/ChannelBrowse.kt` sends the InnerTube
+  `browse` requests itself through NewPipe's helpers (`YoutubeParsingHelper.prepareDesktopJsonBuilder`
+  + `getJsonPostResponse`, same client and headers): search = `browseId` + params
+  `EgZzZWFyY2jyBgQKAloA` + `query` (read only the selected tab, the header holds other lists);
+  Popular = the Videos tab (`EgZ2aWRlb3PyBgQKAjoA`), then the token of the 2nd sort chip (always
+  Latest, Popular, Oldest; `chipViewModel`, or the old `chipCloudChipRenderer`); more pages =
+  `continuation` token from `continuationItemRenderer`. Items are parsed with NewPipe's public
+  `YoutubeStreamInfoItemExtractor` (`videoRenderer`) and `YoutubeStreamInfoItemLockupExtractor`
+  (`lockupViewModel` of type VIDEO). Pitfall: in a channel's tabs the lockups have no channel row, so
+  NewPipe reads the views row as the uploader name: the channel name is forced on every item.
+  nanojson is added as a direct dependency at the exact version NewPipeExtractor requires (it was
+  only on the runtime classpath). UI: `ChannelSearch` (query / submitted) shared by `ChannelOverlay`
+  (magnifier → glass field, ✕) and `ChannelContent` (results replace the channel header and tabs;
+  back closes it, from `MikenekoRoot`); `POPULAR` is a pseudo tab kind after Videos. Subscriptions:
+  magnifier next to the title, `folded()` (lowercase, accents removed) filters the avatars row and
+  the feed. Checked on the emulator.
 - Emulator tip: if screenshots turn black and the app "isn't responding" while its main thread just
   waits for vsync, the emulator's GPU is stuck: restart it with `-gpu swiftshader_indirect`.
 

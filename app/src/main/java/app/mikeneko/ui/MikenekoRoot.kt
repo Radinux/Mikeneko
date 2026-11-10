@@ -81,6 +81,7 @@ import app.mikeneko.ui.glass.rememberBackdrop
 import app.mikeneko.ui.screens.ChannelContent
 import app.mikeneko.ui.screens.ChannelOverlay
 import app.mikeneko.ui.screens.ChannelPlaylist
+import app.mikeneko.ui.screens.ChannelSearch
 import app.mikeneko.ui.screens.FullscreenPlayer
 import app.mikeneko.ui.screens.HomeContent
 import app.mikeneko.ui.screens.HomeOverlay
@@ -366,6 +367,9 @@ fun MikenekoRoot(
     // Une playlist ouverte dans une page de chaîne : le retour la referme d'abord
     val channelPlaylist by ChannelPlaylist.open.collectAsState()
     BackHandler(enabled = channelPlaylist != null && route != Route.Lecteur) { ChannelPlaylist.open.value = null }
+    // La recherche dans une chaîne se ferme avant la chaîne (une playlist ouverte, elle, passe avant)
+    val channelSearch by ChannelSearch.query.collectAsState()
+    BackHandler(enabled = channelSearch != null && channelPlaylist == null && route != Route.Lecteur) { ChannelSearch.close() }
 
     // Une vidéo avait mis la musique de côté : au retour dans Musique, elle revient en pause là où
     // elle en était, seulement s'il n'y a plus de vidéo dans le lecteur (sinon la pilule montre le

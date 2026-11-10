@@ -3,6 +3,18 @@ package app.mikeneko.ui.screens
 import app.mikeneko.ui.components.CONNECTED_GAP
 import app.mikeneko.ui.components.ConnectedChip
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.ImeAction
+import app.mikeneko.ui.theme.Rounded
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -92,6 +104,9 @@ fun SubscriptionsContent(onOpen: (VideoItem) -> Unit, onOpenChannel: (ChannelIte
     val subs by store.items.collectAsState()
     var unwatchedOnly by remember { mutableStateOf(false) }
     var channel by remember { mutableStateOf<String?>(null) }
+    // La loupe (2.14.0) : filtre les chaînes (par nom) et les vidéos (titre ou chaîne) pendant qu'on tape
+    var search by remember { mutableStateOf<String?>(null) }
+    BackHandler(enabled = search != null) { search = null }
 
     val watched by store.watched.collectAsState()
     // Les chaînes sans image (importées) : leurs avatars arrivent un par un, doucement
@@ -102,6 +117,7 @@ fun SubscriptionsContent(onOpen: (VideoItem) -> Unit, onOpenChannel: (ChannelIte
     LaunchedEffect(reset) {
         if (reset > 0) {
             channel = null
+            search = null
             unwatchedOnly = false
             listState.animateScrollToItem(0)
         }
@@ -116,8 +132,11 @@ fun SubscriptionsContent(onOpen: (VideoItem) -> Unit, onOpenChannel: (ChannelIte
     fun toast(text: String) = Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
 
     val hideShorts by AppSettings.hideShorts.collectAsState()
+    val needle = search?.trim()?.let(::folded).orEmpty()
+    val shownSubs = if (needle.isEmpty()) subs else subs.filter { needle in folded(it.name) }
     val visible = feed.orEmpty().filter { item ->
         (channel == null || item.channelId == channel) &&
+            (needle.isEmpty() || needle in folded(item.video.title) || needle in folded(item.video.channel)) &&
             !(hideShorts && item.video.looksShort) &&
             (!unwatchedOnly || item.video.url !in watched)
     }
@@ -146,6 +165,30 @@ fun SubscriptionsContent(onOpen: (VideoItem) -> Unit, onOpenChannel: (ChannelIte
                         fontSize = 14.sp,
                     )
                 }
+                if (subs.isNotEmpty()) {
+                    val open = search != null
+                    Box(
+                        Modifier
+                            .padding(top = 4.dp)
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(if (open) Pelage.RouxNuit else Color.White.copy(alpha = 0.08f))
+                            .clickable(role = Role.Button) { search = if (open) null else "" },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            if (open) MkIcons.Close else MkIcons.Search,
+                            stringResource(if (open) R.string.search_close else R.string.subs_search),
+                            tint = if (open) Pelage.RouxClair else Pelage.Texte,
+                            modifier = Modifier.size(22.dp),
+                        )
+                    }
+                }
+            }
+        }
+        search?.let { text ->
+            item(key = "recherche") {
+                SubsSearchField(text, Modifier.padding(horizontal = 20.dp)) { search = it }
             }
         }
 
@@ -155,7 +198,7 @@ fun SubscriptionsContent(onOpen: (VideoItem) -> Unit, onOpenChannel: (ChannelIte
         if (subs.isNotEmpty()) {
             item {
                 LazyRow(contentPadding = PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    items(subs, key = { it.channelId }) { sub ->
+                    items(shownSubs, key = { it.channelId }) { sub ->
                         // Tap : filtrer sur cette chaîne ; appui long : ouvrir sa page
                         ChannelAvatar(sub, selected = channel == sub.channelId, onLongClick = { onOpenChannel(sub.toChannelItem()) }) {
                             channel = if (channel == sub.channelId) null else sub.channelId
@@ -217,6 +260,7 @@ fun SubscriptionsContent(onOpen: (VideoItem) -> Unit, onOpenChannel: (ChannelIte
                 }
             }
             feed == null -> item { Loading() }
+            groups.isEmpty() && needle.isNotEmpty() -> item { EmptyCat(stringResource(R.string.nothing_found), stringResource(R.string.nothing_found_text)) }
             groups.isEmpty() -> item { EmptyCat(stringResource(R.string.subs_empty), stringResource(R.string.subs_empty_text)) }
             else -> groups.forEach { (title, list) ->
                 item {
@@ -234,6 +278,37 @@ fun SubscriptionsContent(onOpen: (VideoItem) -> Unit, onOpenChannel: (ChannelIte
                 }
             }
         }
+    }
+}
+
+/** Pour chercher sans tenir compte des majuscules ni des accents (« eté » trouve « Été »). */
+private fun folded(text: String): String =
+    java.text.Normalizer.normalize(text.lowercase(), java.text.Normalizer.Form.NFD).replace(Regex("\\p{Mn}+"), "")
+
+/** Le champ de la loupe des abonnements ; le clavier s'ouvre tout de suite. */
+@Composable
+private fun SubsSearchField(text: String, modifier: Modifier = Modifier, onChange: (String) -> Unit) {
+    val focus = remember { FocusRequester() }
+    val keyboard = LocalSoftwareKeyboardController.current
+    LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
+    Box(
+        modifier.fillMaxWidth().height(48.dp).clip(RoundedCornerShape(24.dp)).background(Pelage.Nuit).border(1.5.dp, Pelage.Bord, RoundedCornerShape(24.dp)).padding(horizontal = 18.dp),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        BasicTextField(
+            value = text,
+            onValueChange = onChange,
+            singleLine = true,
+            textStyle = TextStyle(color = Pelage.Texte, fontSize = 15.sp, fontFamily = Rounded, fontWeight = FontWeight.Bold),
+            cursorBrush = SolidColor(Pelage.RouxClair),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
+            modifier = Modifier.fillMaxWidth().focusRequester(focus),
+            decorationBox = { inner ->
+                if (text.isEmpty()) Text(stringResource(R.string.subs_search), color = Pelage.Gris, fontSize = 15.sp, maxLines = 1)
+                inner()
+            },
+        )
     }
 }
 
