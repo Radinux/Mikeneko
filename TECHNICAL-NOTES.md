@@ -1163,6 +1163,14 @@ users: the point is to take them from the videos really watched.
   layer and redraws every glass on each frame; on the playing playlist this ran during the play
   button's trip to the top bar (reported on the phone as a short stutter, not measurable on the
   emulator). If it persists, look at the header item re-entering the list (220 dp cover, cover color).
+- 2.26.1: `ui/DisplayRate.kt` (attached in `MainActivity.onCreate`). The video goes through a
+  `TextureView`, so ExoPlayer's own `Surface.setFrameRate` has no effect on the display: the window's
+  `preferredDisplayModeId` is set instead (same resolution modes only). Rule: no video → 90 Hz (or the
+  fastest mode ≤ 90); video → lowest mode that shows each frame a whole number of times (within
+  0.5 Hz), else 60 Hz; unknown fps → 60 Hz. fps = `VideoStream.fps` of the stream `MediaSources.build`
+  picked (`Built.fps`, 0 for audio / HLS), stored in `PlayerHolder.videoFps` on play and on quality
+  change. The user's phone (Honor) reported `peak-refresh-rate: 60 Hz` for Mikeneko before this:
+  the maker's per-app policy may still win.
 - 2.26.0: `update/Tutorial.kt`. `Tutorial.check` runs once, before « What's new » (called from
   `WhatsNew.pending` and `TutorialSheet`): shown if prefs `tutoriel/vu` is unset AND (fresh install,
   or `WhatsNew.everSeen` false = data cleared); otherwise marked seen (existing users get « What's

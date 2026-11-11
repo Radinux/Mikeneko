@@ -126,6 +126,8 @@ object PlayerHolder {
     val quality = MutableStateFlow<Int?>(null)
     /** Qualité réellement jouée (pour afficher « Auto (720p) »). */
     val playingQuality = MutableStateFlow(0)
+    /** Les images par seconde de la vidéo en cours (0 : inconnu), pour la fréquence de l'écran ([app.mikeneko.ui.DisplayRate]). */
+    val videoFps = MutableStateFlow(0)
     val captionTracks = MutableStateFlow<List<CaptionTrack>>(emptyList())
     val caption = MutableStateFlow<CaptionTrack?>(null)
     val speed = MutableStateFlow(1f)
@@ -531,6 +533,7 @@ object PlayerHolder {
 
             val built = MediaSources.build(info, audioOnly, quality.value, caption.value, cache = if (live) null else OfflineCache.cache(context, audioOnly))
             playingQuality.value = built.height
+            videoFps.value = built.fps
             setCurrent(p, audioOnly && !live, startAtMs.takeIf { !live } ?: 0L, leavingInfo, source = built.source)
             applyVideoSizeLimit(p, live)
             p.setPlaybackSpeed(if (live) 1f else speed.value)
@@ -1402,6 +1405,7 @@ object PlayerHolder {
         val position = p.currentPosition
         val wasPlaying = p.playWhenReady
         playingQuality.value = built.height
+        videoFps.value = built.fps
         p.setMediaSource(built.source, position)
         p.prepare()
         p.playWhenReady = wasPlaying

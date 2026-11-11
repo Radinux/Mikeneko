@@ -69,7 +69,8 @@ object MediaSources {
         }
 
     /** La source à jouer, et la hauteur vidéo réellement choisie (0 pour l'audio seul / le direct). */
-    class Built(val source: MediaSource, val height: Int, val audioKey: String? = null, val videoKey: String? = null)
+    /** [fps] : les images par seconde de la vidéo choisie (0 : inconnu ou son seul), pour la fréquence de l'écran (2.26.1). */
+    class Built(val source: MediaSource, val height: Int, val audioKey: String? = null, val videoKey: String? = null, val fps: Int = 0)
 
     fun isLive(info: StreamInfo) =
         info.streamType == StreamType.LIVE_STREAM || info.streamType == StreamType.AUDIO_LIVE_STREAM
@@ -157,6 +158,7 @@ object MediaSources {
             muxed != null -> Triple(muxed.content, muxed.shortSide, false)
             else -> error(AppLocale.string(R.string.no_playable_stream))
         }
+        val fps = (if (needsAudio) videoOnly?.fps else muxed?.fps)?.takeIf { it > 0 } ?: 0
         val videoKey = if (needsAudio) videoOnly?.let { keyOf('v', it) } else muxed?.let { keyOf('m', it) }
 
         // La vidéo (+ ses sous-titres, ajoutés par DefaultMediaSourceFactory qui sait les lire)
@@ -189,7 +191,7 @@ object MediaSources {
             video
         }
         // Hors ligne, l'entrée garde la piste principale en « audio » : le son, ou le flux vidéo+son
-        return if (needsAudio) Built(source, height, audioKey, videoKey) else Built(source, height, videoKey, null)
+        return if (needsAudio) Built(source, height, audioKey, videoKey, fps) else Built(source, height, videoKey, null, fps)
     }
 
     /** À hauteur égale : le codec le plus léger que le téléphone décode en matériel (voir codecRank), puis le plus fluide. */

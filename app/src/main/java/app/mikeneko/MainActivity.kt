@@ -66,6 +66,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         app.mikeneko.player.PlaybackLog.watchFrames(this) // TEMPORAIRE (2.26.1) : les gels de l'image
+        app.mikeneko.ui.DisplayRate.attach(this) // 90 Hz, ou le rythme de la vidéo en cours (2.26.1)
         if (savedInstanceState == null) {
             links.value = linkFrom(intent)
             if (intent?.getBooleanExtra(Notifier.EXTRA_UPDATE, false) == true) AppUpdates.check(this) // notification de mise à jour

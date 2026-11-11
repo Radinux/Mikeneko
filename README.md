@@ -64,6 +64,9 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
   does, how to bring your subscriptions and music, the player's gestures, music, and syncing your
   devices. *Skip* is always there, and *Settings › About › Replay the tutorial* brings it back.
   The notification prompt now waits until it is closed.
+- 2.26.1: **the app asks for a 90 Hz screen**, and while a video plays the screen follows the
+  video's own pace: 60 Hz for 30 or 60 fps videos, 50 Hz for 25 or 50 fps ones when the screen has
+  it (60 Hz otherwise), 120 Hz for 24 fps films. The phone has the last word.
 - Video page: the like button sits level with the buttons next to it (it was 4 dp higher).
 
 ### 2.25
