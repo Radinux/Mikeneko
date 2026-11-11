@@ -68,6 +68,7 @@ import app.mikeneko.data.Playlist
 import app.mikeneko.data.Playlists
 import app.mikeneko.data.VideoItem
 import app.mikeneko.data.sameTrack
+import app.mikeneko.data.trackKey
 import app.mikeneko.player.PlayerHolder
 import app.mikeneko.ui.components.Capsule
 import app.mikeneko.ui.components.rememberCoverColor
@@ -254,7 +255,14 @@ internal fun ShuffleButton(tracks: List<VideoItem>) {
     val shuffle by PlayerHolder.shuffle.collectAsState()
     val queue by PlayerHolder.queue.collectAsState()
     // Cette liste est celle qui joue : tous ses morceaux sont dans la file (qui peut en avoir plus)
-    val playingThis = remember(queue, tracks) { tracks.all { track -> queue.any { sameTrack(it.url, track.url) } } }
+    // Par identifiants, en un seul passage (2.23.2). Avant : chaque morceau de la liste comparé à chaque
+    // morceau de la file, à chaque retour de l'en-tête à l'écran. Sur une grosse playlist en cours de
+    // lecture (140 morceaux : près de 20 000 comparaisons), ça bloquait une ou deux images, pile pendant
+    // le trajet du bouton lecture. Ailleurs, la recherche s'arrêtait au premier morceau absent de la file.
+    val playingThis = remember(queue, tracks) {
+        val queued = queue.mapTo(HashSet(queue.size * 2)) { trackKey(it.url) }
+        queued.isNotEmpty() && tracks.all { trackKey(it.url) in queued }
+    }
     val on = shuffle && playingThis
     Capsule(stringResource(R.string.shuffle), selected = on, icon = MkIcons.Shuffle) {
         when {

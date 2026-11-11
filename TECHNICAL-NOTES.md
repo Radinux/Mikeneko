@@ -1163,6 +1163,11 @@ users: the point is to take them from the videos really watched.
   layer and redraws every glass on each frame; on the playing playlist this ran during the play
   button's trip to the top bar (reported on the phone as a short stutter, not measurable on the
   emulator). If it persists, look at the header item re-entering the list (220 dp cover, cover color).
+- 2.23.2: `ShuffleButton.playingThis` was `tracks.all { t -> queue.any { sameTrack(...) } }` inside
+  `remember(queue, tracks)`: recomputed each time the header item re-enters the LazyColumn, O(n²) with
+  two regex per `sameTrack`. Only slow when the list IS the queue (otherwise `all` stops at the first
+  missing track) and big, hence "only on the playlist that plays, only when large". Now a HashSet of
+  `trackKey`. Lesson: a per-frame suspect (the bars, 2.23.1) was not the cause; ask for the size.
 - Emulator tip (2026-11-10): with `-gpu swiftshader_indirect` the emulator itself crashes when the
   music window opens; `-gpu host` works again.
 - Emulator tip: if screenshots turn black and the app "isn't responding" while its main thread just
