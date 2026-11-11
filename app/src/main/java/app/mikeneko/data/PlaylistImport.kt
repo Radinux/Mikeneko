@@ -217,6 +217,9 @@ object PlaylistImport {
 
     // ------------------------------------------------------------------ recherches
 
+    /** Un morceau connu par son titre et son artiste (reconnaissance de musique, 2.25.0). */
+    suspend fun findSong(title: String, artist: String): VideoItem? = findSong(Item(Kind.Song, title, artist, ""))
+
     /** Le morceau sur YouTube Music : le résultat dont le titre (et l'artiste) colle le mieux. */
     private suspend fun findSong(song: Item): VideoItem? {
         val title = cleanTitle(song.title)

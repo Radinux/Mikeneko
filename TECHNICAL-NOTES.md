@@ -1163,7 +1163,24 @@ users: the point is to take them from the videos really watched.
   layer and redraws every glass on each frame; on the playing playlist this ran during the play
   button's trip to the top bar (reported on the phone as a short stutter, not measurable on the
   emulator). If it persists, look at the header item re-entering the list (220 dp cover, cover color).
-- 2.24.1: `AppSettings.removeCustomAccent()` (drops `accent_perso`, `Appearance.custom = null`, back to
+- 2.25.0: song recognition. `data/SongRecognizer.kt`: `SongSignature` = Kotlin port of ShazamIO 0.4's
+  pure-Python generator (itself from SongRec): 16 kHz mono s16, Hann(2050)[1:-1] window, 2048-point
+  FFT every 128 samples (own radix-2), peak spreading over 256-frame ring buffers, peaks in 4 bands,
+  binary format (48-byte header, magic 0xCAFE2580, CRC-32 from byte 8, TLV per band) as a data URI.
+  ShazamIO 0.4 has a typo that never fills the 3.5-5.5 kHz band (`5500 < f <= 5500`); SongRec fills it,
+  so the port does (`3500 < f <= 5500`). `SongSignatureTest` checks the bytes against the Python
+  reference on a synthetic signal (md5) and can dump the URI of a raw PCM file (env vars) for a manual
+  check against the service. `SongRecognizer.recognize(uri, ms)` = ShazamIO's POST (same URL, headers,
+  JSON); `track.title` / `subtitle` / `images.coverarthq`. Unofficial: it can break or be blocked.
+  `data/FoundSongs.kt`: `SongListener.listen` records with `AudioRecord` (MIC, 16 kHz) and asks the
+  service at 4, 7, 10 and 13 s (the fingerprint is read on the recording thread, only the request runs
+  aside, each wrapped in `runCatching` so a failure doesn't cancel the scope); stops at the first match;
+  `Failed` only if no request ever succeeded. `FoundSongs.add` keeps the playlist id in prefs
+  (`morceaux_trouves`), falls back to the name, recreates it if deleted; the YouTube Music track comes
+  from `PlaylistImport.findSong(title, artist)`. `ui/screens/SongFinder.kt`: `AnimatedDialog`, pauses
+  our playback while listening and resumes it on close unless *Play* started the found song.
+  New permission: `RECORD_AUDIO` (asked on first use). Icon `MkIcons.Listen`.
+- 2.25.0: `AppSettings.removeCustomAccent()` (drops `accent_perso`, `Appearance.custom = null`, back to
   Calico if the accent was the custom one). `ColorWheelDialog(onRemove)` shows *Delete* only when opened
   from the custom bubble (`editingCustom`), not from the « + ». The bubble uses `combinedClickable`
   (long-press = edit).

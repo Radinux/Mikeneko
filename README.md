@@ -58,14 +58,21 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ## 🎌 What's new ⸜(｡˃ ᵕ ˂ )⸝♡
 
+### 2.25
+
+- **What's this song?** The new microphone button next to the search in Music listens for a few
+  seconds and names the song playing around you. It goes straight into a **Found songs** playlist,
+  ready to play or download. Only a fingerprint of the sound leaves the phone, never the sound
+  itself; your own music pauses while it listens.
+- **Your own color can be deleted**: long-press its bubble (or tap it again once chosen) to open the
+  color wheel, then *Delete*. If it was the app's color, Calico comes back.
+
 ### 2.24
 
 - **Lyrics out of sync? Fix them in one tap.** In the lyrics, tap *Out of sync?*, then tap the line you
   hear right now: every line moves to match. *Earlier* / *Later* nudge them by half a second, and the
   shift is remembered for that track. Some lyrics in the free database are timed for another version
   of the song and copied onto all of them (seen: 13 s late).
-- 2.24.1: **your own color can be deleted**: long-press its bubble (or tap it again once chosen) to
-  open the color wheel, then *Delete*. If it was the app's color, Calico comes back.
 - Lyrics now really pick the version closest to the track's length (before: the first synced one
   found, which could be another version with a longer intro).
 
@@ -427,6 +434,7 @@ Without the release key, your build is signed with the debug key.
 | Music: YouTube Music search, auto Mix, moods, "For you" and "Your mixes" | `data/Music.kt`, `data/MusicForYou.kt`, `ui/screens/MusicPages.kt` (+ `MusicHome`, `MusicSearch`) |
 | Spectrum wave in liquid glass behind the music controls | `ui/glass/LiquidWave.kt`, `player/AudioSpectrum.kt` |
 | Your own playlists, offline downloads, synced lyrics (LRCLIB) | `data/Playlists.kt`, `player/PlaylistDownloads.kt`, `data/Lyrics.kt` |
+| Music: recognize the song playing around you, into a "Found songs" playlist | `data/SongRecognizer.kt`, `data/FoundSongs.kt`, `ui/screens/SongFinder.kt` |
 | Library: history, watch later, liked, your shorts, video playlists | `ui/screens/LibraryScreen.kt`, `data/VideoLibrary.kt` |
 | yt-dlp downloads (in the Library): video, MP3, FLAC, Opus, M4A, sponsors cut out | `data/Downloads.kt`, `ui/screens/DownloadsScreen.kt` |
 | Settings: language, region, playback, SponsorBlock, history, bedtime reminder, backup, updates | `ui/screens/SettingsScreen.kt`, `settings/` |
@@ -514,6 +522,8 @@ Code comments are in French. Ideas and bug reports are welcome in the issues.
   Mikeneko is GPL-3.0 too.
 - [SponsorBlock](https://sponsor.ajay.app), [Return YouTube Dislike](https://returnyoutubedislike.com).
 - [youtubedl-android](https://github.com/yausername/youtubedl-android) / yt-dlp.
+- [ShazamIO](https://github.com/dotX12/ShazamIO) (MIT) and [SongRec](https://github.com/marin-m/SongRec)
+  (GPL-3.0): the audio fingerprint used to recognize songs is a Kotlin port of their algorithm.
 - **M PLUS Rounded 1c** font (The M+ FONTS Project Authors), SIL Open Font License 1.1, trimmed to
   Latin, kana and "三毛猫".
 

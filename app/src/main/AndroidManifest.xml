@@ -10,6 +10,8 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <!-- Volume stable : effet audio (DynamicsProcessing) sur la session du lecteur -->
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <!-- Reconnaître un morceau (2.25.0) : quelques secondes d'écoute, seule une empreinte est envoyée -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!-- Mises à jour depuis GitHub : Mikeneko installe sa nouvelle version (sans appui sur Android 12+) -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 

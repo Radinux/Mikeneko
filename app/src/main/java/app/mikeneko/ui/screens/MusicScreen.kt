@@ -146,6 +146,8 @@ private fun MusicHeader(state: MusicState, backdrop: Backdrop) {
         if (clean.isNotEmpty()) SearchHistory.music(context).add(clean)
         keyboard?.hide()
     }
+    var finding by remember { mutableStateOf(false) }
+    if (finding) SongFinderDialog(onDismiss = { finding = false }, onOpenPlaylist = { state.open(MusicPage.MyPlaylist(it)) })
     Column(Modifier.fillMaxWidth().statusBarSpacePadding().padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp),
@@ -234,6 +236,9 @@ private fun MusicHeader(state: MusicState, backdrop: Backdrop) {
                 }
                 else -> {
                     Spacer(Modifier.weight(1f))
+                    // Reconnaître le morceau qui passe (2.25.0), à côté de la recherche
+                    GlassCircleButton(backdrop, MkIcons.Listen, stringResource(R.string.recognize)) { finding = true }
+                    Spacer(Modifier.width(10.dp))
                     GlassCircleButton(backdrop, MkIcons.Search, stringResource(R.string.music_search)) { state.openSearch() }
                 }
             }
