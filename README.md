@@ -67,6 +67,8 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 - 2.26.1: **the app asks for a 90 Hz screen**, and while a video plays the screen follows the
   video's own pace: 60 Hz for 30 or 60 fps videos, 50 Hz for 25 or 50 fps ones when the screen has
   it (60 Hz otherwise), 120 Hz for 24 fps films. The phone has the last word.
+- 2.26.3: **Settings in landscape**: the title and the tabs sit in a column on the left, the
+  content gets the whole height.
 - 2.26.2: the 90 Hz request also asks for the frame rate itself (Android 15+): asking for the
   screen mode alone left some phones at 60 Hz.
 - 2.26.1: **as many colors of your own as you like**: the « + » now adds a new bubble each time

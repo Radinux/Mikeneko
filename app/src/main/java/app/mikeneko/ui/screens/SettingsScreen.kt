@@ -1,5 +1,14 @@
 package app.mikeneko.ui.screens
 
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.ui.platform.LocalConfiguration
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
@@ -128,6 +137,39 @@ fun SettingsContent(onBack: () -> Unit) {
     val list = rememberLazyListState()
     // Un autre onglet : son contenu repart du haut
     LaunchedEffect(tab) { list.scrollToItem(0) }
+    // Paysage (2.26.3) : le titre et les onglets en colonne à gauche, le contenu à droite (en haut, ils
+    // mangeaient la moitié de la hauteur)
+    if (LocalConfiguration.current.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE) {
+        Row(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))) {
+            Column(
+                Modifier.width(210.dp).fillMaxHeight().verticalScroll(rememberScrollState())
+                    .statusBarSpacePadding().padding(start = 12.dp, end = 4.dp, top = 12.dp, bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Row(Modifier.padding(bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        Modifier.size(44.dp).clip(CircleShape).clickable(role = Role.Button, onClickLabel = stringResource(R.string.back), onClick = onBack),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(MkIcons.ChevronLeft, stringResource(R.string.back), tint = Pelage.Texte, modifier = Modifier.size(26.dp))
+                    }
+                    Text(
+                        stringResource(R.string.settings),
+                        Modifier.padding(start = 4.dp).semantics { heading() },
+                        color = Pelage.Texte,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        maxLines = 1,
+                    )
+                }
+                SettingsTab.entries.forEach { SettingsTabChip(stringResource(it.label), tab == it, Modifier.fillMaxWidth()) { tab = it } }
+            }
+            Column(Modifier.weight(1f).fillMaxHeight().statusBarSpacePadding().padding(top = 8.dp)) {
+                SettingsTabContent(tab, list, context)
+            }
+        }
+        return
+    }
     Column(Modifier.fillMaxSize()) {
         // Le titre et les onglets (2.20.0 : la page entière était trop longue) restent en haut
         Row(Modifier.padding(horizontal = 20.dp).statusBarSpacePadding().padding(top = 12.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -201,10 +243,10 @@ internal enum class SettingsTab(val label: Int) {
 }
 
 @Composable
-private fun SettingsTabChip(text: String, selected: Boolean, onClick: () -> Unit) {
+private fun SettingsTabChip(text: String, selected: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Text(
         text,
-        Modifier
+        modifier
             .clip(RoundedCornerShape(18.dp))
             .background(if (selected) Pelage.Roux else Pelage.Coussin)
             .border(1.5.dp, if (selected) Pelage.Roux else Pelage.Bord, RoundedCornerShape(18.dp))
