@@ -1,5 +1,7 @@
 package app.mikeneko.ui.screens
 
+import androidx.compose.foundation.border
+import androidx.compose.foundation.combinedClickable
 import kotlin.math.PI
 import kotlin.math.sin
 import androidx.compose.foundation.gestures.scrollBy
@@ -454,11 +456,27 @@ fun TrackRow(
     }
 }
 
-/** Un album, une playlist ou un artiste en ligne. */
+/**
+ * Un album, une playlist ou un artiste en ligne. [selected] non nul : mode sélection (3.0.1), une case
+ * à cocher remplace la flèche ; [onLongClick] y fait entrer.
+ */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
-fun CollectionRow(title: String, subtitle: String, thumbnail: Any?, round: Boolean = false, icon: ImageVector? = null, onClick: () -> Unit) {
+fun CollectionRow(
+    title: String,
+    subtitle: String,
+    thumbnail: Any?,
+    round: Boolean = false,
+    icon: ImageVector? = null,
+    selected: Boolean? = null,
+    onLongClick: (() -> Unit)? = null,
+    onClick: () -> Unit,
+) {
     Row(
-        Modifier.fillMaxWidth().clickable(role = Role.Button, onClick = onClick).padding(horizontal = 18.dp, vertical = 7.dp),
+        Modifier.fillMaxWidth()
+            .background(if (selected == true) Pelage.Roux.copy(alpha = 0.16f) else Color.Transparent)
+            .combinedClickable(role = if (selected != null) Role.Checkbox else Role.Button, onLongClick = onLongClick, onClick = onClick)
+            .padding(horizontal = 18.dp, vertical = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -467,7 +485,18 @@ fun CollectionRow(title: String, subtitle: String, thumbnail: Any?, round: Boole
             Text(title, color = Pelage.Texte, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
             if (subtitle.isNotBlank()) Text(subtitle, color = Pelage.Gris, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        Icon(MkIcons.ChevronRight, null, tint = Pelage.Gris, modifier = Modifier.size(18.dp))
+        if (selected == null) {
+            Icon(MkIcons.ChevronRight, null, tint = Pelage.Gris, modifier = Modifier.size(18.dp))
+        } else {
+            Box(
+                Modifier.size(26.dp).clip(CircleShape)
+                    .background(if (selected) Pelage.Roux else Color.Transparent)
+                    .border(2.dp, if (selected) Pelage.Roux else Pelage.Gris, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                if (selected) Icon(MkIcons.Check, null, tint = Pelage.Encre, modifier = Modifier.size(16.dp))
+            }
+        }
     }
 }
 

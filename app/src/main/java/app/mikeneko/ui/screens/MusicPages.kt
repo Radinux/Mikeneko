@@ -1,5 +1,11 @@
 package app.mikeneko.ui.screens
 
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.ui.semantics.Role
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.height
 import app.mikeneko.data.TrackTag
 import app.mikeneko.data.TrackTags
 import app.mikeneko.data.camelotParts
@@ -648,9 +654,21 @@ private fun MusicLibraryContent(state: MusicState) {
     val all = filter == LibraryFilter.All
     val count = downloaded?.size ?: 0
 
+    // Plusieurs playlists à la fois (3.0.1) : un appui long en coche une et ouvre la sélection
+    var selection by remember { mutableStateOf<Set<String>?>(null) }
+    var confirmDelete by remember { mutableStateOf(false) }
+    androidx.activity.compose.BackHandler(enabled = selection != null) { selection = null }
+    fun toggle(id: String) {
+        val now = selection ?: return
+        selection = (if (id in now) now - id else now + id).ifEmpty { null }
+    }
+    // Le filtre change : la sélection s'en va avec les playlists qu'on ne voit plus
+    LaunchedEffect(filter) { if (filter != LibraryFilter.All && filter != LibraryFilter.Playlists) selection = null }
+
     // Le titre est dans la barre du haut (pilule en verre), les filtres en verre juste dessous
     FixedPageBar(state, stringResource(R.string.music_library))
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(top = pageTop() + CHIPS_SPACE, bottom = BOTTOM_SPACE)) {
+    Box(Modifier.fillMaxSize()) {
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(top = pageTop() + CHIPS_SPACE + if (selection != null) 62.dp else 0.dp, bottom = BOTTOM_SPACE)) {
         if (filter == LibraryFilter.Downloaded) {
             val list = downloaded
             when {
@@ -681,8 +699,15 @@ private fun MusicLibraryContent(state: MusicState) {
                 }
             }
             items(playlists, key = { "pl:" + it.id }) { pl ->
-                CollectionRow(pl.name, pluralStringResource(R.plurals.track_count, pl.items.size, pl.items.size), pl.coverModel(), icon = MkIcons.Music) {
-                    state.open(MusicPage.MyPlaylist(pl.id))
+                CollectionRow(
+                    pl.name,
+                    pluralStringResource(R.plurals.track_count, pl.items.size, pl.items.size),
+                    pl.coverModel(),
+                    icon = MkIcons.Music,
+                    selected = selection?.let { pl.id in it },
+                    onLongClick = { if (selection == null) selection = setOf(pl.id) else toggle(pl.id) },
+                ) {
+                    if (selection != null) toggle(pl.id) else state.open(MusicPage.MyPlaylist(pl.id))
                 }
             }
         }
@@ -717,6 +742,66 @@ private fun MusicLibraryContent(state: MusicState) {
                 )
             }
         }
+    }
+        // La barre de la sélection, sous les filtres
+        androidx.compose.animation.AnimatedVisibility(
+            selection != null,
+            Modifier.align(Alignment.TopCenter).padding(top = pageTop() + CHIPS_SPACE).padding(horizontal = 14.dp),
+            enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically { -it / 2 },
+            exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically { -it / 2 },
+        ) {
+            val chosen = selection.orEmpty()
+            Row(
+                Modifier.fillMaxWidth().height(52.dp).clip(RoundedCornerShape(26.dp)).background(Pelage.Coussin)
+                    .border(1.5.dp, Pelage.Bord, RoundedCornerShape(26.dp)).padding(start = 4.dp, end = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(
+                    Modifier.size(44.dp).clip(CircleShape).clickable(role = Role.Button, onClickLabel = stringResource(R.string.cancel)) { selection = null },
+                    contentAlignment = Alignment.Center,
+                ) { Icon(MkIcons.Close, stringResource(R.string.cancel), tint = Pelage.Texte, modifier = Modifier.size(22.dp)) }
+                Text(
+                    pluralStringResource(R.plurals.selected_count, chosen.size, chosen.size),
+                    Modifier.weight(1f).padding(start = 4.dp),
+                    color = Pelage.Texte,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    maxLines = 1,
+                )
+                androidx.compose.material3.TextButton(onClick = { selection = playlists.map { it.id }.toSet().ifEmpty { null } }) {
+                    Text(stringResource(R.string.select_all), color = Pelage.Texte, fontWeight = FontWeight.Bold)
+                }
+                androidx.compose.material3.TextButton(onClick = { if (chosen.isNotEmpty()) confirmDelete = true }) {
+                    Icon(MkIcons.Trash, null, tint = Color(0xFFFF8A80), modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(stringResource(R.string.delete), color = Color(0xFFFF8A80), fontWeight = FontWeight.ExtraBold)
+                }
+            }
+        }
+    }
+    if (confirmDelete) {
+        val chosen = selection.orEmpty()
+        app.mikeneko.ui.components.AnimatedAlertDialog(
+            onDismissRequest = { confirmDelete = false },
+            title = { Text(pluralStringResource(R.plurals.playlists_delete_title, chosen.size, chosen.size), fontWeight = FontWeight.ExtraBold) },
+            text = { Text(stringResource(R.string.playlists_delete_text)) },
+            confirmButton = { close ->
+                androidx.compose.material3.TextButton(onClick = {
+                    val store = Playlists.get(context)
+                    chosen.forEach { id ->
+                        // Comme la suppression d'une seule (pochette choisie comprise)
+                        store.get(id)?.cover?.let { java.io.File(it).delete() }
+                        store.delete(id)
+                    }
+                    state.pages.removeAll { page -> page is MusicPage.MyPlaylist && page.id in chosen }
+                    selection = null
+                    close()
+                }) { Text(stringResource(R.string.delete), color = Color(0xFFFF8A80), fontWeight = FontWeight.ExtraBold) }
+            },
+            dismissButton = { close ->
+                androidx.compose.material3.TextButton(onClick = { close() }) { Text(stringResource(R.string.cancel), color = Pelage.Texte) }
+            },
+        )
     }
 }
 

@@ -642,6 +642,17 @@
     <string name="tuto_devices_3">Sauvegarde tout ton Mikeneko dans un seul fichier (Réglages › Synchro).</string>
     <string name="tuto_ready_title">C\'est parti !</string>
     <string name="tuto_ready_1">Choisis quelques sujets que tu aimes et ta page Pour toi démarre tout de suite. Elle apprend de ce que tu regardes.</string>
+    <string name="select_all">Tout</string>
+    <string name="delete">Supprimer</string>
+    <string name="playlists_delete_text">Elles disparaissent aussi de tes appareils liés, et leurs téléchargements hors ligne sont effacés (sauf les morceaux d\'une autre playlist téléchargée).</string>
+    <plurals name="selected_count">
+        <item quantity="one">%d sélectionnée</item>
+        <item quantity="other">%d sélectionnées</item>
+    </plurals>
+    <plurals name="playlists_delete_title">
+        <item quantity="one">Supprimer %d playlist ?</item>
+        <item quantity="other">Supprimer %d playlists ?</item>
+    </plurals>
     <plurals name="track_count">
         <item quantity="one">%1$d titre</item>
         <item quantity="many">%1$d titres</item>

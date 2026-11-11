@@ -642,6 +642,17 @@
     <string name="tuto_devices_3">Save your whole Mikeneko in one file (Settings › Sync).</string>
     <string name="tuto_ready_title">Ready!</string>
     <string name="tuto_ready_1">Pick a few topics you like and your For you page starts right away. It learns from what you watch.</string>
+    <string name="select_all">All</string>
+    <string name="delete">Delete</string>
+    <string name="playlists_delete_text">They also disappear from your linked devices, and their offline downloads are removed (except songs that are in another downloaded playlist).</string>
+    <plurals name="selected_count">
+        <item quantity="one">%d selected</item>
+        <item quantity="other">%d selected</item>
+    </plurals>
+    <plurals name="playlists_delete_title">
+        <item quantity="one">Delete %d playlist?</item>
+        <item quantity="other">Delete %d playlists?</item>
+    </plurals>
     <plurals name="track_count">
         <item quantity="one">%1$d track</item>
         <item quantity="other">%1$d tracks</item>

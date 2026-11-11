@@ -60,6 +60,8 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ### 3.0
 
+- 3.0.1: **delete several playlists at once**: in your music library, long-press a playlist, tick
+  the others (or *All*), then *Delete*.
 - **Music in Opus**: songs (and the sound of videos) now come in YouTube's best Opus stream, around
   130-160 kb/s at 48 kHz, finer than the ~128 kb/s AAC used until now. AAC remains the fallback,
   and songs you already downloaded keep playing offline as they are.
