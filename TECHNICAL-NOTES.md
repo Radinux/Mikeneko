@@ -1163,6 +1163,11 @@ users: the point is to take them from the videos really watched.
   layer and redraws every glass on each frame; on the playing playlist this ran during the play
   button's trip to the top bar (reported on the phone as a short stutter, not measurable on the
   emulator). If it persists, look at the header item re-entering the list (220 dp cover, cover color).
+- 2.23.3: `PageHeader` puts the title column (weight 1f) and the play button in one Row, then the
+  `actions()` FlowRow full width under it. The play button's `onGloballyPositioned` (PlayAnchor
+  inHeader / left / listTop) is unchanged: it measures wherever the button lands, so the travelling
+  button follows the new place. `TrackTagChips(compact = true)` only uses its Row when
+  `screenWidthDp / fontScale >= 380`, otherwise the Column (fits in the cover's height).
 - 2.23.2: `ShuffleButton.playingThis` was `tracks.all { t -> queue.any { sameTrack(...) } }` inside
   `remember(queue, tracks)`: recomputed each time the header item re-enters the LazyColumn, O(n²) with
   two regex per `sameTrack`. Only slow when the list IS the queue (otherwise `all` stops at the first

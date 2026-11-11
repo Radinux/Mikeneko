@@ -119,19 +119,21 @@ internal fun PageHeader(
             Modifier.align(Alignment.CenterHorizontally).shadow(18.dp, if (round) CircleShape else RoundedCornerShape(14.dp)),
             icon = icon,
         )
-        Text(
-            title,
-            Modifier.padding(top = 18.dp),
-            color = Pelage.Texte,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.ExtraBold,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
-        if (subtitle.isNotBlank()) Text(subtitle, Modifier.padding(top = 2.dp), color = Color(0xFFCFC6BD), fontSize = 14.sp, maxLines = 2)
-        Row(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            // En plusieurs lignes s'il le faut (téléchargement, aléatoire, pochette…) : rien ne s'écrase
-            FlowRow(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) { actions() }
+        // Le titre et le bouton lecture sur la même ligne (2.23.3) ; les capsules en dessous, sur toute la
+        // largeur. Avant, le bouton partageait la ligne des capsules : sur un écran étroit ou avec un texte
+        // agrandi (réglage du téléphone), « Camelot » passait à la ligne et le bouton flottait entre deux.
+        Row(Modifier.fillMaxWidth().padding(top = 18.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f).padding(end = if (onPlay != null) 12.dp else 0.dp)) {
+                Text(
+                    title,
+                    color = Pelage.Texte,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (subtitle.isNotBlank()) Text(subtitle, Modifier.padding(top = 2.dp), color = Color(0xFFCFC6BD), fontSize = 14.sp, maxLines = 2)
+            }
             if (onPlay != null) {
                 Box(
                     Modifier
@@ -169,6 +171,12 @@ internal fun PageHeader(
                 }
             }
         }
+        // En plusieurs lignes s'il le faut (téléchargement, aléatoire, tri…) : rien ne s'écrase
+        FlowRow(
+            Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) { actions() }
         below()
     }
 }

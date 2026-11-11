@@ -68,6 +68,10 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 - **Play button of playlists and albums**: it now enters its capsule from below. It first shifts to
   the side and shrinks while still under the bar, then rises straight into place, so it no longer
   passes in front of the search button.
+- 2.23.3: on a **narrow screen or with a bigger system font**, the header of a playlist or album
+  keeps its shape: the play button now sits next to the title and the capsules get their own row
+  below (a capsule wrapping to a second line left the button floating in between), and the two tags
+  of a track (key and tempo) stack when side by side they would leave the title only a few letters.
 - 2.23.2: the real cause of the play button stutter when scrolling back to the top of a **big playlist
   that is playing** (around 140 tracks and more): the Shuffle capsule compared every track of the
   playlist with every track of the queue each time the header came back on screen. It is now a single

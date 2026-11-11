@@ -748,7 +748,12 @@ internal fun TrackTagChips(tag: TrackTag?, compact: Boolean = false) {
             Chip("$number$letter", base, Color(0xFF15110E))
         }
     }
-    if (compact) {
+    // Sur une seule ligne seulement s'il y a la place (2.23.3) : sur un écran étroit, ou avec le texte
+    // agrandi dans les réglages du téléphone, les deux pastilles côte à côte ne laissaient au titre que
+    // quelques lettres (« tesla ··· »). Empilées, elles tiennent dans la hauteur de la pochette.
+    val config = androidx.compose.ui.platform.LocalConfiguration.current
+    val roomy = config.screenWidthDp / config.fontScale >= 380f
+    if (compact && roomy) {
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) { content() }
     } else {
         Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(3.dp)) { content() }
