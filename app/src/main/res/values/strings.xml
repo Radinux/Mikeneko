@@ -686,7 +686,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">What’s new in Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Nice!</string>
-    <string name="whats_new_body">🎶 Mikeneko 3.0: music in Opus\n\n• Songs now come in YouTube\'s best Opus sound (up to ~160 kb/s, 48 kHz), finer than the AAC used until now. Your downloads keep playing as they are.\n• Tap the Mikeneko capsule on Home to open your profile.\n• Settings in landscape: the tabs sit on the side.\n\n✨ Since 2.26: a tutorial for newcomers (Settings › About › Replay the tutorial), as many colors of your own as you like, and the screen follows each video\'s pace.</string>
+    <string name="whats_new_body">🎶 Mikeneko 3.0: music in Opus\n\n• Songs now come in YouTube\'s best Opus sound (up to ~160 kb/s, 48 kHz), finer than the AAC used until now. Your downloads keep playing as they are.\n• Playlist import picks the right songs: no more other songs with the same title.\n• Tap the Mikeneko capsule on Home to open your profile.\n• Settings in landscape: the tabs sit on the side.\n\n✨ Since 2.26: a tutorial for newcomers (Settings › About › Replay the tutorial), as many colors of your own as you like, and the screen follows each video\'s pace.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Import playlists</string>

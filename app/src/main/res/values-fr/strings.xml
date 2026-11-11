@@ -687,7 +687,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">Quoi de neuf dans Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Super !</string>
-    <string name="whats_new_body">🎶 Mikeneko 3.0 : la musique en Opus\n\n• Les morceaux arrivent maintenant dans le meilleur son Opus de YouTube (jusqu\'à ~160 kb/s, 48 kHz), plus fin que l\'AAC d\'avant. Tes téléchargements continuent de marcher tels quels.\n• Touche la capsule Mikeneko de l\'accueil pour ouvrir ton profil.\n• Réglages en paysage : les onglets sont sur le côté.\n\n✨ Depuis la 2.26 : un tuto pour les nouveaux (Réglages › À propos › Revoir le tuto), autant de couleurs perso que tu veux, et l\'écran qui suit le rythme de chaque vidéo.</string>
+    <string name="whats_new_body">🎶 Mikeneko 3.0 : la musique en Opus\n\n• Les morceaux arrivent maintenant dans le meilleur son Opus de YouTube (jusqu\'à ~160 kb/s, 48 kHz), plus fin que l\'AAC d\'avant. Tes téléchargements continuent de marcher tels quels.\n• L\'import de playlists choisit les bons morceaux : fini les autres chansons au même titre.\n• Touche la capsule Mikeneko de l\'accueil pour ouvrir ton profil.\n• Réglages en paysage : les onglets sont sur le côté.\n\n✨ Depuis la 2.26 : un tuto pour les nouveaux (Réglages › À propos › Revoir le tuto), autant de couleurs perso que tu veux, et l\'écran qui suit le rythme de chaque vidéo.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Importer des playlists</string>
