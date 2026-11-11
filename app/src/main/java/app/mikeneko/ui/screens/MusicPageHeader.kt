@@ -208,6 +208,13 @@ internal fun PageBarEffect(state: MusicState, list: LazyListState, title: String
             if (state.bar?.owner === owner) state.bar = null
         }
     }
+    // Pendant que la page défile, la petite égalisation du morceau en cours se fige (voir PlayingBars)
+    DisposableEffect(list) {
+        onDispose { PlayingBarsClock.scrolling = false }
+    }
+    LaunchedEffect(list) {
+        androidx.compose.runtime.snapshotFlow { list.isScrollInProgress }.collect { PlayingBarsClock.scrolling = it }
+    }
     return anchor
 }
 

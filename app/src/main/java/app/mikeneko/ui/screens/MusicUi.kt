@@ -1,5 +1,7 @@
 package app.mikeneko.ui.screens
 
+import kotlin.math.PI
+import kotlin.math.sin
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.runtime.withFrameNanos
 import kotlinx.coroutines.launch
@@ -9,10 +11,6 @@ import android.content.Context
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -351,25 +349,47 @@ private fun failed(context: Context) =
  * Trois petites barres qui montent et descendent : « ça joue ». En pause, elles s'arrêtent : une
  * animation sans fin dans une page redessine la page à chaque image (et le verre de la barre du
  * haut avec), ce qui faisait accrocher le défilement dès qu'un morceau était chargé.
+ *
+ * 2.23.1 : elles se figent aussi pendant que la page défile ([PlayingBarsClock.scrolling]). Sur la
+ * playlist qui joue, leur animation tombait en plein pendant le trajet du bouton lecture vers la barre
+ * du haut, qui accrochait un court instant à chaque retour en haut de la page. Elles reprennent là où
+ * elles en étaient dès que la page s'arrête.
  */
 @Composable
 fun PlayingBars(modifier: Modifier = Modifier, color: Color = Pelage.RouxClair) {
     val playingLabel = stringResource(R.string.playing_now)
     val running by PlayerHolder.isPlaying.collectAsState()
     val m = modifier.size(16.dp, 14.dp).semantics { contentDescription = playingLabel }
-    if (running) MovingBars(m, color) else Bars(m, color) { i -> PAUSED_BARS[i] }
+    val moving = running && !PlayingBarsClock.scrolling
+    // Le temps de l'animation (ms) : il n'avance que quand les barres bougent
+    val time = remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(moving) {
+        if (!moving) return@LaunchedEffect
+        var last = withFrameNanos { it }
+        while (true) {
+            val now = withFrameNanos { it }
+            time.floatValue += (now - last) / 1_000_000f
+            last = now
+        }
+    }
+    if (!running) {
+        Bars(m, color) { i -> PAUSED_BARS[i] }
+    } else {
+        // Chaque barre va et vient à son rythme, entre 25 % et 100 % de la hauteur
+        Bars(m, color) { i ->
+            val wave = sin((time.floatValue + i * 90f) / BAR_PERIODS[i] * PI.toFloat())
+            0.25f + 0.75f * wave * wave
+        }
+    }
+}
+
+/** Les pages de la musique disent ici quand leur liste défile : les barres attendent. */
+object PlayingBarsClock {
+    var scrolling by mutableStateOf(false)
 }
 
 private val PAUSED_BARS = floatArrayOf(0.45f, 0.8f, 0.6f)
-
-@Composable
-private fun MovingBars(modifier: Modifier, color: Color) {
-    val motion = rememberInfiniteTransition(label = "égalisation")
-    val bars = listOf(380, 520, 440).mapIndexed { i, period ->
-        motion.animateFloat(0.25f, 1f, infiniteRepeatable(tween(period, delayMillis = i * 90), RepeatMode.Reverse), label = "barre $i")
-    }
-    Bars(modifier, color) { i -> bars[i].value }
-}
+private val BAR_PERIODS = floatArrayOf(380f, 520f, 440f)
 
 @Composable
 private fun Bars(modifier: Modifier, color: Color, height: (Int) -> Float) {

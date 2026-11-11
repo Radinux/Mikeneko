@@ -1157,6 +1157,12 @@ users: the point is to take them from the videos really watched.
   The button follows the list all the way (`y = max(free.y, slot.y)`); between 150 and 66 dp under its
   slot it slides sideways to the slot's x and shrinks (smoothstep), then rises straight into the
   capsule. The diagonal path crossed the search button at the right of the capsule.
+- 2.23.1: `PlayingBars` no longer uses an infinite transition. Its own frame loop advances a time
+  value only while the track plays and `PlayingBarsClock.scrolling` is false; `PageBarEffect` sets that
+  flag from `list.isScrollInProgress`. Reason: any animated draw inside a page re-records the backdrop
+  layer and redraws every glass on each frame; on the playing playlist this ran during the play
+  button's trip to the top bar (reported on the phone as a short stutter, not measurable on the
+  emulator). If it persists, look at the header item re-entering the list (220 dp cover, cover color).
 - Emulator tip (2026-11-10): with `-gpu swiftshader_indirect` the emulator itself crashes when the
   music window opens; `-gpu host` works again.
 - Emulator tip: if screenshots turn black and the app "isn't responding" while its main thread just

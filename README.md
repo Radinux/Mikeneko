@@ -68,6 +68,9 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 - **Play button of playlists and albums**: it now enters its capsule from below. It first shifts to
   the side and shrinks while still under the bar, then rises straight into place, so it no longer
   passes in front of the search button.
+- 2.23.1: on the playlist that is playing, the little animated bars of the current track now hold
+  still while the page scrolls (they were redrawing the whole page and its glass on every frame, right
+  when the play button travels to the top bar) and move again as soon as it stops.
 
 ### 2.22
 
