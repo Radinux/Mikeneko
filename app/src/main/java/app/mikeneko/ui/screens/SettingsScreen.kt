@@ -523,8 +523,8 @@ private fun LanguageSection(context: Context) {
 private fun AppearanceSection() {
     val accent = Appearance.accent
     var picking by remember { mutableStateOf(false) }
-    // Le cercle ouvert sur la couleur perso (et pas par le « + ») : il propose de la supprimer
-    var editingCustom by remember { mutableStateOf(false) }
+    // La couleur perso ouverte au cercle (null : le « + », une nouvelle) : modifiable et supprimable
+    var editing by remember { mutableStateOf<Color?>(null) }
     Section(stringResource(R.string.settings_section_appearance)) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
             Text(stringResource(R.string.settings_accent), color = Pelage.Texte, fontSize = 15.sp, fontWeight = FontWeight.Bold)
@@ -552,13 +552,12 @@ private fun AppearanceSection() {
                 Accent.presets.forEach { option ->
                     Bubble(option.base, stringResource(option.label), option.id == accent.id) { AppSettings.setAccent(option) }
                 }
-                // Ta couleur (2.16.0) : sa pastille une fois choisie ; touchée à nouveau (ou appui long), elle
-                // rouvre le cercle, qui peut aussi la supprimer (2.24.1)
-                val custom = Appearance.custom
-                if (custom != null) {
-                    val selected = accent.id == Accent.CUSTOM
+                // Tes couleurs (2.16.0 ; plusieurs depuis 2.26.1) : un tap la choisit ; touchée à nouveau (ou
+                // appui long), elle rouvre le cercle pour la modifier ou la supprimer
+                Appearance.customs.forEach { custom ->
+                    val selected = accent.id == Accent.CUSTOM && Appearance.custom == custom
                     fun edit() {
-                        editingCustom = true
+                        editing = custom
                         picking = true
                     }
                     Bubble(custom, stringResource(R.string.accent_custom), selected, onLongClick = ::edit) {
@@ -573,7 +572,7 @@ private fun AppearanceSection() {
                         .background(Pelage.Bord)
                         .border(1.5.dp, Pelage.Gris.copy(alpha = 0.6f), CircleShape)
                         .clickable(role = Role.Button, onClickLabel = stringResource(R.string.accent_add)) {
-                            editingCustom = false
+                            editing = null
                             picking = true
                         },
                     contentAlignment = Alignment.Center,
@@ -583,15 +582,24 @@ private fun AppearanceSection() {
             }
         }
         if (picking) {
+            val target = editing
             ColorWheelDialog(
-                initial = Appearance.custom ?: accent.base,
+                initial = target ?: accent.base,
                 onDismiss = { picking = false },
-                onRemove = if (editingCustom && Appearance.custom != null) ({
-                    AppSettings.removeCustomAccent()
-                    picking = false
-                }) else null,
+                onRemove = target?.let { color ->
+                    {
+                        AppSettings.removeCustomAccent(color)
+                        picking = false
+                    }
+                },
             ) {
-                AppSettings.setCustomAccent(it)
+                // « Utiliser » : la nouvelle couleur (ou la couleur modifiée) devient l'accent
+                if (target == null) {
+                    AppSettings.addCustomAccent(it)
+                } else {
+                    AppSettings.replaceCustomAccent(target, it)
+                    AppSettings.setCustomAccent(it)
+                }
                 picking = false
             }
         }

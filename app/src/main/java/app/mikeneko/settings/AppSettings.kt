@@ -64,6 +64,10 @@ object AppSettings {
         _sleepMinutes.value = prefs.getInt("dodo_minutes", 60)
         _hideShorts.value = prefs.getBoolean("shorts_masques", false)
         Appearance.custom = prefs.getInt("accent_perso", 0).takeIf { it != 0 }?.let { androidx.compose.ui.graphics.Color(it) }
+        // Plusieurs couleurs perso (2.26.1) ; avant, la seule était « accent_perso »
+        Appearance.customs = prefs.getString("accents_perso", null)
+            ?.split(',')?.mapNotNull { it.toIntOrNull()?.let { argb -> androidx.compose.ui.graphics.Color(argb) } }
+            ?: listOfNotNull(Appearance.custom)
         Appearance.accent = Accent.of(prefs.getString("accent", null), Appearance.custom)
         Appearance.amoled = prefs.getBoolean("amoled", false)
     }
@@ -71,18 +75,38 @@ object AppSettings {
     /** La couleur d'accent (2.9.0). */
     fun setAccent(value: Accent) = save("accent", value.id) { Appearance.accent = value }
 
-    /** La couleur perso, choisie au cercle (2.16.0) : gardée, et prise comme accent. */
+    /** Prend une couleur perso comme accent (2.16.0). */
     fun setCustomAccent(color: androidx.compose.ui.graphics.Color) {
         prefs.edit().putInt("accent_perso", color.toArgb()).apply()
         Appearance.custom = color
         setAccent(Accent.custom(color))
     }
 
-    /** Supprime la couleur perso (2.24.1) : sa pastille part ; si c'était l'accent, retour au calico. */
-    fun removeCustomAccent() {
-        prefs.edit().remove("accent_perso").apply()
-        Appearance.custom = null
-        if (Appearance.accent.id == Accent.CUSTOM) setAccent(Accent.Calico)
+    /** Une nouvelle couleur perso (le « + », 2.26.1) : une pastille de plus, prise comme accent. */
+    fun addCustomAccent(color: androidx.compose.ui.graphics.Color) {
+        if (color !in Appearance.customs) saveCustoms(Appearance.customs + color)
+        setCustomAccent(color)
+    }
+
+    /** Une couleur perso modifiée au cercle : elle garde sa place ; si c'était l'accent, il suit. */
+    fun replaceCustomAccent(old: androidx.compose.ui.graphics.Color, new: androidx.compose.ui.graphics.Color) {
+        saveCustoms(Appearance.customs.map { if (it == old) new else it }.distinct())
+        if (Appearance.accent.id == Accent.CUSTOM && Appearance.custom == old) setCustomAccent(new)
+    }
+
+    /** Supprime une couleur perso (2.24.1) : sa pastille part ; si c'était l'accent, retour au calico. */
+    fun removeCustomAccent(color: androidx.compose.ui.graphics.Color) {
+        saveCustoms(Appearance.customs - color)
+        if (Appearance.custom == color) {
+            prefs.edit().remove("accent_perso").apply()
+            Appearance.custom = null
+            if (Appearance.accent.id == Accent.CUSTOM) setAccent(Accent.Calico)
+        }
+    }
+
+    private fun saveCustoms(list: List<androidx.compose.ui.graphics.Color>) {
+        Appearance.customs = list
+        prefs.edit().putString("accents_perso", list.joinToString(",") { it.toArgb().toString() }).apply()
     }
 
     /** Fond noir pur (2.9.0). */

@@ -71,8 +71,10 @@ data class Accent(val id: String, @StringRes val label: Int, val base: Color, va
  */
 object Appearance {
     var accent by mutableStateOf(Accent.Calico)
-    /** La couleur perso (2.16.0), gardée même quand une autre est choisie (sa pastille reste). */
+    /** La couleur perso en cours (2.16.0) : celle de l'accent quand c'est une couleur perso. */
     var custom by mutableStateOf<Color?>(null)
+    /** Toutes les couleurs perso, dans l'ordre de création (2.26.1 : avant, il n'y en avait qu'une). */
+    var customs by mutableStateOf<List<Color>>(emptyList())
     /** Fond noir pur, pour les écrans OLED. */
     var amoled by mutableStateOf(false)
 }

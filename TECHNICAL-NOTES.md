@@ -1163,6 +1163,10 @@ users: the point is to take them from the videos really watched.
   layer and redraws every glass on each frame; on the playing playlist this ran during the play
   button's trip to the top bar (reported on the phone as a short stutter, not measurable on the
   emulator). If it persists, look at the header item re-entering the list (220 dp cover, cover color).
+- 2.26.1: custom colors. `Appearance.customs` (all of them, prefs `accents_perso` = comma-separated
+  ARGB ints; migrated from the single `accent_perso`) and `Appearance.custom` (the one used by the
+  accent when its id is `Accent.CUSTOM`). `AppSettings.addCustomAccent` / `replaceCustomAccent` /
+  `removeCustomAccent(color)`; the settings keep `editing: Color?` (null = the « + »).
 - 2.26.1: `ui/DisplayRate.kt` (attached in `MainActivity.onCreate`). The video goes through a
   `TextureView`, so ExoPlayer's own `Surface.setFrameRate` has no effect on the display: the window's
   `preferredDisplayModeId` is set instead (same resolution modes only). Rule: no video → 90 Hz (or the

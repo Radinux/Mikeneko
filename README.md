@@ -67,6 +67,9 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 - 2.26.1: **the app asks for a 90 Hz screen**, and while a video plays the screen follows the
   video's own pace: 60 Hz for 30 or 60 fps videos, 50 Hz for 25 or 50 fps ones when the screen has
   it (60 Hz otherwise), 120 Hz for 24 fps films. The phone has the last word.
+- 2.26.1: **as many colors of your own as you like**: the « + » now adds a new bubble each time
+  (it used to overwrite the same one), and every one of them stays editable: long-press it (or tap
+  it again once chosen) to change it in place or delete it.
 - Video page: the like button sits level with the buttons next to it (it was 4 dp higher).
 
 ### 2.25
