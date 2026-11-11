@@ -643,6 +643,9 @@
     <string name="tuto_ready_title">C\'est parti !</string>
     <string name="tuto_ready_1">Choisis quelques sujets que tu aimes et ta page Pour toi démarre tout de suite. Elle apprend de ce que tu regardes.</string>
     <string name="select_all">Tout</string>
+    <string name="crop_hint">Pince pour zoomer, glisse pour déplacer</string>
+    <string name="crop_use">Utiliser</string>
+    <string name="view_image">Voir en grand</string>
     <string name="delete">Supprimer</string>
     <string name="playlists_delete_text">Elles disparaissent aussi de tes appareils liés, et leurs téléchargements hors ligne sont effacés (sauf les morceaux d\'une autre playlist téléchargée).</string>
     <plurals name="selected_count">
@@ -817,7 +820,7 @@
     <string name="github_failed_expired">L\'accès GitHub a été retiré ou a expiré : reconnecte-toi.</string>
     <string name="github_failed_denied">Accès refusé sur GitHub.</string>
     <string name="github_failed_timeout">Le code a expiré : reconnecte-toi.</string>
-    <string name="github_profile_import">Prendre mon nom et ma photo GitHub</string>
+    <string name="github_profile_import">Mon profil GitHub</string>
     <string name="tab_shorts">Shorts</string>
     <string name="shorts_empty">Pas de shorts à montrer pour l’instant. Suis quelques chaînes ou vérifie ta connexion.</string>
     <string name="settings_tab_general">Général</string>

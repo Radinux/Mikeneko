@@ -643,6 +643,9 @@
     <string name="tuto_ready_title">Ready!</string>
     <string name="tuto_ready_1">Pick a few topics you like and your For you page starts right away. It learns from what you watch.</string>
     <string name="select_all">All</string>
+    <string name="crop_hint">Pinch to zoom, drag to move</string>
+    <string name="crop_use">Use</string>
+    <string name="view_image">See it larger</string>
     <string name="delete">Delete</string>
     <string name="playlists_delete_text">They also disappear from your linked devices, and their offline downloads are removed (except songs that are in another downloaded playlist).</string>
     <plurals name="selected_count">
@@ -816,7 +819,7 @@
     <string name="github_failed_expired">GitHub access was removed or expired: sign in again.</string>
     <string name="github_failed_denied">Access refused on GitHub.</string>
     <string name="github_failed_timeout">The code expired: sign in again.</string>
-    <string name="github_profile_import">Use my GitHub name and photo</string>
+    <string name="github_profile_import">My GitHub profile</string>
     <string name="tab_shorts">Shorts</string>
     <string name="shorts_empty">No shorts to show right now. Follow a few channels or check your connection.</string>
     <string name="settings_tab_general">General</string>

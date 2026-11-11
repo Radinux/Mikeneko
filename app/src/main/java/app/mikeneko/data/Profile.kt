@@ -86,6 +86,29 @@ object ProfileStore {
         save(context, current.copy(banner = path))
     }
 
+    /** La photo recadrée (3.0.1, voir ImageCropper). À appeler hors du fil principal. */
+    fun setAvatar(context: Context, bitmap: Bitmap) {
+        val current = load(context).value
+        val path = saveBitmap(context, bitmap, "photo")
+        current.avatar?.let { File(it).delete() }
+        save(context, current.copy(avatar = path))
+    }
+
+    /** La bannière recadrée (3.0.1). À appeler hors du fil principal. */
+    fun setBanner(context: Context, bitmap: Bitmap) {
+        val current = load(context).value
+        val path = saveBitmap(context, bitmap, "banniere")
+        current.banner?.let { File(it).delete() }
+        save(context, current.copy(banner = path))
+    }
+
+    private fun saveBitmap(context: Context, bitmap: Bitmap, name: String): String {
+        val dir = File(context.filesDir, "profil").apply { mkdirs() }
+        val file = File(dir, "$name-${System.currentTimeMillis()}.jpg")
+        file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.JPEG, 90, it) }
+        return file.absolutePath
+    }
+
     /** Copie l'image dans l'appli, réduite ([maxSide] px au plus), en JPEG ; un nouveau nom à chaque fois (pas de vieux cache). */
     private fun saveImage(context: Context, uri: Uri, name: String, maxSide: Int): String {
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }

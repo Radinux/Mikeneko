@@ -1163,6 +1163,12 @@ users: the point is to take them from the videos really watched.
   layer and redraws every glass on each frame; on the playing playlist this ran during the play
   button's trip to the top bar (reported on the phone as a short stutter, not measurable on the
   emulator). If it persists, look at the header item re-entering the list (220 dp cover, cover color).
+- 3.0.1: `ui/components/ImageCropper.kt`: full-screen `AnimatedDialog`, decodes ≤ 2048 px upright
+  (`android.media.ExifInterface` on the stream), window = largest rect of the aspect with 20 dp
+  margins; scale ≥ cover scale (≤ ×8), zoom around the centroid, offsets clamped so the image covers
+  the window; even-odd veil path + white outline (oval or 18 dp round rect); crop = window mapped back
+  through scale/offset, then shrunk to maxSide (512 photo, 1600 banner). `ui/components/ImageViewer.kt`
+  + `largeImage(url)` (`=sNN` → `=s1024` on YouTube image URLs).
 - 3.0.0 (the user's call: a major change of audio format): `MediaSources.bestAudio` takes the
   highest-bitrate Opus stream (`MediaFormat.WEBMA_OPUS` / `OPUS` / codec "opus", itag 251 ~160 kb/s
   48 kHz) before M4A (itag 140, AAC ~128 kb/s 44.1 kHz), for music and for the sound of videos. The

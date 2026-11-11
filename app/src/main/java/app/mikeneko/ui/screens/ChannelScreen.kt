@@ -365,8 +365,16 @@ fun ChannelContent(channel: ChannelItem, onOpen: (VideoItem) -> Unit) {
                         modifier = Modifier.fillMaxWidth().aspectRatio(4f).clip(RoundedCornerShape(18.dp)).background(Pelage.Coussin),
                     )
                 }
-                Box(if (banner != null) Modifier.overlapAbove(42.dp) else Modifier) {
-                    Avatar(info?.avatar ?: channel.avatar, 104.dp)
+                // Un tap sur l'avatar le montre en grand, en carré arrondi (3.0.1)
+                val avatarUrl = info?.avatar ?: channel.avatar
+                var viewing by remember { mutableStateOf(false) }
+                if (viewing && avatarUrl != null) app.mikeneko.ui.components.ImageViewer(avatarUrl) { viewing = false }
+                Box(
+                    (if (banner != null) Modifier.overlapAbove(42.dp) else Modifier)
+                        .clip(CircleShape)
+                        .clickable(enabled = avatarUrl != null, role = Role.Image, onClickLabel = stringResource(R.string.view_image)) { viewing = true },
+                ) {
+                    Avatar(avatarUrl, 104.dp)
                 }
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,

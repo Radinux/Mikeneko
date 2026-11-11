@@ -86,16 +86,28 @@ fun ProfileEditor(onDismiss: () -> Unit) {
     val profile by remember { ProfileStore.load(context) }.collectAsState()
     var pseudo by remember { mutableStateOf(profile.pseudo) }
     fun failed() = Toast.makeText(context, context.getString(R.string.profile_image_failed), Toast.LENGTH_SHORT).show()
+    // L'image choisie passe d'abord par le recadrage (3.0.1) : true = la photo, false = la bannière
+    var cropping by remember { mutableStateOf<Pair<android.net.Uri, Boolean>?>(null) }
     val pickAvatar = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        if (uri != null) scope.launch {
-            val ok = withContext(Dispatchers.IO) { runCatching { ProfileStore.setAvatar(context, uri) }.isSuccess }
-            if (!ok) failed()
-        }
+        if (uri != null) cropping = uri to true
     }
     val pickBanner = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        if (uri != null) scope.launch {
-            val ok = withContext(Dispatchers.IO) { runCatching { ProfileStore.setBanner(context, uri) }.isSuccess }
-            if (!ok) failed()
+        if (uri != null) cropping = uri to false
+    }
+    cropping?.let { (uri, avatar) ->
+        app.mikeneko.ui.components.ImageCropper(
+            uri = uri,
+            aspect = if (avatar) 1f else 3f,
+            round = avatar,
+            maxSide = if (avatar) 512 else 1600,
+            onDismiss = { cropping = null },
+        ) { bitmap ->
+            scope.launch {
+                val ok = withContext(Dispatchers.IO) {
+                    runCatching { if (avatar) ProfileStore.setAvatar(context, bitmap) else ProfileStore.setBanner(context, bitmap) }.isSuccess
+                }
+                if (!ok) failed()
+            }
         }
     }
     val image = PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
@@ -123,14 +135,18 @@ fun ProfileEditor(onDismiss: () -> Unit) {
                 )
             }
             Spacer(Modifier.height(avatar * 0.75f + 8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // Toutes les actions dans un bloc qui passe à la ligne (3.0.1) : sur un écran étroit ou avec le
+            // texte agrandi, la rangée débordait et coupait « Retirer la bannière »
+            val github by app.mikeneko.data.GitHubSync.login.collectAsState()
+            androidx.compose.foundation.layout.FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                // Choisir une image ouvre d'abord le recadrage (3.0.1)
                 Capsule(stringResource(R.string.profile_photo_change), icon = MkIcons.Image) { pickAvatar.launch(image) }
                 Capsule(stringResource(R.string.profile_banner_change), icon = MkIcons.Image) { pickBanner.launch(image) }
-            }
-            // Connecté à GitHub (2.19.0) : reprendre son nom et sa photo d'un tap
-            val github by app.mikeneko.data.GitHubSync.login.collectAsState()
-            if (github is app.mikeneko.data.GitHubSync.Login.In) {
-                Row(Modifier.padding(top = 8.dp)) {
+                // Connecté à GitHub (2.19.0) : reprendre son nom et sa photo d'un tap
+                if (github is app.mikeneko.data.GitHubSync.Login.In) {
                     Capsule(stringResource(R.string.github_profile_import), icon = MkIcons.Globe) {
                         scope.launch {
                             val ok = app.mikeneko.data.GitHubSync.importProfile(context)
@@ -139,15 +155,11 @@ fun ProfileEditor(onDismiss: () -> Unit) {
                         }
                     }
                 }
-            }
-            if (profile.avatar != null || profile.banner != null) {
-                Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (profile.avatar != null) Capsule(stringResource(R.string.profile_photo_remove), icon = MkIcons.Close) {
-                        scope.launch(Dispatchers.IO) { ProfileStore.setAvatar(context, null) }
-                    }
-                    if (profile.banner != null) Capsule(stringResource(R.string.profile_banner_remove), icon = MkIcons.Close) {
-                        scope.launch(Dispatchers.IO) { ProfileStore.setBanner(context, null) }
-                    }
+                if (profile.avatar != null) Capsule(stringResource(R.string.profile_photo_remove), icon = MkIcons.Close) {
+                    scope.launch(Dispatchers.IO) { ProfileStore.setAvatar(context, null) }
+                }
+                if (profile.banner != null) Capsule(stringResource(R.string.profile_banner_remove), icon = MkIcons.Close) {
+                    scope.launch(Dispatchers.IO) { ProfileStore.setBanner(context, null) }
                 }
             }
 
