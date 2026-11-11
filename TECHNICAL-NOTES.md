@@ -1175,6 +1175,13 @@ users: the point is to take them from the videos really watched.
   picked (`Built.fps`, 0 for audio / HLS), stored in `PlayerHolder.videoFps` on play and on quality
   change. The user's phone (Honor) reported `peak-refresh-rate: 60 Hz` for Mikeneko before this:
   the maker's per-app policy may still win.
+  Seen on the phone with 2.26.1: the window asked for mode 2 (90 Hz) but the display stayed at 60:
+  `dumpsys display` › DisplayModeDirector votes showed `PRIORITY_DEFAULT_REFRESH_RATE` max 60 (the
+  maker's default for unknown apps) + `PRIORITY_APP_REQUEST_BASE_MODE_REFRESH_RATE` 90: the mode
+  request doesn't lift the render cap. 2.26.2 adds `View.requestedFrameRate` (Android 15+) on the decor
+  view, `android.R.id.content` and the Compose view: a layer vote SurfaceFlinger may honor within the
+  app-request range, which ignores the low-priority default vote. (`preferredMin/MaxDisplayRefreshRate`
+  would be the direct way but they are hidden API.)
 - 2.26.0: `update/Tutorial.kt`. `Tutorial.check` runs once, before « What's new » (called from
   `WhatsNew.pending` and `TutorialSheet`): shown if prefs `tutoriel/vu` is unset AND (fresh install,
   or `WhatsNew.everSeen` false = data cleared); otherwise marked seen (existing users get « What's

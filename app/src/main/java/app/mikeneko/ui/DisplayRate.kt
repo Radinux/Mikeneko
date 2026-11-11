@@ -46,8 +46,19 @@ object DisplayRate {
                 ?: closestBelow(modes, VIDEO_FALLBACK_HZ)
         }
         val window = activity.window
-        if (window.attributes.preferredDisplayModeId == mode.modeId) return
-        window.attributes = window.attributes.apply { preferredDisplayModeId = mode.modeId }
+        if (window.attributes.preferredDisplayModeId != mode.modeId) {
+            window.attributes = window.attributes.apply { preferredDisplayModeId = mode.modeId }
+        }
+        // Le mode seul ne suffit pas (vu sur un Honor) : le système garde son plafond par défaut de 60 Hz
+        // pour l'affichage. Une fréquence demandée par la vue (Android 15+) est un vote d'appli, que ce
+        // plafond par défaut ne borne pas
+        if (Build.VERSION.SDK_INT >= 35) {
+            // Compté pour les vues qui se redessinent : la racine, et la vue Compose qui dessine tout
+            window.decorView.requestedFrameRate = mode.refreshRate
+            val content = window.decorView.findViewById<android.view.ViewGroup>(android.R.id.content)
+            content?.requestedFrameRate = mode.refreshRate
+            content?.getChildAt(0)?.requestedFrameRate = mode.refreshRate
+        }
     }
 
     /** [rate] Hz montre chaque image de la vidéo un nombre entier de fois (à 0,5 Hz près). */
