@@ -1163,6 +1163,15 @@ users: the point is to take them from the videos really watched.
   layer and redraws every glass on each frame; on the playing playlist this ran during the play
   button's trip to the top bar (reported on the phone as a short stutter, not measurable on the
   emulator). If it persists, look at the header item re-entering the list (220 dp cover, cover color).
+- 2.25.0: `ui/components/SearchMorph.kt`. One `LiquidGlass` whose bounds are lerped in a `layout {}`
+  modifier (read at layout time, no recomposition per frame) between the 50 dp circle (right edge,
+  `closedEnd` from the right) and the open capsule (left edge to `openEnd`, default 60 dp = the ✕).
+  Progress = a spring shared through `rememberSearchMorph`; `FadeUnderSearch` fades what the capsule
+  covers (logo, title, mic, settings) and stops composing it when open; `AppearWithSearch` brings the
+  ✕. The search fields became `BoxScope` content (`MusicSearchField`, `PlaylistFilterField`,
+  `ChannelSearchField`, Home's inline field); their touch handler moved to `glassModifier`. Home: the
+  ✕ takes the settings slot (`closedEnd = 60 dp`). Music playlist page: the pill keeps its exact bounds
+  (end padding 10 + 50 dp) so the travelling play button still lands right.
 - 2.25.0: song recognition. `data/SongRecognizer.kt`: `SongSignature` = Kotlin port of ShazamIO 0.4's
   pure-Python generator (itself from SongRec): 16 kHz mono s16, Hann(2050)[1:-1] window, 2048-point
   FFT every 128 samples (own radix-2), peak spreading over 256-frame ring buffers, peaks in 4 bands,

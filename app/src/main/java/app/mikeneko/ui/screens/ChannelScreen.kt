@@ -84,6 +84,13 @@ import app.mikeneko.settings.AppSettings
 import app.mikeneko.ui.components.Capsule
 import app.mikeneko.ui.components.EmptyCat
 import app.mikeneko.ui.components.GlassCircleButton
+import app.mikeneko.ui.components.AppearWithSearch
+import app.mikeneko.ui.components.FadeUnderSearch
+import app.mikeneko.ui.components.SEARCH_CIRCLE
+import app.mikeneko.ui.components.SEARCH_GAP
+import app.mikeneko.ui.components.SearchMorph
+import app.mikeneko.ui.components.rememberSearchMorph
+import androidx.compose.foundation.layout.BoxScope
 import app.mikeneko.ui.components.Loading
 import app.mikeneko.ui.components.Tag
 import app.mikeneko.ui.components.VideoCard
@@ -689,23 +696,29 @@ fun ChannelOverlay(channel: ChannelItem, backdrop: Backdrop, onBack: () -> Unit)
             }
         }
         Spacer(Modifier.width(12.dp))
-        if (searching) {
-            ChannelSearchField(backdrop, Modifier.weight(1f))
-        } else {
-            Text(
-                playlist?.name ?: channel.name,
-                Modifier.weight(1f),
-                style = TextStyle(fontFamily = Rounded, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, shadow = GlassTextShadow),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        if (playlist == null) {
-            Spacer(Modifier.width(10.dp))
-            if (searching) {
-                GlassCircleButton(backdrop, MkIcons.Close, stringResource(R.string.search_close)) { ChannelSearch.close() }
-            } else {
-                GlassCircleButton(backdrop, MkIcons.Search, stringResource(R.string.channel_search)) { ChannelSearch.query.value = "" }
+        // 2.25.0 : la loupe s'étire en capsule par-dessus le nom de la chaîne, le ✕ arrive au bout
+        val morph = rememberSearchMorph(searching)
+        Box(Modifier.weight(1f).height(SEARCH_CIRCLE)) {
+            FadeUnderSearch(morph, Modifier.align(Alignment.CenterStart).padding(end = if (playlist == null) SEARCH_CIRCLE + SEARCH_GAP else 0.dp)) {
+                Text(
+                    playlist?.name ?: channel.name,
+                    style = TextStyle(fontFamily = Rounded, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, shadow = GlassTextShadow),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            if (playlist == null) {
+                SearchMorph(
+                    backdrop,
+                    open = searching,
+                    progress = morph,
+                    label = stringResource(R.string.channel_search),
+                    onOpen = { ChannelSearch.query.value = "" },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { ChannelSearchField() }
+                AppearWithSearch(morph, Modifier.align(Alignment.CenterEnd)) {
+                    GlassCircleButton(backdrop, MkIcons.Close, stringResource(R.string.search_close)) { ChannelSearch.close() }
+                }
             }
         }
     }
@@ -713,12 +726,12 @@ fun ChannelOverlay(channel: ChannelItem, backdrop: Backdrop, onBack: () -> Unit)
 
 /** Le champ de recherche dans la chaîne, en verre, à la place de son nom. Le clavier s'ouvre tout de suite. */
 @Composable
-private fun ChannelSearchField(backdrop: Backdrop, modifier: Modifier) {
+private fun BoxScope.ChannelSearchField() {
     val query by ChannelSearch.query.collectAsState()
     val focus = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
     LaunchedEffect(Unit) { if (ChannelSearch.submitted.value == null) runCatching { focus.requestFocus() } }
-    LiquidGlass(backdrop, modifier.height(50.dp), cornerRadius = 25.dp, bezel = 16.dp, refraction = 16.dp) {
+    run {
         BasicTextField(
             value = query.orEmpty(),
             onValueChange = { ChannelSearch.query.value = it },

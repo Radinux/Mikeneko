@@ -65,6 +65,13 @@ import app.mikeneko.R
 import app.mikeneko.data.MusicKind
 import app.mikeneko.data.SearchHistory
 import app.mikeneko.ui.components.GlassCircleButton
+import app.mikeneko.ui.components.AppearWithSearch
+import app.mikeneko.ui.components.FadeUnderSearch
+import app.mikeneko.ui.components.SEARCH_CIRCLE
+import app.mikeneko.ui.components.SEARCH_GAP
+import app.mikeneko.ui.components.SearchMorph
+import app.mikeneko.ui.components.rememberSearchMorph
+import androidx.compose.foundation.layout.BoxScope
 import app.mikeneko.ui.glass.Backdrop
 import app.mikeneko.ui.glass.LiquidGlass
 import app.mikeneko.ui.icons.MkIcons
@@ -160,13 +167,14 @@ private fun MusicHeader(state: MusicState, backdrop: Backdrop) {
                     // Une pilule en verre avec le titre de la page et le bouton lecture : elle arrive à mesure
                     // que l'en-tête passe sous la barre (la liste se déforme dessous en défilant)
                     val filtering = page is MusicPage.MyPlaylist && state.playlistFilter != null
-                    Box(Modifier.weight(1f).padding(horizontal = 10.dp).onGloballyPositioned { c ->
+                    // Playlist perso : la loupe au bout s'étire en capsule de filtre par-dessus la pilule (2.25.0)
+                    val morph = rememberSearchMorph(filtering)
+                    Box(Modifier.weight(1f)) {
+                    Box(Modifier.fillMaxWidth().padding(start = 10.dp, end = if (page is MusicPage.MyPlaylist) 10.dp + SEARCH_CIRCLE else 10.dp).onGloballyPositioned { c ->
                         // Dans le repère de cette couche (pas l'écran : voir PlayAnchor.space)
                         state.overlayRoot?.takeIf { it.isAttached }?.let { state.barPill = it.localBoundingBoxOf(c, clipBounds = false) }
                     }) {
-                        if (filtering) {
-                            PlaylistFilterField(state, backdrop)
-                        } else if (bar != null) {
+                        if (bar != null && !(filtering && morph.value >= 0.999f)) Box(Modifier.graphicsLayer { alpha = 1f - morph.value }) {
                             LiquidGlass(
                                 backdrop,
                                 Modifier
@@ -211,35 +219,60 @@ private fun MusicHeader(state: MusicState, backdrop: Backdrop) {
                     // Playlist perso : une loupe pour chercher dedans (2.11.3, à la place du ⋮ : renommer et
                     // supprimer sont dans « Modifier »)
                     if (page is MusicPage.MyPlaylist) {
-                        if (filtering) {
+                        SearchMorph(
+                            backdrop,
+                            open = filtering,
+                            progress = morph,
+                            label = stringResource(R.string.playlist_search),
+                            onOpen = { state.playlistFilter = "" },
+                            modifier = Modifier.fillMaxWidth().padding(start = 10.dp),
+                        ) { PlaylistFilterField(state) }
+                        AppearWithSearch(morph, Modifier.align(Alignment.CenterEnd)) {
                             GlassCircleButton(backdrop, MkIcons.Close, stringResource(R.string.search_close)) { state.playlistFilter = null }
-                        } else {
-                            GlassCircleButton(backdrop, MkIcons.Search, stringResource(R.string.playlist_search)) { state.playlistFilter = "" }
                         }
                     }
-                }
-                state.searching -> {
-                    MusicSearchField(state, backdrop, focus, Modifier.weight(1f), onSubmit = ::submit)
-                    Spacer(Modifier.width(10.dp))
-                    val empty = state.query.isEmpty() && state.submitted == null
-                    GlassCircleButton(backdrop, MkIcons.Close, stringResource(if (empty) R.string.search_close else R.string.search_clear)) {
-                        if (empty) {
-                            state.closeSearch() // plus rien à effacer : on ferme
-                        } else {
-                            // ✕ efface le champ sans fermer, clavier ouvert (les résultats restent dessous)
-                            state.query = ""
-                            state.suggesting = true
-                            runCatching { focus.requestFocus() }
-                            keyboard?.show()
-                        }
                     }
                 }
                 else -> {
-                    Spacer(Modifier.weight(1f))
-                    // Reconnaître le morceau qui passe (2.25.0), à côté de la recherche
-                    GlassCircleButton(backdrop, MkIcons.Listen, stringResource(R.string.recognize)) { finding = true }
-                    Spacer(Modifier.width(10.dp))
-                    GlassCircleButton(backdrop, MkIcons.Search, stringResource(R.string.music_search)) { state.openSearch() }
+                    // 2.25.0 : la loupe s'étire en capsule de recherche (le micro s'efface dessous), le ✕
+                    // arrive à sa place, au bout
+                    val morph = rememberSearchMorph(state.searching)
+                    Box(Modifier.weight(1f).height(SEARCH_CIRCLE)) {
+                        // Reconnaître le morceau qui passe (2.25.0), à côté de la recherche
+                        FadeUnderSearch(morph, Modifier.align(Alignment.CenterEnd).padding(end = SEARCH_CIRCLE + SEARCH_GAP)) {
+                            GlassCircleButton(backdrop, MkIcons.Listen, stringResource(R.string.recognize)) { finding = true }
+                        }
+                        SearchMorph(
+                            backdrop,
+                            open = state.searching,
+                            progress = morph,
+                            label = stringResource(R.string.music_search),
+                            onOpen = { state.openSearch() },
+                            modifier = Modifier.fillMaxWidth(),
+                            glassModifier = Modifier.pointerInput(Unit) {
+                                // Toucher le champ rouvre l'historique / les suggestions (même après une recherche)
+                                awaitEachGesture {
+                                    awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                                    state.suggesting = true
+                                }
+                            },
+                        ) { MusicSearchField(state, focus, onSubmit = ::submit) }
+                        AppearWithSearch(morph, Modifier.align(Alignment.CenterEnd)) {
+                            val empty = state.query.isEmpty() && state.submitted == null
+                            GlassCircleButton(backdrop, MkIcons.Close, stringResource(if (empty) R.string.search_close else R.string.search_clear)) {
+                                if (!state.searching) return@GlassCircleButton
+                                if (empty) {
+                                    state.closeSearch() // plus rien à effacer : on ferme
+                                } else {
+                                    // ✕ efface le champ sans fermer, clavier ouvert (les résultats restent dessous)
+                                    state.query = ""
+                                    state.suggesting = true
+                                    runCatching { focus.requestFocus() }
+                                    keyboard?.show()
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -261,8 +294,9 @@ private fun MusicHeader(state: MusicState, backdrop: Backdrop) {
     }
 }
 
+/** Le champ de la recherche musique, dans la capsule de [SearchMorph]. */
 @Composable
-private fun MusicSearchField(state: MusicState, backdrop: Backdrop, focus: FocusRequester, modifier: Modifier, onSubmit: (String) -> Unit) {
+private fun BoxScope.MusicSearchField(state: MusicState, focus: FocusRequester, onSubmit: (String) -> Unit) {
     val keyboard = LocalSoftwareKeyboardController.current
     // À l'ouverture (pas en revenant d'un album) : le clavier pour taper tout de suite
     LaunchedEffect(Unit) {
@@ -277,21 +311,7 @@ private fun MusicSearchField(state: MusicState, backdrop: Backdrop, focus: Focus
     LaunchedEffect(state.query) {
         if (field.text != state.query) field = TextFieldValue(state.query, TextRange(state.query.length))
     }
-    LiquidGlass(
-        backdrop,
-        modifier
-            .height(50.dp)
-            // Toucher le champ rouvre l'historique / les suggestions (même après une recherche)
-            .pointerInput(Unit) {
-                awaitEachGesture {
-                    awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
-                    state.suggesting = true
-                }
-            },
-        cornerRadius = 25.dp,
-        bezel = 16.dp,
-        refraction = 16.dp,
-    ) {
+    run {
         BasicTextField(
             value = field,
             onValueChange = {
@@ -324,10 +344,10 @@ private fun PillTapBlocker(state: MusicState, modifier: Modifier) {
 
 /** Le champ de recherche dans une playlist perso, en verre, dans la barre du haut (2.11.3). */
 @Composable
-private fun PlaylistFilterField(state: MusicState, backdrop: Backdrop) {
+private fun BoxScope.PlaylistFilterField(state: MusicState) {
     val focus = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
-    LiquidGlass(backdrop, Modifier.fillMaxWidth().height(50.dp), cornerRadius = 25.dp, bezel = 16.dp, refraction = 16.dp) {
+    run {
         BasicTextField(
             value = state.playlistFilter.orEmpty(),
             onValueChange = { state.playlistFilter = it },

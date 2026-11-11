@@ -97,6 +97,12 @@ import app.mikeneko.settings.AppLocale
 import app.mikeneko.settings.AppSettings
 import app.mikeneko.ui.components.EmptyCat
 import app.mikeneko.ui.components.GlassCircleButton
+import app.mikeneko.ui.components.AppearWithSearch
+import app.mikeneko.ui.components.FadeUnderSearch
+import app.mikeneko.ui.components.SEARCH_CIRCLE
+import app.mikeneko.ui.components.SEARCH_GAP
+import app.mikeneko.ui.components.SearchMorph
+import app.mikeneko.ui.components.rememberSearchMorph
 import app.mikeneko.ui.components.Loading
 import app.mikeneko.ui.components.Mascot
 import app.mikeneko.ui.components.VideoCard
@@ -507,73 +513,11 @@ fun HomeOverlay(state: HomeState, backdrop: Backdrop, onSettings: () -> Unit) {
             Modifier.fillMaxWidth().windowInsetsPadding(WindowInsets.statusBarSpace).padding(top = 10.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp), // + 6 dp de marge des rubriques = 12 dp comme avant
         ) {
-            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                if (state.searching) {
-                    LiquidGlass(
-                        backdrop,
-                        Modifier
-                            .weight(1f)
-                            .height(50.dp)
-                            // Toucher le champ rouvre l'historique / les suggestions (même après une recherche)
-                            .pointerInput(Unit) {
-                                awaitEachGesture {
-                                    awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
-                                    state.suggesting = true
-                                    state.filtersOpen = false
-                                }
-                            },
-                        cornerRadius = 25.dp,
-                        bezel = 16.dp,
-                        refraction = 16.dp,
-                    ) {
-                        // Champ à état : on peut le faire défiler au doigt, et après la recherche il
-                        // réaffiche le début du texte (au lieu de rester bloqué sur la fin)
-                        val field = rememberTextFieldState(state.query)
-                        val scroll = rememberScrollState()
-                        val scope = rememberCoroutineScope()
-                        // Champ → état. Dans l'autre sens, seulement si la recherche a été changée d'ailleurs
-                        // (sinon une lettre tapée entre deux synchronisations est effacée : « tarte » → « trte »)
-                        var fromField by remember { mutableStateOf(state.query) }
-                        LaunchedEffect(field) {
-                            snapshotFlow { field.text.toString() }.collect {
-                                if (it != state.query) state.suggesting = true // on tape : les suggestions reviennent
-                                fromField = it
-                                state.query = it
-                            }
-                        }
-                        LaunchedEffect(state.query) {
-                            if (state.query != fromField && field.text.toString() != state.query) field.setTextAndPlaceCursorAtEnd(state.query)
-                        }
-                        // À l'ouverture de la recherche : le clavier tout de suite
-                        LaunchedEffect(Unit) {
-                            if (state.submitted == null) {
-                                runCatching { focus.requestFocus() }
-                                keyboard?.show()
-                            }
-                        }
-                        // Après une recherche, le champ réaffiche le début du texte
-                        LaunchedEffect(state.submitted) {
-                            if (state.submitted != null) {
-                                field.edit { selection = TextRange(0) }
-                                scroll.animateScrollTo(0)
-                            }
-                        }
-                        BasicTextField(
-                            state = field,
-                            lineLimits = TextFieldLineLimits.SingleLine,
-                            scrollState = scroll,
-                            textStyle = TextStyle(color = Color.White, fontSize = 16.sp, fontFamily = Rounded, fontWeight = FontWeight.Bold, shadow = GlassTextShadow),
-                            cursorBrush = SolidColor(Pelage.RouxClair),
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                            onKeyboardAction = { submit(field.text.toString()) },
-                            modifier = Modifier.align(Alignment.CenterStart).fillMaxWidth().padding(horizontal = 18.dp).focusRequester(focus),
-                            decorator = { inner ->
-                                if (state.query.isEmpty()) Text(stringResource(R.string.search_hint), color = Color.White.copy(alpha = 0.7f), fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                                inner()
-                            },
-                        )
-                    }
-                } else {
+            // 2.25.0 : la loupe s'étire en capsule de recherche vers la gauche (le logo s'efface dessous) et
+            // le ✕ prend la place des réglages
+            val morph = rememberSearchMorph(state.searching)
+            Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(SEARCH_CIRCLE)) {
+                FadeUnderSearch(morph, Modifier.align(Alignment.CenterStart)) {
                     LiquidGlass(backdrop, Modifier.height(50.dp), cornerRadius = 25.dp, bezel = 16.dp, refraction = 16.dp) {
                         Row(Modifier.fillMaxHeight().padding(start = 9.dp, end = 18.dp), verticalAlignment = Alignment.CenterVertically) {
                             Mascot(size = 36.dp)
@@ -581,32 +525,95 @@ fun HomeOverlay(state: HomeState, backdrop: Backdrop, onSettings: () -> Unit) {
                             Text("Mikeneko", style = TextStyle(fontFamily = Rounded, color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.ExtraBold, shadow = GlassTextShadow))
                         }
                     }
-                    Spacer(Modifier.weight(1f))
                 }
-                Spacer(Modifier.width(10.dp))
-                val clearLabel = stringResource(if (state.query.isEmpty() && state.submitted == null) R.string.search_close else R.string.search_clear)
-                GlassCircleButton(backdrop, if (state.searching) MkIcons.Close else MkIcons.Search, if (state.searching) clearLabel else stringResource(R.string.search)) {
-                    when {
-                        !state.searching -> {
-                            state.searching = true
-                            state.suggesting = true // à l'ouverture : l'historique des recherches
-                        }
-                        // Champ déjà vide, rien de cherché : il n'y a plus rien à effacer, on ferme
-                        state.query.isEmpty() && state.submitted == null -> state.goBack()
-                        else -> {
-                            // ✕ efface le champ sans fermer : retour à la barre de recherche, clavier ouvert
-                            // (les résultats restent dessous : le retour y ramène)
-                            state.query = ""
+                SearchMorph(
+                    backdrop,
+                    open = state.searching,
+                    progress = morph,
+                    label = stringResource(R.string.search),
+                    onOpen = {
+                        state.searching = true
+                        state.suggesting = true // à l'ouverture : l'historique des recherches
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    closedEnd = SEARCH_CIRCLE + SEARCH_GAP,
+                    glassModifier = Modifier.pointerInput(Unit) {
+                        // Toucher le champ rouvre l'historique / les suggestions (même après une recherche)
+                        awaitEachGesture {
+                            awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
                             state.suggesting = true
                             state.filtersOpen = false
+                        }
+                    },
+                ) {
+                    // Champ à état : on peut le faire défiler au doigt, et après la recherche il
+                    // réaffiche le début du texte (au lieu de rester bloqué sur la fin)
+                    val field = rememberTextFieldState(state.query)
+                    val scroll = rememberScrollState()
+                    val scope = rememberCoroutineScope()
+                    // Champ → état. Dans l'autre sens, seulement si la recherche a été changée d'ailleurs
+                    // (sinon une lettre tapée entre deux synchronisations est effacée : « tarte » → « trte »)
+                    var fromField by remember { mutableStateOf(state.query) }
+                    LaunchedEffect(field) {
+                        snapshotFlow { field.text.toString() }.collect {
+                            if (it != state.query) state.suggesting = true // on tape : les suggestions reviennent
+                            fromField = it
+                            state.query = it
+                        }
+                    }
+                    LaunchedEffect(state.query) {
+                        if (state.query != fromField && field.text.toString() != state.query) field.setTextAndPlaceCursorAtEnd(state.query)
+                    }
+                    // À l'ouverture de la recherche : le clavier tout de suite
+                    LaunchedEffect(Unit) {
+                        if (state.submitted == null) {
                             runCatching { focus.requestFocus() }
                             keyboard?.show()
                         }
                     }
+                    // Après une recherche, le champ réaffiche le début du texte
+                    LaunchedEffect(state.submitted) {
+                        if (state.submitted != null) {
+                            field.edit { selection = TextRange(0) }
+                            scroll.animateScrollTo(0)
+                        }
+                    }
+                    BasicTextField(
+                        state = field,
+                        lineLimits = TextFieldLineLimits.SingleLine,
+                        scrollState = scroll,
+                        textStyle = TextStyle(color = Color.White, fontSize = 16.sp, fontFamily = Rounded, fontWeight = FontWeight.Bold, shadow = GlassTextShadow),
+                        cursorBrush = SolidColor(Pelage.RouxClair),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        onKeyboardAction = { submit(field.text.toString()) },
+                        modifier = Modifier.align(Alignment.CenterStart).fillMaxWidth().padding(horizontal = 18.dp).focusRequester(focus),
+                        decorator = { inner ->
+                            if (state.query.isEmpty()) Text(stringResource(R.string.search_hint), color = Color.White.copy(alpha = 0.7f), fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                            inner()
+                        },
+                    )
                 }
-                if (!state.searching) {
-                    Spacer(Modifier.width(10.dp))
+                FadeUnderSearch(morph, Modifier.align(Alignment.CenterEnd)) {
                     GlassCircleButton(backdrop, MkIcons.Settings, stringResource(R.string.settings), onClick = onSettings)
+                }
+                AppearWithSearch(morph, Modifier.align(Alignment.CenterEnd)) {
+                    val clearLabel = stringResource(if (state.query.isEmpty() && state.submitted == null) R.string.search_close else R.string.search_clear)
+                    GlassCircleButton(backdrop, MkIcons.Close, clearLabel) {
+                        when {
+                            !state.searching -> Unit
+                            // Champ déjà vide, rien de cherché : il n'y a plus rien à effacer, on ferme
+                            state.query.isEmpty() && state.submitted == null -> state.goBack()
+                            else -> {
+                                // ✕ efface le champ sans fermer : retour à la barre de recherche, clavier ouvert
+                                // (les résultats restent dessous : le retour y ramène)
+                                state.query = ""
+                                state.suggesting = true
+                                state.filtersOpen = false
+                                runCatching { focus.requestFocus() }
+                                keyboard?.show()
+                            }
+                        }
+                    }
                 }
             }
             AnimatedSearchSuggestions(

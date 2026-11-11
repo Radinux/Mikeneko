@@ -64,6 +64,9 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
   seconds and names the song playing around you. It goes straight into a **Found songs** playlist,
   ready to play or download. Only a fingerprint of the sound leaves the phone, never the sound
   itself; your own music pauses while it listens.
+- **Search buttons stretch into the search bar**: on Home, Music, your playlists and channel pages,
+  the glass magnifier now grows into the search capsule (and shrinks back into it when closed),
+  instead of a capsule popping up next to it. The ✕ stays a separate button.
 - **Your own color can be deleted**: long-press its bubble (or tap it again once chosen) to open the
   color wheel, then *Delete*. If it was the app's color, Calico comes back.
 
