@@ -121,6 +121,37 @@ object PlaybackLog {
         }
     }
 
+    /**
+     * Les images lentes de l'interface (2.26.1) : une vidéo qui gèle alors que le son continue, c'est
+     * l'affichage (la vidéo est dessinée dans l'interface, pour le verre), pas le lecteur. Chaque image
+     * de plus de [SLOW_FRAME_MS] est notée avec le temps de chaque étape : interface (calcul, mise en
+     * page, dessin), envoi au GPU, GPU.
+     */
+    fun watchFrames(activity: android.app.Activity) {
+        val handler = android.os.Handler(android.os.HandlerThread("images-lentes").apply { start() }.looper)
+        activity.window.addOnFrameMetricsAvailableListener({ _, metrics, _ ->
+            fun ms(id: Int) = metrics.getMetric(id) / 1_000_000
+            val total = ms(android.view.FrameMetrics.TOTAL_DURATION)
+            if (total < SLOW_FRAME_MS) return@addOnFrameMetricsAvailableListener
+            val gpu = if (android.os.Build.VERSION.SDK_INT >= 31) " gpu=${ms(android.view.FrameMetrics.GPU_DURATION)}" else ""
+            val now = PlayerHolder.nowPlaying.value
+            val what = when {
+                now == null -> "nothing"
+                now.audioOnly -> "music"
+                else -> "video"
+            }
+            log(
+                "SLOW_FRAME ${total}ms delay=${ms(android.view.FrameMetrics.UNKNOWN_DELAY_DURATION)} input=${ms(android.view.FrameMetrics.INPUT_HANDLING_DURATION)}" +
+                    " anim=${ms(android.view.FrameMetrics.ANIMATION_DURATION)} layout=${ms(android.view.FrameMetrics.LAYOUT_MEASURE_DURATION)}" +
+                    " draw=${ms(android.view.FrameMetrics.DRAW_DURATION)} sync=${ms(android.view.FrameMetrics.SYNC_DURATION)}" +
+                    " issue=${ms(android.view.FrameMetrics.COMMAND_ISSUE_DURATION)} swap=${ms(android.view.FrameMetrics.SWAP_BUFFERS_DURATION)}$gpu" +
+                    " playing=$what/${PlayerHolder.isPlaying.value}",
+            )
+        }, handler)
+    }
+
+    private const val SLOW_FRAME_MS = 100L
+
     /** Une ligne datée (aussi appelé ailleurs : nouvelle vidéo, saut SponsorBlock…). */
     fun log(line: String) {
         val stamped = "${time.format(Date())} $line\n"

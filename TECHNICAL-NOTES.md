@@ -1191,6 +1191,12 @@ users: the point is to take them from the videos really watched.
   (synced to it) freezes with it: ExoPlayer sees no underrun and no buffering. Useful checks:
   `dumpsys audio` (focus history, output device) and `dumpsys media.audio_flinger` (output thread
   underruns).
+  2.26.1: picture-only freezes (sound goes on) are on the display side: the video goes through a
+  `TextureView` composed by the app's RenderThread, so a slow UI or RenderThread frame freezes the
+  picture while ExoPlayer and the audio carry on. `PlaybackLog.watchFrames` (FrameMetrics listener on
+  the activity window, own HandlerThread) logs `SLOW_FRAME` ≥ 100 ms with delay / input / anim
+  (Compose recomposition) / layout / draw / sync / issue / swap / gpu. `dumpsys gfxinfo app.mikeneko`
+  gives the global histogram.
 - 2.25.0: `ui/components/SearchMorph.kt`. One `LiquidGlass` whose bounds are lerped in a `layout {}`
   modifier (read at layout time, no recomposition per frame) between the 50 dp circle (right edge,
   `closedEnd` from the right) and the open capsule (left edge to `openEnd`, default 60 dp = the ✕).

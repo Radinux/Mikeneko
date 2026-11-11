@@ -65,6 +65,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        app.mikeneko.player.PlaybackLog.watchFrames(this) // TEMPORAIRE (2.26.1) : les gels de l'image
         if (savedInstanceState == null) {
             links.value = linkFrom(intent)
             if (intent?.getBooleanExtra(Notifier.EXTRA_UPDATE, false) == true) AppUpdates.check(this) // notification de mise à jour
