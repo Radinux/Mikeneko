@@ -658,7 +658,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">Quoi de neuf dans Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Super !</string>
-    <string name="whats_new_body">🧹 La synchro retient ce que tu retires\n\n• Tu te désabonnes, tu supprimes une playlist ou un morceau, tu effaces ton historique : tes appareils liés et ton coffre GitHub suivent, au lieu de tout ramener.\n• Importer un fichier de sauvegarde à la main remet toujours tout.\n• Playlists et albums : le bouton lecture entre maintenant dans sa capsule par le dessous.\n\n👆 Depuis la 2.22 : tout réagit sous le doigt, et la pochette vole du petit lecteur musique jusqu’au grand.</string>
+    <string name="whats_new_body">🎧 C\'est quoi ce son ?\n\n• Le nouveau bouton micro, à côté de la recherche dans Musique, écoute quelques secondes et te dit quel morceau passe autour de toi.\n• Il file direct dans ta playlist Sons trouvés, prêt à écouter ou à télécharger. Seule une empreinte du son quitte ton téléphone.\n• Ta couleur perso peut maintenant être supprimée : appui long sur sa pastille.\n\n🎤 Depuis la 2.24 : des paroles décalées ? Touche Décalées ?, puis la ligne que tu entends.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Importer des playlists</string>

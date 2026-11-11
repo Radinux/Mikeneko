@@ -657,7 +657,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">What’s new in Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Nice!</string>
-    <string name="whats_new_body">🧹 Sync now remembers what you remove\n\n• Unfollow a channel, delete a playlist or a track, clear your history: your linked devices and your GitHub locker follow, instead of bringing it back.\n• Importing a backup file by hand still brings everything back.\n• Playlists and albums: the play button now enters its capsule from below.\n\n👆 Since 2.22: everything reacts under your finger, and the music cover flies from the little player to the big one.</string>
+    <string name="whats_new_body">🎧 What\'s this song?\n\n• The new microphone button next to the search in Music listens for a few seconds and names the song playing around you.\n• It goes straight into your Found songs playlist, ready to play or download. Only a fingerprint of the sound leaves your phone.\n• Your own color can now be deleted: long-press its bubble.\n\n🎤 Since 2.24: lyrics out of sync? Tap Out of sync?, then the line you hear right now.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Import playlists</string>
