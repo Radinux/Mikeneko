@@ -631,7 +631,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">What’s new in Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Nice!</string>
-    <string name="whats_new_body">⚡ Shorts and speed\n\n• Hold your finger on a video or a short: it plays at 2× until you let go.\n• Shorts tab in the dock: full screen, with a back button at the top left. Settings › Playback › No Shorts removes it.\n• Shorts start right away: the next 3 are prepared, the previous 2 stay ready.\n• Settings are now in tabs: General, Playback, For you, Sync, About.\n\n☁️ Since 2.19: sync as you go between your linked devices and your GitHub locker.</string>
+    <string name="whats_new_body">👆 Everything reacts under your finger\n\n• Rows, buttons and capsules shrink a little and light up when you touch them.\n• Music: the cover flies from the little player to the big one when you open it.\n• Playlists and albums: the play button and its capsule now arrive together in the top bar.\n\n⚡ Since 2.21: hold a video or a short for 2×, full-screen Shorts tab, queue and menus that open like the lyrics.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Import playlists</string>

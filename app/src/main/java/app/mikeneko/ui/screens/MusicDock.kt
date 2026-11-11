@@ -75,7 +75,7 @@ import kotlinx.coroutines.launch
  * de morceau (le titre suit le doigt).
  */
 @Composable
-internal fun MusicDockRow() {
+internal fun MusicDockRow(hideCover: () -> Boolean = { false }) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     // Une vidéo qui joue n'est pas de la musique : on montre le morceau qu'elle a mis de côté (s'il y en a)
@@ -179,7 +179,8 @@ internal fun MusicDockRow() {
     ) {
         // La pochette reste en place (elle change en fondu) ; seul le titre suit le doigt, et le titre du
         // morceau voisin arrive à côté dès le début du glissé
-        Box(Modifier.size(48.dp).clip(RoundedCornerShape(14.dp)).background(Pelage.RouxNuit)) {
+        // (cachée pendant qu'elle « vole » vers la grande pochette de la fenêtre, voir MusicDockWindow)
+        Box(Modifier.size(48.dp).graphicsLayer { alpha = if (hideCover()) 0f else 1f }.clip(RoundedCornerShape(14.dp)).background(Pelage.RouxNuit)) {
             Crossfade(shownThumbnail, animationSpec = tween(220), label = "pochette") { thumb ->
                 AsyncImage(thumb, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
             }

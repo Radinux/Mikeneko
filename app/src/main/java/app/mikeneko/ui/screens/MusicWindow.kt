@@ -1,5 +1,13 @@
 package app.mikeneko.ui.screens
 
+import app.mikeneko.ui.theme.Pelage
+import coil3.compose.AsyncImage
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.derivedStateOf
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
@@ -207,7 +215,7 @@ fun MusicDockWindow(
                     .placeWhile { state.expand.value < 0.35f }
                     .graphicsLayer { alpha = (1f - state.expand.value * 2.8f).coerceIn(0f, 1f) },
             ) {
-                MusicDockRow()
+                MusicDockRow(hideCover = { state.coverFlying })
             }
             // La fenêtre : à sa taille finale dès le départ (pas de remise en page pendant le geste),
             // collée en bas, découpée par la vitre ; elle apparaît quand la vitre a assez grandi
@@ -234,6 +242,57 @@ fun MusicDockWindow(
                     .graphicsLayer { alpha = if (warm && state.expand.value <= 0.3f) 0.004f else ((state.expand.value - 0.3f) / 0.4f).coerceIn(0f, 1f) },
             ) {
                 PlayerWindowContent(state, backdrop, onDownload, onOpenArtist, onOpenAlbum)
+            }
+            // La pochette qui voyage (2.22.0) : de sa place dans la pilule jusqu'à la grande pochette de la
+            // fenêtre, en grandissant avec la vitre. Les deux vraies pochettes sont cachées pendant ce temps :
+            // une seule image, qui ne disparaît jamais en route.
+            // Au même rythme que la vitre (pas d'accélération à part : elle sortirait de la vitre par le haut).
+            // Elle est mise en page une fois, à sa grande taille, puis réduite : l'image reste nette et rien
+            // n'est remesuré pendant le geste.
+            fun flight() = state.expand.value.coerceIn(0f, 1f)
+            val small = with(density) { 48.dp.toPx() }
+            fun flightScale() = state.coverInWindow?.width?.takeIf { it > 0f }?.let { big -> lerp(small, big, flight()) / big } ?: 1f
+            Box(
+                Modifier
+                    .layout { measurable, constraints ->
+                        val target = state.coverInWindow
+                        val big = (target?.width ?: small).roundToInt().coerceAtLeast(1)
+                        val placeable = measurable.measure(Constraints.fixed(big, big))
+                        layout(constraints.maxWidth, constraints.maxHeight) {
+                            if (target == null || !state.coverFlying) return@layout
+                            val e = flight()
+                            val glassW = constraints.maxWidth.toFloat()
+                            val glassH = constraints.maxHeight.toFloat()
+                            val fromLeft = 10.dp.toPx()
+                            val fromTop = glassH - MUSIC_DOCK_HEIGHT.toPx() + (MUSIC_DOCK_HEIGHT.toPx() - small) / 2f
+                            // Le contenu de la fenêtre est centré et collé en bas de la vitre
+                            val toLeft = (glassW - (geometry.windowRight - geometry.windowLeft)) / 2f + target.left
+                            val toTop = glassH - (geometry.bottom - geometry.windowTop) + target.top
+                            placeable.place(lerp(fromLeft, toLeft, e).roundToInt(), lerp(fromTop, toTop, e).roundToInt())
+                        }
+                    }
+                    .graphicsLayer {
+                        val scale = flightScale()
+                        transformOrigin = TransformOrigin(0f, 0f)
+                        scaleX = scale
+                        scaleY = scale
+                        shape = RoundedCornerShape(lerp(14.dp.toPx(), 26.dp.toPx(), flight()) / scale)
+                        clip = true
+                    }
+                    .background(Pelage.RouxNuit)
+                    // Le liseré crème de la grande pochette arrive en chemin
+                    .drawWithContent {
+                        drawContent()
+                        val e = flight()
+                        val scale = flightScale()
+                        val stroke = 3.dp.toPx() * e / scale
+                        if (stroke > 0.2f) {
+                            val r = lerp(14.dp.toPx(), 26.dp.toPx(), e) / scale
+                            drawRoundRect(Pelage.Creme, Offset(stroke / 2f, stroke / 2f), Size(size.width - stroke, size.height - stroke), CornerRadius(r - stroke / 2f), style = Stroke(stroke))
+                        }
+                    },
+            ) {
+                AsyncImage(playingNow?.thumbnail ?: parkedNow?.thumbnail, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
             }
         }
     }

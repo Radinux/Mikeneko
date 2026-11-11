@@ -1121,6 +1121,23 @@ users: the point is to take them from the videos really watched.
   Users: `LyricsSheet`, `QueueSheet` (same anchor: the player's button capsule), `MusicSheetHost`
   (anchor = that capsule when the music window is open, else a capsule at the bottom of the screen) and
   `CommentsPanel` (anchor = the bubble button of the short, published through `ShortComments.anchor`).
+- 2.22.0, press feedback: `PressIndication` (`ui/theme/Clay.kt`), an `IndicationNodeFactory` provided as
+  `LocalIndication` inside `MikenekoTheme`, so every plain `clickable` gets it (those with
+  `indication = null` or `jellyClickable` keep theirs; Material buttons and switches keep their ripple).
+  It scales the content in the draw phase (at most 5 dp per side) and adds a 10 % white veil.
+- 2.22.0, top-bar capsule of music pages: `PageBar.progress` = max(header passed, travel of the play
+  button). Before, the capsule waited for the bottom of the header while the button followed its own
+  position, so with rows under the button (Shuffle, Keep, Add | Edit…) the button reached the bar
+  while the capsule was still transparent. Positions (`PlayAnchor.left/listTop`, `MusicState.barPill`)
+  are now taken in the space of the overlay layer (`MusicState.overlayRoot`, `localPositionOf`) instead
+  of the root: a root position captured during the tab's enter animation (translated and scaled layer)
+  stayed wrong afterwards.
+- 2.22.0, music dock: a third layer in the glass draws the cover between the pill (48 dp) and the
+  window's cover (`MusicPlayerState.coverInWindow`, measured in the window content's space); both real
+  covers are hidden while `coverFlying`. It is laid out once at the big size and scaled down (sharp
+  image, no remeasure per frame) and moves linearly with the glass (an eased flight left the glass
+  through the top and got clipped). `stretchGesture` settles the glass in a `finally`: a gesture cut
+  by a restarted `pointerInput` used to leave it half-open, pill faded and window not shown yet.
 - Emulator tip (2026-11-10): with `-gpu swiftshader_indirect` the emulator itself crashes when the
   music window opens; `-gpu host` works again.
 - Emulator tip: if screenshots turn black and the app "isn't responding" while its main thread just

@@ -58,6 +58,17 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ## 🎌 What's new ⸜(｡˃ ᵕ ˂ )⸝♡
 
+### 2.22
+
+- **Everything reacts under your finger**: list rows, round buttons, capsules and cards shrink a
+  little and light up when touched, then bounce back.
+- **Music player**: when the little player opens into the window, its cover flies and grows up to the
+  big cover (and back). The little player can no longer stay stuck half-open after an interrupted
+  gesture.
+- **Play button of playlists and albums**: its capsule in the top bar now arrives with it. Before, on
+  pages with buttons under the play button, it could sit alone at the top with no capsule around it,
+  or land beside its place after switching tabs.
+
 ### 2.21
 
 - **Hold to speed up**: keep a finger on a video or a short and it plays at **2×** until you let go

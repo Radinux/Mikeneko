@@ -1,5 +1,6 @@
 package app.mikeneko.ui.theme
 
+import androidx.compose.ui.geometry.CornerRadius
 import kotlinx.coroutines.launch
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
@@ -181,6 +182,7 @@ private class PressNode(private val source: InteractionSource) : Modifier.Node()
         val s = 1f - shrink * p
         scale(s, s) { this@draw.drawContent() }
         val light = (p * 0.1f).coerceIn(0f, 0.1f)
-        if (light > 0f) scale(s, s) { drawRect(Color.White.copy(alpha = light)) }
+        // (coins arrondis : sur une ligne de liste, pas de rectangle dur ; un bouton rond, lui, est déjà découpé)
+        if (light > 0f) scale(s, s) { drawRoundRect(Color.White.copy(alpha = light), cornerRadius = CornerRadius(14.dp.toPx())) }
     }
 }

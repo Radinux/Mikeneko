@@ -49,6 +49,15 @@ class MusicPlayerState(private val scope: CoroutineScope) {
     /** Où est la barre de boutons du lecteur (dans la fenêtre) : les paroles en sortent et y rentrent (2.15.2). */
     var lyricsAnchor by mutableStateOf<androidx.compose.ui.geometry.Rect?>(null)
 
+    /**
+     * La grande pochette dans la fenêtre (2.22.0), dans le repère du contenu de la fenêtre : pendant
+     * l'ouverture, la pochette de la pilule grandit jusqu'à elle (et y retourne à la fermeture).
+     */
+    var coverInWindow by mutableStateOf<androidx.compose.ui.geometry.Rect?>(null)
+
+    /** La pochette est en vol entre la pilule et la fenêtre : les deux vraies sont cachées, on dessine celle qui voyage. */
+    val coverFlying: Boolean get() = coverInWindow != null && expand.value > 0.004f && expand.value < 0.996f
+
     fun expand(velocity: Float = 0f) = settle(true, velocity)
 
     fun collapse(velocity: Float = 0f) {

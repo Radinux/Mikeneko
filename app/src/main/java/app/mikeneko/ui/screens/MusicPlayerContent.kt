@@ -1,5 +1,8 @@
 package app.mikeneko.ui.screens
 
+import kotlin.math.abs
+import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.graphics.FilterQuality
 import coil3.request.ImageRequest
 import android.content.res.Configuration
@@ -162,7 +165,8 @@ internal fun PlayerWindowContent(
     val glass = rememberBackdrop()
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 
-    Box(Modifier.fillMaxSize()) {
+    var windowRoot by remember { mutableStateOf<LayoutCoordinates?>(null) }
+    Box(Modifier.fillMaxSize().onPlaced { windowRoot = it }) {
         // Le fond, que réfractent les boutons : un dégradé de la couleur de la pochette vers la nuit (il
         // change avec le morceau). Plus d'image de la pochette dessous (2.11.5) : la couleur suffit, et
         // l'image agrandie se voyait en pixels
@@ -211,6 +215,16 @@ internal fun PlayerWindowContent(
                     Modifier
                         .fillMaxWidth(0.9f)
                         .aspectRatio(1f, matchHeightConstraintsFirst = true)
+                        // Sa place dans la fenêtre : la pochette de la pilule vole jusqu'ici (2.22.0), et
+                        // celle-ci ne se montre qu'une fois la fenêtre ouverte
+                        .onGloballyPositioned { c ->
+                            windowRoot?.takeIf { it.isAttached }?.let { root ->
+                                val box = root.localBoundingBoxOf(c, clipBounds = false)
+                                val known = state.coverInWindow
+                                if (known == null || abs(known.left - box.left) > 0.5f || abs(known.top - box.top) > 0.5f || abs(known.width - box.width) > 0.5f) state.coverInWindow = box
+                            }
+                        }
+                        .graphicsLayer { alpha = if (state.coverFlying) 0f else 1f }
                         .shadow(22.dp, RoundedCornerShape(26.dp))
                         .border(3.dp, Pelage.Creme, RoundedCornerShape(26.dp))
                         .clip(RoundedCornerShape(26.dp))
