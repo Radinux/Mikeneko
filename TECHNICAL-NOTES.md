@@ -1174,6 +1174,12 @@ users: the point is to take them from the videos really watched.
   loads slower than 2 s, discontinuities, format changes, player / audio sink errors, plus PLAY and
   SPONSORBLOCK_SKIP lines from `PlayerHolder`. Read with
   `adb shell cat /sdcard/Android/data/app.mikeneko/files/lecture.log`. Remove with the fix.
+  `PlaybackLog.checkStall` (called by the 400 ms SponsorBlock watcher) logs `STALL <ms>` when the
+  position advances less than a third of wall time while READY and playing, with the audio output
+  (bluetooth / wired / speaker). A Bluetooth A2DP hiccup stalls the AudioTrack clock, and the video
+  (synced to it) freezes with it: ExoPlayer sees no underrun and no buffering. Useful checks:
+  `dumpsys audio` (focus history, output device) and `dumpsys media.audio_flinger` (output thread
+  underruns).
 - 2.25.0: `ui/components/SearchMorph.kt`. One `LiquidGlass` whose bounds are lerped in a `layout {}`
   modifier (read at layout time, no recomposition per frame) between the 50 dp circle (right edge,
   `closedEnd` from the right) and the open capsule (left edge to `openEnd`, default 60 dp = the ✕).

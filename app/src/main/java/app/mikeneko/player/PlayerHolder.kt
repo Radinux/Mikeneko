@@ -1435,6 +1435,7 @@ object PlayerHolder {
         watcher = scope.launch {
             while (isActive) {
                 val p = player
+                p?.let { PlaybackLog.checkStall(it) } // TEMPORAIRE (2.25.0) : les petits gels
                 val segments = nowPlaying.value?.segments.orEmpty()
                 if (p != null && autoSkip.value && p.isPlaying && segments.isNotEmpty()) {
                     val position = p.currentPosition
