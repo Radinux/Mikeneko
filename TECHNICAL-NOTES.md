@@ -1163,6 +1163,13 @@ users: the point is to take them from the videos really watched.
   layer and redraws every glass on each frame; on the playing playlist this ran during the play
   button's trip to the top bar (reported on the phone as a short stutter, not measurable on the
   emulator). If it persists, look at the header item re-entering the list (220 dp cover, cover color).
+- 3.0.0 (the user's call: a major change of audio format): `MediaSources.bestAudio` takes the
+  highest-bitrate Opus stream (`MediaFormat.WEBMA_OPUS` / `OPUS` / codec "opus", itag 251 ~160 kb/s
+  48 kHz) before M4A (itag 140, AAC ~128 kb/s 44.1 kHz), for music and for the sound of videos. The
+  offline cache key holds the itag and the file size, and offline playback rebuilds from each saved
+  entry's own keys, so AAC files downloaded before stay playable. `TrackAnalysis` decodes through
+  MediaExtractor / MediaCodec: format-agnostic, Opus included. Premium 256 kb/s AAC needs a signed-in
+  Premium account: out of reach.
 - 2.26.1: custom colors. `Appearance.customs` (all of them, prefs `accents_perso` = comma-separated
   ARGB ints; migrated from the single `accent_perso`) and `Appearance.custom` (the one used by the
   accent when its id is `Accent.CUSTOM`). `AppSettings.addCustomAccent` / `replaceCustomAccent` /

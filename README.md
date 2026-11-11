@@ -58,6 +58,16 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ## 🎌 What's new ⸜(｡˃ ᵕ ˂ )⸝♡
 
+### 3.0
+
+- **Music in Opus**: songs (and the sound of videos) now come in YouTube's best Opus stream, around
+  130-160 kb/s at 48 kHz, finer than the ~128 kb/s AAC used until now. AAC remains the fallback,
+  and songs you already downloaded keep playing offline as they are.
+- **Your profile opens from the Mikeneko capsule** at the top of Home (it did nothing); the big
+  profile card is gone from the top of Settings.
+- **Settings in landscape**: the title and the tabs sit in a column on the left, the content gets
+  the whole height.
+
 ### 2.26
 
 - **A tutorial on first launch** (and after clearing the app's data): a few pages on what Mikeneko
@@ -67,10 +77,6 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 - 2.26.1: **the app asks for a 90 Hz screen**, and while a video plays the screen follows the
   video's own pace: 60 Hz for 30 or 60 fps videos, 50 Hz for 25 or 50 fps ones when the screen has
   it (60 Hz otherwise), 120 Hz for 24 fps films. The phone has the last word.
-- 2.26.3: **your profile opens from the Mikeneko capsule** at the top of Home (it did nothing); the big
-  profile card is gone from the top of Settings.
-- 2.26.3: **Settings in landscape**: the title and the tabs sit in a column on the left, the
-  content gets the whole height.
 - 2.26.2: the 90 Hz request also asks for the frame rate itself (Android 15+): asking for the
   screen mode alone left some phones at 60 Hz.
 - 2.26.1: **as many colors of your own as you like**: the « + » now adds a new bubble each time

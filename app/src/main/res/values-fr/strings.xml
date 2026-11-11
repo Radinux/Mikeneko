@@ -687,7 +687,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">Quoi de neuf dans Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Super !</string>
-    <string name="whats_new_body">👋 Un tuto pour les nouveaux\n\n• Le premier lancement (ou un nouveau départ après avoir effacé les données de l\'appli) ouvre maintenant quelques pages : ramener tes abonnements et ta musique, les gestes du lecteur, la musique, la synchro entre appareils.\n• Curieux ? Réglages › À propos › Revoir le tuto.\n• Page vidéo : le bouton j\'aime est bien aligné avec ses voisins.\n\n🎧 Depuis la 2.25 : le bouton micro dans Musique te dit quel son passe autour de toi, et le range dans ta playlist Sons trouvés.</string>
+    <string name="whats_new_body">🎶 Mikeneko 3.0 : la musique en Opus\n\n• Les morceaux arrivent maintenant dans le meilleur son Opus de YouTube (jusqu\'à ~160 kb/s, 48 kHz), plus fin que l\'AAC d\'avant. Tes téléchargements continuent de marcher tels quels.\n• Touche la capsule Mikeneko de l\'accueil pour ouvrir ton profil.\n• Réglages en paysage : les onglets sont sur le côté.\n\n✨ Depuis la 2.26 : un tuto pour les nouveaux (Réglages › À propos › Revoir le tuto), autant de couleurs perso que tu veux, et l\'écran qui suit le rythme de chaque vidéo.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Importer des playlists</string>

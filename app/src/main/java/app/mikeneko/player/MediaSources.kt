@@ -346,9 +346,16 @@ object MediaSources {
             .ifEmpty { playable.filter { it.audioTrackType == null } }
             .ifEmpty { playable.filter { it.audioTrackType != AudioTrackType.DUBBED && it.audioTrackType != AudioTrackType.DESCRIPTIVE } }
             .ifEmpty { playable }
-        return original.filter { it.format == MediaFormat.M4A }.maxByOrNull { it.averageBitrate }
+        // L'Opus d'abord, au plus haut débit (2.26.3 : ~130-160 kb/s en 48 kHz, plus fin que l'AAC
+        // ~128 kb/s de YouTube) ; l'AAC (M4A) s'il n'y en a pas. Les morceaux déjà téléchargés gardent
+        // leur fichier AAC : la sauvegarde hors ligne retient la clé exacte de chacun
+        return original.filter(::isOpus).maxByOrNull { it.averageBitrate }
+            ?: original.filter { it.format == MediaFormat.M4A }.maxByOrNull { it.averageBitrate }
             ?: original.maxByOrNull { it.averageBitrate }
     }
+
+    private fun isOpus(stream: AudioStream): Boolean =
+        stream.format == MediaFormat.WEBMA_OPUS || stream.format == MediaFormat.OPUS || stream.codec?.contains("opus", ignoreCase = true) == true
 }
 
 /** Ce que les décodeurs vidéo du téléphone savent faire (résultats gardés en mémoire). */

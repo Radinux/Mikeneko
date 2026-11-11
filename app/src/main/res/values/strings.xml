@@ -686,7 +686,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">What’s new in Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Nice!</string>
-    <string name="whats_new_body">👋 A tutorial for newcomers\n\n• The first launch (or a fresh start after clearing the app\'s data) now opens a few pages: bringing your subscriptions and music, the player\'s gestures, music, syncing your devices.\n• Curious? Settings › About › Replay the tutorial.\n• Video page: the like button sits level with its neighbors.\n\n🎧 Since 2.25: the microphone button in Music names the song playing around you, into your Found songs playlist.</string>
+    <string name="whats_new_body">🎶 Mikeneko 3.0: music in Opus\n\n• Songs now come in YouTube\'s best Opus sound (up to ~160 kb/s, 48 kHz), finer than the AAC used until now. Your downloads keep playing as they are.\n• Tap the Mikeneko capsule on Home to open your profile.\n• Settings in landscape: the tabs sit on the side.\n\n✨ Since 2.26: a tutorial for newcomers (Settings › About › Replay the tutorial), as many colors of your own as you like, and the screen follows each video\'s pace.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Import playlists</string>
