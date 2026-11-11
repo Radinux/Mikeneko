@@ -58,8 +58,15 @@ object WhatsNew {
     private fun version(context: Context): String =
         runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull().orEmpty()
 
+    /** A-t-on déjà noté une version vue ? (non : installation neuve ou données effacées, voir [Tutorial]) */
+    fun everSeen(context: Context): Boolean =
+        context.getSharedPreferences("nouveautes", Context.MODE_PRIVATE).getString("vue", null) != null
+
     /** À montrer ? Une première installation compte comme « déjà vue ». */
     fun pending(context: Context): Boolean {
+        // Le tuto passe d'abord (premier lancement, données effacées) : il remplace « Quoi de neuf »
+        Tutorial.check(context)
+        if (Tutorial.open.value) return false
         val prefs = context.getSharedPreferences("nouveautes", Context.MODE_PRIVATE)
         val current = version(context)
         val seen = prefs.getString("vue", null)

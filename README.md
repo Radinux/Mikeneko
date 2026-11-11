@@ -58,6 +58,14 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ## 🎌 What's new ⸜(｡˃ ᵕ ˂ )⸝♡
 
+### 2.26
+
+- **A tutorial on first launch** (and after clearing the app's data): a few pages on what Mikeneko
+  does, how to bring your subscriptions and music, the player's gestures, music, and syncing your
+  devices. *Skip* is always there, and *Settings › About › Replay the tutorial* brings it back.
+  The notification prompt now waits until it is closed.
+- Video page: the like button sits level with the buttons next to it (it was 4 dp higher).
+
 ### 2.25
 
 - **What's this song?** The new microphone button next to the search in Music listens for a few

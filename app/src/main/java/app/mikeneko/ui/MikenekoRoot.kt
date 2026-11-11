@@ -112,6 +112,7 @@ import app.mikeneko.ui.theme.statusBarSpace
 import app.mikeneko.update.AppUpdates
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /**
@@ -351,7 +352,11 @@ fun MikenekoRoot(
 
     val notifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
     LaunchedEffect(Unit) {
-        if (Build.VERSION.SDK_INT >= 33) notifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+        if (Build.VERSION.SDK_INT < 33) return@LaunchedEffect
+        // Pas par-dessus le tuto (2.26.0) : on attend qu'il soit fermé
+        app.mikeneko.update.Tutorial.check(context)
+        app.mikeneko.update.Tutorial.open.first { !it }
+        notifications.launch(Manifest.permission.POST_NOTIFICATIONS)
     }
 
     // Avant les « return » ci-dessous : le minuteur survit au plein écran et au PiP
@@ -601,6 +606,11 @@ fun MikenekoRoot(
 
         // « Quoi de neuf » après une mise à jour (2.7.0), au-dessus de tout, une fois par version
         WhatsNewSheet(backdrop)
+        // Le tuto (2.26.0) : premier lancement ou données effacées, au-dessus de tout
+        app.mikeneko.update.TutorialSheet(onImport = {
+            app.mikeneko.ui.screens.SettingsStart.tab.value = app.mikeneko.ui.screens.SettingsTab.Sync
+            go(Route.Reglages)
+        })
     }
 }
 

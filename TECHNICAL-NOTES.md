@@ -1163,6 +1163,17 @@ users: the point is to take them from the videos really watched.
   layer and redraws every glass on each frame; on the playing playlist this ran during the play
   button's trip to the top bar (reported on the phone as a short stutter, not measurable on the
   emulator). If it persists, look at the header item re-entering the list (220 dp cover, cover color).
+- 2.26.0: `update/Tutorial.kt`. `Tutorial.check` runs once, before « What's new » (called from
+  `WhatsNew.pending` and `TutorialSheet`): shown if prefs `tutoriel/vu` is unset AND (fresh install,
+  or `WhatsNew.everSeen` false = data cleared); otherwise marked seen (existing users get « What's
+  new »). When shown it marks « What's new » seen. Full-screen overlay in `MikenekoRoot` above
+  everything: `HorizontalPager` of 6 pages, dots, *Skip* (hidden on the last page), back = skip.
+  *Import now* sets `SettingsStart.tab` (a StateFlow the open settings also follow) to Sync. The
+  startup `POST_NOTIFICATIONS` request waits for `Tutorial.open` to be false. Replay: About.
+  Gestures described were checked in code: `TapToSeek` (±10 s, more taps add 10 s, hold = 2×),
+  `pullToMinimize` (swipe down → mini player).
+- 2.26.0: video page action row: `FilledTonalButton` measures 48 dp (minimum touch target) for a 40 dp
+  shape; the custom like capsule is 40 dp, so a top-aligned Row put it 4 dp higher. Center the row.
 - 2.25.0: playback hiccup suspects. `PlayerHolder` saves the video position every 10 s
   (`WatchPositions.save` → new `_progress` map, `WatchHistory.recordProgress` → new `_entries` list
   when +2 %). Readers of the whole value recomposed each time: every `WatchProgressBar` (now a

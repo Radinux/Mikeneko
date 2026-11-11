@@ -613,6 +613,35 @@
     <string name="recognize_play">Écouter</string>
     <string name="recognize_open">Voir la playlist</string>
     <string name="found_songs">Sons trouvés</string>
+    <string name="tuto_skip">Passer</string>
+    <string name="tuto_next">Suivant</string>
+    <string name="tuto_go">C\'est parti</string>
+    <string name="tuto_replay">Revoir le tuto</string>
+    <string name="tuto_import_now">Importer maintenant</string>
+    <string name="tuto_welcome_title">Bienvenue dans Mikeneko</string>
+    <string name="tuto_welcome_1">YouTube sans pub et sans compte.</string>
+    <string name="tuto_welcome_2">Tout ce que tu fais reste sur ton téléphone : pas de connexion, pas de pistage.</string>
+    <string name="tuto_import_title">Ramène tes affaires</string>
+    <string name="tuto_import_1">Tes abonnements depuis NewPipe, FreeTube ou Google Takeout.</string>
+    <string name="tuto_import_2">Tes playlists, artistes et albums d\'autres applis de musique (un export TuneMyMusic).</string>
+    <string name="tuto_import_3">Ou une sauvegarde Mikeneko d\'un autre téléphone. Rien n\'est jamais effacé.</string>
+    <string name="tuto_player_title">Le lecteur</string>
+    <string name="tuto_player_1">Double tap à gauche ou à droite : 10 secondes en arrière ou en avant. Continue de taper pour plus.</string>
+    <string name="tuto_player_2">Garde le doigt sur la vidéo : elle passe en vitesse ×2.</string>
+    <string name="tuto_player_3">Glisse la vidéo vers le bas : elle se range dans le mini-lecteur.</string>
+    <string name="tuto_player_4">Les sponsors et les intros sont sautés tout seuls (SponsorBlock).</string>
+    <string name="tuto_player_5">Quitte l\'appli pendant une vidéo : elle continue dans une petite fenêtre.</string>
+    <string name="tuto_music_title">Musique</string>
+    <string name="tuto_music_1">YouTube Music : morceaux, albums, artistes, et des mix faits pour toi.</string>
+    <string name="tuto_music_2">Des paroles qui suivent la chanson.</string>
+    <string name="tuto_music_3">Le bouton micro te dit quel son passe autour de toi.</string>
+    <string name="tuto_music_4">Télécharge tes playlists pour les écouter hors ligne.</string>
+    <string name="tuto_devices_title">Sur tous tes appareils</string>
+    <string name="tuto_devices_1">Relie un autre téléphone ou une tablette avec un code à 6 chiffres : ils restent synchronisés.</string>
+    <string name="tuto_devices_2">Ou garde tout dans ton coffre GitHub.</string>
+    <string name="tuto_devices_3">Sauvegarde tout ton Mikeneko dans un seul fichier (Réglages › Synchro).</string>
+    <string name="tuto_ready_title">C\'est parti !</string>
+    <string name="tuto_ready_1">Choisis quelques sujets que tu aimes et ta page Pour toi démarre tout de suite. Elle apprend de ce que tu regardes.</string>
     <plurals name="track_count">
         <item quantity="one">%1$d titre</item>
         <item quantity="many">%1$d titres</item>
@@ -658,7 +687,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">Quoi de neuf dans Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Super !</string>
-    <string name="whats_new_body">🎧 C\'est quoi ce son ?\n\n• Le nouveau bouton micro, à côté de la recherche dans Musique, écoute quelques secondes et te dit quel morceau passe autour de toi.\n• Il file direct dans ta playlist Sons trouvés, prêt à écouter ou à télécharger. Seule une empreinte du son quitte ton téléphone.\n• Ta couleur perso peut maintenant être supprimée : appui long sur sa pastille.\n\n🎤 Depuis la 2.24 : des paroles décalées ? Touche Décalées ?, puis la ligne que tu entends.</string>
+    <string name="whats_new_body">👋 Un tuto pour les nouveaux\n\n• Le premier lancement (ou un nouveau départ après avoir effacé les données de l\'appli) ouvre maintenant quelques pages : ramener tes abonnements et ta musique, les gestes du lecteur, la musique, la synchro entre appareils.\n• Curieux ? Réglages › À propos › Revoir le tuto.\n• Page vidéo : le bouton j\'aime est bien aligné avec ses voisins.\n\n🎧 Depuis la 2.25 : le bouton micro dans Musique te dit quel son passe autour de toi, et le range dans ta playlist Sons trouvés.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Importer des playlists</string>

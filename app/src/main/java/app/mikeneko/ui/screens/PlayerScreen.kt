@@ -497,7 +497,13 @@ fun PlayerContent(onMinimize: () -> Unit, onDownload: (String) -> Unit, onRadio:
                 val asVideo = VideoItem(info.url, info.title, info.channel, info.thumbnail, channelId = info.channelUrl?.let(::channelIdFrom))
                 val liked = likedList.any { sameTrack(it.url, info.url) }
                 val later = laterList.any { sameTrack(it.url, info.url) }
-                Row(Modifier.padding(top = 6.dp).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Centrés : les boutons Material se réservent 48 dp de haut (zone de toucher) pour 40 dp
+                // visibles ; alignée en haut, la capsule J'aime (40 dp) était 4 dp plus haut (2.26.0)
+                Row(
+                    Modifier.padding(top = 6.dp).horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     // J'aime / je n'aime pas : un bouton Material 3 en deux parties (2.9.0) ; plein de la
                     // couleur d'accent quand la vidéo est aimée
                     val likeColors = if (liked) ButtonDefaults.buttonColors() else ButtonDefaults.filledTonalButtonColors()

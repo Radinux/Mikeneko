@@ -117,6 +117,14 @@ private val SLEEP_DELAYS = listOf(30, 45, 60, 90, 120)
 fun SettingsContent(onBack: () -> Unit) {
     val context = LocalContext.current
     var tab by rememberSaveable { mutableStateOf(SettingsTab.General) }
+    // L'onglet demandé d'ailleurs (le tuto → les imports), même si les réglages sont déjà ouverts
+    val requested by SettingsStart.tab.collectAsState()
+    LaunchedEffect(requested) {
+        requested?.let {
+            tab = it
+            SettingsStart.tab.value = null
+        }
+    }
     val list = rememberLazyListState()
     // Un autre onglet : son contenu repart du haut
     LaunchedEffect(tab) { list.scrollToItem(0) }
@@ -178,8 +186,13 @@ private fun ColumnScope.SettingsTabContent(tab: SettingsTab, list: LazyListState
     }
 }
 
+/** L'onglet où ouvrir les réglages la prochaine fois (lu une fois). */
+internal object SettingsStart {
+    val tab = kotlinx.coroutines.flow.MutableStateFlow<SettingsTab?>(null)
+}
+
 /** Les onglets des réglages, dans l'ordre. */
-private enum class SettingsTab(val label: Int) {
+internal enum class SettingsTab(val label: Int) {
     General(R.string.settings_tab_general),
     Playback(R.string.settings_tab_playback),
     ForYou(R.string.settings_tab_foryou),
@@ -815,6 +828,14 @@ private fun AboutSection(context: Context) {
                 Text("Mikeneko · " + stringResource(R.string.settings_version, version), color = Pelage.Texte, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                 Text(stringResource(R.string.settings_about_text), color = Secondary, fontSize = 13.sp)
                 UpdateRow(context)
+                // Revoir le tuto du premier lancement (2.26.0)
+                Text(
+                    stringResource(R.string.tuto_replay),
+                    Modifier.clip(RoundedCornerShape(6.dp)).clickable(role = Role.Button) { app.mikeneko.update.Tutorial.replay() }.padding(vertical = 6.dp),
+                    color = Pelage.RouxClair,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                )
                 Text(stringResource(R.string.settings_credits), Modifier.padding(top = 8.dp), color = Pelage.Texte, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
                 CREDITS.forEach { (name, url) ->
                     Text(
