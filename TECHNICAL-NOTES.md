@@ -1163,6 +1163,11 @@ users: the point is to take them from the videos really watched.
   layer and redraws every glass on each frame; on the playing playlist this ran during the play
   button's trip to the top bar (reported on the phone as a short stutter, not measurable on the
   emulator). If it persists, look at the header item re-entering the list (220 dp cover, cover color).
+- 2.25.0: playback hiccup suspects. `PlayerHolder` saves the video position every 10 s
+  (`WatchPositions.save` → new `_progress` map, `WatchHistory.recordProgress` → new `_entries` list
+  when +2 %). Readers of the whole value recomposed each time: every `WatchProgressBar` (now a
+  per-card `derivedStateOf`) and `HomeFeed`'s `historyEmpty` (now `derivedStateOf { isEmpty() }`).
+  Rule: a StateFlow that changes during playback must not be read whole by a big composable.
 - 2.25.0: `ui/components/SearchMorph.kt`. One `LiquidGlass` whose bounds are lerped in a `layout {}`
   modifier (read at layout time, no recomposition per frame) between the 50 dp circle (right edge,
   `closedEnd` from the right) and the open capsule (left edge to `openEnd`, default 60 dp = the ✕).

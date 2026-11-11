@@ -210,11 +210,14 @@ fun VideoThumbnail(video: VideoItem, modifier: Modifier = Modifier, corner: Dp =
 @Composable
 fun WatchProgressBar(url: String, modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val progress by remember { WatchPositions.progress(context) }.collectAsState()
+    // Le dictionnaire change toutes les 10 s pendant une vidéo (sa position est gardée) : chaque
+    // miniature ne se redessine que si SA valeur change, pas à chaque fois (2.25.0, petits à-coups)
+    val progress = remember { WatchPositions.progress(context) }.collectAsState()
     val id = remember(url) { app.mikeneko.data.videoIdOf(url) }
-    val fraction = id?.let { progress[it] } ?: return
+    val fraction by remember(id) { androidx.compose.runtime.derivedStateOf { id?.let { progress.value[it] } } }
+    val value = fraction ?: return
     Box(modifier.fillMaxWidth().height(4.dp).background(Color.White.copy(alpha = 0.35f))) {
-        Box(Modifier.fillMaxWidth(fraction).fillMaxHeight().background(Pelage.Roux))
+        Box(Modifier.fillMaxWidth(value).fillMaxHeight().background(Pelage.Roux))
     }
 }
 

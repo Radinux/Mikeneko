@@ -314,7 +314,10 @@ fun HomeContent(state: HomeState, onOpen: (VideoItem) -> Unit) {
     val tastesSkipped by tastes.skipped.collectAsState()
     val watchHistory = remember { WatchHistory.get(context) }
     val historyLoaded by watchHistory.loaded.collectAsState()
-    val historyEmpty = watchHistory.entries.collectAsState().value.isEmpty()
+    // Seulement vide / pas vide : lire la liste entière recomposait tout le fil à chaque progrès de la
+    // vidéo en cours (toutes les 10 à 20 s pendant la lecture, 2.25.0)
+    val historyEntries = watchHistory.entries.collectAsState()
+    val historyEmpty by remember { androidx.compose.runtime.derivedStateOf { historyEntries.value.isEmpty() } }
     val needsTastes = forYou && historyLoaded && historyEmpty && chosenTastes.isEmpty() && !tastesSkipped
 
     var videos by remember(feed) { mutableStateOf(cachedFeed(context, feed) ?: state.lastShown[feed]) }

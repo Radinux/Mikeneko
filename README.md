@@ -67,6 +67,8 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 - **Search buttons stretch into the search bar**: on Home, Music, your playlists and channel pages,
   the glass magnifier now grows into the search capsule (and shrinks back into it when closed),
   instead of a capsule popping up next to it. The ✕ stays a separate button.
+- Fewer hiccups while a video plays: saving its position every 10 s no longer redraws every
+  thumbnail on screen, nor the whole Home feed behind the player.
 - **Your own color can be deleted**: long-press its bubble (or tap it again once chosen) to open the
   color wheel, then *Delete*. If it was the app's color, Calico comes back.
 
