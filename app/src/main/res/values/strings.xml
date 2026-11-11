@@ -679,6 +679,7 @@
     <string name="accent_picker_text">Slide around the circle for the hue, towards the middle for a softer color</string>
     <string name="accent_picker_ok">Use it</string>
     <string name="accent_picker_cancel">Cancel</string>
+    <string name="accent_picker_remove">Delete</string>
 
     <!-- Notifications (Notifier.kt, 2.10.0) -->
     <string name="notif_channel_updates">Updates</string>

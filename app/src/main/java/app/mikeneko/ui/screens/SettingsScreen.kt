@@ -16,6 +16,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -509,6 +510,8 @@ private fun LanguageSection(context: Context) {
 private fun AppearanceSection() {
     val accent = Appearance.accent
     var picking by remember { mutableStateOf(false) }
+    // Le cercle ouvert sur la couleur perso (et pas par le « + ») : il propose de la supprimer
+    var editingCustom by remember { mutableStateOf(false) }
     Section(stringResource(R.string.settings_section_appearance)) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
             Text(stringResource(R.string.settings_accent), color = Pelage.Texte, fontSize = 15.sp, fontWeight = FontWeight.Bold)
@@ -519,14 +522,14 @@ private fun AppearanceSection() {
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 @Composable
-                fun Bubble(fill: Color, label: String, selected: Boolean, onClick: () -> Unit) {
+                fun Bubble(fill: Color, label: String, selected: Boolean, onLongClick: (() -> Unit)? = null, onClick: () -> Unit) {
                     Box(
                         Modifier
                             .size(44.dp)
                             .clip(CircleShape)
                             .background(fill)
                             .border(if (selected) 3.dp else 0.dp, Pelage.Texte, CircleShape)
-                            .clickable(role = Role.RadioButton, onClickLabel = label, onClick = onClick)
+                            .combinedClickable(role = Role.RadioButton, onClickLabel = label, onLongClick = onLongClick, onClick = onClick)
                             .semantics { contentDescription = label; this.selected = selected },
                         contentAlignment = Alignment.Center,
                     ) {
@@ -536,12 +539,17 @@ private fun AppearanceSection() {
                 Accent.presets.forEach { option ->
                     Bubble(option.base, stringResource(option.label), option.id == accent.id) { AppSettings.setAccent(option) }
                 }
-                // Ta couleur (2.16.0) : sa pastille une fois choisie ; touchée à nouveau, elle rouvre le cercle
+                // Ta couleur (2.16.0) : sa pastille une fois choisie ; touchée à nouveau (ou appui long), elle
+                // rouvre le cercle, qui peut aussi la supprimer (2.24.1)
                 val custom = Appearance.custom
                 if (custom != null) {
                     val selected = accent.id == Accent.CUSTOM
-                    Bubble(custom, stringResource(R.string.accent_custom), selected) {
-                        if (selected) picking = true else AppSettings.setCustomAccent(custom)
+                    fun edit() {
+                        editingCustom = true
+                        picking = true
+                    }
+                    Bubble(custom, stringResource(R.string.accent_custom), selected, onLongClick = ::edit) {
+                        if (selected) edit() else AppSettings.setCustomAccent(custom)
                     }
                 }
                 // Le « + » : le cercle chromatique
@@ -551,7 +559,10 @@ private fun AppearanceSection() {
                         .clip(CircleShape)
                         .background(Pelage.Bord)
                         .border(1.5.dp, Pelage.Gris.copy(alpha = 0.6f), CircleShape)
-                        .clickable(role = Role.Button, onClickLabel = stringResource(R.string.accent_add)) { picking = true },
+                        .clickable(role = Role.Button, onClickLabel = stringResource(R.string.accent_add)) {
+                            editingCustom = false
+                            picking = true
+                        },
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(MkIcons.Plus, stringResource(R.string.accent_add), tint = Pelage.Texte, modifier = Modifier.size(22.dp))
@@ -562,6 +573,10 @@ private fun AppearanceSection() {
             ColorWheelDialog(
                 initial = Appearance.custom ?: accent.base,
                 onDismiss = { picking = false },
+                onRemove = if (editingCustom && Appearance.custom != null) ({
+                    AppSettings.removeCustomAccent()
+                    picking = false
+                }) else null,
             ) {
                 AppSettings.setCustomAccent(it)
                 picking = false

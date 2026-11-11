@@ -1163,6 +1163,10 @@ users: the point is to take them from the videos really watched.
   layer and redraws every glass on each frame; on the playing playlist this ran during the play
   button's trip to the top bar (reported on the phone as a short stutter, not measurable on the
   emulator). If it persists, look at the header item re-entering the list (220 dp cover, cover color).
+- 2.24.1: `AppSettings.removeCustomAccent()` (drops `accent_perso`, `Appearance.custom = null`, back to
+  Calico if the accent was the custom one). `ColorWheelDialog(onRemove)` shows *Delete* only when opened
+  from the custom bubble (`editingCustom`), not from the « + ». The bubble uses `combinedClickable`
+  (long-press = edit).
 - 2.24.0: lyrics offset. `LyricsOffsets` (prefs `paroles_decalage`, key = track url, ms added to each
   line time, ±120 s, local only). `LyricsSheet` holds `offset` / `adjusting` per track; `SyncedLyrics`
   uses `timeMs + offset` for the current line and the seek; in adjust mode a line tap sets

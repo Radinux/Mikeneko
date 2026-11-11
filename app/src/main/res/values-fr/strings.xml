@@ -680,6 +680,7 @@
     <string name="accent_picker_text">Fais glisser autour du cercle pour la teinte, vers le centre pour une couleur plus douce</string>
     <string name="accent_picker_ok">Choisir</string>
     <string name="accent_picker_cancel">Annuler</string>
+    <string name="accent_picker_remove">Supprimer</string>
 
     <!-- Notifications (Notifier.kt, 2.10.0) -->
     <string name="notif_channel_updates">Mises à jour</string>

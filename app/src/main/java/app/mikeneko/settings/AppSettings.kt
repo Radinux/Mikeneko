@@ -78,6 +78,13 @@ object AppSettings {
         setAccent(Accent.custom(color))
     }
 
+    /** Supprime la couleur perso (2.24.1) : sa pastille part ; si c'était l'accent, retour au calico. */
+    fun removeCustomAccent() {
+        prefs.edit().remove("accent_perso").apply()
+        Appearance.custom = null
+        if (Appearance.accent.id == Accent.CUSTOM) setAccent(Accent.Calico)
+    }
+
     /** Fond noir pur (2.9.0). */
     fun setAmoled(value: Boolean) = save("amoled", value) { Appearance.amoled = value }
 

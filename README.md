@@ -64,6 +64,8 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
   hear right now: every line moves to match. *Earlier* / *Later* nudge them by half a second, and the
   shift is remembered for that track. Some lyrics in the free database are timed for another version
   of the song and copied onto all of them (seen: 13 s late).
+- 2.24.1: **your own color can be deleted**: long-press its bubble (or tap it again once chosen) to
+  open the color wheel, then *Delete*. If it was the app's color, Calico comes back.
 - Lyrics now really pick the version closest to the track's length (before: the first synced one
   found, which could be another version with a longer intro).
 

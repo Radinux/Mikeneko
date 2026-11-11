@@ -57,7 +57,7 @@ private const val MIN_SATURATION = 0.12f
  * le centre. Un rond suit le doigt ; l'aperçu et le code de la couleur sont dessous.
  */
 @Composable
-fun ColorWheelDialog(initial: Color, onDismiss: () -> Unit, onPick: (Color) -> Unit) {
+fun ColorWheelDialog(initial: Color, onDismiss: () -> Unit, onRemove: (() -> Unit)? = null, onPick: (Color) -> Unit) {
     val start = remember(initial) { FloatArray(3).also { android.graphics.Color.colorToHSV(initial.toArgb(), it) } }
     var hue by remember { mutableFloatStateOf(start[0]) }
     var saturation by remember { mutableFloatStateOf(start[1].coerceIn(MIN_SATURATION, 1f)) }
@@ -117,6 +117,13 @@ fun ColorWheelDialog(initial: Color, onDismiss: () -> Unit, onPick: (Color) -> U
                 Text("#%06X".format(color.toArgb() and 0xFFFFFF), color = Pelage.Texte, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
             Row(Modifier.fillMaxWidth().padding(top = 18.dp), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+                // Ouvert sur la couleur perso (2.24.1) : on peut aussi la supprimer
+                if (onRemove != null) {
+                    TextButton(onClick = { close { onRemove() } }) {
+                        Text(stringResource(R.string.accent_picker_remove), color = Color(0xFFFF8A80), fontWeight = FontWeight.Bold)
+                    }
+                    Spacer(Modifier.weight(1f))
+                }
                 TextButton(onClick = { close() }) { Text(stringResource(R.string.accent_picker_cancel), color = Pelage.Texte, fontWeight = FontWeight.Bold) }
                 Spacer(Modifier.width(8.dp))
                 // L'aperçu sur le bouton lui-même : c'est la couleur des boutons choisis
