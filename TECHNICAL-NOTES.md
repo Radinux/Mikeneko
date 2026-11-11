@@ -1168,6 +1168,12 @@ users: the point is to take them from the videos really watched.
   when +2 %). Readers of the whole value recomposed each time: every `WatchProgressBar` (now a
   per-card `derivedStateOf`) and `HomeFeed`'s `historyEmpty` (now `derivedStateOf { isEmpty() }`).
   Rule: a StateFlow that changes during playback must not be read whole by a big composable.
+- 2.25.0 (TEMPORARY): `player/PlaybackLog.kt`, an `AnalyticsListener` writing to
+  `getExternalFilesDir/lecture.log` (256 KB, keeps the newer half) on a single-thread executor:
+  BUFFERING/READY with `totalBufferedDuration`, `onAudioUnderrun`, dropped frames (≥ 5), load errors,
+  loads slower than 2 s, discontinuities, format changes, player / audio sink errors, plus PLAY and
+  SPONSORBLOCK_SKIP lines from `PlayerHolder`. Read with
+  `adb shell cat /sdcard/Android/data/app.mikeneko/files/lecture.log`. Remove with the fix.
 - 2.25.0: `ui/components/SearchMorph.kt`. One `LiquidGlass` whose bounds are lerped in a `layout {}`
   modifier (read at layout time, no recomposition per frame) between the 50 dp circle (right edge,
   `closedEnd` from the right) and the open capsule (left edge to `openEnd`, default 60 dp = the ✕).

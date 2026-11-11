@@ -214,6 +214,7 @@ object PlayerHolder {
             player = created
             appContext = context.applicationContext
             MediaSources.appContext = context.applicationContext
+            PlaybackLog.attach(context.applicationContext, created) // TEMPORAIRE (2.25.0) : les petits gels
             created.addListener(object : Player.Listener {
                 override fun onRenderedFirstFrame() {
                     VideoFrames.firstFrames.value++
@@ -453,6 +454,7 @@ object PlayerHolder {
     ) {
         // Un short : il tourne en boucle, repart toujours du début et ne prend pas de place dans la reprise
         playingShort = short && !audioOnly
+        PlaybackLog.log("PLAY ${if (audioOnly) "audio" else if (short) "short" else "video"} ${videoIdOf(url) ?: url.take(60)}")
         // Le morceau déjà en cours (musique), touché à nouveau : il repart du début, sans rien
         // recharger (pas de nouvelle requête à YouTube). En erreur, on recharge vraiment.
         val current = nowPlaying.value
@@ -1438,6 +1440,7 @@ object PlayerHolder {
                     val position = p.currentPosition
                     segments.firstOrNull { it.category in AppSettings.skipCategories.value && position >= it.startMs && position < it.endMs - 500 }
                         ?.let { segment ->
+                            PlaybackLog.log("SPONSORBLOCK_SKIP ${segment.category} ${segment.startMs}..${segment.endMs}")
                             p.seekTo(segment.endMs)
                             skipped.tryEmit(segment.category)
                         }
