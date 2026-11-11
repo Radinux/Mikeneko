@@ -290,7 +290,7 @@ object GitHubSync {
             val plain = open(code, remote) ?: return Status.NeedKey(wrong = true)
             theirs = plain
             val content = MikenekoBackup.read(String(plain, Charsets.UTF_8))
-            added = withContext(Dispatchers.Main) { MikenekoBackup.import(context, content) }
+            added = withContext(Dispatchers.Main) { MikenekoBackup.import(context, content, sync = true) }
         }
         // Le premier appareil tire la clé
         val code = key(context) ?: newKey().also { saveKey(context, it) }

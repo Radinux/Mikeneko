@@ -212,6 +212,12 @@ class PlayAnchor(
     /** L'arrivée de la pilule de la barre : avec l'en-tête qui passe dessous, et au plus tard avec le bouton. */
     val progress: Float get() = maxOf(passed.value, travelled())
 
+    /**
+     * Où dessiner le bouton. 2.23.0 : il entre dans la pilule par le dessous. Il suit la liste jusqu'au
+     * bout (plus de glissade en biais commencée tôt, qui le faisait passer devant la loupe à droite de
+     * la pilule) : encore bien sous la barre, il se décale sur le côté et rétrécit ([SIDE_FROM] →
+     * [SIDE_DONE] sous sa place), puis monte tout droit avec la liste et s'arrête dans la pilule.
+     */
     fun spot(density: Density = this.density): PlaySpot? = with(density) {
         if (inHeader == null) return null
         val pill = pill() ?: return null
@@ -224,11 +230,16 @@ class PlayAnchor(
             c.y + (1f - p) * 14.dp.toPx(),
         )
         val free = free() ?: return PlaySpot(slot, 1f)
-        val t = travelled()
-        // Linéaire en t : le bouton ralentit en arrivant (y = place + travel·(1−t)²)
-        PlaySpot(androidx.compose.ui.geometry.lerp(free, slot, t), t)
+        val below = free.y - c.y // ce qu'il lui reste à monter
+        val side = (1f - (below - SIDE_DONE.toPx()) / (SIDE_FROM - SIDE_DONE).toPx()).coerceIn(0f, 1f)
+        val t = side * side * (3f - 2f * side) // départ et arrivée en douceur
+        PlaySpot(Offset(free.x + (slot.x - free.x) * t, maxOf(free.y, slot.y)), t)
     }
 }
+
+/** Sous sa place dans la pilule : où le bouton commence à se décaler sur le côté, et où il a fini. */
+private val SIDE_FROM = 150.dp
+private val SIDE_DONE = 66.dp
 
 /** Les filtres de la bibliothèque musique. */
 enum class LibraryFilter { All, Playlists, Albums, Artists, Downloaded }

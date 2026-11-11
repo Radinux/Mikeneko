@@ -36,7 +36,11 @@ class Tastes private constructor(context: Context) {
         ?: Random.nextLong().also { prefs.edit().putLong("graine", it).apply() }
 
     fun set(ids: Set<String>) {
+        val before = _chosen.value
         _chosen.value = ids.filter { id -> ALL.any { it.id == id } }.toSet()
+        // Pour la synchro (2.23.0) : un sujet retiré ne revient plus d'un autre appareil
+        Deletions.gone((before - _chosen.value).map { "t:$it" })
+        Deletions.back((_chosen.value - before).map { "t:$it" })
         prefs.edit().putString("choisis", _chosen.value.joinToString(",")).putBoolean("passe", true).apply()
         _skipped.value = true
     }
@@ -50,6 +54,12 @@ class Tastes private constructor(context: Context) {
             (known - _chosen.value).isNotEmpty() -> set(_chosen.value + known)
             (known.isNotEmpty() || skipped) && !_skipped.value -> skip()
         }
+    }
+
+    /** La synchro : les sujets retirés sur un autre appareil sont retirés ici aussi. */
+    fun dropGone() {
+        val kept = _chosen.value.filterNot { Deletions.isGone("t:$it") }.toSet()
+        if (kept.size != _chosen.value.size) set(kept)
     }
 
     fun skip() {

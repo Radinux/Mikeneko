@@ -58,6 +58,17 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ## 🎌 What's new ⸜(｡˃ ᵕ ˂ )⸝♡
 
+### 2.23
+
+- **Sync remembers what you remove.** Unfollow a channel, delete a playlist, take a track out of one,
+  remove an album, an artist, a favorite, a liked or saved video, a For you topic, or clear your
+  history: your linked devices and your GitHub locker now remove it too. Before, sync only added,
+  so the device that still had it sent it back. Put something back later and it comes back
+  everywhere. Importing a backup file by hand still restores everything it contains.
+- **Play button of playlists and albums**: it now enters its capsule from below. It first shifts to
+  the side and shrinks while still under the bar, then rises straight into place, so it no longer
+  passes in front of the search button.
+
 ### 2.22
 
 - **Everything reacts under your finger**: list rows, round buttons, capsules and cards shrink a

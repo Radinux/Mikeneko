@@ -23,6 +23,7 @@ class MikenekoApp : Application(), SingletonImageLoader.Factory {
     override fun onCreate() {
         super.onCreate()
         AppSettings.init(this)
+        app.mikeneko.data.Deletions.init(this) // avant les listes : ce qu'on retire est retenu pour la synchro (2.23.0)
         PlayerHolder.init(this)
         NewPipe.init(NewPipeDownloader.instance)
         AppLocale.init(this) // langue et pays des contenus, d'après les réglages

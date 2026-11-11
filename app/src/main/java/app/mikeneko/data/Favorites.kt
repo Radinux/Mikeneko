@@ -20,6 +20,7 @@ class Favorites private constructor(context: Context) {
         val added = !contains(item.url)
         _items.value = if (added) listOf(item) + _items.value else _items.value.filterNot { it.url == item.url }
         save()
+        if (added) Deletions.back(key(item.url)) else Deletions.gone(key(item.url))
         return added
     }
 
@@ -29,8 +30,20 @@ class Favorites private constructor(context: Context) {
         if (fresh.isNotEmpty()) {
             _items.value = _items.value + fresh
             save()
+            Deletions.back(fresh.map { key(it.url) })
         }
         return fresh.size
+    }
+
+    // ---- les suppressions, pour la synchro (2.23.0, voir Deletions)
+    fun key(url: String) = "f:" + Deletions.video(url)
+
+    /** La synchro : ce qui a été retiré sur un autre appareil est retiré ici aussi. */
+    fun dropGone() {
+        val kept = _items.value.filterNot { Deletions.isGone(key(it.url)) }
+        if (kept.size == _items.value.size) return
+        _items.value = kept
+        save()
     }
 
     private fun load(): List<VideoItem> = runCatching {

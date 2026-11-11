@@ -631,7 +631,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">What’s new in Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Nice!</string>
-    <string name="whats_new_body">👆 Everything reacts under your finger\n\n• Rows, buttons and capsules shrink a little and light up when you touch them.\n• Music: the cover flies from the little player to the big one when you open it.\n• Playlists and albums: the play button and its capsule now arrive together in the top bar.\n\n⚡ Since 2.21: hold a video or a short for 2×, full-screen Shorts tab, queue and menus that open like the lyrics.</string>
+    <string name="whats_new_body">🧹 Sync now remembers what you remove\n\n• Unfollow a channel, delete a playlist or a track, clear your history: your linked devices and your GitHub locker follow, instead of bringing it back.\n• Importing a backup file by hand still brings everything back.\n• Playlists and albums: the play button now enters its capsule from below.\n\n👆 Since 2.22: everything reacts under your finger, and the music cover flies from the little player to the big one.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Import playlists</string>

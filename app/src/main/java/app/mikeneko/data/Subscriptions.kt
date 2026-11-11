@@ -46,7 +46,11 @@ class SubscriptionStore private constructor(context: Context) {
         val merged = (list + _items.value).distinctBy { it.channelId }.sortedBy { it.name.lowercase() }
         _items.value = merged
         save(merged)
+        Deletions.back(list.map { "s:" + it.channelId }) // une chaîne retirée puis suivie à nouveau
     }
+
+    /** La synchro : les chaînes retirées sur un autre appareil sont retirées ici aussi (2.23.0). */
+    fun dropGone() = _items.value.filter { Deletions.isGone("s:" + it.channelId) }.forEach { remove(it.channelId) }
 
     /** L'image d'une chaîne suivie, reçue en passant (vidéo, page de la chaîne) ou cherchée exprès. */
     fun setAvatar(channelId: String, avatar: String?) {
@@ -63,6 +67,7 @@ class SubscriptionStore private constructor(context: Context) {
         val left = _items.value.filterNot { it.channelId == channelId }
         _items.value = left
         save(left)
+        Deletions.gone("s:$channelId")
         if (channelId in _bells.value) toggleBell(channelId) // plus abonné : plus de cloche
     }
 

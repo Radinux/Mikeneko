@@ -133,6 +133,18 @@ class WatchHistory private constructor(context: Context) {
     fun clear() {
         _entries.value = emptyList()
         io.launch { file.delete() }
+        Deletions.gone(Deletions.HISTORY) // la synchro : effacé partout, jusqu'à maintenant (2.23.0)
+    }
+
+    /** La synchro : l'historique a été effacé sur un autre appareil à [time] ; ce qui date d'avant part ici aussi. */
+    @Synchronized
+    fun dropBefore(time: Long) {
+        if (time <= 0L) return
+        ensureLoaded()
+        val kept = _entries.value.filter { it.at > time }
+        if (kept.size == _entries.value.size) return
+        _entries.value = kept
+        save()
     }
 
     private fun save() {

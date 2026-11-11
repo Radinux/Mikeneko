@@ -632,7 +632,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">Quoi de neuf dans Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Super !</string>
-    <string name="whats_new_body">👆 Tout réagit sous le doigt\n\n• Les lignes, les boutons et les capsules rétrécissent un peu et s’éclairent quand tu les touches.\n• Musique : la pochette vole du petit lecteur jusqu’au grand quand tu l’ouvres.\n• Playlists et albums : le bouton lecture et sa capsule arrivent maintenant ensemble dans la barre du haut.\n\n⚡ Depuis la 2.21 : maintiens une vidéo ou un short pour le 2×, onglet Shorts en plein écran, file et menus qui s’ouvrent comme les paroles.</string>
+    <string name="whats_new_body">🧹 La synchro retient ce que tu retires\n\n• Tu te désabonnes, tu supprimes une playlist ou un morceau, tu effaces ton historique : tes appareils liés et ton coffre GitHub suivent, au lieu de tout ramener.\n• Importer un fichier de sauvegarde à la main remet toujours tout.\n• Playlists et albums : le bouton lecture entre maintenant dans sa capsule par le dessous.\n\n👆 Depuis la 2.22 : tout réagit sous le doigt, et la pochette vole du petit lecteur musique jusqu’au grand.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Importer des playlists</string>

@@ -20,6 +20,8 @@ data class Playlist(val id: String, val name: String, val items: List<VideoItem>
  */
 class Playlists private constructor(context: Context, file: String) {
     private val prefs = context.getSharedPreferences(file, Context.MODE_PRIVATE)
+    /** « m » musique, « v » vidéos : dans les clés des suppressions ([Deletions]). */
+    private val kind = if (file == "playlists") "m" else "v"
     private val _items = MutableStateFlow(load())
     val items: StateFlow<List<Playlist>> = _items.asStateFlow()
 
@@ -76,17 +78,54 @@ class Playlists private constructor(context: Context, file: String) {
     /** Remplace les morceaux (le nouvel ordre après un déplacement, 2.11.13). */
     fun setItems(id: String, items: List<VideoItem>) = change(id) { it.copy(items = items) }
 
-    fun move(id: String, from: Int, to: Int) = change(id) { p ->
+    // (un déplacement ne retire rien : pas la peine de comparer toute la liste à chaque cran du doigt)
+    fun move(id: String, from: Int, to: Int) = change(id, track = false) { p ->
         if (from !in p.items.indices || to !in p.items.indices) p
         else p.copy(items = p.items.toMutableList().apply { add(to, removeAt(from)) })
     }
 
-    private fun change(id: String, block: (Playlist) -> Playlist) = update { list -> list.map { if (it.id == id) block(it) else it } }
+    private fun change(id: String, track: Boolean = true, block: (Playlist) -> Playlist) =
+        update(track) { list -> list.map { if (it.id == id) block(it) else it } }
 
-    private fun update(block: (List<Playlist>) -> List<Playlist>) {
-        _items.value = block(_items.value)
+    private fun update(track: Boolean = true, block: (List<Playlist>) -> List<Playlist>) {
+        val before = _items.value
+        val after = block(before)
+        _items.value = after
         save()
+        if (track) track(before, after)
     }
+
+    // ---- les suppressions, pour la synchro (2.23.0, voir Deletions)
+
+    private fun listKey(name: String) = "p:$kind:" + name.trim().lowercase()
+    private fun itemKey(name: String, url: String) = "i:$kind:" + name.trim().lowercase() + SEP + Deletions.video(url)
+    private fun keys(list: List<Playlist>): Set<String> =
+        HashSet<String>().apply { list.forEach { p -> add(listKey(p.name)); p.items.forEach { add(itemKey(p.name, it.url)) } } }
+
+    /**
+     * Ce qui a disparu est marqué retiré, ce qui est revenu est marqué remis. Une playlist supprimée (ou
+     * renommée : son ancien nom) laisse une seule marque, pas une par morceau.
+     */
+    private fun track(before: List<Playlist>, after: List<Playlist>) {
+        val old = keys(before)
+        val new = keys(after)
+        if (old == new) return
+        val alive = after.mapTo(HashSet()) { listKey(it.name) }
+        Deletions.gone((old - new).filter { !it.startsWith("i:") || ("p:" + it.substring(2).substringBefore(SEP)) in alive })
+        Deletions.back(new - old)
+    }
+
+    /** La synchro : ce qui a été retiré sur un autre appareil est retiré ici aussi. */
+    fun dropGone() = update(track = false) { list ->
+        list.filterNot { Deletions.isGone(listKey(it.name)) }.map { p ->
+            val kept = p.items.filterNot { Deletions.isGone(itemKey(p.name, it.url)) }
+            if (kept.size == p.items.size) p else p.copy(items = kept)
+        }
+    }
+
+    /** Ce que la synchro peut reprendre d'une playlist d'un autre appareil : null si elle a été supprimée ici. */
+    fun withoutGone(name: String, items: List<VideoItem>): List<VideoItem>? =
+        if (Deletions.isGone(listKey(name))) null else items.filterNot { Deletions.isGone(itemKey(name, it.url)) }
 
     private fun load(): List<Playlist> = runCatching {
         val array = JSONArray(prefs.getString("liste", "[]"))
@@ -108,6 +147,7 @@ class Playlists private constructor(context: Context, file: String) {
     }
 
     companion object {
+        private const val SEP = "\u0001"
         @Volatile private var instance: Playlists? = null
         @Volatile private var videoInstance: Playlists? = null
 

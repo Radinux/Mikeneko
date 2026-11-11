@@ -1,5 +1,6 @@
 package app.mikeneko.data
 
+import android.util.Base64
 import android.content.Context
 import android.util.Xml
 import java.io.InputStream
@@ -25,6 +26,7 @@ import org.xmlpull.v1.XmlSerializer
  *   <tastes skipped="true"><taste id="cooking"/></tastes>                      (2.19.1)
  *   <history><watched url="…" title="…" channel="…" at="…" part="0.8" tags="a|b"/></history>
  *   <positions><position id="…" ms="…" at="…" duration="…"/></positions>
+ *   <removed><gone k="(clé en base64)" at="…" back="true"/></removed>         (2.23.0, voir Deletions)
  * </mikeneko>
  * ```
  */
@@ -49,6 +51,8 @@ object MikenekoBackup {
         val history: List<WatchHistory.Entry> = emptyList(),
         /** Où on en était dans les dernières vidéos (2.19.1). */
         val positions: List<WatchPositions.Saved> = emptyList(),
+        /** Ce qui a été retiré (ou remis) sur l'appareil qui a écrit le fichier (2.23.0) : pour la synchro. */
+        val removals: Map<String, Deletions.Mark> = emptyMap(),
     )
 
     /** Ce que l'import a ajouté. */
@@ -140,6 +144,18 @@ object MikenekoBackup {
         }
         xml.endTag(null, "positions")
 
+        // Ce qu'on a retiré (2.23.0) : la synchro le retire aussi ailleurs. La clé est en base64 (elle
+        // peut contenir un nom de playlist, avec n'importe quel caractère).
+        xml.startTag(null, "removed")
+        Deletions.all().toSortedMap().forEach { (key, mark) ->
+            xml.startTag(null, "gone")
+            xml.attribute(null, "k", Base64.encodeToString(key.toByteArray(), Base64.NO_WRAP or Base64.URL_SAFE))
+            xml.attribute(null, "at", mark.at.toString())
+            if (!mark.gone) xml.attribute(null, "back", "true")
+            xml.endTag(null, "gone")
+        }
+        xml.endTag(null, "removed")
+
         xml.endTag(null, "mikeneko")
         xml.endDocument()
         out.flush()
@@ -182,6 +198,7 @@ object MikenekoBackup {
         var tastesSkipped = false
         val history = mutableListOf<WatchHistory.Entry>()
         val positions = mutableListOf<WatchPositions.Saved>()
+        val removals = HashMap<String, Deletions.Mark>()
 
         var section: String? = null // subscriptions, playlists, library, favorites, later, liked, shorts
         var playlistKind: String? = null
@@ -197,6 +214,11 @@ object MikenekoBackup {
                     "playlist" -> { playlistName = a("name"); playlistItems = mutableListOf() }
                     "tastes" -> tastesSkipped = a("skipped") == "true"
                     "taste" -> a("id")?.let { tastes += it }
+                    "gone" -> {
+                        val key = a("k")?.let { runCatching { String(Base64.decode(it, Base64.NO_WRAP or Base64.URL_SAFE)) }.getOrNull() }
+                        val at = a("at")?.toLongOrNull()
+                        if (key != null && at != null) removals[key] = Deletions.Mark(at, gone = a("back") != "true")
+                    }
                     "watched" -> a("url")?.let { url ->
                         history += WatchHistory.Entry(
                             url = url,
@@ -253,11 +275,64 @@ object MikenekoBackup {
                 }
             }
         }
-        return Content(subscriptions, music, videosLists, albums, artists, favorites, later, liked, shorts, tastes, tastesSkipped, history, positions)
+        return Content(subscriptions, music, videosLists, albums, artists, favorites, later, liked, shorts, tastes, tastesSkipped, history, positions, removals)
     }
 
-    /** Ajoute le contenu d'un fichier (sans rien effacer). */
-    fun import(context: Context, content: Content): Added {
+    /**
+     * Ajoute le contenu d'un fichier, sans rien effacer.
+     *
+     * [sync] (2.23.0) : c'est un autre appareil qui parle, pas un fichier qu'on importe exprès. Ce qu'il a
+     * retiré est retiré ici aussi, et ce qu'on a retiré ici n'est pas repris de lui ([Deletions]). Un
+     * fichier importé à la main, lui, remet tout ce qu'il contient.
+     */
+    fun import(context: Context, content: Content, sync: Boolean = false): Added =
+        if (sync) importSync(context, content) else importAll(context, content)
+
+    private fun importSync(context: Context, theirs: Content): Added {
+        Deletions.merge(theirs.removals)
+        val music = Playlists.get(context)
+        val videoLists = Playlists.videos(context)
+        val library = MusicLibrary.get(context)
+        val favorites = Favorites.get(context)
+        val videos = VideoLibrary.get(context)
+        val historyCleared = Deletions.goneAt(Deletions.HISTORY)
+        val positionsCleared = Deletions.goneAt(Deletions.POSITIONS)
+        // D'abord : ce qui est marqué retiré part d'ici (sans laisser de nouvelle marque)
+        Deletions.applying {
+            SubscriptionStore.get(context).dropGone()
+            music.dropGone()
+            videoLists.dropGone()
+            library.dropGone()
+            favorites.dropGone()
+            videos.dropGone()
+            Tastes.get(context).dropGone()
+            WatchHistory.get(context).dropBefore(historyCleared)
+            WatchPositions.dropBefore(context, positionsCleared)
+        }
+        // Ensuite : on reprend de l'autre tout ce qui n'est pas marqué retiré
+        fun lists(store: Playlists, from: List<Pair<String, List<VideoItem>>>) =
+            from.mapNotNull { (name, items) -> store.withoutGone(name, items)?.let { name to it } }
+        return importAll(
+            context,
+            Content(
+                subscriptions = theirs.subscriptions.filterNot { Deletions.isGone("s:" + it.channelId) },
+                musicPlaylists = lists(music, theirs.musicPlaylists),
+                videoPlaylists = lists(videoLists, theirs.videoPlaylists),
+                albums = theirs.albums.filterNot { Deletions.isGone(library.albumKey(it)) },
+                artists = theirs.artists.filterNot { Deletions.isGone(library.artistKey(it)) },
+                favorites = theirs.favorites.filterNot { Deletions.isGone(favorites.key(it.url)) },
+                later = theirs.later.filterNot { Deletions.isGone(videos.laterKey(it.url)) },
+                liked = theirs.liked.filterNot { Deletions.isGone(videos.likedKey(it.url)) },
+                shorts = theirs.shorts.filterNot { Deletions.isGone(videos.shortKey(it.url)) },
+                tastes = theirs.tastes.filterNot { Deletions.isGone("t:$it") }.toSet(),
+                tastesSkipped = theirs.tastesSkipped,
+                history = theirs.history.filter { it.at > historyCleared },
+                positions = theirs.positions.filter { it.at > positionsCleared },
+            ),
+        )
+    }
+
+    private fun importAll(context: Context, content: Content): Added {
         val store = SubscriptionStore.get(context)
         val before = store.items.value.size
         if (content.subscriptions.isNotEmpty()) store.addAll(content.subscriptions)

@@ -26,6 +26,7 @@ class MusicLibrary private constructor(context: Context) {
         val added = !hasAlbum(album.url)
         _albums.value = if (added) listOf(album) + _albums.value else _albums.value.filterNot { it.url == album.url }
         save()
+        if (added) Deletions.back(albumKey(album)) else Deletions.gone(albumKey(album))
         return added
     }
 
@@ -33,6 +34,7 @@ class MusicLibrary private constructor(context: Context) {
         val added = !hasArtist(artist)
         _artists.value = if (added) listOf(artist) + _artists.value else _artists.value.filterNot { sameArtist(it, artist) }
         save()
+        if (added) Deletions.back(artistKey(artist)) else Deletions.gone(artistKey(artist))
         return added
     }
 
@@ -43,7 +45,22 @@ class MusicLibrary private constructor(context: Context) {
         _albums.value = _albums.value + newAlbums
         _artists.value = _artists.value + newArtists
         save()
+        Deletions.back(newAlbums.map(::albumKey) + newArtists.map(::artistKey))
         return newAlbums.size + newArtists.size
+    }
+
+    // ---- les suppressions, pour la synchro (2.23.0, voir Deletions)
+    fun albumKey(album: MusicCollection) = "al:" + album.url
+    fun artistKey(artist: ChannelItem) = "ar:" + artist.url.ifBlank { artist.name.lowercase() }
+
+    /** La synchro : ce qui a été retiré sur un autre appareil est retiré ici aussi. */
+    fun dropGone() {
+        val albums = _albums.value.filterNot { Deletions.isGone(albumKey(it)) }
+        val artists = _artists.value.filterNot { Deletions.isGone(artistKey(it)) }
+        if (albums.size == _albums.value.size && artists.size == _artists.value.size) return
+        _albums.value = albums
+        _artists.value = artists
+        save()
     }
 
     /** Même chaîne, ou même nom quand l'adresse manque (artiste venu d'un morceau). */

@@ -39,6 +39,7 @@ class VideoLibrary private constructor(context: Context) {
         if (fresh.isNotEmpty()) {
             flow.value = flow.value + fresh
             save(key, flow.value)
+            Deletions.back(fresh.map { markKey(key, it.url) })
         }
         return fresh.size
     }
@@ -51,12 +52,31 @@ class VideoLibrary private constructor(context: Context) {
         val there = flow.value.any { sameTrack(it.url, video.url) }
         flow.value = if (there) flow.value.filterNot { sameTrack(it.url, video.url) } else listOf(video) + flow.value
         save(key, flow.value)
+        if (there) Deletions.gone(markKey(key, video.url)) else Deletions.back(markKey(key, video.url))
         return !there
     }
 
     private fun remove(flow: MutableStateFlow<List<VideoItem>>, key: String, url: String) {
         flow.value = flow.value.filterNot { sameTrack(it.url, url) }
         save(key, flow.value)
+        Deletions.gone(markKey(key, url))
+    }
+
+    // ---- les suppressions, pour la synchro (2.23.0, voir Deletions)
+    private fun markKey(list: String, url: String) = when (list) { "plus_tard" -> "l:"; "jaime" -> "k:"; else -> "h:" } + Deletions.video(url)
+    fun laterKey(url: String) = markKey("plus_tard", url)
+    fun likedKey(url: String) = markKey("jaime", url)
+    fun shortKey(url: String) = markKey("shorts", url)
+
+    /** La synchro : ce qui a été retiré sur un autre appareil est retiré ici aussi. */
+    fun dropGone() {
+        for ((flow, list) in listOf(_later to "plus_tard", _liked to "jaime", _shorts to "shorts")) {
+            val kept = flow.value.filterNot { Deletions.isGone(markKey(list, it.url)) }
+            if (kept.size != flow.value.size) {
+                flow.value = kept
+                save(list, kept)
+            }
+        }
     }
 
     private fun load(key: String): List<VideoItem> = runCatching {

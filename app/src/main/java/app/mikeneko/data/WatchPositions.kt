@@ -101,5 +101,17 @@ object WatchPositions {
     fun clear(context: Context) {
         prefs(context).edit().clear().apply()
         _progress.value = emptyMap()
+        Deletions.gone(Deletions.POSITIONS) // la synchro : effacé partout, jusqu'à maintenant (2.23.0)
+    }
+
+    /** La synchro : les positions ont été effacées sur un autre appareil à [time] ; les plus anciennes partent ici aussi. */
+    fun dropBefore(context: Context, time: Long) {
+        if (time <= 0L) return
+        val old = all(context).filter { it.at <= time }
+        if (old.isEmpty()) return
+        val edit = prefs(context).edit()
+        old.forEach { edit.remove(it.id) }
+        edit.apply()
+        refresh(context)
     }
 }

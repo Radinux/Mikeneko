@@ -1138,6 +1138,25 @@ users: the point is to take them from the videos really watched.
   image, no remeasure per frame) and moves linearly with the glass (an eased flight left the glass
   through the top and got clipped). `stretchGesture` settles the glass in a `finally`: a gesture cut
   by a restarted `pointerInput` used to leave it half-open, pill faded and window not shown yet.
+- 2.23.0, removals in sync: `data/Deletions` keeps marks `key → (time, gone | back)` in prefs
+  `suppressions` (kept one year, 5000 at most), initialised first in `MikenekoApp`. Stores mark what
+  the user removes (`gone`) and what comes back after having been removed (`back`); nothing is marked
+  otherwise, so a new device still receives everything. Keys: `s:` channel id, `p:<m|v>:<name>`
+  playlist, `i:<m|v>:<name>\u0001<video id>` playlist track, `al:` album url, `ar:` artist, `f:` `l:`
+  `k:` `h:` favorite / later / liked / saved short, `t:` topic, `H*` / `P*` = history / resume points
+  cleared at that time. `Playlists` diffs its key set in `update()` (not for `move`); a deleted or
+  renamed playlist leaves one mark, not one per track. The backup XML carries `<removed><gone k at
+  back/>` (key in URL-safe base64; older versions ignore the tag). `MikenekoBackup.import(sync = true)`
+  (LocalSync and GitHubSync): merge the marks (newest wins), drop locally what is marked gone inside
+  `Deletions.applying { }` (no new marks), then import the peer's content filtered by the marks. A file
+  imported by hand uses `sync = false`: everything is added and marks turn to `back`. Limits: device
+  clocks are compared; something removed on A and added independently on B after that (never removed
+  on B) is still removed on B; a peer older than 2.23 keeps sending removed items, which are filtered
+  here as long as the mark lives.
+- 2.23.0, play button of music pages: `PlayAnchor.spot` no longer lerps diagonally over the last 56 dp.
+  The button follows the list all the way (`y = max(free.y, slot.y)`); between 150 and 66 dp under its
+  slot it slides sideways to the slot's x and shrinks (smoothstep), then rises straight into the
+  capsule. The diagonal path crossed the search button at the right of the capsule.
 - Emulator tip (2026-11-10): with `-gpu swiftshader_indirect` the emulator itself crashes when the
   music window opens; `-gpu host` works again.
 - Emulator tip: if screenshots turn black and the app "isn't responding" while its main thread just

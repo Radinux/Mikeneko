@@ -659,7 +659,7 @@ object LocalSync {
             GitHubSync.receiveKey(context, extras?.optString("cle")?.ifEmpty { null })
         }
         val content = MikenekoBackup.read(String(received, Charsets.UTF_8))
-        val added = withContext(Dispatchers.Main) { MikenekoBackup.import(context, content) }
+        val added = withContext(Dispatchers.Main) { MikenekoBackup.import(context, content, sync = true) }
 
         // Appairés par PIN : les deux gardent le même secret (tiré de cet échange), et seront liés
         if (byPin) {
