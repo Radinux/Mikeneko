@@ -63,6 +63,10 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 - **Music in Opus**: songs (and the sound of videos) now come in YouTube's best Opus stream, around
   130-160 kb/s at 48 kHz, finer than the ~128 kb/s AAC used until now. AAC remains the fallback,
   and songs you already downloaded keep playing offline as they are.
+- **Playlist import picks the right songs**: the artist must really match (one of the credited
+  artists is enough), titles are compared both ways, and remixes, covers, live, slowed or karaoke
+  versions are skipped unless the original title asks for them. A song with the same name by someone
+  else is no longer added: it shows up in the "not found" list instead.
 - **Your profile opens from the Mikeneko capsule** at the top of Home (it did nothing); the big
   profile card is gone from the top of Settings.
 - **Settings in landscape**: the title and the tabs sit in a column on the left, the content gets

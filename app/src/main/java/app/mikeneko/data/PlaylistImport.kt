@@ -232,16 +232,70 @@ object PlaylistImport {
             }
     }
 
-    private fun bestMatch(results: List<VideoItem>, song: Item, title: String): VideoItem? {
-        val wanted = words(title)
-        val artistWords = words(song.artist)
-        return results.take(8).map { r ->
-            val got = words(cleanTitle(r.title))
-            val overlap = if (wanted.isEmpty()) 0.0 else wanted.count { it in got }.toDouble() / wanted.size
-            val artistHit = artistWords.isNotEmpty() && artistWords.any { it in words(r.channel) || it in got }
-            r to overlap + if (artistHit) 0.35 else 0.0
-        }.filter { (_, score) -> score >= 0.6 }.maxByOrNull { it.second }?.first
+    private fun bestMatch(results: List<VideoItem>, song: Item, title: String): VideoItem? =
+        results.take(8).map { r -> r to matchScore(song.title, song.artist, r.title, r.channel) }
+            .filter { (_, score) -> score >= MIN_MATCH }
+            .maxByOrNull { it.second }?.first // à score égal, le premier (le plus pertinent pour YouTube)
+
+    private const val MIN_MATCH = 0.6
+
+    /**
+     * À quel point un résultat (titre, chaîne) est le morceau voulu, de 0 à 1 (2.26.3 / 3.0.0). Avant,
+     * un bon titre suffisait (l'artiste n'était qu'un bonus) et un titre plus long comptait comme
+     * parfait : « même titre, autre chanson », remix, reprise… 10 à 15 % d'erreurs sur un vrai import.
+     * - l'artiste doit correspondre quand on le connaît (un des artistes crédités suffit) ;
+     * - le titre se compare dans les deux sens (les mots en trop comptent) ;
+     * - une version dérivée (remix, live, reprise, ralentie…) est écartée si on ne l'a pas demandée.
+     */
+    internal fun matchScore(wantedTitle: String, wantedArtist: String, gotTitle: String, gotChannel: String): Double {
+        val channel = norm(cleanArtist(gotChannel))
+        val gotRaw = norm(gotTitle)
+        if (wantedArtist.isNotBlank() && !artistMatches(wantedArtist, channel, gotRaw)) return 0.0
+        val wantedRaw = norm(wantedTitle)
+        if (DERIVED.any { it in words(gotTitle) && it !in words(wantedTitle) }) return 0.0
+        // Le titre sans « (feat. …) », « - Remastered »… ni le nom de l'artiste (« Artiste - Titre » des vidéos)
+        val artistWords = artistNames(wantedArtist).flatMap { words(it) }.toSet()
+        val wanted = words(cleanTitle(wantedTitle)) - DRESSING
+        val got = words(cleanTitle(gotTitle)) - (artistWords - wanted) - DRESSING
+        if (wanted.isEmpty() || got.isEmpty()) return if (wantedRaw == gotRaw) 1.0 else 0.0
+        val common = wanted.count { it in got }.toDouble()
+        // Les deux sens : ce qui manque du titre voulu, et ce que le résultat a en trop
+        return minOf(common / wanted.size, common / got.size)
     }
+
+    /** Un des artistes crédités se retrouve dans la chaîne (« Artiste - Topic »…) ou dans le titre. */
+    private fun artistMatches(wantedArtist: String, channel: String, gotTitle: String): Boolean =
+        artistNames(wantedArtist).any { name ->
+            val n = norm(name)
+            n.isNotEmpty() && (
+                containsWords(channel, n) || containsWords(gotTitle, n) ||
+                    // Chaîne plus courte que le nom (« Daft Punk » pour « Daft Punk & Pharrell ») : assez longue
+                    (channel.length >= 4 && containsWords(n, channel))
+                )
+        }
+
+    /** « A, B & C feat. D » → A, B, C, D. */
+    private fun artistNames(artist: String): List<String> =
+        artist.split(ARTIST_SEPARATORS).map { it.trim() }.filter { it.isNotEmpty() }
+
+    /** [part] est dans [whole], mot pour mot (pas « art » dans « party »). */
+    private fun containsWords(whole: String, part: String): Boolean =
+        " $whole ".contains(" $part ")
+
+    private val ARTIST_SEPARATORS = Regex("""\s*(,|&|/|;|\+|\bx\b|\band\b|\bet\b|\bfeat\.?|\bft\.?|\bwith\b)\s*""", RegexOption.IGNORE_CASE)
+
+    /** Les mots des versions dérivées : écartées si le titre voulu ne les a pas. */
+    private val DERIVED = setOf(
+        "remix", "rmx", "cover", "covers", "karaoke", "instrumental", "live", "acoustic", "acoustique",
+        "slowed", "reverb", "sped", "nightcore", "8d", "bootleg", "mashup", "extended", "piano", "lofi",
+        "tutorial", "reaction",
+    )
+
+    /** Les mots d'habillage des vidéos (« Official Video », « Lyrics »…) : ni manquants ni en trop. */
+    private val DRESSING = setOf(
+        "official", "officiel", "officielle", "video", "videoclip", "clip", "audio", "lyric", "lyrics", "paroles",
+        "visualizer", "visualiser", "music", "musique", "hd", "hq", "4k", "mv", "topic", "vevo", "version", "original",
+    )
 
     private suspend fun findArtist(item: Item): ChannelItem? {
         val wanted = norm(item.title)

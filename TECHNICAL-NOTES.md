@@ -1170,6 +1170,13 @@ users: the point is to take them from the videos really watched.
   entry's own keys, so AAC files downloaded before stay playable. `TrackAnalysis` decodes through
   MediaExtractor / MediaCodec: format-agnostic, Opus included. Premium 256 kb/s AAC needs a signed-in
   Premium account: out of reach.
+- 3.0.0: import matching (`PlaylistImport.matchScore`, tested by `ImportMatchTest`). Before: score =
+  share of the wanted title words found + 0.35 if ANY artist word appeared, threshold 0.6, so a
+  same-title song by anyone passed, and « Title (Remix) » scored 1. Now: 0 unless one credited artist
+  (split on , & / ; + x and et feat ft with) is in the channel (minus « - Topic ») or the title as
+  whole words (or the channel, ≥ 4 chars, inside the artist name); 0 if the result has a DERIVED word
+  the wanted title lacks; else min(common / wanted, common / got) on cleaned titles minus video
+  « dressing » words and the artist's own words. Ties keep YouTube's order.
 - 2.26.1: custom colors. `Appearance.customs` (all of them, prefs `accents_perso` = comma-separated
   ARGB ints; migrated from the single `accent_perso`) and `Appearance.custom` (the one used by the
   accent when its id is `Accent.CUSTOM`). `AppSettings.addCustomAccent` / `replaceCustomAccent` /
