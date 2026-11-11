@@ -1,5 +1,7 @@
 package app.mikeneko.ui.screens
 
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import app.mikeneko.ui.components.CONNECTED_GAP
 import app.mikeneko.ui.components.ConnectedChip
 import android.content.Context
@@ -520,8 +522,18 @@ fun HomeOverlay(state: HomeState, backdrop: Backdrop, onSettings: () -> Unit) {
             // le ✕ prend la place des réglages
             val morph = rememberSearchMorph(state.searching)
             Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(SEARCH_CIRCLE)) {
+                // La capsule Mikeneko ouvre ton profil (2.26.3 ; avant, une grande carte en haut des réglages)
+                var profileOpen by remember { mutableStateOf(false) }
+                if (profileOpen) ProfileEditor { profileOpen = false }
                 FadeUnderSearch(morph, Modifier.align(Alignment.CenterStart)) {
-                    LiquidGlass(backdrop, Modifier.height(50.dp), cornerRadius = 25.dp, bezel = 16.dp, refraction = 16.dp) {
+                    LiquidGlass(
+                        backdrop,
+                        Modifier.height(50.dp).semantics { contentDescription = context.getString(R.string.profile_edit) },
+                        cornerRadius = 25.dp,
+                        bezel = 16.dp,
+                        refraction = 16.dp,
+                        onClick = { profileOpen = true },
+                    ) {
                         Row(Modifier.fillMaxHeight().padding(start = 9.dp, end = 18.dp), verticalAlignment = Alignment.CenterVertically) {
                             Mascot(size = 36.dp)
                             Spacer(Modifier.width(7.dp))

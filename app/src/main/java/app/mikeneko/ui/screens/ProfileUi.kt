@@ -78,44 +78,6 @@ private fun Banner(profile: Profile, modifier: Modifier) {
     }
 }
 
-/**
- * Le profil en haut des Réglages (2.18.0) : la bannière, la photo dans son cadre qui déborde dessus, le
- * pseudo. Un tap ouvre [ProfileEditor].
- */
-@Composable
-fun ProfileCard(modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    val profile by remember { ProfileStore.load(context) }.collectAsState()
-    var editing by remember { mutableStateOf(false) }
-    if (editing) ProfileEditor { editing = false }
-    val avatar = 84.dp
-    Column(modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).clickable(role = Role.Button, onClickLabel = stringResource(R.string.profile_edit)) { editing = true }) {
-        Banner(profile, Modifier.fillMaxWidth().aspectRatio(3f))
-        // La photo (avec son cadre) remonte sur la bannière, sans laisser de trou dessous
-        Row(
-            Modifier.fillMaxWidth().padding(start = 6.dp).layout { measurable, constraints ->
-                val placeable = measurable.measure(constraints)
-                val shift = (avatar * 0.55f).roundToPx()
-                layout(placeable.width, (placeable.height - shift).coerceAtLeast(0)) { placeable.place(0, -shift) }
-            },
-            verticalAlignment = Alignment.Bottom,
-        ) {
-            ProfileAvatar(profile.avatar, profile.pseudo, ProfileFrame.of(profile.frame), avatar)
-            Column(Modifier.weight(1f).padding(start = 4.dp, bottom = 14.dp)) {
-                Text(
-                    profile.pseudo.ifBlank { stringResource(R.string.profile_no_pseudo) },
-                    color = Pelage.Texte,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(stringResource(R.string.profile_edit), color = Pelage.RouxClair, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-            }
-        }
-    }
-}
-
 /** Modifier le profil : la bannière, la photo, le pseudo et le cadre. Tout est gardé tout de suite. */
 @Composable
 fun ProfileEditor(onDismiss: () -> Unit) {

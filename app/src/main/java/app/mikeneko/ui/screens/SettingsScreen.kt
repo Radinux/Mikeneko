@@ -207,7 +207,7 @@ private fun ColumnScope.SettingsTabContent(tab: SettingsTab, list: LazyListState
     ) {
         when (tab) {
             SettingsTab.General -> {
-                item { ProfileCard(Modifier.padding(horizontal = 16.dp).padding(top = 8.dp, bottom = 8.dp)) } // le profil (2.18.0)
+                // Le profil (2.18.0) s'ouvre depuis la capsule Mikeneko de l'accueil (2.26.3), plus d'ici
                 item { AppearanceSection() }
                 item { LanguageSection(context) }
                 item { WellbeingSection() }
