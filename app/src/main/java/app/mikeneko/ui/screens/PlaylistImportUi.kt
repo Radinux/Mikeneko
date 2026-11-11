@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
+import app.mikeneko.ui.components.AnimatedAlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.LinearProgressIndicator
@@ -77,7 +77,7 @@ fun PlaylistImportPicker(preview: PlaylistImport.Preview, onDismiss: () -> Unit)
     var chosen by remember { mutableStateOf(if (preview.searches(groups.toSet()) <= 150) groups.toSet() else emptySet()) }
     val searches = preview.searches(chosen)
     val minutes = ceil(PlaylistImport.estimateSeconds(searches) / 60.0).toInt()
-    AlertDialog(
+    AnimatedAlertDialog(
         onDismissRequest = onDismiss,
         containerColor = Pelage.Coussin,
         titleContentColor = Pelage.Texte,
@@ -108,13 +108,13 @@ fun PlaylistImportPicker(preview: PlaylistImport.Preview, onDismiss: () -> Unit)
                 )
             }
         },
-        confirmButton = {
+        confirmButton = { close ->
             TextButton(enabled = chosen.isNotEmpty(), onClick = {
                 PlaylistImport.start(context, preview, chosen)
-                onDismiss()
+                close()
             }) { Text(stringResource(R.string.import_start), color = if (chosen.isEmpty()) Pelage.Gris else Pelage.RouxClair, fontWeight = FontWeight.ExtraBold) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel), color = Pelage.Texte) } },
+        dismissButton = { close -> TextButton(onClick = { close() }) { Text(stringResource(R.string.cancel), color = Pelage.Texte) } },
     )
 }
 
@@ -146,7 +146,7 @@ private fun PickRow(title: String, checked: Boolean, onChange: (Boolean) -> Unit
 fun PlaylistImportSummary() {
     val state by PlaylistImport.state.collectAsState()
     val result = (state as? PlaylistImport.State.Done)?.result ?: return
-    AlertDialog(
+    AnimatedAlertDialog(
         onDismissRequest = { PlaylistImport.dismiss() },
         containerColor = Pelage.Coussin,
         titleContentColor = Pelage.Texte,
@@ -166,6 +166,6 @@ fun PlaylistImportSummary() {
                 }
             }
         },
-        confirmButton = { TextButton(onClick = { PlaylistImport.dismiss() }) { Text(stringResource(R.string.import_ok), color = Pelage.RouxClair, fontWeight = FontWeight.ExtraBold) } },
+        confirmButton = { close -> TextButton(onClick = { close() }) { Text(stringResource(R.string.import_ok), color = Pelage.RouxClair, fontWeight = FontWeight.ExtraBold) } },
     )
 }

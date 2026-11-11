@@ -43,7 +43,8 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
+import app.mikeneko.ui.components.AnimatedDialog
+import app.mikeneko.ui.components.DialogClose
 import app.mikeneko.R
 import app.mikeneko.data.GitHubSync
 import app.mikeneko.ui.components.Loading
@@ -52,15 +53,15 @@ import app.mikeneko.ui.theme.Rounded
 
 /** Le cadre commun des fenêtres GitHub (comme celle de la synchro par PIN). */
 @Composable
-private fun GitHubDialog(title: String, onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
-    Dialog(onDismissRequest = onDismiss) {
+private fun GitHubDialog(title: String, onDismiss: () -> Unit, content: @Composable ColumnScope.(close: DialogClose) -> Unit) {
+    AnimatedDialog(onDismissRequest = onDismiss) { close ->
         Column(
             Modifier.fillMaxWidth().clip(RoundedCornerShape(28.dp)).background(Pelage.Coussin).padding(22.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(title, Modifier.semantics { heading() }, color = Pelage.Texte, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center)
             Spacer(Modifier.height(14.dp))
-            content()
+            content(close)
         }
     }
 }
@@ -78,12 +79,13 @@ fun GitHubSignInDialog(onDismiss: () -> Unit) {
     val context = LocalContext.current
     val uri = LocalUriHandler.current
     val login by GitHubSync.login.collectAsState()
-    LaunchedEffect(login) { if (login is GitHubSync.Login.In) onDismiss() }
-    fun close() {
+    // Fermée (sortie jouée) : on abandonne la connexion si elle attendait encore le code
+    fun closed() {
         if (login is GitHubSync.Login.Code) GitHubSync.cancelSignIn()
         onDismiss()
     }
-    GitHubDialog(stringResource(R.string.github_sign_in), ::close) {
+    GitHubDialog(stringResource(R.string.github_sign_in), ::closed) { close ->
+        LaunchedEffect(login) { if (login is GitHubSync.Login.In) close() }
         when (val state = login) {
             is GitHubSync.Login.Code -> {
                 LaunchedEffect(state.userCode) { copy(context, "GitHub", state.userCode) }
@@ -106,7 +108,7 @@ fun GitHubSignInDialog(onDismiss: () -> Unit) {
             }
         }
         Spacer(Modifier.height(6.dp))
-        TextButton(onClick = ::close, modifier = Modifier.align(Alignment.End)) {
+        TextButton(onClick = { close() }, modifier = Modifier.align(Alignment.End)) {
             Text(stringResource(R.string.sync_close), color = Pelage.Texte, fontWeight = FontWeight.Bold)
         }
     }
@@ -117,7 +119,7 @@ fun GitHubSignInDialog(onDismiss: () -> Unit) {
 fun SyncKeyDialog(onDismiss: () -> Unit) {
     val context = LocalContext.current
     val key = remember { GitHubSync.syncKey(context) }
-    GitHubDialog(stringResource(R.string.github_key), onDismiss) {
+    GitHubDialog(stringResource(R.string.github_key), onDismiss) { close ->
         if (key == null) {
             Text(stringResource(R.string.github_key_none), color = Pelage.Gris, fontSize = 14.sp, textAlign = TextAlign.Center)
         } else {
@@ -134,7 +136,7 @@ fun SyncKeyDialog(onDismiss: () -> Unit) {
             }) { Text(stringResource(R.string.github_key_copy), fontWeight = FontWeight.ExtraBold) }
         }
         Spacer(Modifier.height(6.dp))
-        TextButton(onClick = onDismiss, modifier = Modifier.align(Alignment.End)) {
+        TextButton(onClick = { close() }, modifier = Modifier.align(Alignment.End)) {
             Text(stringResource(R.string.sync_close), color = Pelage.Texte, fontWeight = FontWeight.Bold)
         }
     }
@@ -147,11 +149,11 @@ fun EnterSyncKeyDialog(onDismiss: () -> Unit) {
     val status by GitHubSync.status.collectAsState()
     var typed by remember { mutableStateOf("") }
     var sent by remember { mutableStateOf(false) }
-    // Une fois la synchro passée avec cette clé, on ferme
-    LaunchedEffect(status) { if (sent && status is GitHubSync.Status.Done) onDismiss() }
     val focus = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
-    GitHubDialog(stringResource(R.string.github_key_enter), onDismiss) {
+    GitHubDialog(stringResource(R.string.github_key_enter), onDismiss) { close ->
+        // Une fois la synchro passée avec cette clé, on ferme
+        LaunchedEffect(status) { if (sent && status is GitHubSync.Status.Done) close() }
         Text(stringResource(R.string.github_key_enter_text), color = Pelage.Texte, fontSize = 13.sp, textAlign = TextAlign.Center)
         Spacer(Modifier.height(12.dp))
         Box(
@@ -187,7 +189,7 @@ fun EnterSyncKeyDialog(onDismiss: () -> Unit) {
             GitHubSync.enterKey(context, typed)
         }, enabled = GitHubSync.normalizeKey(typed) != null) { Text(stringResource(R.string.github_key_use), fontWeight = FontWeight.ExtraBold) }
         Spacer(Modifier.height(6.dp))
-        TextButton(onClick = onDismiss, modifier = Modifier.align(Alignment.End)) {
+        TextButton(onClick = { close() }, modifier = Modifier.align(Alignment.End)) {
             Text(stringResource(R.string.sync_close), color = Pelage.Texte, fontWeight = FontWeight.Bold)
         }
     }

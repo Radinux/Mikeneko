@@ -53,8 +53,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
+import app.mikeneko.ui.components.AnimatedDialog
 import app.mikeneko.R
 import app.mikeneko.data.Profile
 import app.mikeneko.data.ProfileFrame
@@ -139,7 +138,7 @@ fun ProfileEditor(onDismiss: () -> Unit) {
     }
     val image = PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
 
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+    AnimatedDialog(onDismissRequest = onDismiss, margin = 0.dp) { close ->
         Column(
             Modifier.padding(16.dp).fillMaxWidth().heightIn(max = 720.dp).clip(RoundedCornerShape(28.dp)).background(Pelage.Coussin)
                 .verticalScroll(rememberScrollState()).padding(20.dp),
@@ -250,7 +249,7 @@ fun ProfileEditor(onDismiss: () -> Unit) {
             }
 
             Spacer(Modifier.height(8.dp))
-            Button(onClick = onDismiss, modifier = Modifier.align(Alignment.End)) { Text(stringResource(R.string.playlist_done), fontWeight = FontWeight.ExtraBold) }
+            Button(onClick = { close() }, modifier = Modifier.align(Alignment.End)) { Text(stringResource(R.string.playlist_done), fontWeight = FontWeight.ExtraBold) }
         }
     }
 }

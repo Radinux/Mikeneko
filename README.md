@@ -68,6 +68,9 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 - **Play button of playlists and albums**: it now enters its capsule from below. It first shifts to
   the side and shrinks while still under the bar, then rises straight into place, so it no longer
   passes in front of the search button.
+- 2.23.4: **every pop-up window now closes smoothly** (confirmations, sync, GitHub, profile, color
+  wheel, import, bedtime reminder): it fades and shrinks a little while the dimmed background clears,
+  instead of vanishing at once.
 - 2.23.3: on a **narrow screen or with a bigger system font**, the header of a playlist or album
   keeps its shape: the play button now sits next to the title and the capsules get their own row
   below (a capsule wrapping to a second line left the button floating in between), and the two tags

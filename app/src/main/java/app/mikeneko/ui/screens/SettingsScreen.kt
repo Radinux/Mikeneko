@@ -37,7 +37,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
+import app.mikeneko.ui.components.AnimatedAlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -448,22 +448,22 @@ private fun OfflineSection(context: Context) {
         ) { confirm = true }
     }
     if (confirm) {
-        AlertDialog(
+        AnimatedAlertDialog(
             onDismissRequest = { confirm = false },
             containerColor = Pelage.Coussin,
             titleContentColor = Pelage.Texte,
             textContentColor = Secondary,
             title = { Text(stringResource(R.string.settings_offline_confirm_title), fontWeight = FontWeight.ExtraBold) },
             text = { Text(stringResource(R.string.settings_offline_confirm_text)) },
-            confirmButton = {
+            confirmButton = { close ->
                 TextButton(onClick = {
-                    confirm = false
+                    close()
                     Thread { runCatching { OfflineCache.clear(context) } }.start()
                     size = size?.copy(first = 0L, second = 0L)
                 }) { Text(stringResource(R.string.settings_offline_confirm), color = Color(0xFFFF8A80), fontWeight = FontWeight.ExtraBold) }
             },
-            dismissButton = {
-                TextButton(onClick = { confirm = false }) { Text(stringResource(R.string.cancel), color = Pelage.Texte) }
+            dismissButton = { close ->
+                TextButton(onClick = { close() }) { Text(stringResource(R.string.cancel), color = Pelage.Texte) }
             },
         )
     }
@@ -742,26 +742,26 @@ private fun HistorySection(context: Context) {
         }
     }
     if (confirm) {
-        AlertDialog(
+        AnimatedAlertDialog(
             onDismissRequest = { confirm = false },
             containerColor = Pelage.Coussin,
             titleContentColor = Pelage.Texte,
             textContentColor = Secondary,
             title = { Text(stringResource(R.string.settings_history_confirm_title), fontWeight = FontWeight.ExtraBold) },
             text = { Text(stringResource(R.string.settings_history_confirm_text)) },
-            confirmButton = {
+            confirmButton = { close ->
                 TextButton(onClick = {
                     WatchHistory.get(context).clear()
                     WatchPositions.clear(context)
                     Impressions.get(context).clear()
                     SubscriptionStore.get(context).clearWatched()
                     ForYou.clearCache()
-                    confirm = false
+                    close()
                     Toast.makeText(context, context.getString(R.string.settings_history_cleared), Toast.LENGTH_SHORT).show()
                 }) { Text(stringResource(R.string.settings_history_confirm), color = Color(0xFFFF8A80), fontWeight = FontWeight.ExtraBold) }
             },
-            dismissButton = {
-                TextButton(onClick = { confirm = false }) { Text(stringResource(R.string.cancel), color = Pelage.Texte) }
+            dismissButton = { close ->
+                TextButton(onClick = { close() }) { Text(stringResource(R.string.cancel), color = Pelage.Texte) }
             },
         )
     }

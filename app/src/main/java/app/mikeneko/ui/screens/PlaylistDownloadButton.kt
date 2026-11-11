@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.AlertDialog
+import app.mikeneko.ui.components.AnimatedAlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -73,21 +73,21 @@ private fun DownloadToggle(downloads: PlaylistDownloads, id: String, state: Down
         if (state.on) confirm = true else downloads.setDownloaded(id, true)
     }
     if (confirm) {
-        AlertDialog(
+        AnimatedAlertDialog(
             onDismissRequest = { confirm = false },
             containerColor = Pelage.Coussin,
             titleContentColor = Pelage.Texte,
             textContentColor = Pelage.Gris,
             title = { Text(stringResource(R.string.playlist_download_remove_title), fontWeight = FontWeight.ExtraBold) },
             text = { Text(stringResource(if (videos) R.string.playlist_download_remove_text_videos else R.string.playlist_download_remove_text)) },
-            confirmButton = {
+            confirmButton = { close ->
                 TextButton(onClick = {
-                    confirm = false
                     downloads.setDownloaded(id, false)
+                    close()
                 }) { Text(stringResource(R.string.playlist_download_remove), color = Color(0xFFFF8A80), fontWeight = FontWeight.ExtraBold) }
             },
-            dismissButton = {
-                TextButton(onClick = { confirm = false }) { Text(stringResource(R.string.cancel), color = Pelage.Texte) }
+            dismissButton = { close ->
+                TextButton(onClick = { close() }) { Text(stringResource(R.string.cancel), color = Pelage.Texte) }
             },
         )
     }

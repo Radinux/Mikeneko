@@ -32,8 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
+import app.mikeneko.ui.components.AnimatedDialog
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
@@ -75,7 +74,7 @@ fun SleepReminder(suppressed: Boolean = false, firstAfterMinutes: Int = 60, snoo
     }
 
     if (!visible || suppressed) return
-    Dialog(onDismissRequest = ::snooze, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+    AnimatedDialog(onDismissRequest = ::snooze, fullScreen = true) { close ->
         Column(
             Modifier.fillMaxSize().background(Pelage.Nuit).safeDrawingPadding().padding(horizontal = 28.dp, vertical = 40.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -102,12 +101,12 @@ fun SleepReminder(suppressed: Boolean = false, firstAfterMinutes: Int = 60, snoo
             Button(
                 onClick = {
                     PlayerHolder.pause()
-                    snooze()
+                    close()
                 },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
             ) { Text(stringResource(R.string.sleep_goodnight), fontSize = 16.sp, fontWeight = FontWeight.ExtraBold) }
             Spacer(Modifier.height(12.dp))
-            FilledTonalButton(onClick = ::snooze, modifier = Modifier.fillMaxWidth().height(56.dp)) {
+            FilledTonalButton(onClick = { close() }, modifier = Modifier.fillMaxWidth().height(56.dp)) {
                 Text(stringResource(R.string.sleep_snooze, snoozeMinutes), fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
         }

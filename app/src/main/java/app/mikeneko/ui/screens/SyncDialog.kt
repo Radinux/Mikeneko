@@ -48,7 +48,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
+import app.mikeneko.ui.components.AnimatedDialog
 import app.mikeneko.R
 import app.mikeneko.data.LocalSync
 import app.mikeneko.data.MikenekoBackup
@@ -71,12 +71,13 @@ fun SyncDialog(onDismiss: () -> Unit) {
         LocalSync.screenOpened(context)
         onDispose { LocalSync.screenClosed(context) }
     }
-    fun close() {
+    // Appelé une fois la sortie jouée
+    fun closed() {
         LocalSync.screenClosed(context)
         onDismiss()
     }
 
-    Dialog(onDismissRequest = ::close) {
+    AnimatedDialog(onDismissRequest = ::closed) { close ->
         Column(
             Modifier.fillMaxWidth().clip(RoundedCornerShape(28.dp)).background(Pelage.Coussin).padding(22.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -104,7 +105,7 @@ fun SyncDialog(onDismiss: () -> Unit) {
             }
             if (state !is LocalSync.State.Done) {
                 Spacer(Modifier.height(10.dp))
-                TextButton(onClick = ::close, modifier = Modifier.align(Alignment.End)) {
+                TextButton(onClick = { close() }, modifier = Modifier.align(Alignment.End)) {
                     Text(stringResource(R.string.sync_close), color = Pelage.Texte, fontWeight = FontWeight.Bold)
                 }
             }

@@ -40,7 +40,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import app.mikeneko.R
 import app.mikeneko.ui.theme.Pelage
 import kotlin.math.atan2
@@ -64,7 +63,7 @@ fun ColorWheelDialog(initial: Color, onDismiss: () -> Unit, onPick: (Color) -> U
     var saturation by remember { mutableFloatStateOf(start[1].coerceIn(MIN_SATURATION, 1f)) }
     val color = Color.hsv(hue, saturation, VALUE)
 
-    Dialog(onDismissRequest = onDismiss) {
+    AnimatedDialog(onDismissRequest = onDismiss) { close ->
         Column(
             Modifier.clip(RoundedCornerShape(28.dp)).background(Pelage.Coussin).padding(22.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -118,11 +117,11 @@ fun ColorWheelDialog(initial: Color, onDismiss: () -> Unit, onPick: (Color) -> U
                 Text("#%06X".format(color.toArgb() and 0xFFFFFF), color = Pelage.Texte, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
             Row(Modifier.fillMaxWidth().padding(top = 18.dp), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                TextButton(onClick = onDismiss) { Text(stringResource(R.string.accent_picker_cancel), color = Pelage.Texte, fontWeight = FontWeight.Bold) }
+                TextButton(onClick = { close() }) { Text(stringResource(R.string.accent_picker_cancel), color = Pelage.Texte, fontWeight = FontWeight.Bold) }
                 Spacer(Modifier.width(8.dp))
                 // L'aperçu sur le bouton lui-même : c'est la couleur des boutons choisis
                 Button(
-                    onClick = { onPick(color) },
+                    onClick = { close { onPick(color) } },
                     colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = color, contentColor = Pelage.Encre),
                 ) { Text(stringResource(R.string.accent_picker_ok), fontWeight = FontWeight.ExtraBold) }
             }

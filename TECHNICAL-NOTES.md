@@ -1163,6 +1163,15 @@ users: the point is to take them from the videos really watched.
   layer and redraws every glass on each frame; on the playing playlist this ran during the play
   button's trip to the top bar (reported on the phone as a short stutter, not measurable on the
   emulator). If it persists, look at the header item re-entering the list (220 dp cover, cover color).
+- 2.23.4: `ui/components/AnimatedDialog.kt`. A Compose `Dialog` vanishes the moment it leaves the
+  composition, and the platform dim goes with it. `AnimatedDialog` keeps the window during the exit:
+  a `MutableTransitionState` drives the card (fade + scale) and its own scrim (window dim set to 0 and
+  window animations off in a `SideEffect`, `decorFitsSystemWindows = false`, `safeDrawingPadding` so the
+  keyboard still pushes the card). Closing always goes through the `DialogClose` handed to the content
+  (back, tap outside, buttons); `onDismissRequest` (or the lambda passed to `close { }`) runs only once
+  the exit is idle, and the window is then dropped (`gone`) even if the caller keeps it composed.
+  `AnimatedAlertDialog` rebuilds Material 3's `AlertDialog` layout (24 dp padding, 28 dp corners,
+  headlineSmall / bodyMedium, buttons right-aligned). New dialogs: use these, not `Dialog`/`AlertDialog`.
 - 2.23.3: `PageHeader` puts the title column (weight 1f) and the play button in one Row, then the
   `actions()` FlowRow full width under it. The play button's `onGloballyPositioned` (PlayAnchor
   inHeader / left / listTop) is unchanged: it measures wherever the button lands, so the travelling
