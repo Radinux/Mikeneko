@@ -67,6 +67,8 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 - **Search buttons stretch into the search bar**: on Home, Music, your playlists and channel pages,
   the glass magnifier now grows into the search capsule (and shrinks back into it when closed),
   instead of a capsule popping up next to it. The ✕ stays a separate button.
+- 2.25.1: the temporary playback log also notices when a video stops moving while it should be
+  playing, to track down rare very short freezes.
 - Fewer hiccups while a video plays: saving its position every 10 s no longer redraws every
   thumbnail on screen, nor the whole Home feed behind the player.
 - **Your own color can be deleted**: long-press its bubble (or tap it again once chosen) to open the
