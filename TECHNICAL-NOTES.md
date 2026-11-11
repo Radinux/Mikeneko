@@ -1163,6 +1163,15 @@ users: the point is to take them from the videos really watched.
   layer and redraws every glass on each frame; on the playing playlist this ran during the play
   button's trip to the top bar (reported on the phone as a short stutter, not measurable on the
   emulator). If it persists, look at the header item re-entering the list (220 dp cover, cover color).
+- 2.24.0: lyrics offset. `LyricsOffsets` (prefs `paroles_decalage`, key = track url, ms added to each
+  line time, ±120 s, local only). `LyricsSheet` holds `offset` / `adjusting` per track; `SyncedLyrics`
+  uses `timeMs + offset` for the current line and the seek; in adjust mode a line tap sets
+  `offset = position - 300 ms (reaction) - line.timeMs`. `SyncBar` = Earlier / value / Later (±500 ms),
+  Reset. `LyricsRepository.best()` sorts the candidates within 8 s by |duration gap| (it said "closest"
+  but took the first synced one in LRCLIB's order). LRCLIB copies one LRC onto every version of a song
+  (Let's Go – Jaden Bojsen: 8 identical LRCs from 148 s to 193 s), so even the right duration can be
+  mistimed. Automatic alignment by listening was considered: needs an on-device speech / vocal model,
+  heavy and unreliable on loud electronic tracks; not done.
 - 2.23.4: `ui/components/AnimatedDialog.kt`. A Compose `Dialog` vanishes the moment it leaves the
   composition, and the platform dim goes with it. `AnimatedDialog` keeps the window during the exit:
   a `MutableTransitionState` drives the card (fade + scale) and its own scrim (window dim set to 0 and

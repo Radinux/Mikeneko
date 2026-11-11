@@ -587,6 +587,14 @@
     <string name="lyrics_instrumental">Instrumental</string>
     <string name="lyrics_instrumental_text">No lyrics: just music.</string>
     <string name="lyrics_source">Lyrics: LRCLIB (lrclib.net)</string>
+    <string name="lyrics_sync">Out of sync?</string>
+    <string name="lyrics_sync_offset">Shifted %1$s</string>
+    <string name="lyrics_sync_done">Done</string>
+    <string name="lyrics_sync_hint">Tap the line you hear right now, or move them by half a second.</string>
+    <string name="lyrics_sync_earlier">Earlier</string>
+    <string name="lyrics_sync_later">Later</string>
+    <string name="lyrics_sync_reset">Reset</string>
+    <string name="lyrics_sync_line">Sync on this line</string>
     <plurals name="track_count">
         <item quantity="one">%1$d track</item>
         <item quantity="other">%1$d tracks</item>

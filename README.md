@@ -58,6 +58,15 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ## 🎌 What's new ⸜(｡˃ ᵕ ˂ )⸝♡
 
+### 2.24
+
+- **Lyrics out of sync? Fix them in one tap.** In the lyrics, tap *Out of sync?*, then tap the line you
+  hear right now: every line moves to match. *Earlier* / *Later* nudge them by half a second, and the
+  shift is remembered for that track. Some lyrics in the free database are timed for another version
+  of the song and copied onto all of them (seen: 13 s late).
+- Lyrics now really pick the version closest to the track's length (before: the first synced one
+  found, which could be another version with a longer intro).
+
 ### 2.23
 
 - **Sync remembers what you remove.** Unfollow a channel, delete a playlist, take a track out of one,

@@ -587,6 +587,14 @@
     <string name="lyrics_instrumental">Instrumental</string>
     <string name="lyrics_instrumental_text">Pas de paroles : juste de la musique.</string>
     <string name="lyrics_source">Paroles : LRCLIB (lrclib.net)</string>
+    <string name="lyrics_sync">Décalées ?</string>
+    <string name="lyrics_sync_offset">Décalées de %1$s</string>
+    <string name="lyrics_sync_done">OK</string>
+    <string name="lyrics_sync_hint">Touche la ligne que tu entends maintenant, ou décale-les d\'une demi-seconde.</string>
+    <string name="lyrics_sync_earlier">Plus tôt</string>
+    <string name="lyrics_sync_later">Plus tard</string>
+    <string name="lyrics_sync_reset">Remettre</string>
+    <string name="lyrics_sync_line">Caler sur cette ligne</string>
     <plurals name="track_count">
         <item quantity="one">%1$d titre</item>
         <item quantity="many">%1$d titres</item>

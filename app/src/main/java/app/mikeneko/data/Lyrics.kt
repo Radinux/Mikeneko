@@ -1,5 +1,6 @@
 package app.mikeneko.data
 
+import android.content.Context
 import kotlin.math.abs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -68,11 +69,20 @@ object LyricsRepository {
         }
     }.getOrNull()
 
-    /** Le résultat le plus proche en durée (à 8 s près quand on la connaît), synchronisé de préférence. */
+    /**
+     * Le résultat le plus proche en durée (à 8 s près quand on la connaît), synchronisé de préférence.
+     * 2.24.0 : vraiment le plus proche. Avant, c'était le premier synchronisé dans l'ordre de LRCLIB,
+     * qui pouvait être une autre version (intro plus longue : tout arrivait en retard).
+     */
     private fun best(results: JSONArray?, durationSec: Long): Lyrics? {
         if (results == null || results.length() == 0) return null
+        fun gap(o: JSONObject): Double {
+            val d = o.optDouble("duration", 0.0)
+            return if (durationSec <= 0 || d.isNaN() || d <= 0) 0.0 else abs(d - durationSec)
+        }
         val candidates = (0 until results.length()).map { results.getJSONObject(it) }
-            .filter { durationSec <= 0 || it.optDouble("duration", 0.0) <= 0 || abs(it.optDouble("duration") - durationSec) <= 8 }
+            .filter { gap(it) <= 8 }
+            .sortedBy(::gap)
         val pick = candidates.firstOrNull { !it.isNull("syncedLyrics") && it.optString("syncedLyrics").isNotBlank() }
             ?: candidates.firstOrNull { !it.isNull("plainLyrics") && it.optString("plainLyrics").isNotBlank() }
             ?: candidates.firstOrNull { it.optBoolean("instrumental") }
@@ -85,6 +95,24 @@ object LyricsRepository {
         plain = if (isNull("plainLyrics")) null else optString("plainLyrics").ifBlank { null },
         instrumental = optBoolean("instrumental"),
     )
+}
+
+/**
+ * Le recalage des paroles synchronisées, par morceau (2.24.0), en ms ajoutées aux temps des lignes :
+ * sur LRCLIB, une même version mal calée est parfois recopiée sur toutes les autres (vu : 13 s de
+ * retard). Gardé sur ce téléphone seulement.
+ */
+object LyricsOffsets {
+    private const val PREFS = "paroles_decalage"
+    const val LIMIT = 120_000L
+
+    fun get(context: Context, track: String): Long = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getLong(track, 0L)
+
+    fun set(context: Context, track: String, ms: Long) {
+        val edit = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+        if (ms == 0L) edit.remove(track) else edit.putLong(track, ms.coerceIn(-LIMIT, LIMIT))
+        edit.apply()
+    }
 }
 
 private val LRC_TIME = Regex("\\[(\\d{1,2}):(\\d{2})(?:[.:](\\d{1,3}))?]")
