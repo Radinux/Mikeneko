@@ -69,6 +69,7 @@ class MainActivity : ComponentActivity() {
         app.mikeneko.ui.DisplayRate.attach(this) // 90 Hz, ou le rythme de la vidéo en cours (2.26.1)
         if (savedInstanceState == null) {
             links.value = linkFrom(intent)
+            if (links.value != null) app.mikeneko.ui.BootScreen.ready() // un lien : la vidéo, pas l'accueil
             if (intent?.getBooleanExtra(Notifier.EXTRA_UPDATE, false) == true) AppUpdates.check(this) // notification de mise à jour
             // Nouvelle ouverture : aucun menu resté ouvert de la fois d'avant
             MusicSheet.open.value = null
@@ -104,13 +105,17 @@ class MainActivity : ComponentActivity() {
         setContent(parent = fixedSpeedRecomposer()) {
             val pip by inPip.collectAsState()
             MikenekoTheme {
-                MikenekoRoot(
-                    inPip = pip,
-                    links = links,
-                    onLinkHandled = { links.value = null },
-                    onFullscreenChanged = ::applyFullscreen,
-                    onVideoScreen = ::setVideoRotation,
-                )
+                androidx.compose.foundation.layout.Box {
+                    MikenekoRoot(
+                        inPip = pip,
+                        links = links,
+                        onLinkHandled = { links.value = null },
+                        onFullscreenChanged = ::applyFullscreen,
+                        onVideoScreen = ::setVideoRotation,
+                    )
+                    // Au lancement : le logo le temps que l'accueil se remplisse (3.0.2)
+                    if (!pip) app.mikeneko.ui.BootScreen.Overlay()
+                }
             }
         }
     }

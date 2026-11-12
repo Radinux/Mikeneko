@@ -128,6 +128,8 @@ object PlayerHolder {
     val playingQuality = MutableStateFlow(0)
     /** Les images par seconde de la vidéo en cours (0 : inconnu), pour la fréquence de l'écran ([app.mikeneko.ui.DisplayRate]). */
     val videoFps = MutableStateFlow(0)
+    /** Largeur / hauteur de la vidéo en cours (0 : inconnue), pour placer la lueur dans les bandes noires du plein écran (3.0.2). */
+    val videoAspect = MutableStateFlow(0f)
     val captionTracks = MutableStateFlow<List<CaptionTrack>>(emptyList())
     val caption = MutableStateFlow<CaptionTrack?>(null)
     val speed = MutableStateFlow(1f)
@@ -270,6 +272,9 @@ object PlayerHolder {
                 }
 
                 override fun onVideoSizeChanged(videoSize: VideoSize) {
+                    if (videoSize.width > 0 && videoSize.height > 0) {
+                        videoAspect.value = videoSize.width * videoSize.pixelWidthHeightRatio / videoSize.height
+                    }
                     // En direct, la qualité change toute seule (HLS) : on affiche celle reçue
                     if (nowPlaying.value?.live == true && videoSize.height > 0) {
                         playingQuality.value = MediaSources.qualityTier(videoSize.width, videoSize.height)

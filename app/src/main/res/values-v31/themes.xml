@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Comme values/themes.xml, plus l'écran de démarrage d'Android 12+ : le même chat que BootScreen,
+         sans le rond de l'icône, sur le fond de l'appli (3.0.2) -->
+    <style name="Theme.Mikeneko" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/nuit</item>
+        <item name="android:colorAccent">@color/roux</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowSplashScreenBackground">@color/nuit</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
+    </style>
+</resources>

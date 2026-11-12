@@ -346,6 +346,9 @@ fun HomeContent(state: HomeState, onOpen: (VideoItem) -> Unit) {
     val shownVideos = remember(videos, hidden, blocked, feed, hideShorts) {
         videos?.let { list -> if (feed is HomeFeed.Search) list else list.filter(feedback::allows) }
     }
+    // L'écran de démarrage s'efface quand l'accueil a de quoi montrer (3.0.2)
+    val showable = shownVideos != null || needsTastes
+    LaunchedEffect(showable) { if (showable) app.mikeneko.ui.BootScreen.ready() }
     SideEffect { Shorts.offer(shownVideos) } // un short ouvert d'ici : on glisse vers les shorts de cette liste
     val impressions = remember { Impressions.get(context) }
     DisposableEffect(Unit) { onDispose { impressions.save() } }

@@ -16,6 +16,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.Executors
+import kotlin.math.roundToInt
 
 /**
  * TEMPORAIRE (2.25.0) : un journal de ce qui arrive au lecteur, pour trouver les rares gels très
@@ -109,6 +110,30 @@ object PlaybackLog {
         }
         lastPosition = if (playing) position else -1L
         lastWall = wall
+        checkDecoder(player)
+    }
+
+    // Images jetées par le décodeur vidéo (3.0.2) : ExoPlayer ne les signale que par paquets de 50, trop
+    // tard pour dater un gel. Ici, relevé à chaque passage (~0,4 s).
+    private var lastDropped = 0
+
+    private fun checkDecoder(player: ExoPlayer) {
+        val counters = player.videoDecoderCounters ?: run {
+            lastDropped = 0
+            return
+        }
+        counters.ensureUpdated()
+        val dropped = counters.droppedBufferCount + counters.droppedInputBufferCount
+        if (dropped < lastDropped) lastDropped = 0 // nouveau décodeur
+        if (dropped > lastDropped) {
+            val format = player.videoFormat
+            log(
+                "VIDEO_DROPPED +${dropped - lastDropped} (total $dropped, max in a row ${counters.maxConsecutiveDroppedBufferCount})" +
+                    " pos=${player.currentPosition} video=${format?.width}x${format?.height}@${format?.frameRate?.roundToInt()} ${format?.sampleMimeType}" +
+                    " decoder=${counters.decoderInitCount}x",
+            )
+        }
+        lastDropped = dropped
     }
 
     @Suppress("DEPRECATION")

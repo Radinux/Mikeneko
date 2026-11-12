@@ -1,5 +1,19 @@
 package app.mikeneko.ui.screens
 
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.BlurEffect
+import androidx.compose.ui.graphics.ClipOp
+import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.layer.CompositingStrategy
+import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.rememberGraphicsLayer
+import androidx.compose.ui.unit.IntSize
+import app.mikeneko.ui.components.ambientSupported
+import kotlin.math.roundToInt
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -138,6 +152,8 @@ fun FullscreenPlayer(onExit: () -> Unit) {
         Box(Modifier.fillMaxSize().graphicsLayer { with(RotationMorph) { fullscreenVideo() } }.backdropSource(video)) {
             VideoSurface(Modifier.fillMaxSize(), captionLift = captionLift)
         }
+        // Mode ambiant (3.0.2) : la lueur de la vidéo dans les bandes noires, jamais sur l'image
+        BarsGlow(video)
 
         // Toute la surface : un tap montre / cache les commandes, un double tap recule / avance de 10 s
         TapToSeekLayer(
@@ -294,3 +310,74 @@ private fun UpNextHint(backdrop: Backdrop, onClick: () -> Unit) {
         }
     }
 }
+
+/**
+ * Le mode ambiant du plein écran (3.0.2) : quand la vidéo n'a pas le format de l'écran, ses bandes
+ * noires prennent une lueur de ses couleurs. La vidéo est étirée jusqu'aux bords, floutée en tout
+ * petit puis agrandie (comme [AmbientGlow] de la page vidéo, pour rester légère : elle est refaite à
+ * chaque image de la vidéo), et n'est dessinée qu'en dehors de l'image.
+ */
+@Composable
+private fun BarsGlow(video: Backdrop) {
+    val ambient by PlayerHolder.ambient.collectAsState()
+    val aspect by PlayerHolder.videoAspect.collectAsState()
+    if (!ambient || !ambientSupported || aspect <= 0f) return
+    // Pendant la rotation vers le plein écran, la vidéo pivote : la lueur arrive ensuite
+    val shown by animateFloatAsState(if (RotationMorph.running) 0f else 1f, tween(600), label = "lueur")
+    val blurred = rememberGraphicsLayer()
+    val faded = rememberGraphicsLayer()
+    Box(
+        Modifier
+            .fillMaxSize()
+            .graphicsLayer { alpha = shown }
+            .drawBehind {
+                val layer = video.layer
+                if (layer.size.width == 0 || shown == 0f) return@drawBehind
+                // La place de l'image (ajustée à l'écran, centrée)
+                val screenRatio = size.width / size.height
+                val videoW = if (aspect > screenRatio) size.width else size.height * aspect
+                val videoH = if (aspect > screenRatio) size.width / aspect else size.height
+                val left = (size.width - videoW) / 2f
+                val top = (size.height - videoH) / 2f
+                if (left < 4.dp.toPx() && top < 4.dp.toPx()) return@drawBehind // pas de bandes
+                val small = IntSize(
+                    (size.width / BARS_GLOW_SCALE).roundToInt().coerceAtLeast(1),
+                    (size.height / BARS_GLOW_SCALE).roundToInt().coerceAtLeast(1),
+                )
+                val sx = small.width / size.width
+                val sy = small.height / size.height
+                // 1. L'image étirée jusqu'aux bords de l'écran (et un peu au-delà), en petit, floutée
+                val radius = 36.dp.toPx() / BARS_GLOW_SCALE
+                blurred.renderEffect = BlurEffect(radius, radius, TileMode.Clamp)
+                blurred.record(small) {
+                    scale(sx, sy, pivot = Offset.Zero) {
+                        scale(size.width / videoW * 1.1f, size.height / videoH * 1.1f, pivot = center) {
+                            scale(size.width / layer.size.width, size.height / layer.size.height, pivot = Offset.Zero) { drawLayer(layer) }
+                        }
+                    }
+                }
+                // 2. Plus forte contre l'image, plus douce vers les bords de l'écran
+                faded.compositingStrategy = CompositingStrategy.Offscreen
+                faded.alpha = 0.8f
+                faded.record(small) {
+                    drawLayer(blurred)
+                    val fade = if (left >= top) {
+                        val edge = left / size.width
+                        Brush.horizontalGradient(0f to Color.Black.copy(alpha = 0.35f), edge to Color.Black, 1f - edge to Color.Black, 1f to Color.Black.copy(alpha = 0.35f))
+                    } else {
+                        val edge = top / size.height
+                        Brush.verticalGradient(0f to Color.Black.copy(alpha = 0.35f), edge to Color.Black, 1f - edge to Color.Black, 1f to Color.Black.copy(alpha = 0.35f))
+                    }
+                    drawRect(fade, blendMode = BlendMode.DstIn)
+                }
+                // 3. Agrandie, seulement dans les bandes : l'image elle-même reste intacte
+                clipRect(left, top, left + videoW, top + videoH, clipOp = ClipOp.Difference) {
+                    scale(1f / sx, 1f / sy, pivot = Offset.Zero) { drawLayer(faded) }
+                }
+            },
+    )
+}
+
+/** De combien la lueur des bandes est réduite avant d'être floutée. */
+private const val BARS_GLOW_SCALE = 8f
+

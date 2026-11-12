@@ -1163,6 +1163,20 @@ users: the point is to take them from the videos really watched.
   layer and redraws every glass on each frame; on the playing playlist this ran during the play
   button's trip to the top bar (reported on the phone as a short stutter, not measurable on the
   emulator). If it persists, look at the header item re-entering the list (220 dp cover, cover color).
+- 3.0.2: `ui/BootScreen.kt`, an overlay above `MikenekoRoot` (set in `MainActivity.setContent`, hidden in
+  PiP). `BootScreen.ready()` is called by `HomeContent` once `shownVideos != null || needsTastes`, and by
+  `MainActivity` when started from a link; the overlay waits for it (4 s max), lets thumbnails arrive
+  250 ms, fills its ring, then fades and scales up. `gone` is process-wide, so a rotation or coming back
+  doesn't show it again. To hide the jump from Android 12+'s splash, `values-v31/themes.xml` sets
+  `windowSplashScreenAnimatedIcon` to `drawable/splash_icon.xml` (the mascot inset 30.9 %, i.e. 110 of
+  the 288 dp icon area, centred) and the overlay draws the same 110 dp cat at the window centre on the
+  same `#141210` (even with pure black on). The ring follows real time (`SystemClock`, not the
+  animation clock): `0.9 × (1 − e^(−t/1.4 s))`, then 400 ms (Compose time) to full.
+- 3.0.2: `BarsGlow` (FullscreenPlayer.kt): `PlayerHolder.videoAspect` (from `onVideoSizeChanged`) gives
+  the Fit rect of the picture; the backdrop layer (whole screen, bars included) is scaled around the
+  centre so the picture covers the screen ×1.1, recorded into a 1/8 layer with a 36 dp / 8 blur
+  (`TileMode.Clamp`), faded toward the screen edges on a second small offscreen layer (alpha 0.8), then
+  drawn back up under `clipRect(picture, ClipOp.Difference)`. Skipped when the bars are under 4 dp.
 - 3.0.1: `ui/components/ImageCropper.kt`: full-screen `AnimatedDialog`, decodes ≤ 2048 px upright
   (`android.media.ExifInterface` on the stream), window = largest rect of the aspect with 20 dp
   margins; scale ≥ cover scale (≤ ×8), zoom around the centroid, offsets clamped so the image covers

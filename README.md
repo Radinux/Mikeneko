@@ -60,6 +60,11 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ### 3.0
 
+- 3.0.2: **ambient mode in full screen**: when a video doesn't have the shape of your screen, its
+  black bars take a soft glow of its colors (never over the picture). The glow of the video page is
+  also much lighter to draw.
+- 3.0.2: **start screen**: Mikeneko shows its cat with a progress ring while Home gets its videos,
+  then fades out onto a ready page.
 - 3.0.1: **delete several playlists at once**: in your music library, long-press a playlist, tick
   the others (or *All*), then *Delete*.
 - 3.0.1: **crop your profile photo and banner**: after picking an image, move and pinch it in a

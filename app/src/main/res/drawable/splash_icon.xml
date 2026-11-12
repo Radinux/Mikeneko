@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- L'icône de l'écran de démarrage d'Android 12+ (3.0.2) : le chat seul, sans le rond, à la taille et
+     à la place où BootScreen le reprend (110 dp sur les 288 dp de la zone d'icône, centré) -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_mikeneko"
+    android:inset="30.9%" />
