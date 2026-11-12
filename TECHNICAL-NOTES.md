@@ -1236,6 +1236,13 @@ users: the point is to take them from the videos really watched.
   the activity window, own HandlerThread) logs `SLOW_FRAME` ≥ 100 ms with delay / input / anim
   (Compose recomposition) / layout / draw / sync / issue / swap / gpu. `dumpsys gfxinfo app.mikeneko`
   gives the global histogram.
+  3.0.2: an emulator Perfetto trace during a video showed the UI thread nearly idle and the RenderThread
+  redrawing the whole window for each video frame. `AmbientGlow` was the biggest part: a 70 dp blur on a
+  full-size offscreen layer, redone every video frame. It now records the video into a `GraphicsLayer`
+  `GLOW_SCALE` (8) times smaller each way, blurs it there (radius / 8), applies the fade and the alpha on a
+  second small offscreen layer, and draws that scaled back up (bilinear: invisible on a blur). Emulator:
+  44 → 27 ms per frame (16 ms without the glow). Measure with `dumpsys gfxinfo app.mikeneko reset`, 20 s
+  on the video page, then `dumpsys gfxinfo app.mikeneko`.
 - 2.25.0: `ui/components/SearchMorph.kt`. One `LiquidGlass` whose bounds are lerped in a `layout {}`
   modifier (read at layout time, no recomposition per frame) between the 50 dp circle (right edge,
   `closedEnd` from the right) and the open capsule (left edge to `openEnd`, default 60 dp = the ✕).

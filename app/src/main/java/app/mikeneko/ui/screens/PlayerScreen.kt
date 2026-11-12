@@ -64,7 +64,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -72,7 +71,7 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.layer.CompositingStrategy
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.TileMode
@@ -80,6 +79,7 @@ import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
@@ -101,6 +101,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -156,6 +157,7 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -622,11 +624,18 @@ private fun WhiteAction(icon: ImageVector, label: String, onClick: () -> Unit) {
  * Mode ambiant : l'image de la vidéo (déjà enregistrée pour le verre), agrandie et très floutée,
  * qui déborde au-dessus et en dessous du lecteur puis s'efface vers le bas.
  * Se place en haut de l'écran, derrière le contenu du lecteur.
+ *
+ * 3.0.2 : la lueur est calculée en tout petit ([GLOW_SCALE] fois moins de pixels de chaque côté)
+ * puis agrandie. Elle est refaite à chaque image de la vidéo : en pleine taille, le flou de 70 dp
+ * triplait le travail du GPU par image (mesuré : 44 ms contre 16 ms sans la lueur sur l'émulateur).
+ * Une image très floue n'a pas de détails à perdre : agrandie, elle reste la même.
  */
 @Composable
 private fun AmbientGlow(video: Backdrop, modifier: Modifier = Modifier) {
     val density = LocalDensity.current
     val top = WindowInsets.statusBarSpace.getTop(density) + with(density) { 56.dp.toPx() } // barre d'état + « Lecture en cours »
+    val blurred = rememberGraphicsLayer()
+    val faded = rememberGraphicsLayer()
     BoxWithConstraints(modifier.fillMaxWidth()) {
         val videoHeight = maxWidth * 9f / 16f
         val glowHeight = with(density) { top.toDp() } + videoHeight + 220.dp
@@ -634,41 +643,49 @@ private fun AmbientGlow(video: Backdrop, modifier: Modifier = Modifier) {
             Modifier
                 .fillMaxWidth()
                 .height(glowHeight)
-                .graphicsLayer {
-                    compositingStrategy = CompositingStrategy.Offscreen
-                    alpha = 0.75f
-                }
-                .drawWithContent {
-                    drawContent()
-                    // Fondu vers le bas (et un peu en haut) pour que la lueur n'ait pas de bord
-                    drawRect(
-                        Brush.verticalGradient(0f to Color.Black.copy(alpha = 0.7f), 0.3f to Color.Black, 0.62f to Color.Black, 1f to Color.Transparent),
-                        blendMode = BlendMode.DstIn,
+                .drawBehind {
+                    val layer = video.layer
+                    if (layer.size.width == 0) return@drawBehind
+                    val small = IntSize(
+                        (size.width / GLOW_SCALE).roundToInt().coerceAtLeast(1),
+                        (size.height / GLOW_SCALE).roundToInt().coerceAtLeast(1),
                     )
-                },
-        ) {
-            Box(
-                Modifier
-                    .matchParentSize()
-                    .graphicsLayer {
-                        renderEffect = BlurEffect(70.dp.toPx(), 70.dp.toPx(), TileMode.Decal)
-                    }
-                    .drawBehind {
-                        val layer = video.layer
-                        if (layer.size.width == 0) return@drawBehind
-                        val w = size.width
-                        val h = w * 9f / 16f
-                        translate(top = top) {
-                            // Plus large et surtout plus haute que la vidéo : la lueur déborde
-                            scale(scaleX = 1.25f, scaleY = 1.9f, pivot = Offset(w / 2f, h / 2f)) {
-                                scale(w / layer.size.width, h / layer.size.height, pivot = Offset.Zero) { drawLayer(layer) }
+                    val sx = small.width / size.width
+                    val sy = small.height / size.height
+                    val w = size.width
+                    val h = w * 9f / 16f
+                    // 1. La vidéo agrandie, réduite en petit, puis floutée (le flou réduit d'autant)
+                    val radius = 70.dp.toPx() / GLOW_SCALE
+                    blurred.renderEffect = BlurEffect(radius, radius, TileMode.Decal)
+                    blurred.record(small) {
+                        scale(sx, sy, pivot = Offset.Zero) {
+                            translate(top = top) {
+                                // Plus large et surtout plus haute que la vidéo : la lueur déborde
+                                scale(scaleX = 1.25f, scaleY = 1.9f, pivot = Offset(w / 2f, h / 2f)) {
+                                    scale(w / layer.size.width, h / layer.size.height, pivot = Offset.Zero) { drawLayer(layer) }
+                                }
                             }
                         }
-                    },
-            )
-        }
+                    }
+                    // 2. Le fondu vers le bas (et un peu en haut) pour que la lueur n'ait pas de bord, en petit aussi
+                    faded.compositingStrategy = CompositingStrategy.Offscreen
+                    faded.alpha = 0.75f
+                    faded.record(small) {
+                        drawLayer(blurred)
+                        drawRect(
+                            Brush.verticalGradient(0f to Color.Black.copy(alpha = 0.7f), 0.3f to Color.Black, 0.62f to Color.Black, 1f to Color.Transparent),
+                            blendMode = BlendMode.DstIn,
+                        )
+                    }
+                    // 3. Agrandie à la taille de l'écran (lissée : rien ne se voit, c'est déjà flou)
+                    scale(1f / sx, 1f / sy, pivot = Offset.Zero) { drawLayer(faded) }
+                },
+        )
     }
 }
+
+/** De combien la lueur du mode ambiant est réduite avant d'être floutée (voir [AmbientGlow]). */
+private const val GLOW_SCALE = 8f
 
 /**
  * La description : date de mise en ligne, puis le texte (liens et horodatages cliquables).
