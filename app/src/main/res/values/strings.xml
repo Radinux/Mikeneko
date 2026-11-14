@@ -338,6 +338,13 @@
     <string name="sponsor_auto">Automatic paw swipe</string>
     <string name="sponsor_none">No sponsors spotted</string>
     <string name="sponsor_skipped">Paw swipe! Sponsor skipped 🐾</string>
+    <string name="sponsor_skipped_selfpromo">Paw swipe! Self-promo skipped 🐾</string>
+    <string name="sponsor_skipped_interaction">Paw swipe! Subscribe reminder skipped 🐾</string>
+    <string name="sponsor_skipped_intro">Paw swipe! Intro skipped 🐾</string>
+    <string name="sponsor_skipped_outro">Paw swipe! Credits skipped 🐾</string>
+    <string name="sponsor_skipped_preview">Paw swipe! Preview skipped 🐾</string>
+    <string name="sponsor_skipped_music_offtopic">Paw swipe! Non-music part skipped 🐾</string>
+    <string name="sponsor_skipped_filler">Paw swipe! Tangent skipped 🐾</string>
     <string name="stable_volume">Stable volume</string>
     <string name="stable_volume_refused">Your phone doesn\'t allow the stable volume effect</string>
     <string name="stable_volume_text">Evens out parts that are too loud or too quiet (videos only)</string>

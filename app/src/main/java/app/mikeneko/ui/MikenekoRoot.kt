@@ -343,7 +343,23 @@ fun MikenekoRoot(
     }
 
     LaunchedEffect(Unit) {
-        PlayerHolder.skipped.collect { toast(context.getString(R.string.sponsor_skipped)) }
+        // Le passage sauté dit ce qu'il était (3.1.2 : avant, toujours « Sponsor », même pour une intro)
+        PlayerHolder.skipped.collect { category ->
+            toast(
+                context.getString(
+                    when (category) {
+                        "selfpromo" -> R.string.sponsor_skipped_selfpromo
+                        "interaction" -> R.string.sponsor_skipped_interaction
+                        "intro" -> R.string.sponsor_skipped_intro
+                        "outro" -> R.string.sponsor_skipped_outro
+                        "preview" -> R.string.sponsor_skipped_preview
+                        "music_offtopic" -> R.string.sponsor_skipped_music_offtopic
+                        "filler" -> R.string.sponsor_skipped_filler
+                        else -> R.string.sponsor_skipped
+                    },
+                ),
+            )
+        }
     }
 
     // Mises à jour depuis GitHub : vérifiées par MainActivity.onStart (toutes les 4 h au plus) ; une

@@ -337,6 +337,13 @@
     <string name="sponsor_auto">Coup de patte automatique</string>
     <string name="sponsor_none">Aucun sponsor repéré</string>
     <string name="sponsor_skipped">Coup de patte ! Sponsor dégagé 🐾</string>
+    <string name="sponsor_skipped_selfpromo">Coup de patte ! Autopromo dégagée 🐾</string>
+    <string name="sponsor_skipped_interaction">Coup de patte ! Rappel « abonne-toi » dégagé 🐾</string>
+    <string name="sponsor_skipped_intro">Coup de patte ! Intro dégagée 🐾</string>
+    <string name="sponsor_skipped_outro">Coup de patte ! Générique dégagé 🐾</string>
+    <string name="sponsor_skipped_preview">Coup de patte ! Aperçu dégagé 🐾</string>
+    <string name="sponsor_skipped_music_offtopic">Coup de patte ! Passage sans musique dégagé 🐾</string>
+    <string name="sponsor_skipped_filler">Coup de patte ! Digression dégagée 🐾</string>
     <string name="stable_volume">Volume stable</string>
     <string name="stable_volume_refused">Ton téléphone refuse l\'effet de volume stable</string>
     <string name="stable_volume_text">Égalise les passages trop forts ou trop bas (vidéos seulement)</string>
