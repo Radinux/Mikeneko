@@ -314,7 +314,7 @@ class EffectChain(val preset: AudioPreset, val sampleRate: Int) {
             AudioPreset.Slowed -> {
                 eq(Biquad.lowPass(fs, 10_000.0, 0.6), Biquad.lowShelf(fs, 120.0, 2.0))
                 preGain = db(-2.0)
-                reverb = Reverb(fs, 2.6, 0.25f, 180.0)
+                reverb = Reverb(fs, 2.6, 0.20f, 180.0) // 3.3.1 : 0,25 → 0,20 (un peu moins de réverbération)
             }
             AudioPreset.SpedUp, AudioPreset.Nightcore -> eq(Biquad.highShelf(fs, 10_000.0, 2.0))
             AudioPreset.Spatial -> {
@@ -325,7 +325,7 @@ class EffectChain(val preset: AudioPreset, val sampleRate: Int) {
             }
             AudioPreset.EightD -> {
                 autoPan = AutoPan(fs)
-                reverb = Reverb(fs, 1.5, 0.15f, 150.0)
+                reverb = Reverb(fs, 1.5, 0.12f, 150.0)
             }
             AudioPreset.BassBoost -> {
                 eq(Biquad.peak(fs, 60.0, 5.0, 0.9), Biquad.peak(fs, 150.0, 3.0, 1.0), Biquad.peak(fs, 320.0, -2.5, 0.9))
@@ -357,7 +357,7 @@ class EffectChain(val preset: AudioPreset, val sampleRate: Int) {
             AudioPreset.Wide -> width = 0.2f
             AudioPreset.Muffled -> {
                 Biquad.lowPass24(fs, 520.0).forEach { eq(it) }
-                reverb = Reverb(fs, 1.2, 0.15f, 100.0)
+                reverb = Reverb(fs, 1.2, 0.12f, 100.0)
             }
             AudioPreset.OldRadio, AudioPreset.LoFi -> {
                 (Biquad.highPass24(fs, 400.0) + Biquad.lowPass24(fs, 3_500.0)).forEach { eq(it) }
