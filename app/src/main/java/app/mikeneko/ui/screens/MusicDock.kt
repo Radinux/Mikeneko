@@ -109,14 +109,11 @@ internal fun MusicDockRow(hideCover: () -> Boolean = { false }) {
         ?: now?.let { if (it.live) stringResource(R.string.radio_live_suffix, it.channel) else it.channel }
         ?: parked?.channel
     // Les voisins dans la file (elle boucle) : le titre suivant arrive dès qu'on commence à glisser.
-    // Vers la droite après 3 s de lecture, « précédent » remet le morceau au début : c'est lui qu'on montre.
+    // Vers la droite, c'est toujours le morceau d'avant (3.2.2 : avant, après 3 s de lecture, le glissé
+    // remettait seulement le morceau au début, comme le bouton)
     val index = (landed ?: pending)?.let { t -> queue.indexOfFirst { sameTrack(it.url, t.url) } }?.takeIf { it >= 0 } ?: queueIndex
     val nextItem = if (canSwipe) queue.getOrNull((index + 1) % queue.size) else null
-    val previousItem = when {
-        !canSwipe -> null
-        landed == null && pending == null && PlayerHolder.progress().first > 3_000 -> now?.let { VideoItem(it.url, it.title, it.channel, it.thumbnail) }
-        else -> queue.getOrNull((index - 1 + queue.size) % queue.size)
-    }
+    val previousItem = if (canSwipe) queue.getOrNull((index - 1 + queue.size) % queue.size) else null
     val nextLabel = stringResource(R.string.radio_next)
     val previousLabel = stringResource(R.string.radio_previous)
 
@@ -128,7 +125,7 @@ internal fun MusicDockRow(hideCover: () -> Boolean = { false }) {
             swipe.animateTo(if (forward) -out else out, spring(dampingRatio = 0.9f, stiffness = Spring.StiffnessMediumLow))
             landed = target
             swipe.snapTo(0f) // le voisin devient le titre affiché, exactement au même endroit
-            runCatching { if (forward) PlayerHolder.next(context) else PlayerHolder.previous(context) }
+            runCatching { if (forward) PlayerHolder.next(context) else PlayerHolder.previous(context, restartFirst = false) }
                 .onFailure {
                     landed = null
                     Toast.makeText(context, context.getString(R.string.radio_station_failed), Toast.LENGTH_SHORT).show()

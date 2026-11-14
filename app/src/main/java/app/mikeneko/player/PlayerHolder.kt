@@ -1118,11 +1118,14 @@ object PlayerHolder {
         playAt(context, queueIndex.value + 1)
     }
 
-    /** Précédent : après 3 s d'un morceau, on revient à son début (comme tous les lecteurs de musique). */
-    suspend fun previous(context: Context) {
+    /**
+     * Précédent : après 3 s d'un morceau, on revient à son début (comme tous les lecteurs de musique).
+     * [restartFirst] = false (le glissé sur la capsule, 3.2.2) : toujours le morceau d'avant.
+     */
+    suspend fun previous(context: Context, restartFirst: Boolean = true) {
         val p = player
         val now = nowPlaying.value
-        if (p != null && now != null && !now.live && p.currentPosition > 3_000) {
+        if (restartFirst && p != null && now != null && !now.live && p.currentPosition > 3_000) {
             p.seekTo(0)
             return
         }
