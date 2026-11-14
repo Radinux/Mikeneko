@@ -102,12 +102,13 @@ fun MusicDockWindow(
         val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
         val layoutDirection = LocalLayoutDirection.current
         val safeSides = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal).asPaddingValues()
-        val startInset = safeSides.calculateStartPadding(layoutDirection) + if (landscape) DOCK_RAIL_SPACE else 0.dp
-        val endInset = safeSides.calculateEndPadding(layoutDirection)
+        val startInset = safeSides.calculateStartPadding(layoutDirection)
+        // Paysage : le dock en colonne est à droite (3.2.1)
+        val endInset = safeSides.calculateEndPadding(layoutDirection) + if (landscape) DOCK_RAIL_SPACE else 0.dp
         val geometry = remember(width, height, statusTop, navBottom, density, landscape, startInset, endInset) {
             with(density) {
                 if (landscape) {
-                    // Paysage : la pilule en bas à droite (plus étroite), la fenêtre à droite du dock en colonne
+                    // Paysage : la pilule en bas à droite, juste avant le dock en colonne (plus étroite), la fenêtre à sa gauche
                     val pillBottom = height - (navBottom + 14.dp).toPx()
                     val pillRight = width - (endInset + 16.dp).toPx()
                     val pillWidth = minOf(420.dp.toPx(), pillRight - (startInset + 16.dp).toPx())

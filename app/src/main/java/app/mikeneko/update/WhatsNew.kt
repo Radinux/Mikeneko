@@ -120,21 +120,25 @@ fun WhatsNewSheet(backdrop: Backdrop) {
                     tint = Color(0xC71A1613),
                     frost = 28.dp,
                 ) {
-                    Column(Modifier.fillMaxWidth().padding(22.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Mascot(size = 64.dp)
+                    // Paysage (3.2.1) : sans le chat, et le texte rétrécit (il défile) pour que « Super ! » reste
+                    // toujours visible ; avant, le bouton sortait de l'écran
+                    val landscape = androidx.compose.ui.platform.LocalConfiguration.current.orientation ==
+                        android.content.res.Configuration.ORIENTATION_LANDSCAPE
+                    Column(Modifier.fillMaxWidth().padding(if (landscape) 16.dp else 22.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        if (!landscape) Mascot(size = 64.dp)
                         Text(
                             stringResource(R.string.whats_new_title, version),
-                            Modifier.padding(top = 10.dp, bottom = 14.dp),
+                            Modifier.padding(top = if (landscape) 0.dp else 10.dp, bottom = if (landscape) 8.dp else 14.dp),
                             style = TextStyle(fontFamily = Rounded, color = Pelage.Texte, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold, shadow = GlassTextShadow, textAlign = TextAlign.Center),
                         )
-                        Box(Modifier.heightIn(max = 380.dp)) {
+                        Box(Modifier.weight(1f, fill = false).heightIn(max = 380.dp)) {
                             Text(
                                 stringResource(R.string.whats_new_body),
                                 Modifier.verticalScroll(rememberScrollState()),
                                 style = TextStyle(fontFamily = Rounded, color = Color(0xFFEDE6DF), fontSize = 15.sp, lineHeight = 21.sp, shadow = GlassTextShadow),
                             )
                         }
-                        Button(onClick = { close() }, modifier = Modifier.padding(top = 18.dp)) {
+                        Button(onClick = { close() }, modifier = Modifier.padding(top = if (landscape) 10.dp else 18.dp)) {
                             Text(stringResource(R.string.whats_new_ok), fontFamily = Rounded, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
                         }
                     }

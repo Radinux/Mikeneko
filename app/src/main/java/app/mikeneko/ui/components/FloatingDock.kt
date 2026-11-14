@@ -67,7 +67,7 @@ private fun tabs(shorts: Boolean) =
 /** Largeur du dock en colonne (paysage). */
 val DOCK_RAIL_WIDTH = 78.dp
 
-/** Place laissée au contenu à gauche en paysage : marge + dock en colonne + écart. */
+/** Place laissée au contenu à droite en paysage (3.2.1 ; avant, à gauche) : marge + dock en colonne + écart. */
 val DOCK_RAIL_SPACE = 12.dp + DOCK_RAIL_WIDTH + 6.dp
 
 /**
@@ -81,7 +81,7 @@ fun FloatingDock(
     current: Route,
     visible: Boolean,
     modifier: Modifier = Modifier,
-    /** Paysage : une colonne sur le côté gauche (toute la hauteur reste au contenu). */
+    /** Paysage : une colonne sur le côté droit (toute la hauteur reste au contenu). */
     vertical: Boolean = false,
     onSelect: (Route) -> Unit,
 ) {
@@ -146,8 +146,9 @@ private fun DockRail(backdrop: Backdrop, tabs: List<Route>, current: Route, visi
     AnimatedVisibility(
         visible = visible,
         modifier = modifier,
-        enter = slideInHorizontally(spring(dampingRatio = 0.62f, stiffness = Spring.StiffnessLow)) { -it * 2 },
-        exit = slideOutHorizontally(tween(300)) { -it * 2 },
+        // Il arrive et repart par la droite, son côté
+        enter = slideInHorizontally(spring(dampingRatio = 0.62f, stiffness = Spring.StiffnessLow)) { it * 2 },
+        exit = slideOutHorizontally(tween(300)) { it * 2 },
     ) {
         LiquidGlass(backdrop, Modifier.width(DOCK_RAIL_WIDTH).heightIn(max = 73.dp * tabs.size).fillMaxHeight(), cornerRadius = 34.dp, bezel = 24.dp, refraction = 24.dp) {
             BoxWithConstraints(Modifier.fillMaxSize().padding(6.dp)) {

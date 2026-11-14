@@ -281,13 +281,13 @@ fun MikenekoRoot(
     // Tourner le téléphone sur une vidéo = plein écran ; revenir en portrait = on en sort.
     // (Après le bouton, l'orientation est forcée : la config ne change qu'une fois le téléphone tourné.)
     val orientation = LocalConfiguration.current.orientation
-    // Paysage : le dock devient une colonne à gauche, le contenu se décale à sa droite
+    // Paysage : le dock devient une colonne à droite (3.2.1 ; avant, à gauche), le contenu s'arrête avant elle
     val landscape = orientation == Configuration.ORIENTATION_LANDSCAPE
     val railShown = landscape && route != Route.Lecteur && route != Route.Reglages && route != Route.Shorts
     val layoutDirection = LocalLayoutDirection.current
     val safeSides = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal).asPaddingValues()
     val contentInset = if (railShown) {
-        Modifier.padding(start = safeSides.calculateStartPadding(layoutDirection) + DOCK_RAIL_SPACE, end = safeSides.calculateEndPadding(layoutDirection))
+        Modifier.padding(start = safeSides.calculateStartPadding(layoutDirection), end = safeSides.calculateEndPadding(layoutDirection) + DOCK_RAIL_SPACE)
     } else {
         Modifier
     }
@@ -557,8 +557,8 @@ fun MikenekoRoot(
                     backdrop = backdrop,
                     current = route,
                     visible = dockVisible,
-                    modifier = Modifier.align(Alignment.CenterStart).windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Start))
-                        .padding(start = 12.dp, top = railTop),
+                    modifier = Modifier.align(Alignment.CenterEnd).windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.End))
+                        .padding(end = 12.dp, top = railTop),
                     vertical = true,
                     onSelect = ::selectTab,
                 )
