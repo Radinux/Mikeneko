@@ -1,5 +1,8 @@
 package app.mikeneko.player
 
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.flow.collectLatest
+import app.mikeneko.settings.AudioQuality
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.SystemClock
@@ -191,6 +194,7 @@ object PlayerHolder {
                 history.add(item)
             }
         }
+        watchCrossfade()
         // Musique ↔ vidéo : le volume stable est coupé pour la musique, remis pour les vidéos
         scope.launch {
             nowPlaying.map { it?.audioOnly == true }.distinctUntilChanged().collect { applyStableVolume() }
@@ -458,6 +462,7 @@ object PlayerHolder {
         autoPlay: Boolean = true,
         short: Boolean = false,
     ) {
+        endCrossfade() // une autre lecture : le morceau qui finissait en fondu s'arrête
         // Un short : il tourne en boucle, repart toujours du début et ne prend pas de place dans la reprise
         playingShort = short && !audioOnly
         // Le morceau déjà en cours (musique), touché à nouveau : il repart du début, sans rien
@@ -534,7 +539,11 @@ object PlayerHolder {
             loop.value = playingShort
             p.repeatMode = if (playingShort) Player.REPEAT_MODE_ONE else if (audioOnly) repeatModeFor(live) else Player.REPEAT_MODE_OFF
 
-            val built = MediaSources.build(info, audioOnly, quality.value, caption.value, cache = if (live) null else OfflineCache.cache(context, audioOnly))
+            val built = MediaSources.build(
+                info, audioOnly, quality.value, caption.value,
+                cache = if (live) null else OfflineCache.cache(context, audioOnly),
+                audioQuality = AppSettings.musicQuality(context),
+            )
             playingQuality.value = built.height
             videoFps.value = built.fps
             setCurrent(p, audioOnly && !live, startAtMs.takeIf { !live } ?: 0L, leavingInfo, source = built.source)
@@ -677,6 +686,126 @@ object PlayerHolder {
         preloaded = null
     }
 
+    // ---- Le fondu enchaîné (3.1.2) ----
+    //
+    // Les dernières secondes d'un morceau ([AppSettings.crossfadeSeconds]) : le suivant, déjà préparé,
+    // part dans le lecteur principal (qui passe donc au morceau suivant, file et écran compris), pendant
+    // qu'un second lecteur, [tail], finit le morceau qu'on quitte. Les deux volumes se croisent (à
+    // puissance égale : pas de creux au milieu). Seulement pour la musique, quand le suivant est
+    // préparé (pas en « répéter le morceau », ni au bout de la file, ni avec le minuteur « fin du morceau »).
+
+    private var tail: ExoPlayer? = null
+    /** Le lecteur du morceau qu'on quitte est préparé ce temps-là avant le début du fondu. */
+    private val CROSSFADE_LEAD_MS = 400L
+    private var crossfadeJob: Job? = null
+
+    private fun watchCrossfade() {
+        scope.launch {
+            // Relevé seulement pendant une lecture
+            isPlaying.collectLatest { playing ->
+                if (!playing) return@collectLatest
+                while (true) {
+                    delay(100)
+                    maybeStartCrossfade()
+                }
+            }
+        }
+    }
+
+    private fun maybeStartCrossfade() {
+        val fade = AppSettings.crossfadeSeconds.value * 1_000L
+        if (fade <= 0 || crossfadeJob?.isActive == true) return
+        val p = player ?: return
+        val now = nowPlaying.value ?: return
+        if (!now.audioOnly || now.live || preloaded == null || !p.playWhenReady) return
+        if (p.mediaItemCount <= p.currentMediaItemIndex + 1) return
+        val duration = p.duration.takeIf { it != C.TIME_UNSET && it > 0 } ?: return
+        if (duration < fade * 2 + 5_000) return // un morceau très court : pas de fondu
+        val remaining = duration - p.currentPosition
+        if (remaining > fade + CROSSFADE_LEAD_MS || remaining < 1_500) return
+        val context = appContext ?: return
+        crossfadeJob = scope.launch {
+            try {
+                crossfade(context, p, minOf(fade, remaining - CROSSFADE_LEAD_MS).coerceAtLeast(1_000))
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // (un fondu raté ne doit jamais couper la musique)
+            } finally {
+                releaseTail()
+            }
+        }
+    }
+
+    private suspend fun crossfade(context: Context, p: ExoPlayer, fade: Long) {
+        val leaving = p.currentMediaItem ?: return
+        val source = tailSource(context, leaving) ?: return
+        val index = p.currentMediaItemIndex
+        val t = ExoPlayer.Builder(context)
+            .setAudioAttributes(AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(), false)
+            .build()
+        tail = t
+        // Prêt un peu en avance, à l'endroit où en sera le morceau, puis lancé pile à ce moment-là
+        var target = p.currentPosition + CROSSFADE_LEAD_MS
+        t.setMediaSource(source, target)
+        t.prepare()
+        repeat(3) {
+            withTimeoutOrNull(2_000) { while (t.playbackState != Player.STATE_READY) delay(15) } ?: return
+            if (p.currentPosition <= target) return@repeat
+            // Prêt trop tard : on le recale un peu plus loin
+            target = p.currentPosition + CROSSFADE_LEAD_MS
+            t.seekTo(target)
+        }
+        val reached = withTimeoutOrNull(CROSSFADE_LEAD_MS + 1_000) { while (p.currentPosition < target) delay(4) }
+        // Entre-temps : un autre morceau, une pause, un saut en arrière… pas de fondu
+        if (reached == null || player !== p || p.currentMediaItemIndex != index || !p.playWhenReady || preloaded == null) return
+        if (p.mediaItemCount <= index + 1) return
+        t.volume = 1f
+        t.play()
+        p.volume = 0f
+        jumping = Jump.Forward
+        p.seekToNextMediaItem()
+        val start = android.os.SystemClock.uptimeMillis()
+        try {
+            while (true) {
+                val f = ((android.os.SystemClock.uptimeMillis() - start).toFloat() / fade).coerceIn(0f, 1f)
+                // Mis en pause pendant le fondu : le morceau qu'on quitte s'arrête là
+                if (player !== p || !p.playWhenReady) break
+                p.volume = kotlin.math.sin(f * Math.PI / 2).toFloat()
+                t.volume = kotlin.math.cos(f * Math.PI / 2).toFloat()
+                if (f >= 1f) break
+                delay(30)
+            }
+        } finally {
+            p.volume = 1f
+        }
+    }
+
+    /** Le son du morceau en cours pour [tail] : depuis le cache (lu en entier pendant sa lecture), ou le fichier du téléphone. */
+    @OptIn(UnstableApi::class)
+    private fun tailSource(context: Context, item: MediaItem): MediaSource? {
+        val config = item.localConfiguration ?: return null
+        val key = config.customCacheKey
+        return when {
+            config.uri.scheme == "mikeneko-hors-ligne" && key != null -> OfflineCache.sourceForKey(context, key, item)
+            key != null -> MediaSources.cachedAudio(OfflineCache.musicCache(context), item)
+            else -> androidx.media3.exoplayer.source.DefaultMediaSourceFactory(context).createMediaSource(item)
+        }
+    }
+
+    private fun releaseTail() {
+        tail?.release()
+        tail = null
+    }
+
+    /** Arrête un fondu en cours : le morceau qu'on quittait se tait, le principal reprend tout son volume. */
+    private fun endCrossfade() {
+        crossfadeJob?.cancel()
+        crossfadeJob = null
+        releaseTail()
+        player?.volume = 1f
+    }
+
     // ---- Le morceau précédent, gardé ----
     //
     // Le dernier morceau joué reste chargé juste avant le morceau en cours : « précédent » (ou un tap
@@ -768,7 +897,7 @@ object PlayerHolder {
             offline != null -> p.addMediaSource(OfflineCache.source(context, offline, audioOnly = true))
             info == null -> p.addMediaItem(localMediaItem(item.url))
             else -> {
-                val built = MediaSources.build(info, audioOnly = true, cache = OfflineCache.musicCache(context))
+                val built = MediaSources.build(info, audioOnly = true, cache = OfflineCache.musicCache(context), audioQuality = AppSettings.musicQuality(context))
                 p.addMediaSource(built.source)
                 rememberOffline(context, info, audioOnly = true, built)
             }
@@ -1241,6 +1370,7 @@ object PlayerHolder {
     fun bufferedPosition(): Long = player?.bufferedPosition ?: 0L
 
     fun stop() {
+        endCrossfade()
         playingShort = false
         parkedVideo.value = null
         saveVideoPosition()
@@ -1404,7 +1534,9 @@ object PlayerHolder {
         val now = nowPlaying.value ?: return
         if (now.live) return
         val cache = appContext?.let { OfflineCache.cache(it, now.audioOnly) }
-        val built = runCatching { MediaSources.build(current, now.audioOnly, quality.value, caption.value, cache) }.getOrNull() ?: return
+        val built = runCatching {
+            MediaSources.build(current, now.audioOnly, quality.value, caption.value, cache, audioQuality = appContext?.let { AppSettings.musicQuality(it) } ?: AudioQuality.High)
+        }.getOrNull() ?: return
         val position = p.currentPosition
         val wasPlaying = p.playWhenReady
         playingQuality.value = built.height

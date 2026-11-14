@@ -1,5 +1,6 @@
 package app.mikeneko.player
 
+import app.mikeneko.settings.AppSettings
 import android.content.Context
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
@@ -315,7 +316,8 @@ class PlaylistDownloads private constructor(private val audioOnly: Boolean) {
             return false
         }
         val info = YouTubeRepository.stream(item.url)
-        val plan = MediaSources.downloadPlan(info, audioOnly, if (audioOnly) null else VIDEO_HEIGHT)
+        // La musique dans la qualité choisie pour les téléchargements (3.1.2)
+        val plan = MediaSources.downloadPlan(info, audioOnly, if (audioOnly) null else VIDEO_HEIGHT, AppSettings.downloadQuality.value)
         val http = DefaultHttpDataSource.Factory()
             .setUserAgent(NewPipeDownloader.USER_AGENT)
             .setAllowCrossProtocolRedirects(true)

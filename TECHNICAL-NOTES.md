@@ -1378,3 +1378,15 @@ users: the point is to take them from the videos really watched.
   - importing the `youtube.com/feed/channels` page saved as .mhtml from Chrome (an idea taken from
     youtube-subscription-extractor).
 - Go back to an official NewPipeExtractor release when it ships.
+- 3.1.2: music settings. `AudioQuality` (High/Normal/Low) in `AppSettings`; `MediaSources.bestAudio` picks within
+  the Opus family (else AAC, else all) the max bitrate, the max ≤ 100 kb/s, or the min; only for `audioOnly`
+  builds and music `downloadPlan`s (a video's sound stays the best). Playback uses
+  `AppSettings.musicQuality(context)` = mobile setting when `ConnectivityManager.isActiveNetworkMetered`, else the
+  Wi-Fi one. Cache keys contain the itag, so another quality is another cache entry; downloaded/cached entries
+  keep playing as they are. Crossfade (`PlayerHolder`, « Le fondu enchaîné »): a 100 ms check while playing; at
+  `fade + CROSSFADE_LEAD_MS` before the end, with a preloaded next item, `tail` (a plain ExoPlayer, no audio focus)
+  gets the leaving item rebuilt from its MediaItem (`customCacheKey` → `MediaSources.cachedAudio` on the music
+  cache, `mikeneko-hors-ligne://` → `OfflineCache.sourceForKey`, local files → `DefaultMediaSourceFactory`),
+  prepared at `position + 400 ms`, started when the main player reaches it; then `jumping = Forward` +
+  `seekToNextMediaItem()` (the usual `adoptPreloaded` path) and an equal-power volume ramp. `endCrossfade()` in
+  `play()` and `stop()`; `player.volume` is otherwise always 1.

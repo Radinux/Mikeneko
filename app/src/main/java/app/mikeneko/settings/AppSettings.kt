@@ -52,6 +52,17 @@ object AppSettings {
     private val _sleepMinutes = MutableStateFlow(60)
     val sleepMinutes: StateFlow<Int> = _sleepMinutes.asStateFlow()
 
+    // La musique (3.1.2) : la qualité du son selon la connexion, celle des téléchargements, et le fondu
+    // enchaîné entre deux morceaux (0 : aucun, on passe de l'un à l'autre sans blanc)
+    private val _musicQualityWifi = MutableStateFlow(AudioQuality.High)
+    val musicQualityWifi: StateFlow<AudioQuality> = _musicQualityWifi.asStateFlow()
+    private val _musicQualityMobile = MutableStateFlow(AudioQuality.High)
+    val musicQualityMobile: StateFlow<AudioQuality> = _musicQualityMobile.asStateFlow()
+    private val _downloadQuality = MutableStateFlow(AudioQuality.High)
+    val downloadQuality: StateFlow<AudioQuality> = _downloadQuality.asStateFlow()
+    private val _crossfadeSeconds = MutableStateFlow(0)
+    val crossfadeSeconds: StateFlow<Int> = _crossfadeSeconds.asStateFlow()
+
     fun init(context: Context) {
         prefs = context.getSharedPreferences("reglages", Context.MODE_PRIVATE)
         _language.value = prefs.getString("langue", LANGUAGE_SYSTEM) ?: LANGUAGE_SYSTEM
@@ -63,6 +74,10 @@ object AppSettings {
         _sleepReminder.value = prefs.getBoolean("dodo", true)
         _sleepMinutes.value = prefs.getInt("dodo_minutes", 60)
         _hideShorts.value = prefs.getBoolean("shorts_masques", false)
+        _musicQualityWifi.value = AudioQuality.of(prefs.getString("musique_qualite_wifi", null))
+        _musicQualityMobile.value = AudioQuality.of(prefs.getString("musique_qualite_mobile", null))
+        _downloadQuality.value = AudioQuality.of(prefs.getString("musique_qualite_telechargement", null))
+        _crossfadeSeconds.value = prefs.getInt("fondu_secondes", 0)
         Appearance.custom = prefs.getInt("accent_perso", 0).takeIf { it != 0 }?.let { androidx.compose.ui.graphics.Color(it) }
         // Plusieurs couleurs perso (2.26.1) ; avant, la seule était « accent_perso »
         Appearance.customs = prefs.getString("accents_perso", null)
@@ -125,6 +140,17 @@ object AppSettings {
     fun setSleepMinutes(value: Int) = save("dodo_minutes", value) { _sleepMinutes.value = value }
     fun setHideShorts(value: Boolean) = save("shorts_masques", value) { _hideShorts.value = value }
 
+    fun setMusicQualityWifi(value: AudioQuality) = save("musique_qualite_wifi", value.id) { _musicQualityWifi.value = value }
+    fun setMusicQualityMobile(value: AudioQuality) = save("musique_qualite_mobile", value.id) { _musicQualityMobile.value = value }
+    fun setDownloadQuality(value: AudioQuality) = save("musique_qualite_telechargement", value.id) { _downloadQuality.value = value }
+    fun setCrossfadeSeconds(value: Int) = save("fondu_secondes", value) { _crossfadeSeconds.value = value }
+
+    /** La qualité du son de la musique pour la connexion du moment : données mobiles (réseau facturé) ou Wi-Fi. */
+    fun musicQuality(context: Context): AudioQuality {
+        val metered = runCatching { context.getSystemService(android.net.ConnectivityManager::class.java).isActiveNetworkMetered }.getOrDefault(false)
+        return if (metered) _musicQualityMobile.value else _musicQualityWifi.value
+    }
+
     fun setSkipCategory(category: String, skip: Boolean) {
         val next = if (skip) _skipCategories.value + category else _skipCategories.value - category
         _skipCategories.value = next
@@ -153,4 +179,18 @@ object AppSettings {
 
     const val LANGUAGE_SYSTEM = "system"
     const val REGION_AUTO = "auto"
+}
+
+/**
+ * La qualité du son de la musique (3.1.2), d'après les flux de YouTube : Haute ≈ 130-160 kb/s (Opus),
+ * Normale ≈ 70 kb/s, Économe ≈ 50 kb/s. L'Opus d'abord à chaque niveau, l'AAC s'il n'y en a pas.
+ */
+enum class AudioQuality(val id: String) {
+    High("haute"),
+    Normal("normale"),
+    Low("econome");
+
+    companion object {
+        fun of(id: String?): AudioQuality = entries.firstOrNull { it.id == id } ?: High
+    }
 }

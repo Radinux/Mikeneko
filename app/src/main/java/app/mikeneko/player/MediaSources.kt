@@ -1,5 +1,6 @@
 package app.mikeneko.player
 
+import app.mikeneko.settings.AudioQuality
 import android.content.res.Resources
 import android.media.MediaCodecInfo
 import android.content.Context
@@ -112,7 +113,15 @@ object MediaSources {
     /**
      * @param cache la sauvegarde hors ligne où passent les flux ([OfflineCache]) ; null = sans cache.
      */
-    fun build(info: StreamInfo, audioOnly: Boolean, maxHeight: Int? = null, caption: CaptionTrack? = null, cache: SimpleCache? = null): Built {
+    /** @param audioQuality la qualité du son, pour la musique seulement (une vidéo garde le meilleur son). */
+    fun build(
+        info: StreamInfo,
+        audioOnly: Boolean,
+        maxHeight: Int? = null,
+        caption: CaptionTrack? = null,
+        cache: SimpleCache? = null,
+        audioQuality: AudioQuality = AudioQuality.High,
+    ): Built {
         val http = DefaultHttpDataSource.Factory()
             .setUserAgent(NewPipeDownloader.USER_AGENT)
             .setAllowCrossProtocolRedirects(true)
@@ -141,7 +150,7 @@ object MediaSources {
         val plain = ChunkedDataSource.Factory(http)
         val chunked = if (cache != null) OfflineCache.factory(cache, plain) else plain
         val progressive = ProgressiveMediaSource.Factory(chunked)
-        val audio = bestAudio(info.audioStreams)
+        val audio = bestAudio(info.audioStreams, if (audioOnly) audioQuality else AudioQuality.High)
         fun keyOf(kind: Char, stream: Stream) = if (cache != null) cacheKey(info, kind, stream) else null
         val audioKey = audio?.let { keyOf('a', it) }
 
@@ -208,8 +217,8 @@ object MediaSources {
     /** Ce qu'il faut télécharger pour garder une vidéo / un morceau hors ligne (mêmes choix et mêmes clés que [build]). */
     class Plan(val audioKey: String, val audioUrl: String, val videoKey: String?, val videoUrl: String?, val height: Int)
 
-    fun downloadPlan(info: StreamInfo, audioOnly: Boolean, maxHeight: Int?): Plan {
-        val audio = bestAudio(info.audioStreams)
+    fun downloadPlan(info: StreamInfo, audioOnly: Boolean, maxHeight: Int?, audioQuality: AudioQuality = AudioQuality.High): Plan {
+        val audio = bestAudio(info.audioStreams, if (audioOnly) audioQuality else AudioQuality.High)
         fun key(kind: Char, stream: Stream) = cacheKey(info, kind, stream)
         if (audioOnly) {
             audio ?: error(AppLocale.string(R.string.no_playable_stream))
@@ -338,7 +347,7 @@ object MediaSources {
      * générés par IA) et peut en mettre un par défaut selon la langue du téléphone : on les écarte,
      * comme l'audiodescription.
      */
-    private fun bestAudio(streams: List<AudioStream>): AudioStream? {
+    private fun bestAudio(streams: List<AudioStream>, quality: AudioQuality = AudioQuality.High): AudioStream? {
         // Le son « DRC » (volume compressé par YouTube) seulement s'il n'y a rien d'autre
         val playable = streams.filter { it.isUrl }.let { all -> all.filter { it.itagItem?.isDrc != true }.ifEmpty { all } }
         val original = playable.filter { it.audioTrackType == AudioTrackType.ORIGINAL }
@@ -349,9 +358,35 @@ object MediaSources {
         // L'Opus d'abord, au plus haut débit (2.26.3 : ~130-160 kb/s en 48 kHz, plus fin que l'AAC
         // ~128 kb/s de YouTube) ; l'AAC (M4A) s'il n'y en a pas. Les morceaux déjà téléchargés gardent
         // leur fichier AAC : la sauvegarde hors ligne retient la clé exacte de chacun
-        return original.filter(::isOpus).maxByOrNull { it.averageBitrate }
-            ?: original.filter { it.format == MediaFormat.M4A }.maxByOrNull { it.averageBitrate }
-            ?: original.maxByOrNull { it.averageBitrate }
+        val family = original.filter(::isOpus).ifEmpty { original.filter { it.format == MediaFormat.M4A } }.ifEmpty { original }
+        return pick(family, quality)
+    }
+
+    /**
+     * Dans une famille de flux (Opus, ou AAC) : le plus gros débit (Haute), le plus gros sous
+     * [NORMAL_MAX_KBPS] (Normale), le plus petit (Économe). Un débit inconnu (≤ 0) passe en dernier.
+     */
+    private fun pick(streams: List<AudioStream>, quality: AudioQuality): AudioStream? {
+        val known = streams.filter { it.averageBitrate > 0 }.ifEmpty { return streams.firstOrNull() }
+        return when (quality) {
+            AudioQuality.High -> known.maxByOrNull { it.averageBitrate }
+            AudioQuality.Normal -> known.filter { it.averageBitrate <= NORMAL_MAX_KBPS }.maxByOrNull { it.averageBitrate }
+                ?: known.minByOrNull { it.averageBitrate }
+            AudioQuality.Low -> known.minByOrNull { it.averageBitrate }
+        }
+    }
+
+    private const val NORMAL_MAX_KBPS = 100
+
+    /**
+     * Le son d'un morceau déjà joué, relu pour le fondu enchaîné (3.1.2) : même adresse et même clé
+     * de cache que dans le lecteur principal, donc lu depuis le cache (le morceau y est en entier).
+     */
+    fun cachedAudio(cache: SimpleCache, item: MediaItem): MediaSource {
+        val http = DefaultHttpDataSource.Factory()
+            .setUserAgent(NewPipeDownloader.USER_AGENT)
+            .setAllowCrossProtocolRedirects(true)
+        return ProgressiveMediaSource.Factory(OfflineCache.factory(cache, ChunkedDataSource.Factory(http))).createMediaSource(item)
     }
 
     private fun isOpus(stream: AudioStream): Boolean =

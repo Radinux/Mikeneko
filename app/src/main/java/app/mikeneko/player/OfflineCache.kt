@@ -188,6 +188,15 @@ object OfflineCache {
         prefs(context, store).edit().remove(videoId).apply()
     }
 
+    /**
+     * Le fondu enchaîné (3.1.2) : [item] (« mikeneko-hors-ligne://clé ») relu depuis le cache qui le
+     * contient (playlists téléchargées, puis sauvegarde de lecture), sans réseau. Null s'il n'y est plus.
+     */
+    fun sourceForKey(context: Context, key: String, item: MediaItem): MediaSource? {
+        val store = listOf(Store.SavedMusic, Store.Music).firstOrNull { runCatching { key in cache(context, it).keys }.getOrDefault(false) } ?: return null
+        return ProgressiveMediaSource.Factory(CacheDataSource.Factory().setCache(cache(context, store)).setUpstreamDataSourceFactory(null)).createMediaSource(item)
+    }
+
     /** La source qui relit [entry] depuis le cache seul. */
     fun source(context: Context, entry: Entry, audioOnly: Boolean): MediaSource {
         // Pas de réseau derrière : ce qui manque est une erreur

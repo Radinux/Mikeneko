@@ -846,4 +846,16 @@
     <string name="settings_tab_foryou">For you</string>
     <string name="settings_tab_sync">Sync</string>
     <string name="settings_tab_about">About</string>
+    <string name="settings_section_music">Music</string>
+    <string name="settings_crossfade">Crossfade</string>
+    <string name="settings_crossfade_text">The next song starts while this one fades out</string>
+    <string name="crossfade_off">Off</string>
+    <string name="crossfade_seconds">%1$d s</string>
+    <string name="settings_music_quality_wifi">Sound quality on Wi‑Fi</string>
+    <string name="settings_music_quality_mobile">Sound quality on mobile data</string>
+    <string name="settings_download_quality">Download quality</string>
+    <string name="settings_download_quality_text">For the playlists you download. Songs already downloaded keep theirs.</string>
+    <string name="audio_quality_high">High (~160 kb/s)</string>
+    <string name="audio_quality_normal">Normal (~70 kb/s)</string>
+    <string name="audio_quality_low">Data saver (~50 kb/s)</string>
 </resources>

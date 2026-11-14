@@ -214,6 +214,7 @@ private fun ColumnScope.SettingsTabContent(tab: SettingsTab, list: LazyListState
             }
             SettingsTab.Playback -> {
                 item { PlaybackSection() }
+                item { MusicSection() }
                 item { SponsorBlockSection() }
                 item { OfflineSection(context) }
             }
@@ -693,6 +694,44 @@ private fun PlaybackSection() {
         }
     }
 }
+
+/** La musique (3.1.2) : le fondu entre deux morceaux, la qualité du son selon la connexion, celle des téléchargements. */
+@Composable
+private fun MusicSection() {
+    val crossfade by AppSettings.crossfadeSeconds.collectAsState()
+    val wifi by AppSettings.musicQualityWifi.collectAsState()
+    val mobile by AppSettings.musicQualityMobile.collectAsState()
+    val downloads by AppSettings.downloadQuality.collectAsState()
+    val qualities = listOf(
+        app.mikeneko.settings.AudioQuality.High to stringResource(R.string.audio_quality_high),
+        app.mikeneko.settings.AudioQuality.Normal to stringResource(R.string.audio_quality_normal),
+        app.mikeneko.settings.AudioQuality.Low to stringResource(R.string.audio_quality_low),
+    )
+    Section(stringResource(R.string.settings_section_music)) {
+        ChoiceRow(
+            icon = MkIcons.Waves,
+            title = stringResource(R.string.settings_crossfade),
+            options = CROSSFADES.map { it to if (it == 0) stringResource(R.string.crossfade_off) else stringResource(R.string.crossfade_seconds, it) },
+            selected = crossfade,
+            subtitle = stringResource(R.string.settings_crossfade_text),
+        ) { AppSettings.setCrossfadeSeconds(it) }
+        Divider()
+        ChoiceRow(MkIcons.Quality, stringResource(R.string.settings_music_quality_wifi), qualities, wifi) { AppSettings.setMusicQualityWifi(it) }
+        Divider()
+        ChoiceRow(MkIcons.Globe, stringResource(R.string.settings_music_quality_mobile), qualities, mobile) { AppSettings.setMusicQualityMobile(it) }
+        Divider()
+        ChoiceRow(
+            MkIcons.Download,
+            stringResource(R.string.settings_download_quality),
+            qualities,
+            downloads,
+            subtitle = stringResource(R.string.settings_download_quality_text),
+        ) { AppSettings.setDownloadQuality(it) }
+    }
+}
+
+/** Les durées de fondu proposées, en secondes (0 : aucun). */
+private val CROSSFADES = listOf(0, 2, 4, 6, 8, 10, 12)
 
 @Composable
 private fun SponsorBlockSection() {
