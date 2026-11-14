@@ -334,8 +334,9 @@ fun MiniPip(modifier: Modifier = Modifier, onExpand: () -> Unit, onClose: () -> 
                 ) {
                     Box(Modifier.fillMaxSize()) {
                         Box(Modifier.fillMaxSize().background(Color(0x61141210)))
-                        GlassCircleButton(backdrop, MkIcons.Expand, stringResource(R.string.expand_video), Modifier.align(Alignment.TopStart).padding(6.dp), size = 44.dp) { leave(onExpand) }
-                        GlassCircleButton(backdrop, if (playing) MkIcons.Pause else MkIcons.Play, stringResource(if (playing) R.string.pause else R.string.play), Modifier.align(Alignment.Center), size = 44.dp) {
+                        // 3.2.1 : lecture/pause en haut à gauche, agrandir au centre (inversés)
+                        GlassCircleButton(backdrop, MkIcons.Expand, stringResource(R.string.expand_video), Modifier.align(Alignment.Center), size = 44.dp) { leave(onExpand) }
+                        GlassCircleButton(backdrop, if (playing) MkIcons.Pause else MkIcons.Play, stringResource(if (playing) R.string.pause else R.string.play), Modifier.align(Alignment.TopStart).padding(6.dp), size = 44.dp) {
                             PlayerHolder.togglePlay()
                             poke++
                         }
