@@ -58,6 +58,20 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ## 🎌 What's new ⸜(｡˃ ᵕ ˂ )⸝♡
 
+### 3.2
+
+- 3.2.0: **crossfade**: the next song starts while the current one fades out (Settings › Playback ›
+  Music, 2 to 12 s, off by default).
+- 3.2.0: **sound quality** for music on Wi‑Fi, on mobile data and for downloads: High (~160 kb/s),
+  Normal (~70 kb/s) or Data saver (~50 kb/s). Changing it also applies to songs already kept: they are
+  fetched or downloaded again in the new quality (a downloaded song stays playable until its new file
+  is ready).
+- 3.2.0: the music player shows the **sound playing** (« Opus · 160 kb/s · 48 kHz ») and **where it
+  goes** (your Bluetooth device's name, wired headphones, phone speaker).
+- 3.2.0: **swipe down** to close the video settings (now with a visible closing animation) and the music
+  menus from the song's banner.
+- 3.2.0: the paw tells **what it skipped**: an intro, credits, a sponsor…
+
 ### 3.1
 
 - 3.1.1: **select albums and artists too**: in your music library, long-press a saved album or artist
