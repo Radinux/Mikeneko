@@ -1232,12 +1232,12 @@ users: the point is to take them from the videos really watched.
   when +2 %). Readers of the whole value recomposed each time: every `WatchProgressBar` (now a
   per-card `derivedStateOf`) and `HomeFeed`'s `historyEmpty` (now `derivedStateOf { isEmpty() }`).
   Rule: a StateFlow that changes during playback must not be read whole by a big composable.
-- 2.25.0 (TEMPORARY): `player/PlaybackLog.kt`, an `AnalyticsListener` writing to
+- 2.25.0 → 3.1.0 (diagnostic, removed in 3.1.1 once the freezes were gone): `player/PlaybackLog.kt` was an `AnalyticsListener` writing to
   `getExternalFilesDir/lecture.log` (256 KB, keeps the newer half) on a single-thread executor:
   BUFFERING/READY with `totalBufferedDuration`, `onAudioUnderrun`, dropped frames (≥ 5), load errors,
   loads slower than 2 s, discontinuities, format changes, player / audio sink errors, plus PLAY and
   SPONSORBLOCK_SKIP lines from `PlayerHolder`. Read with
-  `adb shell cat /sdcard/Android/data/app.mikeneko/files/lecture.log`. Remove with the fix.
+  `adb shell cat /sdcard/Android/data/app.mikeneko/files/lecture.log` (3.1.1 deletes the file at launch).
   `PlaybackLog.checkStall` (called by the 400 ms SponsorBlock watcher) logs `STALL <ms>` when the
   position advances less than a third of wall time while READY and playing, with the audio output
   (bluetooth / wired / speaker). A Bluetooth A2DP hiccup stalls the AudioTrack clock, and the video
@@ -1257,6 +1257,15 @@ users: the point is to take them from the videos really watched.
   second small offscreen layer, and draws that scaled back up (bilinear: invisible on a blur). Emulator:
   44 → 27 ms per frame (16 ms without the glow). Measure with `dumpsys gfxinfo app.mikeneko reset`, 20 s
   on the video page, then `dumpsys gfxinfo app.mikeneko`.
+  3.1.0, the actual cause: the whole window froze (comments too), `SLOW_FRAME 641ms delay=633` with every
+  other phase small. FrameMetrics' UNKNOWN_DELAY is the time before the UI thread even starts the frame,
+  so the UI thread was busy with non-frame work. It hit 60 s after the video started (`AutoSync`'s GitHub
+  delay, armed by the new history entry) and ~1.5 s after launch (the foreground sync): `GitHubSync` and
+  `LocalSync` ran `MikenekoBackup.import` on `Dispatchers.Main` at every sync, merging the whole backup
+  even when the other side had not changed. Now each keeps the SHA-256 of the content last seen (`vu` in
+  the `github` prefs, `vu_<device id>` in `synchro`) and skips the merge when it is the same. A real
+  change still merges on the main thread (the stores are single-threaded). The 3.1.0 log also had a
+  main-thread watchdog (ping every 100 ms, stack after 300 ms): a quick way to name such a culprit.
 - 2.25.0: `ui/components/SearchMorph.kt`. One `LiquidGlass` whose bounds are lerped in a `layout {}`
   modifier (read at layout time, no recomposition per frame) between the 50 dp circle (right edge,
   `closedEnd` from the right) and the open capsule (left edge to `openEnd`, default 60 dp = the ✕).

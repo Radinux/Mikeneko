@@ -35,6 +35,8 @@ class MikenekoApp : Application(), SingletonImageLoader.Factory {
         TrackAnalyzer.watch(this) // tempo et tonalité des morceaux écoutés (2.15.0)
         LocalSync.start(this) // les appareils liés se resynchronisent sur le même réseau (2.17.0)
         app.mikeneko.data.AutoSync.start(this) // et dès qu'on change quelque chose (2.19.2)
+        // Le journal de diagnostic des gels (2.25.0 → 3.1.0) est retiré : son fichier part aussi
+        Thread { getExternalFilesDir(null)?.let { java.io.File(it, "lecture.log").delete() } }.start()
     }
 
     /**

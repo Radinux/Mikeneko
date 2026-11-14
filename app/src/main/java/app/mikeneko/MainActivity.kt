@@ -65,8 +65,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        app.mikeneko.player.PlaybackLog.watchFrames(this) // TEMPORAIRE (2.26.1) : les gels de l'image
-        app.mikeneko.player.PlaybackLog.watchMainThread() // TEMPORAIRE (3.1.0) : ce que fait le fil principal pendant un gel
         app.mikeneko.ui.DisplayRate.attach(this) // 90 Hz, ou le rythme de la vidéo en cours (2.26.1)
         if (savedInstanceState == null) {
             links.value = linkFrom(intent)
