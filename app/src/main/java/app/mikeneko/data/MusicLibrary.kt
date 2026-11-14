@@ -38,6 +38,18 @@ class MusicLibrary private constructor(context: Context) {
         return added
     }
 
+    /** Retire d'un coup les albums et artistes de clés [keys] ([albumKey], [artistKey] ; sélection, 3.1.1). */
+    fun remove(keys: Set<String>) {
+        val albums = _albums.value.filterNot { albumKey(it) in keys }
+        val artists = _artists.value.filterNot { artistKey(it) in keys }
+        val gone = (_albums.value - albums.toSet()).map(::albumKey) + (_artists.value - artists.toSet()).map(::artistKey)
+        if (gone.isEmpty()) return
+        _albums.value = albums
+        _artists.value = artists
+        save()
+        Deletions.gone(gone)
+    }
+
     /** Import : ajoute à la fin ce qui manque. Renvoie le nombre ajouté. */
     fun addAll(albums: List<MusicCollection>, artists: List<ChannelItem>): Int {
         val newAlbums = albums.filter { a -> !hasAlbum(a.url) }.distinctBy { it.url }

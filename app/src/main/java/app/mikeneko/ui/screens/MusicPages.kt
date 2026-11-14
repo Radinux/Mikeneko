@@ -655,16 +655,23 @@ private fun MusicLibraryContent(state: MusicState) {
     val all = filter == LibraryFilter.All
     val count = downloaded?.size ?: 0
 
-    // Plusieurs playlists à la fois (3.0.1) : un appui long en coche une et ouvre la sélection
+    // Plusieurs à la fois (3.0.1 les playlists, 3.1.1 les albums et artistes aussi) : un appui long en
+    // coche un et ouvre la sélection. Les clés : « pl:<id> », et celles de MusicLibrary (« al: », « ar: »)
     var selection by remember { mutableStateOf<Set<String>?>(null) }
+    fun playlistKey(id: String) = "pl:$id"
+    fun shown(key: String) = when {
+        key.startsWith("pl:") -> all || filter == LibraryFilter.Playlists
+        key.startsWith("al:") -> all || filter == LibraryFilter.Albums
+        else -> all || filter == LibraryFilter.Artists
+    }
     var confirmDelete by remember { mutableStateOf(false) }
     androidx.activity.compose.BackHandler(enabled = selection != null) { selection = null }
     fun toggle(id: String) {
         val now = selection ?: return
         selection = (if (id in now) now - id else now + id).ifEmpty { null }
     }
-    // Le filtre change : la sélection s'en va avec les playlists qu'on ne voit plus
-    LaunchedEffect(filter) { if (filter != LibraryFilter.All && filter != LibraryFilter.Playlists) selection = null }
+    // Le filtre change : ce qu'on ne voit plus sort de la sélection
+    LaunchedEffect(filter) { selection = selection?.filter(::shown)?.toSet()?.ifEmpty { null } }
 
     // Le titre est dans la barre du haut (pilule en verre), les filtres en verre juste dessous
     FixedPageBar(state, stringResource(R.string.music_library))
@@ -705,11 +712,11 @@ private fun MusicLibraryContent(state: MusicState) {
                     pluralStringResource(R.plurals.track_count, pl.items.size, pl.items.size),
                     pl.coverModel(),
                     icon = MkIcons.Music,
-                    selected = selection?.let { pl.id in it },
-                    onLongClick = { if (selection == null) selection = setOf(pl.id) else toggle(pl.id) },
+                    selected = selection?.let { playlistKey(pl.id) in it },
+                    onLongClick = { if (selection == null) selection = setOf(playlistKey(pl.id)) else toggle(playlistKey(pl.id)) },
                     pinned = pl.pinned,
                 ) {
-                    if (selection != null) toggle(pl.id) else state.open(MusicPage.MyPlaylist(pl.id))
+                    if (selection != null) toggle(playlistKey(pl.id)) else state.open(MusicPage.MyPlaylist(pl.id))
                 }
             }
         }
@@ -720,7 +727,15 @@ private fun MusicLibraryContent(state: MusicState) {
                 }
             }
             items(albums, key = { "album:" + it.url }) { album ->
-                CollectionRow(album.title, collectionSubtitle(album), album.thumbnail, icon = MkIcons.Album) { state.open(MusicPage.Album(album)) }
+                val key = library.albumKey(album)
+                CollectionRow(
+                    album.title,
+                    collectionSubtitle(album),
+                    album.thumbnail,
+                    icon = MkIcons.Album,
+                    selected = selection?.let { key in it },
+                    onLongClick = { if (selection == null) selection = setOf(key) else toggle(key) },
+                ) { if (selection != null) toggle(key) else state.open(MusicPage.Album(album)) }
             }
         }
         if (all || filter == LibraryFilter.Artists) {
@@ -730,7 +745,15 @@ private fun MusicLibraryContent(state: MusicState) {
                 }
             }
             items(artists, key = { "artiste:" + it.url + it.name }) { artist ->
-                CollectionRow(artist.name, stringResource(R.string.music_artist), artist.avatar, round = true) { state.open(MusicPage.Artist(artist)) }
+                val key = library.artistKey(artist)
+                CollectionRow(
+                    artist.name,
+                    stringResource(R.string.music_artist),
+                    artist.avatar,
+                    round = true,
+                    selected = selection?.let { key in it },
+                    onLongClick = { if (selection == null) selection = setOf(key) else toggle(key) },
+                ) { if (selection != null) toggle(key) else state.open(MusicPage.Artist(artist)) }
             }
         }
         if (all && albums.isEmpty() && artists.isEmpty()) {
@@ -753,6 +776,8 @@ private fun MusicLibraryContent(state: MusicState) {
             exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically { -it / 2 },
         ) {
             val chosen = selection.orEmpty()
+            val chosenPlaylists = playlists.filter { playlistKey(it.id) in chosen }
+            val onlyPlaylists = chosen.all { it.startsWith("pl:") }
             Row(
                 Modifier.fillMaxWidth().height(52.dp).clip(RoundedCornerShape(26.dp)).background(Pelage.Coussin)
                     .border(1.5.dp, Pelage.Bord, RoundedCornerShape(26.dp)).padding(start = 4.dp, end = 6.dp),
@@ -763,52 +788,68 @@ private fun MusicLibraryContent(state: MusicState) {
                     contentAlignment = Alignment.Center,
                 ) { Icon(MkIcons.Close, stringResource(R.string.cancel), tint = Pelage.Texte, modifier = Modifier.size(22.dp)) }
                 Text(
-                    pluralStringResource(R.plurals.selected_count, chosen.size, chosen.size),
+                    pluralStringResource(if (onlyPlaylists) R.plurals.selected_count else R.plurals.selected_count_any, chosen.size, chosen.size),
                     Modifier.weight(1f).padding(start = 4.dp),
                     color = Pelage.Texte,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.ExtraBold,
                     maxLines = 1,
                 )
-                // Épingler en tête (3.1.0) : toutes déjà épinglées → les désépingler
-                val allPinned = chosen.isNotEmpty() && playlists.filter { it.id in chosen }.all { it.pinned }
-                val pinLabel = stringResource(if (allPinned) R.string.playlist_unpin else R.string.playlist_pin)
-                Box(
-                    Modifier.size(44.dp).clip(CircleShape).clickable(role = Role.Button, onClickLabel = pinLabel) {
-                        Playlists.get(context).setPinned(chosen, !allPinned)
-                        selection = null
-                    },
-                    contentAlignment = Alignment.Center,
-                ) { Icon(MkIcons.Pin, pinLabel, tint = if (allPinned) Pelage.RouxClair else Pelage.Texte, modifier = Modifier.size(22.dp)) }
-                androidx.compose.material3.TextButton(onClick = { selection = playlists.map { it.id }.toSet().ifEmpty { null } }) {
+                // Épingler en tête (3.1.0), seulement des playlists : toutes déjà épinglées → les désépingler
+                if (chosen.isNotEmpty() && onlyPlaylists) {
+                    val allPinned = chosenPlaylists.all { it.pinned }
+                    val pinLabel = stringResource(if (allPinned) R.string.playlist_unpin else R.string.playlist_pin)
+                    Box(
+                        Modifier.size(44.dp).clip(CircleShape).clickable(role = Role.Button, onClickLabel = pinLabel) {
+                            Playlists.get(context).setPinned(chosenPlaylists.map { it.id }.toSet(), !allPinned)
+                            selection = null
+                        },
+                        contentAlignment = Alignment.Center,
+                    ) { Icon(MkIcons.Pin, pinLabel, tint = if (allPinned) Pelage.RouxClair else Pelage.Texte, modifier = Modifier.size(22.dp)) }
+                }
+                // « Tout » : tout ce que le filtre montre
+                androidx.compose.material3.TextButton(onClick = {
+                    selection = (playlists.map { playlistKey(it.id) } + albums.map(library::albumKey) + artists.map(library::artistKey))
+                        .filter(::shown).toSet().ifEmpty { null }
+                }) {
                     Text(stringResource(R.string.select_all), color = Pelage.Texte, fontWeight = FontWeight.Bold)
                 }
                 androidx.compose.material3.TextButton(onClick = { if (chosen.isNotEmpty()) confirmDelete = true }) {
                     Icon(MkIcons.Trash, null, tint = Color(0xFFFF8A80), modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text(stringResource(R.string.delete), color = Color(0xFFFF8A80), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(if (onlyPlaylists) R.string.delete else R.string.library_remove), color = Color(0xFFFF8A80), fontWeight = FontWeight.ExtraBold)
                 }
             }
         }
     }
     if (confirmDelete) {
         val chosen = selection.orEmpty()
+        val chosenIds = playlists.filter { playlistKey(it.id) in chosen }.map { it.id }.toSet()
+        val onlyPlaylists = chosenIds.size == chosen.size
         app.mikeneko.ui.components.AnimatedAlertDialog(
             onDismissRequest = { confirmDelete = false },
-            title = { Text(pluralStringResource(R.plurals.playlists_delete_title, chosen.size, chosen.size), fontWeight = FontWeight.ExtraBold) },
-            text = { Text(stringResource(R.string.playlists_delete_text)) },
+            title = {
+                Text(
+                    if (onlyPlaylists) pluralStringResource(R.plurals.playlists_delete_title, chosen.size, chosen.size)
+                    else pluralStringResource(R.plurals.library_remove_title, chosen.size, chosen.size),
+                    fontWeight = FontWeight.ExtraBold,
+                )
+            },
+            // Des playlists dedans : leur texte (les téléchargements) ; sinon, celui des albums et artistes
+            text = { Text(stringResource(if (chosenIds.isNotEmpty()) R.string.playlists_delete_text else R.string.library_remove_text)) },
             confirmButton = { close ->
                 androidx.compose.material3.TextButton(onClick = {
                     val store = Playlists.get(context)
-                    chosen.forEach { id ->
+                    chosenIds.forEach { id ->
                         // Comme la suppression d'une seule (pochette choisie comprise)
                         store.get(id)?.cover?.let { java.io.File(it).delete() }
                         store.delete(id)
                     }
-                    state.pages.removeAll { page -> page is MusicPage.MyPlaylist && page.id in chosen }
+                    library.remove(chosen - chosenIds.map(::playlistKey).toSet())
+                    state.pages.removeAll { page -> page is MusicPage.MyPlaylist && page.id in chosenIds }
                     selection = null
                     close()
-                }) { Text(stringResource(R.string.delete), color = Color(0xFFFF8A80), fontWeight = FontWeight.ExtraBold) }
+                }) { Text(stringResource(if (onlyPlaylists) R.string.delete else R.string.library_remove), color = Color(0xFFFF8A80), fontWeight = FontWeight.ExtraBold) }
             },
             dismissButton = { close ->
                 androidx.compose.material3.TextButton(onClick = { close() }) { Text(stringResource(R.string.cancel), color = Pelage.Texte) }

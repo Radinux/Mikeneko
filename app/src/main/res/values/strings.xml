@@ -655,6 +655,15 @@
         <item quantity="one">%d selected</item>
         <item quantity="other">%d selected</item>
     </plurals>
+    <plurals name="selected_count_any">
+        <item quantity="one">%d selected</item>
+        <item quantity="other">%d selected</item>
+    </plurals>
+    <plurals name="library_remove_title">
+        <item quantity="one">Remove %d item from your library?</item>
+        <item quantity="other">Remove %d items from your library?</item>
+    </plurals>
+    <string name="library_remove_text">They also disappear from your linked devices.</string>
     <plurals name="playlists_delete_title">
         <item quantity="one">Delete %d playlist?</item>
         <item quantity="other">Delete %d playlists?</item>
