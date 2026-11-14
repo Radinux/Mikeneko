@@ -65,6 +65,9 @@ object GitHubSync {
     private const val MIN_GAP_MS = 60_000L
     /** Appli ouverte : on va voir toutes les 3 min ce que les autres appareils ont envoyé (2.19.2). */
     private const val POLL_MS = 3 * 60_000L
+
+    /** L'empreinte du contenu du coffre à la fin de la dernière synchro (3.0.3). */
+    private const val SEEN = "vu"
     private const val VAULT_ALIAS = "mikeneko-github"
     /** L'alphabet de la clé de synchro : sans 0/O ni 1/I/L, pour la recopier sans erreur. */
     private const val KEY_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
@@ -187,7 +190,7 @@ object GitHubSync {
      */
     fun signOut(context: Context) {
         cancelSignIn()
-        prefs(context).edit().remove("jeton").remove("login").remove("nom").remove("photo").remove("gist").apply()
+        prefs(context).edit().remove("jeton").remove("login").remove("nom").remove("photo").remove("gist").remove(SEEN).apply()
         _login.value = Login.Out
         _status.value = Status.Idle
     }
@@ -289,8 +292,13 @@ object GitHubSync {
             val code = key(context) ?: return Status.NeedKey(wrong = false)
             val plain = open(code, remote) ?: return Status.NeedKey(wrong = true)
             theirs = plain
-            val content = MikenekoBackup.read(String(plain, Charsets.UTF_8))
-            added = withContext(Dispatchers.Main) { MikenekoBackup.import(context, content, sync = true) }
+            // Le coffre n'a pas bougé depuis notre dernière synchro (le cas courant : pendant une vidéo,
+            // seul ce téléphone y écrit) : rien de neuf à fusionner. La fusion se fait sur le fil principal
+            // et figeait toute l'appli jusqu'à 0,7 s, une fois par minute pendant une vidéo (3.0.3)
+            if (AutoSync.digest(plain) != p.getString(SEEN, null)) {
+                val content = MikenekoBackup.read(String(plain, Charsets.UTF_8))
+                added = withContext(Dispatchers.Main) { MikenekoBackup.import(context, content, sync = true) }
+            }
         }
         // Le premier appareil tire la clé
         val code = key(context) ?: newKey().also { saveKey(context, it) }
@@ -305,7 +313,8 @@ object GitHubSync {
             if (gistId != null && writeGistOrMissing(token, gistId, body)) gistId else createGist(token, body)
         }
         val now = System.currentTimeMillis()
-        p.edit().putString("gist", written).putLong("derniere", now).apply()
+        // Le coffre contient maintenant exactement [ours] : la prochaine fois, s'il est pareil, rien à fusionner
+        p.edit().putString("gist", written).putString(SEEN, AutoSync.digest(ours)).putLong("derniere", now).apply()
         _lastSync.value = now
         AutoSync.markGitHub(print)
         return Status.Done(added, now)

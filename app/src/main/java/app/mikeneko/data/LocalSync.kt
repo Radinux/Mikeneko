@@ -182,6 +182,7 @@ object LocalSync {
 
     private fun forget(context: Context, id: String) {
         synchronized(this) { saveLinks(context, _links.value.filterNot { it.id == id }) }
+        prefs(context).edit().remove("vu_$id").apply()
         refresh(context)
     }
 
@@ -658,8 +659,17 @@ object LocalSync {
             val extras = crypto.open(channel.receive())?.let { JSONObject(String(it)) }
             GitHubSync.receiveKey(context, extras?.optString("cle")?.ifEmpty { null })
         }
-        val content = MikenekoBackup.read(String(received, Charsets.UTF_8))
-        val added = withContext(Dispatchers.Main) { MikenekoBackup.import(context, content, sync = true) }
+        // L'autre n'a rien changé depuis notre dernière synchro avec lui : rien à fusionner (la fusion se fait
+        // sur le fil principal et figeait toute l'appli jusqu'à 0,7 s, 3.0.3)
+        val seen = AutoSync.digest(received)
+        val seenKey = "vu_" + peer.id
+        val added = if (!byPin && seen == prefs(context).getString(seenKey, null)) {
+            MikenekoBackup.Added(0, 0, 0, 0)
+        } else {
+            val content = MikenekoBackup.read(String(received, Charsets.UTF_8))
+            withContext(Dispatchers.Main) { MikenekoBackup.import(context, content, sync = true) }
+                .also { prefs(context).edit().putString(seenKey, seen).apply() }
+        }
 
         // Appairés par PIN : les deux gardent le même secret (tiré de cet échange), et seront liés
         if (byPin) {
