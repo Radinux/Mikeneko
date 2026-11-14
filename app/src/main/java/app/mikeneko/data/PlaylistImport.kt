@@ -223,7 +223,12 @@ object PlaylistImport {
     /** Le morceau sur YouTube Music : le résultat dont le titre (et l'artiste) colle le mieux. */
     private suspend fun findSong(song: Item): VideoItem? {
         val title = cleanTitle(song.title)
-        val query = listOf(song.artist, title).filter { it.isNotBlank() }.joinToString(" ")
+        // Une version dérivée demandée (« Slowed + Reverb », « Live »…) reste dans la recherche, même si le
+        // nettoyage du titre l'a enlevée avec sa parenthèse (« (Slowed + Reverb Version) ») : sinon YouTube ne
+        // renvoie que l'original (3.1.1)
+        val kept = words(title)
+        val version = derived(song.title).filter { it !in kept }.joinToString(" ")
+        val query = listOf(song.artist, title, version).filter { it.isNotBlank() }.joinToString(" ")
         return bestMatch(Music.songs(query), song, title)
             // Pas un morceau de YouTube Music (ASMR, podcast, live…) : parmi les vidéos
             ?: run {
@@ -252,7 +257,12 @@ object PlaylistImport {
         val gotRaw = norm(gotTitle)
         if (wantedArtist.isNotBlank() && !artistMatches(wantedArtist, channel, gotRaw)) return 0.0
         val wantedRaw = norm(wantedTitle)
-        if (DERIVED.any { it in words(gotTitle) && it !in words(wantedTitle) }) return 0.0
+        val gotDerived = derived(gotTitle)
+        val wantedDerived = derived(wantedTitle)
+        if (gotDerived.any { it !in wantedDerived }) return 0.0
+        // Et l'inverse (3.1.1) : une version dérivée demandée, l'original n'est pas elle (« Golden Brown »
+        // pour « Golden Brown Slowed + Reverb »). Un de ses mots suffit (« (Slowed) » va)
+        if (wantedDerived.isNotEmpty() && gotDerived.none { it in wantedDerived }) return 0.0
         // Le titre sans « (feat. …) », « - Remastered »… ni le nom de l'artiste (« Artiste - Titre » des vidéos)
         val artistWords = artistNames(wantedArtist).flatMap { words(it) }.toSet()
         val wanted = words(cleanTitle(wantedTitle)) - DRESSING
@@ -290,6 +300,8 @@ object PlaylistImport {
         "slowed", "reverb", "sped", "nightcore", "8d", "bootleg", "mashup", "extended", "piano", "lofi",
         "tutorial", "reaction",
     )
+
+    private fun derived(title: String): Set<String> = words(title).filterTo(HashSet()) { it in DERIVED }
 
     /** Les mots d'habillage des vidéos (« Official Video », « Lyrics »…) : ni manquants ni en trop. */
     private val DRESSING = setOf(

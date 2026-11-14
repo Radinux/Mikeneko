@@ -22,6 +22,22 @@ class ImportMatchTest {
 
     @Test fun slowedNotWantedIsRejected() = assertEquals(0.0, score("Blinding Lights", "The Weeknd", "Blinding Lights (Slowed + Reverb)", "The Weeknd"), 0.001)
 
+    @Test fun slowedWantedRejectsTheOriginal() =
+        assertEquals(0.0, score("Golden Brown Slowed + reverb", "The Stranglers", "Golden Brown", "The Stranglers - Topic"), 0.001)
+
+    @Test fun slowedWantedInVersionBracketRejectsTheOriginal() =
+        assertEquals(0.0, score("Golden Brown (Slowed + Reverb Version)", "The Stranglers", "Golden Brown", "The Stranglers"), 0.001)
+
+    @Test fun slowedWantedIsKept() =
+        assertEquals(1.0, score("Golden Brown Slowed + reverb", "The Stranglers", "Golden Brown (Slowed + Reverb)", "The Stranglers"), 0.001)
+
+    @Test fun slowedWantedAcceptsSlowedOnly() =
+        assertTrue(score("Golden Brown Slowed + reverb", "The Stranglers", "Golden Brown (slowed)", "The Stranglers") >= 0.6)
+
+    @Test fun liveWantedRejectsStudio() = assertEquals(0.0, score("Creep - Live", "Radiohead", "Creep", "Radiohead - Topic"), 0.001)
+
+    @Test fun derivedWordInTheRealTitleIsFine() = assertEquals(1.0, score("Live Forever", "Oasis", "Live Forever", "Oasis - Topic"), 0.001)
+
     @Test fun officialVideoOnVevoIsKept() =
         assertEquals(1.0, score("Blinding Lights", "The Weeknd", "The Weeknd - Blinding Lights (Official Video)", "TheWeekndVEVO"), 0.001)
 
