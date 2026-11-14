@@ -58,6 +58,14 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ## 🎌 What's new ⸜(｡˃ ᵕ ˂ )⸝♡
 
+### 3.3
+
+- 3.3.0: **audio effects for music**: 16 presets — Slowed + Reverb, Sped Up, Nightcore, 360 Spatial, 8D,
+  Bass Boost, Ultra Bass, Crispy Clear, V-Balance, Vocal, Warm, Wide Stereo, Muffled, Old Radio, Lo-Fi.
+  Tap the sliders button in the music player. Slowed / Sped Up / Nightcore / Lo-Fi change speed and
+  pitch together (like a record); the rest is computed by Mikeneko itself, so it sounds the same on
+  every phone, with a soft limiter so nothing clips. Music only, remembered, shown in the sound line.
+
 ### 3.2
 
 - 3.2.2: **deleting the playlist that is playing** stops the music (a deleted video playlist leaves the
