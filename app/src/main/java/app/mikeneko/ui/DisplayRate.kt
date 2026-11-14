@@ -47,6 +47,8 @@ object DisplayRate {
         }
         val window = activity.window
         if (window.attributes.preferredDisplayModeId != mode.modeId) {
+            // TEMPORAIRE (3.0.3) : un changement de fréquence peut figer l'écran, à recouper avec les gels
+            app.mikeneko.player.PlaybackLog.log("DISPLAY_MODE ${current.refreshRate.roundToInt()} -> ${mode.refreshRate.roundToInt()}Hz videoFps=$videoFps")
             window.attributes = window.attributes.apply { preferredDisplayModeId = mode.modeId }
         }
         // Le mode seul ne suffit pas (vu sur un Honor) : le système garde son plafond par défaut de 60 Hz

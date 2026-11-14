@@ -170,12 +170,62 @@ object PlaybackLog {
                     " anim=${ms(android.view.FrameMetrics.ANIMATION_DURATION)} layout=${ms(android.view.FrameMetrics.LAYOUT_MEASURE_DURATION)}" +
                     " draw=${ms(android.view.FrameMetrics.DRAW_DURATION)} sync=${ms(android.view.FrameMetrics.SYNC_DURATION)}" +
                     " issue=${ms(android.view.FrameMetrics.COMMAND_ISSUE_DURATION)} swap=${ms(android.view.FrameMetrics.SWAP_BUFFERS_DURATION)}$gpu" +
-                    " playing=$what/${PlayerHolder.isPlaying.value}",
+                    " playing=$what/${PlayerHolder.isPlaying.value} ${gc()}",
             )
         }, handler)
     }
 
     private const val SLOW_FRAME_MS = 100L
+
+    /**
+     * Le fil principal bloqué (3.0.3) : pendant un gel, les commentaires figent aussi, donc toute la
+     * fenêtre s'arrête. Un fil à part fait signe au fil principal toutes les 100 ms pendant une lecture ;
+     * s'il ne répond pas depuis [MAIN_BLOCKED_MS], on note ce qu'il est en train de faire (sa pile), puis
+     * combien de temps il est resté bloqué. Rien ici si le blocage est dans le dessin (GPU) : ce sont
+     * alors les lignes SLOW_FRAME seules.
+     */
+    fun watchMainThread() {
+        if (watchingMain) return
+        watchingMain = true
+        val mainLooper = android.os.Looper.getMainLooper()
+        val main = android.os.Handler(mainLooper)
+        val watchdog = android.os.Handler(android.os.HandlerThread("fil-principal").apply { start() }.looper)
+        val beat = Runnable { mainBeat = android.os.SystemClock.uptimeMillis() }
+        mainBeat = android.os.SystemClock.uptimeMillis()
+        watchdog.post(object : Runnable {
+            override fun run() {
+                val now = android.os.SystemClock.uptimeMillis()
+                if (!PlayerHolder.isPlaying.value) {
+                    // Pas de lecture : pas de réveil toutes les 100 ms (la batterie)
+                    blockedBeat = -1L
+                    mainBeat = now
+                    watchdog.postDelayed(this, 1_000)
+                    return
+                }
+                val last = mainBeat
+                if (now - last >= MAIN_BLOCKED_MS && blockedBeat != last) {
+                    blockedBeat = last
+                    val stack = mainLooper.thread.stackTrace.take(30)
+                        .joinToString(" < ") { "${it.className.substringAfterLast('.')}.${it.methodName}:${it.lineNumber}" }
+                    log("MAIN_BLOCKED ${now - last}ms+ ${gc()} at $stack")
+                } else if (blockedBeat != -1L && last != blockedBeat) {
+                    log("MAIN_FREE blocked ~${last - blockedBeat - 100}ms ${gc()}")
+                    blockedBeat = -1L
+                }
+                main.post(beat)
+                watchdog.postDelayed(this, 100)
+            }
+        })
+    }
+
+    @Volatile private var mainBeat = 0L
+    private var blockedBeat = -1L
+    private var watchingMain = false
+    private const val MAIN_BLOCKED_MS = 300L
+
+    /** Les ramasse-miettes qui arrêtent l'appli (cumulés depuis le lancement) : comparer deux lignes. */
+    private fun gc(): String =
+        "gc=${android.os.Debug.getRuntimeStat("art.gc.blocking-gc-count")}x/${android.os.Debug.getRuntimeStat("art.gc.blocking-gc-time")}ms"
 
     /** Une ligne datée (aussi appelé ailleurs : nouvelle vidéo, saut SponsorBlock…). */
     fun log(line: String) {
