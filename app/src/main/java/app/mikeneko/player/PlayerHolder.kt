@@ -1449,6 +1449,43 @@ object PlayerHolder {
     }
 
     /**
+     * Une playlist de musique supprimée (3.2.2) : si c'est elle qui joue (tous ses morceaux sont dans la
+     * file, et le morceau en cours, ou mis de côté par une vidéo, en fait partie), la musique s'arrête
+     * et la file se vide. Avant, elle continuait comme si de rien n'était.
+     */
+    fun playlistDeleted(items: List<VideoItem>) {
+        if (items.isEmpty()) return
+        fun keyOf(url: String) = videoIdOf(url) ?: url
+        val ids = items.mapTo(HashSet()) { keyOf(it.url) }
+        if (!queue.value.mapTo(HashSet()) { keyOf(it.url) }.containsAll(ids)) return
+        val now = nowPlaying.value
+        val playingIt = now != null && now.audioOnly && keyOf(now.url) in ids
+        val parkedIt = parkedMusic.value?.let { keyOf(it.url) in ids } == true
+        if (!playingIt && !parkedIt) return
+        if (playingIt) stop()
+        mixJob?.cancel()
+        mixJob = null
+        mixSeed = null
+        mixNext = null
+        autoMix.value = false
+        queue.value = emptyList()
+        queueIndex.value = -1
+        unshuffled = null
+        parkedMusic.value = null
+    }
+
+    /** Une playlist de vidéos supprimée (3.2.2) : si c'est celle du tiroir « À suivre », elle en part (la vidéo continue). */
+    fun videoPlaylistDeleted(items: List<VideoItem>) {
+        if (items.isEmpty()) return
+        fun keyOf(url: String) = videoIdOf(url) ?: url
+        val ids = items.mapTo(HashSet()) { keyOf(it.url) }
+        if (videoPlaylist.value.isNotEmpty() && videoPlaylist.value.all { keyOf(it.url) in ids }) {
+            videoPlaylist.value = emptyList()
+            videoPlaylistTitle.value = null
+        }
+    }
+
+    /**
      * L'appli retirée des applis récentes : tout s'arrête (son, file, mix, minuteur) et la
      * prochaine ouverture repart de zéro, comme après un vrai redémarrage.
      */

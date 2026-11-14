@@ -66,7 +66,13 @@ class Playlists private constructor(context: Context, file: String) {
     /** La photo choisie comme pochette (null : retour à la mosaïque des pochettes des morceaux). */
     fun setCover(id: String, path: String?) = change(id) { it.copy(cover = path) }
 
-    fun delete(id: String) = update { list -> list.filterNot { it.id == id } }
+    fun delete(id: String) {
+        val gone = get(id)
+        update { list -> list.filterNot { it.id == id } }
+        // La playlist de musique qui joue s'arrête avec elle (3.2.2)
+        if (kind == "m" && gone != null) app.mikeneko.player.PlayerHolder.playlistDeleted(gone.items)
+        if (kind == "v" && gone != null) app.mikeneko.player.PlayerHolder.videoPlaylistDeleted(gone.items)
+    }
 
     /** Ajoute en tête (2.11.2 : le dernier ajouté en premier). Renvoie false si le morceau y était déjà. */
     fun add(id: String, item: VideoItem): Boolean {
