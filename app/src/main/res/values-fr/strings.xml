@@ -720,7 +720,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">Quoi de neuf dans Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Super !</string>
-    <string name="whats_new_body">🎧 Mikeneko 3.2 : fondu enchaîné et qualité du son\n\n• Fondu enchaîné : le morceau suivant commence pendant que l\'autre s\'efface (Réglages › Musique, de 2 à 12 s).\n• Choisis la qualité du son en Wi‑Fi, en données mobiles, et pour tes téléchargements.\n• Épingle tes playlists en haut, et sélectionne plusieurs albums ou artistes d\'un coup dans ta bibliothèque musique.\n• Glisse vers le bas pour fermer les réglages vidéo et les menus de la musique.\n• Le coup de patte dit ce qu\'il a sauté : une intro, un générique, un sponsor…</string>
+    <string name="whats_new_body">🎛️ Mikeneko 3.3 : les effets audio\n\n• 16 effets audio pour la musique : Slowed + Reverb, Sped Up, Nightcore, 8D, Spatial 360, basses renforcées, ultra basses, cristallin, vieille radio et d\'autres. Touche le bouton des curseurs dans le lecteur musique.\n• Le lecteur musique affiche le son qui joue et où il part (ton casque Bluetooth…).\n• Fondu enchaîné et qualité du son : Réglages › Musique.\n• Glisse vers la droite sur la capsule musique pour revenir au morceau précédent.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Importer des playlists</string>
@@ -865,4 +865,37 @@
     <string name="output_speaker">Haut-parleur du téléphone</string>
     <string name="output_other">Sortie audio</string>
     <string name="settings_tab_music">Musique</string>
+    <string name="audio_effects">Effets audio</string>
+    <string name="fx_normal">Normal</string>
+    <string name="fx_normal_text">Le morceau tel quel</string>
+    <string name="fx_slowed">Slowed + Reverb</string>
+    <string name="fx_slowed_text">Plus lent et plus grave, planant, comme un vinyle ralenti</string>
+    <string name="fx_sped_up">Sped Up</string>
+    <string name="fx_sped_up_text">Plus rapide et plus aigu, nerveux</string>
+    <string name="fx_nightcore">Nightcore</string>
+    <string name="fx_nightcore_text">Encore plus rapide et plus aigu</string>
+    <string name="fx_spatial">Spatial 360</string>
+    <string name="fx_spatial_text">Une bulle sonore 3D autour du casque, sans écho</string>
+    <string name="fx_8d">Audio 8D</string>
+    <string name="fx_8d_text">Le son tourne autour de la tête (au casque)</string>
+    <string name="fx_bass_boost">Basses renforcées</string>
+    <string name="fx_bass_boost_text">Des basses profondes et propres, la voix intacte</string>
+    <string name="fx_ultra_bass">Ultra basses</string>
+    <string name="fx_ultra_bass_text">Impact maximal, comme un caisson de basses</string>
+    <string name="fx_crispy">Cristallin</string>
+    <string name="fx_crispy_text">Ultra net et aéré</string>
+    <string name="fx_v_balance">Courbe en V</string>
+    <string name="fx_v_balance_text">Basses et aigus mis en avant, pour l\'écoute de tous les jours</string>
+    <string name="fx_vocal">Voix</string>
+    <string name="fx_vocal_text">Les voix au premier plan (podcasts, acoustique)</string>
+    <string name="fx_warm">Chaud et doux</string>
+    <string name="fx_warm_text">Rond et doux, sans fatigue</string>
+    <string name="fx_wide">Stéréo large</string>
+    <string name="fx_wide_text">Une scène plus large, sans écho ajouté</string>
+    <string name="fx_muffled">Étouffé</string>
+    <string name="fx_muffled_text">La musique derrière une porte, sous l\'eau</string>
+    <string name="fx_old_radio">Vieille radio</string>
+    <string name="fx_old_radio_text">Un poste AM des années 50</string>
+    <string name="fx_lofi">Lo-fi</string>
+    <string name="fx_lofi_text">La vieille radio, un peu ralentie</string>
 </resources>

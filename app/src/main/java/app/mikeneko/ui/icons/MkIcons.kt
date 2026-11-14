@@ -105,6 +105,8 @@ object MkIcons {
     val Reorder = stroke("reordonner", "M8 20V5 M4 9l4-4 4 4 M16 4v15 M12 15l4 4 4-4", width = 2.3f)
     val Mix = stroke("mix", "M12 12c-2-2.67-4-4-6-4a4 4 0 1 0 0 8c2 0 4-1.33 6-4zm0 0c2 2.67 4 4 6 4a4 4 0 0 0 0-8c-2 0-4 1.33-6 4z")
     /** Reconnaître un morceau (2.25.0) : un micro. */
+    // Les effets audio (3.3.0) : des curseurs d'égaliseur
+    val Equalizer = stroke("effets", "M5 21v-7 M5 10V3 M12 21v-9 M12 8V3 M19 21v-5 M19 12V3 M2 14h6 M9 8h6 M16 16h6")
     // La sortie du son (3.2.0) : casque Bluetooth, casque filaire / USB, haut-parleur
     val Bluetooth = stroke("bluetooth", "M7 7.5l10 9-5 4.5V3l5 4.5-10 9")
     val Headphones = stroke("casque", "M4 15v-3a8 8 0 0 1 16 0v3 M4 15h3v5H5.5A1.5 1.5 0 0 1 4 18.5z M20 15h-3v5h1.5a1.5 1.5 0 0 0 1.5-1.5z")

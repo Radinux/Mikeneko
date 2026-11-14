@@ -309,6 +309,10 @@ internal fun PlayerWindowContent(
                             if (PlayerHolder.queue.value.isEmpty()) toast(context.getString(R.string.queue_empty)) else state.queueOpen = true
                         }
                         ActionSlot(MkIcons.Lyrics, stringResource(R.string.lyrics), enabled = !live && now != null) { state.lyricsOpen = true }
+                        // Les effets audio (3.3.0)
+                        ActionSlot(MkIcons.Equalizer, stringResource(R.string.audio_effects), enabled = !live && now != null) {
+                            PlayerHolder.settingsPage.value = app.mikeneko.player.SettingsPage.Effets
+                        }
                         ActionSlot(MkIcons.PlaylistAdd, stringResource(R.string.playlist_add), enabled = now != null) {
                             current()?.let { MusicSheet.open.value = MusicSheet.AddToPlaylist(it) }
                         }
@@ -450,6 +454,7 @@ private fun DetailsCard(image: String?, round: Boolean, title: String, subtitle:
 @Composable
 private fun SoundInfo(key: String?) {
     val details by PlayerHolder.audioDetails.collectAsState()
+    val preset by PlayerHolder.audioPreset.collectAsState()
     val output = app.mikeneko.ui.components.rememberAudioOutput(key)
     val style = TextStyle(fontFamily = Rounded, color = Color(0xFFE3DAD2), fontSize = 12.sp, fontWeight = FontWeight.Bold, shadow = GlassTextShadow)
     Row(
@@ -463,6 +468,10 @@ private fun SoundInfo(key: String?) {
                 if (k % 1.0 == 0.0) "${k.toInt()} kHz" else String.format(java.util.Locale.getDefault(), "%.1f kHz", k)
             }
             Text(listOfNotNull(d.codec, d.kbps?.let { "$it kb/s" }, khz).joinToString(" · "), style = style, maxLines = 1)
+        }
+        // L'effet audio en cours, s'il y en a un (3.3.0)
+        if (preset != app.mikeneko.player.AudioPreset.Normal) {
+            Text(app.mikeneko.ui.components.presetName(preset), style = style.copy(color = Pelage.RouxClair), maxLines = 1)
         }
         output?.let { o ->
             Row(Modifier.weight(1f, fill = false), verticalAlignment = Alignment.CenterVertically) {

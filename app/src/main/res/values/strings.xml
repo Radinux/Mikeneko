@@ -719,7 +719,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">What’s new in Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Nice!</string>
-    <string name="whats_new_body">🎧 Mikeneko 3.2: crossfade and sound quality\n\n• Crossfade: the next song starts while the current one fades out (Settings › Music, 2 to 12 s).\n• Choose the sound quality on Wi‑Fi, on mobile data, and for your downloads.\n• Pin your playlists to the top, and select several albums or artists at once in your music library.\n• Swipe down to close the video settings and the music menus.\n• The paw tells what it skipped: an intro, credits, a sponsor…</string>
+    <string name="whats_new_body">🎛️ Mikeneko 3.3: audio effects\n\n• 16 audio effects for music: Slowed + Reverb, Sped Up, Nightcore, 8D, 360 Spatial, Bass Boost, Ultra Bass, Crispy Clear, Old Radio and more. Tap the sliders button in the music player.\n• The music player shows the sound playing and where it goes (your Bluetooth headphones…).\n• Crossfade and sound quality: Settings › Music.\n• Swipe right on the music capsule to go back to the previous song.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Import playlists</string>
@@ -864,4 +864,37 @@
     <string name="output_speaker">Phone speaker</string>
     <string name="output_other">Audio output</string>
     <string name="settings_tab_music">Music</string>
+    <string name="audio_effects">Audio effects</string>
+    <string name="fx_normal">Normal</string>
+    <string name="fx_normal_text">The song as it is</string>
+    <string name="fx_slowed">Slowed + Reverb</string>
+    <string name="fx_slowed_text">Slower and lower, dreamy, like a slowed-down record</string>
+    <string name="fx_sped_up">Sped Up</string>
+    <string name="fx_sped_up_text">Faster and higher, punchy</string>
+    <string name="fx_nightcore">Nightcore</string>
+    <string name="fx_nightcore_text">Even faster and higher</string>
+    <string name="fx_spatial">360 Spatial</string>
+    <string name="fx_spatial_text">A 3D bubble of sound around your headphones, no echo</string>
+    <string name="fx_8d">8D Audio</string>
+    <string name="fx_8d_text">The sound turns around your head (headphones)</string>
+    <string name="fx_bass_boost">Bass Boost</string>
+    <string name="fx_bass_boost_text">Deep, clean bass that leaves the voice alone</string>
+    <string name="fx_ultra_bass">Ultra Bass</string>
+    <string name="fx_ultra_bass_text">Maximum impact, like a subwoofer</string>
+    <string name="fx_crispy">Crispy Clear</string>
+    <string name="fx_crispy_text">Crystal-clear and airy</string>
+    <string name="fx_v_balance">V-Balance</string>
+    <string name="fx_v_balance_text">Punchy bass and bright highs for everyday listening</string>
+    <string name="fx_vocal">Vocal</string>
+    <string name="fx_vocal_text">Voices up front (podcasts, acoustic)</string>
+    <string name="fx_warm">Warm</string>
+    <string name="fx_warm_text">Soft and round, for long listening</string>
+    <string name="fx_wide">Wide Stereo</string>
+    <string name="fx_wide_text">A wider stage, no artificial echo</string>
+    <string name="fx_muffled">Muffled</string>
+    <string name="fx_muffled_text">Music behind a door, underwater</string>
+    <string name="fx_old_radio">Old Radio</string>
+    <string name="fx_old_radio_text">A vintage 1950s AM radio</string>
+    <string name="fx_lofi">Lo-Fi</string>
+    <string name="fx_lofi_text">The old radio, a bit slower</string>
 </resources>

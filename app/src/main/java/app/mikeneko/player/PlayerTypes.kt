@@ -39,7 +39,7 @@ data class NowPlaying(
 )
 
 /** Les pages du menu de réglages du lecteur (null = menu fermé). */
-enum class SettingsPage { Menu, Qualite, Vitesse, SousTitres, Minuteur }
+enum class SettingsPage { Menu, Qualite, Vitesse, SousTitres, Minuteur, Effets }
 
 /** Minuteur de veille : arrêter la lecture après un délai, ou à la fin de la vidéo. */
 sealed interface SleepTimer {

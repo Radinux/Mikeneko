@@ -172,6 +172,15 @@ object PlayerHolder {
         autoplay.value = p.getBoolean("lecture_auto", true)
         repeat.value = runCatching { Repeat.valueOf(p.getString("repeter", null) ?: "Off") }.getOrDefault(Repeat.Off)
         shuffle.value = p.getBoolean("aleatoire", false)
+        audioPreset.value = AudioPreset.of(p.getString("effet_audio", null))
+        AudioEffects.preset = audioPreset.value
+        // Musique ↔ vidéo (3.3.0) : les effets audio et leur vitesse ne s'appliquent qu'à la musique
+        scope.launch {
+            nowPlaying.map { it != null && it.audioOnly && !it.live }.distinctUntilChanged().collect { music ->
+                AudioEffects.musicPlaying = music
+                player?.let { applySpeed(it, if (nowPlaying.value?.live == true) 1f else speed.value) }
+            }
+        }
         // La position de la vidéo, gardée de temps en temps (si l'appli est tuée sans prévenir)
         scope.launch {
             while (true) {
@@ -310,7 +319,7 @@ object PlayerHolder {
                     if (state == Player.STATE_READY) refreshAudioDetails(created) // la durée est connue
                 }
             })
-            created.setPlaybackSpeed(speed.value)
+            applySpeed(created, speed.value)
             applyStableVolume(created.audioSessionId)
         }
 
@@ -561,7 +570,7 @@ object PlayerHolder {
             videoFps.value = built.fps
             setCurrent(p, audioOnly && !live, startAtMs.takeIf { !live } ?: 0L, leavingInfo, source = built.source)
             applyVideoSizeLimit(p, live)
-            p.setPlaybackSpeed(if (live) 1f else speed.value)
+            applySpeed(p, if (live) 1f else speed.value)
             p.prepare()
             if (autoPlay) p.play() else p.pause()
             nowPlaying.value = nowPlayingFrom(context, info, audioOnly, live)
@@ -788,9 +797,11 @@ object PlayerHolder {
         val leaving = p.currentMediaItem ?: return
         val source = tailSource(context, leaving) ?: return
         val index = p.currentMediaItemIndex
-        val t = ExoPlayer.Builder(context)
+        // Avec les mêmes effets audio et la même vitesse que le morceau qu'il finit (3.3.0)
+        val t = ExoPlayer.Builder(context, EffectsRenderersFactory(context))
             .setAudioAttributes(AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(), false)
             .build()
+        t.playbackParameters = p.playbackParameters
         tail = t
         // Prêt un peu en avance, à l'endroit où en sera le morceau, puis lancé pile à ce moment-là
         var target = p.currentPosition + CROSSFADE_LEAD_MS
@@ -1024,7 +1035,7 @@ object PlayerHolder {
         playingQuality.value = entry.height
         setCurrent(p, keepPrevious = audioOnly, startAtMs, leavingInfo, source = OfflineCache.source(context, entry, audioOnly))
         applyVideoSizeLimit(p, live = false)
-        p.setPlaybackSpeed(speed.value)
+        applySpeed(p, speed.value)
         p.prepare()
         if (autoPlay) p.play() else p.pause()
         watcher?.cancel()
@@ -1068,7 +1079,7 @@ object PlayerHolder {
         p.repeatMode = repeatModeFor(live = false)
         setCurrent(p, keepPrevious = true, startAtMs, leavingInfo, item = localMediaItem(url))
         applyVideoSizeLimit(p, live = false)
-        p.setPlaybackSpeed(speed.value)
+        applySpeed(p, speed.value)
         p.prepare()
         if (autoPlay) p.play() else p.pause()
         watcher?.cancel()
@@ -1557,9 +1568,31 @@ object PlayerHolder {
         prefs?.edit()?.putBoolean("sponsorblock_auto", on)?.apply()
     }
 
+    // ---- Les effets audio de la musique (3.3.0, voir AudioEffects) ----
+
+    /** Le préréglage choisi (gardé entre les lancements). */
+    val audioPreset = MutableStateFlow(AudioPreset.Normal)
+
+    fun setAudioPreset(preset: AudioPreset) {
+        audioPreset.value = preset
+        AudioEffects.preset = preset
+        prefs?.edit()?.putString("effet_audio", preset.id)?.apply()
+        player?.let { applySpeed(it, if (boosted.value) HOLD_SPEED else speed.value) }
+    }
+
+    /**
+     * La vitesse [base] (réglage, ou ×2 au doigt), avec celle du préréglage pour la musique : un
+     * « slowed » ralentit ET baisse la hauteur, comme un vinyle (pas de correction de hauteur).
+     */
+    private fun applySpeed(p: ExoPlayer, base: Float) {
+        val now = nowPlaying.value
+        val fx = if (now != null && now.audioOnly && !now.live) audioPreset.value.speed else 1f
+        p.playbackParameters = androidx.media3.common.PlaybackParameters(base * fx, fx)
+    }
+
     fun setSpeed(value: Float) {
         speed.value = value
-        if (nowPlaying.value?.live != true) player?.setPlaybackSpeed(value)
+        if (nowPlaying.value?.live != true) player?.let { applySpeed(it, value) }
     }
 
     /** Le doigt maintenu sur la vidéo ou le short (2.21.0) : ×2 tant qu'il reste posé. */
@@ -1571,7 +1604,7 @@ object PlayerHolder {
         val can = on && now != null && !now.live && !now.audioOnly
         if (boosted.value == can) return
         boosted.value = can
-        player?.setPlaybackSpeed(if (can) HOLD_SPEED else if (now?.live == true) 1f else speed.value)
+        player?.let { applySpeed(it, if (can) HOLD_SPEED else if (now?.live == true) 1f else speed.value) }
     }
 
     const val HOLD_SPEED = 2f

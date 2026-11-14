@@ -229,6 +229,7 @@ fun PlayerSettingsSheet(backdrop: Backdrop, audioOnly: Boolean = false) {
                             SettingsPage.Vitesse -> SpeedPage(::back)
                             SettingsPage.SousTitres -> CaptionsPage(::back)
                             SettingsPage.Minuteur -> TimerPage(::back)
+                            SettingsPage.Effets -> EffectsPage(::back)
                         }
                     }
                 }
@@ -294,8 +295,89 @@ private fun MenuPage(audioOnly: Boolean) {
             }
         }
     }
+    // Les effets audio (3.3.0) : la musique seulement
+    if (!video && !live && now != null) {
+        val preset by PlayerHolder.audioPreset.collectAsState()
+        NavRow(MkIcons.Equalizer, stringResource(R.string.audio_effects), presetName(preset)) { go(SettingsPage.Effets) }
+    }
     NavRow(MkIcons.Moon, stringResource(R.string.sleep_timer), timerLabel()) { go(SettingsPage.Minuteur) }
 }
+
+/** Les effets audio de la musique (3.3.0) : un préréglage, avec son ambiance en une ligne. */
+@Composable
+private fun EffectsPage(onBack: () -> Unit) {
+    val preset by PlayerHolder.audioPreset.collectAsState()
+    PageHeader(stringResource(R.string.audio_effects), onBack)
+    app.mikeneko.player.AudioPreset.entries.forEach { p ->
+        val selected = p == preset
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .heightIn(min = 56.dp)
+                .clickable(role = Role.RadioButton) { PlayerHolder.setAudioPreset(p) }
+                .padding(horizontal = 22.dp, vertical = 7.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(Modifier.width(22.dp), contentAlignment = Alignment.Center) {
+                if (selected) Icon(MkIcons.Check, stringResource(R.string.selected), tint = Pelage.RouxClair, modifier = Modifier.size(20.dp))
+            }
+            Column(Modifier.padding(start = 16.dp)) {
+                Text(
+                    presetName(p),
+                    color = if (selected) Pelage.RouxClair else Pelage.Texte,
+                    fontSize = 15.sp,
+                    fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.SemiBold,
+                )
+                Text(presetVibe(p), color = Secondary, fontSize = 12.sp)
+            }
+        }
+    }
+}
+
+/** Le nom d'un préréglage d'effets audio. */
+@Composable
+fun presetName(preset: app.mikeneko.player.AudioPreset): String = stringResource(
+    when (preset) {
+        app.mikeneko.player.AudioPreset.Normal -> R.string.fx_normal
+        app.mikeneko.player.AudioPreset.Slowed -> R.string.fx_slowed
+        app.mikeneko.player.AudioPreset.SpedUp -> R.string.fx_sped_up
+        app.mikeneko.player.AudioPreset.Nightcore -> R.string.fx_nightcore
+        app.mikeneko.player.AudioPreset.Spatial -> R.string.fx_spatial
+        app.mikeneko.player.AudioPreset.EightD -> R.string.fx_8d
+        app.mikeneko.player.AudioPreset.BassBoost -> R.string.fx_bass_boost
+        app.mikeneko.player.AudioPreset.UltraBass -> R.string.fx_ultra_bass
+        app.mikeneko.player.AudioPreset.Crispy -> R.string.fx_crispy
+        app.mikeneko.player.AudioPreset.VBalance -> R.string.fx_v_balance
+        app.mikeneko.player.AudioPreset.Vocal -> R.string.fx_vocal
+        app.mikeneko.player.AudioPreset.Warm -> R.string.fx_warm
+        app.mikeneko.player.AudioPreset.Wide -> R.string.fx_wide
+        app.mikeneko.player.AudioPreset.Muffled -> R.string.fx_muffled
+        app.mikeneko.player.AudioPreset.OldRadio -> R.string.fx_old_radio
+        app.mikeneko.player.AudioPreset.LoFi -> R.string.fx_lofi
+    },
+)
+
+@Composable
+private fun presetVibe(preset: app.mikeneko.player.AudioPreset): String = stringResource(
+    when (preset) {
+        app.mikeneko.player.AudioPreset.Normal -> R.string.fx_normal_text
+        app.mikeneko.player.AudioPreset.Slowed -> R.string.fx_slowed_text
+        app.mikeneko.player.AudioPreset.SpedUp -> R.string.fx_sped_up_text
+        app.mikeneko.player.AudioPreset.Nightcore -> R.string.fx_nightcore_text
+        app.mikeneko.player.AudioPreset.Spatial -> R.string.fx_spatial_text
+        app.mikeneko.player.AudioPreset.EightD -> R.string.fx_8d_text
+        app.mikeneko.player.AudioPreset.BassBoost -> R.string.fx_bass_boost_text
+        app.mikeneko.player.AudioPreset.UltraBass -> R.string.fx_ultra_bass_text
+        app.mikeneko.player.AudioPreset.Crispy -> R.string.fx_crispy_text
+        app.mikeneko.player.AudioPreset.VBalance -> R.string.fx_v_balance_text
+        app.mikeneko.player.AudioPreset.Vocal -> R.string.fx_vocal_text
+        app.mikeneko.player.AudioPreset.Warm -> R.string.fx_warm_text
+        app.mikeneko.player.AudioPreset.Wide -> R.string.fx_wide_text
+        app.mikeneko.player.AudioPreset.Muffled -> R.string.fx_muffled_text
+        app.mikeneko.player.AudioPreset.OldRadio -> R.string.fx_old_radio_text
+        app.mikeneko.player.AudioPreset.LoFi -> R.string.fx_lofi_text
+    },
+)
 
 @Composable
 private fun QualityPage(onBack: () -> Unit) {

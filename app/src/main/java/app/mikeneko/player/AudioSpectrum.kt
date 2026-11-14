@@ -169,6 +169,18 @@ class SpectrumRenderersFactory(context: Context) : DefaultRenderersFactory(conte
         DefaultAudioSink.Builder(context)
             .setEnableFloatOutput(enableFloatOutput)
             .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
-            .setAudioProcessors(arrayOf(TeeAudioProcessor(AudioSpectrum)))
+            // Les effets audio de la musique d'abord (3.3.0) : la vague montre le son tel qu'on l'entend
+            .setAudioProcessors(arrayOf(PresetAudioProcessor(), TeeAudioProcessor(AudioSpectrum)))
+            .build()
+}
+
+/** Le lecteur du fondu enchaîné : les mêmes effets audio, sans la vague (3.3.0). */
+@UnstableApi
+class EffectsRenderersFactory(context: Context) : DefaultRenderersFactory(context) {
+    override fun buildAudioSink(context: Context, enableFloatOutput: Boolean, enableAudioTrackPlaybackParams: Boolean): AudioSink =
+        DefaultAudioSink.Builder(context)
+            .setEnableFloatOutput(enableFloatOutput)
+            .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
+            .setAudioProcessors(arrayOf(PresetAudioProcessor()))
             .build()
 }
