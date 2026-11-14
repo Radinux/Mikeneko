@@ -717,9 +717,11 @@ fun MusicSheetHost(backdrop: Backdrop, anchor: Rect? = null, onPlaylistDeleted: 
         maxWidth = 520.dp,
         tint = Color(0xC71A1613),
         frost = 28.dp,
-    ) { _ ->
+    ) { handle ->
         val sheet = shown ?: return@MorphSheet
-        Column(Modifier.fillMaxWidth().heightIn(max = 560.dp).padding(top = 2.dp, bottom = 10.dp)) {
+        // Glisser vers le bas ferme aussi depuis le bandeau du morceau et les titres (3.1.2), pas seulement
+        // la poignée : les listes qui défilent gardent leur défilement (et ferment une fois en haut)
+        Column(Modifier.fillMaxWidth().heightIn(max = 560.dp).then(handle).padding(top = 2.dp, bottom = 10.dp)) {
             when (sheet) {
                 is MusicSheet.Track -> TrackMenu(context, sheet, ::close)
                 is MusicSheet.AddToPlaylist -> PlaylistPicker(context, sheet.track, ::close)
