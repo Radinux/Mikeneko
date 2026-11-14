@@ -60,6 +60,14 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ### 3.1
 
+- 3.1.1: **select albums and artists too**: in your music library, long-press a saved album or artist
+  (or a playlist), tick others, then *Remove* them all at once.
+- 3.1.1: **import keeps the version you asked for**: a « slowed + reverb », live or remix song in your
+  file no longer becomes the original song.
+- 3.1.1: smoother opening of the music capsule; the music home greeting no longer runs under the mic
+  button; the *Play* button of a recognized song is no longer squeezed.
+- 3.1.1: the temporary playback log is removed (the freezes it was hunting are fixed), and its file is
+  deleted from the phone.
 - 3.1.0: **pin playlists to the top**: in your music library, long-press a playlist and tap the pin
   (or *Pin to top* in its *Edit* panel); for a video playlist, *Pin to top* on its page. Pinned
   playlists come first everywhere (library, music home, *Add to playlist*) with a small pin.
