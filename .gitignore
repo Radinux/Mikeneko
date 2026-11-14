@@ -21,3 +21,4 @@ signing.properties
 
 # Réglages Claude Code propres à cette machine
 .claude/settings.local.json
+presets_audio_dsp.txt
