@@ -33,6 +33,8 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
+import app.mikeneko.ui.components.SEARCH_CIRCLE
+import app.mikeneko.ui.components.SEARCH_GAP
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -127,12 +129,14 @@ internal fun MusicHome(state: MusicState, onPlayStations: (List<VideoItem>, Int)
         verticalArrangement = Arrangement.spacedBy(22.dp),
     ) {
         item(key = "bonjour") {
-            Text(
+            // À droite : le micro et la loupe en verre (barre à 16 dp du bord). Trop long, le texte rétrécit
+            // plutôt que de passer dessous (3.1.1 : « Good afternoon » touchait le micro)
+            BasicText(
                 stringResource(greeting()),
-                Modifier.padding(start = 20.dp, end = 80.dp), // à droite : la loupe en verre
-                color = Pelage.Texte,
-                fontSize = 30.sp,
-                fontWeight = FontWeight.ExtraBold,
+                Modifier.padding(start = 20.dp, end = 16.dp + SEARCH_CIRCLE * 2 + SEARCH_GAP + 8.dp),
+                style = TextStyle(color = Pelage.Texte, fontWeight = FontWeight.ExtraBold),
+                maxLines = 1,
+                autoSize = TextAutoSize.StepBased(minFontSize = 18.sp, maxFontSize = 30.sp, stepSize = 1.sp),
             )
         }
         item(key = "rapide") {

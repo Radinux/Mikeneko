@@ -165,8 +165,16 @@ fun SongFinderDialog(onDismiss: () -> Unit, onOpenPlaylist: (String) -> Unit) {
 
 @Composable
 private fun Buttons(state: FinderState, close: DialogClose, onOpenPlaylist: (String) -> Unit, onPlay: (VideoItem) -> Unit) {
-    Row(Modifier.fillMaxWidth().padding(top = 16.dp), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-        val found = state as? FinderState.Found
+    val found = state as? FinderState.Found
+    // « Écouter » sur toute la largeur, au-dessus (3.1.1 : à trois sur une ligne, il était écrasé)
+    if (found?.item != null) {
+        Button(onClick = { onPlay(found.item) }, Modifier.fillMaxWidth().padding(top = 16.dp)) {
+            Icon(MkIcons.Play, null, Modifier.size(18.dp))
+            Spacer(Modifier.size(6.dp))
+            Text(stringResource(R.string.recognize_play), fontWeight = FontWeight.ExtraBold)
+        }
+    }
+    Row(Modifier.fillMaxWidth().padding(top = if (found?.item != null) 6.dp else 16.dp), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
         if (found?.playlistId != null) {
             TextButton(onClick = { onOpenPlaylist(found.playlistId) }) {
                 Text(stringResource(R.string.recognize_open), color = Pelage.Texte, fontWeight = FontWeight.Bold)
@@ -179,14 +187,6 @@ private fun Buttons(state: FinderState, close: DialogClose, onOpenPlaylist: (Str
                 color = Pelage.Texte,
                 fontWeight = FontWeight.Bold,
             )
-        }
-        if (found?.item != null) {
-            Spacer(Modifier.size(8.dp))
-            Button(onClick = { onPlay(found.item) }) {
-                Icon(MkIcons.Play, null, Modifier.size(18.dp))
-                Spacer(Modifier.size(6.dp))
-                Text(stringResource(R.string.recognize_play), fontWeight = FontWeight.ExtraBold)
-            }
         }
     }
 }
