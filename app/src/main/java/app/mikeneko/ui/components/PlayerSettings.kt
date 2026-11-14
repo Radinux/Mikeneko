@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -124,7 +125,10 @@ fun PlayerSettingsSheet(backdrop: Backdrop, audioOnly: Boolean = false) {
             visible = page != null,
             modifier = Modifier.align(Alignment.BottomCenter),
             enter = slideInVertically(tween(320)) { it } + fadeIn(tween(200)),
-            exit = slideOutVertically(tween(260)) { it } + fadeOut(tween(200)),
+            // La fermeture se voit (3.1.2) : avant, le fondu (200) finissait avant le glissé (260) et, à
+            // vitesse d'animation ×2, le panneau semblait disparaître d'un coup. Il redescend d'abord,
+            // et ne s'efface qu'à la fin
+            exit = slideOutVertically(tween(360, easing = FastOutLinearInEasing)) { it } + fadeOut(tween(160, delayMillis = 200)),
         ) {
             LiquidGlass(
                 backdrop = backdrop,
