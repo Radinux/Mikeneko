@@ -1,5 +1,6 @@
 package app.mikeneko.player
 
+import androidx.media3.common.MimeTypes
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.flow.collectLatest
 import app.mikeneko.settings.AudioQuality
@@ -131,6 +132,10 @@ object PlayerHolder {
     val playingQuality = MutableStateFlow(0)
     /** Les images par seconde de la vidéo en cours (0 : inconnu), pour la fréquence de l'écran ([app.mikeneko.ui.DisplayRate]). */
     val videoFps = MutableStateFlow(0)
+
+    /** Le son qui joue (3.2.0), montré dans le lecteur musique : codec, débit (kb/s, null si inconnu), fréquence (Hz). */
+    data class AudioDetails(val codec: String, val kbps: Int?, val sampleRate: Int)
+    val audioDetails = MutableStateFlow<AudioDetails?>(null)
     /** Largeur / hauteur de la vidéo en cours (0 : inconnue), pour placer la lueur dans les bandes noires du plein écran (3.0.2). */
     val videoAspect = MutableStateFlow(0f)
     val captionTracks = MutableStateFlow<List<CaptionTrack>>(emptyList())
@@ -295,6 +300,14 @@ object PlayerHolder {
 
                 override fun onAudioSessionIdChanged(audioSessionId: Int) {
                     applyStableVolume(audioSessionId)
+                }
+            })
+            // Le format du son du morceau en cours (3.2.0), pour le lecteur musique : pris dans ses pistes, qui
+            // changent pile à la transition (le décodeur, lui, lit déjà le suivant quelques secondes avant)
+            created.addListener(object : Player.Listener {
+                override fun onTracksChanged(tracks: Tracks) = refreshAudioDetails(created)
+                override fun onPlaybackStateChanged(state: Int) {
+                    if (state == Player.STATE_READY) refreshAudioDetails(created) // la durée est connue
                 }
             })
             created.setPlaybackSpeed(speed.value)
@@ -684,6 +697,40 @@ object PlayerHolder {
             }
         }
         preloaded = null
+    }
+
+    /**
+     * Codec, débit et fréquence du son en cours. Le débit : celui annoncé par le flux, sinon la taille du
+     * fichier (dans la clé de cache, « id:a251:taille », ou le fichier du téléphone) divisée par la durée.
+     */
+    @OptIn(UnstableApi::class)
+    private fun refreshAudioDetails(p: ExoPlayer) {
+        val group = p.currentTracks.groups.firstOrNull { it.type == C.TRACK_TYPE_AUDIO && it.isSelected }
+        val format = group?.let { g -> (0 until g.length).firstOrNull { g.isTrackSelected(it) }?.let(g::getTrackFormat) }
+        if (format == null) {
+            audioDetails.value = null
+            return
+        }
+        val codec = when (format.sampleMimeType) {
+            MimeTypes.AUDIO_OPUS -> "Opus"
+            MimeTypes.AUDIO_AAC -> "AAC"
+            MimeTypes.AUDIO_MPEG -> "MP3"
+            MimeTypes.AUDIO_FLAC -> "FLAC"
+            MimeTypes.AUDIO_VORBIS -> "Vorbis"
+            MimeTypes.AUDIO_RAW -> "PCM"
+            MimeTypes.AUDIO_AC3 -> "AC-3"
+            MimeTypes.AUDIO_E_AC3 -> "E-AC-3"
+            else -> format.sampleMimeType?.substringAfter('/')?.uppercase() ?: "?"
+        }
+        val declared = (if (format.averageBitrate > 0) format.averageBitrate else format.bitrate).takeIf { it > 0 }?.let { it / 1000 }
+        val kbps = declared ?: run {
+            val duration = p.duration.takeIf { it != C.TIME_UNSET && it > 0 } ?: return@run null
+            val config = p.currentMediaItem?.localConfiguration
+            val bytes = config?.customCacheKey?.substringAfterLast(':')?.toLongOrNull()
+                ?: config?.uri?.takeIf { LocalMusic.isLocal(it.toString()) }?.let { LocalMusic.fileOf(it.toString())?.length() }
+            bytes?.takeIf { it > 0 }?.let { (it * 8 / duration).toInt() } // octets → kbit par seconde (ms)
+        }
+        audioDetails.value = AudioDetails(codec, kbps, format.sampleRate)
     }
 
     // ---- Le fondu enchaîné (3.2.0) ----

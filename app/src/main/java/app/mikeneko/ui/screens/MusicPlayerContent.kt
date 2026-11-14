@@ -268,6 +268,7 @@ internal fun PlayerWindowContent(
                 } else if (now != null) {
                     TrackProgress(now?.url, state.open)
                 }
+                if (now != null) SoundInfo(now?.url)
                 Spacer(Modifier.height(12.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     ModeToggle(MkIcons.Shuffle, stringResource(if (shuffle) R.string.shuffle_off else R.string.shuffle_on), active = shuffle) {
@@ -439,6 +440,36 @@ private fun DetailsCard(image: String?, round: Boolean, title: String, subtitle:
             if (subtitle != null) Text(subtitle, color = Color(0xFFE3DAD2), fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         Icon(MkIcons.ChevronRight, null, tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(20.dp))
+    }
+}
+
+/**
+ * Sous la barre (3.2.0) : la qualité du son qui joue (« Opus · 160 kb/s · 48 kHz ») et où il part
+ * (le nom du casque Bluetooth, casque filaire, haut-parleur).
+ */
+@Composable
+private fun SoundInfo(key: String?) {
+    val details by PlayerHolder.audioDetails.collectAsState()
+    val output = app.mikeneko.ui.components.rememberAudioOutput(key)
+    val style = TextStyle(fontFamily = Rounded, color = Color(0xFFE3DAD2), fontSize = 12.sp, fontWeight = FontWeight.Bold, shadow = GlassTextShadow)
+    Row(
+        Modifier.fillMaxWidth().padding(top = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(14.dp, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        details?.let { d ->
+            val khz = d.sampleRate.takeIf { it > 0 }?.let { rate ->
+                val k = rate / 1000.0
+                if (k % 1.0 == 0.0) "${k.toInt()} kHz" else String.format(java.util.Locale.getDefault(), "%.1f kHz", k)
+            }
+            Text(listOfNotNull(d.codec, d.kbps?.let { "$it kb/s" }, khz).joinToString(" · "), style = style, maxLines = 1)
+        }
+        output?.let { o ->
+            Row(Modifier.weight(1f, fill = false), verticalAlignment = Alignment.CenterVertically) {
+                Icon(o.icon, null, tint = Color(0xFFE3DAD2), modifier = Modifier.size(15.dp))
+                Text(o.label, style = style, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 5.dp))
+            }
+        }
     }
 }
 
