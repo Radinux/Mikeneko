@@ -58,6 +58,16 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ## 🎌 What's new ⸜(｡˃ ᵕ ˂ )⸝♡
 
+### 3.1
+
+- 3.1.0: **pin playlists to the top**: in your music library, long-press a playlist and tap the pin
+  (or *Pin to top* in its *Edit* panel); for a video playlist, *Pin to top* on its page. Pinned
+  playlists come first everywhere (library, music home, *Add to playlist*) with a small pin.
+- 3.1.0: **no more short freezes of the whole app** (picture and scrolling stopping for about half a
+  second, roughly once a minute during a video, and right after opening the app) when GitHub sync or
+  a linked device is on: a sync no longer re-merges your whole library when nothing changed on the
+  other side.
+
 ### 3.0
 
 - 3.0.2: **ambient mode in full screen**: when a video doesn't have the shape of your screen, its
