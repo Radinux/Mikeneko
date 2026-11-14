@@ -67,6 +67,7 @@ import app.mikeneko.data.MusicForYou
 import app.mikeneko.data.MusicHistory
 import app.mikeneko.data.MusicLibrary
 import app.mikeneko.data.Playlists
+import app.mikeneko.data.pinnedFirst
 import app.mikeneko.data.VideoItem
 import app.mikeneko.ui.components.Loading
 import app.mikeneko.ui.components.Tag
@@ -116,7 +117,7 @@ internal fun MusicHome(state: MusicState, onPlayStations: (List<VideoItem>, Int)
     val quick = buildList {
         add(QuickTile(context.getString(R.string.music_library), null, MkIcons.Library) { state.open(MusicPage.Library) })
         add(QuickTile(context.getString(R.string.music_downloaded), null, MkIcons.Download) { state.open(MusicPage.Downloads) })
-        playlists.take(3).forEach { pl -> add(QuickTile(pl.name, pl.coverModel(), MkIcons.Music) { state.open(MusicPage.MyPlaylist(pl.id)) }) }
+        playlists.pinnedFirst().take(3).forEach { pl -> add(QuickTile(pl.name, pl.coverModel(), MkIcons.Music) { state.open(MusicPage.MyPlaylist(pl.id)) }) }
         recent.take((6 - size).coerceAtLeast(0)).forEach { track -> add(QuickTile(track.title, track.thumbnail, MkIcons.Music) { replay(track) }) }
     }
 

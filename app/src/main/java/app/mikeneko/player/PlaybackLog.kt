@@ -178,7 +178,7 @@ object PlaybackLog {
     private const val SLOW_FRAME_MS = 100L
 
     /**
-     * Le fil principal bloqué (3.0.3) : pendant un gel, les commentaires figent aussi, donc toute la
+     * Le fil principal bloqué (3.1.0) : pendant un gel, les commentaires figent aussi, donc toute la
      * fenêtre s'arrête. Un fil à part fait signe au fil principal toutes les 100 ms pendant une lecture ;
      * s'il ne répond pas depuis [MAIN_BLOCKED_MS], on note ce qu'il est en train de faire (sa pile), puis
      * combien de temps il est resté bloqué. Rien ici si le blocage est dans le dessin (GPU) : ce sont

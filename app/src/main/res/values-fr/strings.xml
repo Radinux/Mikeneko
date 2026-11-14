@@ -571,6 +571,9 @@
     <string name="playlist_already_in">Déjà dans « %1$s »</string>
     <string name="playlist_rename">Renommer</string>
     <string name="playlist_delete">Supprimer la playlist</string>
+    <string name="playlist_pin">Épingler en haut</string>
+    <string name="playlist_unpin">Désépingler</string>
+    <string name="playlist_pinned">Épinglée</string>
     <string name="playlist_name_hint">Nom de la playlist</string>
     <string name="playlist_remove_track">Retirer de la playlist</string>
     <string name="playlist_empty">Playlist vide</string>

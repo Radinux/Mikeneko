@@ -66,7 +66,7 @@ object GitHubSync {
     /** Appli ouverte : on va voir toutes les 3 min ce que les autres appareils ont envoyé (2.19.2). */
     private const val POLL_MS = 3 * 60_000L
 
-    /** L'empreinte du contenu du coffre à la fin de la dernière synchro (3.0.3). */
+    /** L'empreinte du contenu du coffre à la fin de la dernière synchro (3.1.0). */
     private const val SEEN = "vu"
     private const val VAULT_ALIAS = "mikeneko-github"
     /** L'alphabet de la clé de synchro : sans 0/O ni 1/I/L, pour la recopier sans erreur. */
@@ -294,7 +294,7 @@ object GitHubSync {
             theirs = plain
             // Le coffre n'a pas bougé depuis notre dernière synchro (le cas courant : pendant une vidéo,
             // seul ce téléphone y écrit) : rien de neuf à fusionner. La fusion se fait sur le fil principal
-            // et figeait toute l'appli jusqu'à 0,7 s, une fois par minute pendant une vidéo (3.0.3)
+            // et figeait toute l'appli jusqu'à 0,7 s, une fois par minute pendant une vidéo (3.1.0)
             if (AutoSync.digest(plain) != p.getString(SEEN, null)) {
                 val content = MikenekoBackup.read(String(plain, Charsets.UTF_8))
                 added = withContext(Dispatchers.Main) { MikenekoBackup.import(context, content, sync = true) }

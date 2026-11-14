@@ -83,6 +83,7 @@ import app.mikeneko.data.MusicCollection
 import app.mikeneko.data.MusicKind
 import app.mikeneko.data.MusicLibrary
 import app.mikeneko.data.Playlists
+import app.mikeneko.data.pinnedFirst
 import app.mikeneko.data.VideoItem
 import app.mikeneko.data.sameTrack
 import app.mikeneko.player.PlayerHolder
@@ -698,7 +699,7 @@ private fun MusicLibraryContent(state: MusicState) {
                     state.open(MusicPage.Downloads)
                 }
             }
-            items(playlists, key = { "pl:" + it.id }) { pl ->
+            items(playlists.pinnedFirst(), key = { "pl:" + it.id }) { pl ->
                 CollectionRow(
                     pl.name,
                     pluralStringResource(R.plurals.track_count, pl.items.size, pl.items.size),
@@ -706,6 +707,7 @@ private fun MusicLibraryContent(state: MusicState) {
                     icon = MkIcons.Music,
                     selected = selection?.let { pl.id in it },
                     onLongClick = { if (selection == null) selection = setOf(pl.id) else toggle(pl.id) },
+                    pinned = pl.pinned,
                 ) {
                     if (selection != null) toggle(pl.id) else state.open(MusicPage.MyPlaylist(pl.id))
                 }
@@ -768,6 +770,16 @@ private fun MusicLibraryContent(state: MusicState) {
                     fontWeight = FontWeight.ExtraBold,
                     maxLines = 1,
                 )
+                // Épingler en tête (3.1.0) : toutes déjà épinglées → les désépingler
+                val allPinned = chosen.isNotEmpty() && playlists.filter { it.id in chosen }.all { it.pinned }
+                val pinLabel = stringResource(if (allPinned) R.string.playlist_unpin else R.string.playlist_pin)
+                Box(
+                    Modifier.size(44.dp).clip(CircleShape).clickable(role = Role.Button, onClickLabel = pinLabel) {
+                        Playlists.get(context).setPinned(chosen, !allPinned)
+                        selection = null
+                    },
+                    contentAlignment = Alignment.Center,
+                ) { Icon(MkIcons.Pin, pinLabel, tint = if (allPinned) Pelage.RouxClair else Pelage.Texte, modifier = Modifier.size(22.dp)) }
                 androidx.compose.material3.TextButton(onClick = { selection = playlists.map { it.id }.toSet().ifEmpty { null } }) {
                     Text(stringResource(R.string.select_all), color = Pelage.Texte, fontWeight = FontWeight.Bold)
                 }

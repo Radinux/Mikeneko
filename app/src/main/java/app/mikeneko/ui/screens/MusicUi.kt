@@ -99,6 +99,7 @@ import androidx.compose.ui.res.pluralStringResource
 import app.mikeneko.data.MusicCollection
 import app.mikeneko.data.MusicKind
 import app.mikeneko.data.Playlists
+import app.mikeneko.data.pinnedFirst
 import app.mikeneko.data.VideoItem
 import app.mikeneko.data.formatDuration
 import app.mikeneko.player.PlayerHolder
@@ -470,6 +471,7 @@ fun CollectionRow(
     icon: ImageVector? = null,
     selected: Boolean? = null,
     onLongClick: (() -> Unit)? = null,
+    pinned: Boolean = false,
     onClick: () -> Unit,
 ) {
     Row(
@@ -485,6 +487,8 @@ fun CollectionRow(
             Text(title, color = Pelage.Texte, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
             if (subtitle.isNotBlank()) Text(subtitle, color = Pelage.Gris, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
+        // Épinglée en tête (3.1.0)
+        if (pinned) Icon(MkIcons.Pin, stringResource(R.string.playlist_pinned), tint = Pelage.RouxClair, modifier = Modifier.size(16.dp))
         if (selected == null) {
             Icon(MkIcons.ChevronRight, null, tint = Pelage.Gris, modifier = Modifier.size(18.dp))
         } else {
@@ -918,7 +922,7 @@ private fun PlaylistPicker(context: Context, track: VideoItem, close: () -> Unit
     )
     Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState())) {
         SheetRow(MkIcons.Plus, stringResource(R.string.playlist_new)) { MusicSheet.open.value = MusicSheet.NewPlaylist(track) }
-        playlists.forEach { playlist ->
+        playlists.pinnedFirst().forEach { playlist ->
             SheetRow(MkIcons.Music, playlist.name, subtitle = context.resources.getQuantityString(R.plurals.track_count, playlist.items.size, playlist.items.size)) {
                 val added = Playlists.get(context).add(playlist.id, track)
                 toast(context, context.getString(if (added) R.string.playlist_added_to else R.string.playlist_already_in, playlist.name))

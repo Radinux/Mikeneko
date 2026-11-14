@@ -60,6 +60,7 @@ import app.mikeneko.R
 import app.mikeneko.data.Downloads
 import app.mikeneko.data.Playlist
 import app.mikeneko.data.Playlists
+import app.mikeneko.data.pinnedFirst
 import app.mikeneko.data.VideoItem
 import app.mikeneko.data.VideoLibrary
 import app.mikeneko.data.WatchHistory
@@ -244,7 +245,7 @@ private fun LibraryHome(state: LibraryState, onOpen: (VideoItem) -> Unit) {
                 Text(stringResource(R.string.library_playlists_empty), Modifier.padding(horizontal = 20.dp), color = Pelage.Gris, fontSize = 13.sp)
             }
         }
-        items(playlists, key = { it.id }) { playlist ->
+        items(playlists.pinnedFirst(), key = { it.id }) { playlist ->
             PlaylistTile(playlist, Modifier.padding(horizontal = 20.dp)) { state.page = LibraryPage.MyPlaylist(playlist.id) }
         }
     }
@@ -328,6 +329,8 @@ private fun PlaylistTile(playlist: Playlist, modifier: Modifier = Modifier, onCl
             Text(playlist.name, color = Pelage.Texte, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
             Text(pluralStringResource(R.plurals.videos_count, playlist.items.size, playlist.items.size), color = Pelage.Gris, fontSize = 13.sp)
         }
+        // Épinglée en tête (3.1.0)
+        if (playlist.pinned) Icon(MkIcons.Pin, stringResource(R.string.playlist_pinned), tint = Pelage.RouxClair, modifier = Modifier.size(16.dp))
     }
 }
 
@@ -541,6 +544,12 @@ private fun MyVideoPlaylistPage(id: String, state: LibraryState, onOpen: (VideoI
                     }
                     PlaylistDownloadCapsule(PlaylistDownloads.videos, id, playlist.items)
                     Capsule(stringResource(R.string.playlist_rename)) { renaming = !renaming }
+                    // Épingler en tête de la Bibliothèque (3.1.0)
+                    Capsule(
+                        stringResource(if (playlist.pinned) R.string.playlist_pinned else R.string.playlist_pin),
+                        selected = playlist.pinned,
+                        icon = MkIcons.Pin,
+                    ) { store.setPinned(setOf(id), !playlist.pinned) }
                     // Supprimer : un premier tap demande confirmation (4 s)
                     Capsule(
                         stringResource(if (confirmDelete) R.string.unsubscribe_confirm else R.string.playlist_delete),

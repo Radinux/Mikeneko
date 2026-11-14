@@ -660,7 +660,7 @@ object LocalSync {
             GitHubSync.receiveKey(context, extras?.optString("cle")?.ifEmpty { null })
         }
         // L'autre n'a rien changé depuis notre dernière synchro avec lui : rien à fusionner (la fusion se fait
-        // sur le fil principal et figeait toute l'appli jusqu'à 0,7 s, 3.0.3)
+        // sur le fil principal et figeait toute l'appli jusqu'à 0,7 s, 3.1.0)
         val seen = AutoSync.digest(received)
         val seenKey = "vu_" + peer.id
         val added = if (!byPin && seen == prefs(context).getString(seenKey, null)) {

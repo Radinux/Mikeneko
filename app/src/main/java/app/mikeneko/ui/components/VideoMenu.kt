@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.sp
 import app.mikeneko.R
 import app.mikeneko.data.Feedback
 import app.mikeneko.data.Playlists
+import app.mikeneko.data.pinnedFirst
 import app.mikeneko.data.VideoItem
 import app.mikeneko.data.VideoLibrary
 import app.mikeneko.data.channelKey
@@ -298,7 +299,7 @@ private fun PlaylistPicker(video: VideoItem, onDone: () -> Unit) {
         fontWeight = FontWeight.ExtraBold,
     )
     Column(Modifier.heightIn(max = 320.dp).verticalScroll(rememberScrollState())) {
-        playlists.forEach { playlist ->
+        playlists.pinnedFirst().forEach { playlist ->
             val inside = playlist.items.any { sameTrack(it.url, video.url) }
             MenuRow(if (inside) MkIcons.Check else MkIcons.PlaylistAdd, playlist.name, pluralStringResource(R.plurals.videos_count, playlist.items.size, playlist.items.size)) {
                 val added = store.add(playlist.id, video)

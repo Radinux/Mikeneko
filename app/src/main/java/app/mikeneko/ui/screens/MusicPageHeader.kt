@@ -343,6 +343,15 @@ internal fun PlaylistEditPanel(playlist: Playlist, onDone: () -> Unit, onDeleted
                 }
             }
         }
+        // Épinglée : en tête de la bibliothèque et de l'accueil de la musique (3.1.0)
+        ConnectedChip(
+            stringResource(if (playlist.pinned) R.string.playlist_pinned else R.string.playlist_pin),
+            selected = playlist.pinned,
+            first = true,
+            last = true,
+            icon = MkIcons.Pin,
+            pillWhenSelected = false,
+        ) { store.setPinned(setOf(playlist.id), !playlist.pinned) }
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             OutlinedButton(
                 onClick = {

@@ -11,8 +11,19 @@ import org.json.JSONObject
 /**
  * Une playlist faite à la main (musique ou vidéos). [cover] : la photo choisie comme pochette (fichier de
  * l'appli). [sort] : son tri automatique ([TrackTags.Sort], 2.15.0 ; null : l'ordre choisi à la main).
+ * [pinned] (3.1.0) : épinglée, elle reste en tête des listes (sur ce téléphone : pas dans la synchro).
  */
-data class Playlist(val id: String, val name: String, val items: List<VideoItem>, val cover: String? = null, val sort: String? = null)
+data class Playlist(
+    val id: String,
+    val name: String,
+    val items: List<VideoItem>,
+    val cover: String? = null,
+    val sort: String? = null,
+    val pinned: Boolean = false,
+)
+
+/** Les épinglées d'abord, chaque groupe dans son ordre habituel (3.1.0). */
+fun List<Playlist>.pinnedFirst(): List<Playlist> = if (none { it.pinned }) this else sortedBy { !it.pinned }
 
 /**
  * Les playlists perso, gardées sur le téléphone (comme les favoris). Deux carnets séparés : celles
@@ -68,6 +79,10 @@ class Playlists private constructor(context: Context, file: String) {
     fun remove(id: String, index: Int) = change(id) { p ->
         if (index !in p.items.indices) p else p.copy(items = p.items.toMutableList().apply { removeAt(index) })
     }
+
+    /** Épingle (ou désépingle) les playlists [ids] : elles passent en tête des listes (3.1.0). */
+    fun setPinned(ids: Set<String>, pinned: Boolean) =
+        update(track = false) { list -> list.map { if (it.id in ids) it.copy(pinned = pinned) else it } }
 
     /** Le tri automatique (null : retour à l'ordre fait à la main). */
     fun setSort(id: String, sort: String?) = change(id) { it.copy(sort = sort) }
@@ -132,7 +147,7 @@ class Playlists private constructor(context: Context, file: String) {
         (0 until array.length()).map { i ->
             val o = array.getJSONObject(i)
             val tracks = o.getJSONArray("items")
-            Playlist(o.getString("id"), o.optString("name"), (0 until tracks.length()).map { trackFromJson(tracks.getJSONObject(it)) }, o.optString("cover").ifEmpty { null }, o.optString("sort").ifEmpty { null })
+            Playlist(o.getString("id"), o.optString("name"), (0 until tracks.length()).map { trackFromJson(tracks.getJSONObject(it)) }, o.optString("cover").ifEmpty { null }, o.optString("sort").ifEmpty { null }, o.optBoolean("pinned"))
         }
     }.getOrDefault(emptyList())
 
@@ -141,7 +156,7 @@ class Playlists private constructor(context: Context, file: String) {
         _items.value.forEach { p ->
             val tracks = JSONArray()
             p.items.forEach { tracks.put(it.toTrackJson()) }
-            array.put(JSONObject().put("id", p.id).put("name", p.name).put("items", tracks).put("cover", p.cover ?: "").put("sort", p.sort ?: ""))
+            array.put(JSONObject().put("id", p.id).put("name", p.name).put("items", tracks).put("cover", p.cover ?: "").put("sort", p.sort ?: "").put("pinned", p.pinned))
         }
         prefs.edit().putString("liste", array.toString()).apply()
     }
