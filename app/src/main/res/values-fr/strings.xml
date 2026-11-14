@@ -855,7 +855,7 @@
     <string name="settings_music_quality_wifi">Qualité du son en Wi‑Fi</string>
     <string name="settings_music_quality_mobile">Qualité du son en données mobiles</string>
     <string name="settings_download_quality">Qualité des téléchargements</string>
-    <string name="settings_download_quality_text">Pour les playlists que tu télécharges. Les morceaux déjà téléchargés gardent la leur.</string>
+    <string name="settings_download_quality_text">Pour les playlists que tu télécharges. La changer les retélécharge dans la nouvelle qualité.</string>
     <string name="audio_quality_high">Haute (~160 kb/s)</string>
     <string name="audio_quality_normal">Normale (~70 kb/s)</string>
     <string name="audio_quality_low">Économe (~50 kb/s)</string>

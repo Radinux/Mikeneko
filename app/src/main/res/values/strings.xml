@@ -854,7 +854,7 @@
     <string name="settings_music_quality_wifi">Sound quality on Wi‑Fi</string>
     <string name="settings_music_quality_mobile">Sound quality on mobile data</string>
     <string name="settings_download_quality">Download quality</string>
-    <string name="settings_download_quality_text">For the playlists you download. Songs already downloaded keep theirs.</string>
+    <string name="settings_download_quality_text">For the playlists you download. Changing it downloads them again in the new quality.</string>
     <string name="audio_quality_high">High (~160 kb/s)</string>
     <string name="audio_quality_normal">Normal (~70 kb/s)</string>
     <string name="audio_quality_low">Data saver (~50 kb/s)</string>

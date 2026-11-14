@@ -1004,6 +1004,7 @@ object PlayerHolder {
                     audioKey = key,
                     videoKey = built.videoKey,
                     height = built.height,
+                    quality = built.audioQuality,
                 ),
             )
         }

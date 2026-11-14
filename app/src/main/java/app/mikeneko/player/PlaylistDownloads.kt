@@ -1,5 +1,7 @@
 package app.mikeneko.player
 
+import kotlinx.coroutines.flow.drop
+import app.mikeneko.settings.AudioQuality
 import app.mikeneko.settings.AppSettings
 import android.content.Context
 import androidx.annotation.OptIn
@@ -118,6 +120,8 @@ class PlaylistDownloads private constructor(private val audioOnly: Boolean) {
         _unavailable.value = prefs(c).getStringSet("indisponibles", emptySet()).orEmpty().toSet()
         scope.launch {
             _saved.value = OfflineCache.ids(c, store).filter { OfflineCache.entry(c, store, it) != null }.toSet()
+            // La qualité des téléchargements change (3.2.0) : les morceaux déjà là se refont
+            if (audioOnly) launch { AppSettings.downloadQuality.drop(1).collect { sync() } }
             // Une playlist modifiée (morceau ajouté, retiré, playlist supprimée) : on se met à jour
             playlistStore(c).items.collect { sync() }
         }
@@ -175,8 +179,15 @@ class PlaylistDownloads private constructor(private val audioOnly: Boolean) {
         }
     }
 
-    /** Ce qui reste à télécharger (sans les indisponibles). */
-    private fun pending(c: Context) = wanted(c).filter { (id, _) -> id !in _saved.value && id !in _unavailable.value }
+    /** Ce qui reste à télécharger (sans les indisponibles), dont les morceaux à refaire dans une autre qualité. */
+    private fun pending(c: Context) = wanted(c).filter { (id, _) -> (id !in _saved.value || outdated(c, id)) && id !in _unavailable.value }
+
+    /**
+     * Téléchargé dans une autre qualité que celle choisie maintenant (3.2.0) : il se retélécharge. L'ancien
+     * reste lisible hors ligne jusqu'à ce que le nouveau le remplace.
+     */
+    private fun outdated(c: Context, id: String): Boolean =
+        audioOnly && OfflineCache.quality(c, store, id).let { it != null && it != AppSettings.downloadQuality.value }
 
     private fun setUnavailable(c: Context, ids: Set<String>) {
         _unavailable.value = ids
@@ -304,8 +315,14 @@ class PlaylistDownloads private constructor(private val audioOnly: Boolean) {
     /** Télécharge une vidéo / un morceau dans la réserve. Renvoie true si le réseau a servi. */
     private suspend fun download(c: Context, id: String, item: VideoItem): Boolean {
         val target = OfflineCache.cache(c, store)
-        // Déjà lu en entier : recopié depuis la sauvegarde de lecture
-        OfflineCache.entry(c, played, id)?.let { entry ->
+        val quality = AppSettings.downloadQuality.value
+        // Ce qui était là avant (une autre qualité) : ses fichiers partent une fois le nouveau en place
+        val old = OfflineCache.entry(c, store, id)
+        fun dropOld(keep: Set<String>) {
+            listOfNotNull(old?.audioKey, old?.videoKey).filter { it !in keep }.forEach { runCatching { target.removeResource(it) } }
+        }
+        // Déjà lu en entier (dans la qualité voulue) : recopié depuis la sauvegarde de lecture
+        OfflineCache.entry(c, played, id)?.takeIf { !audioOnly || it.quality == quality }?.let { entry ->
             val from = OfflineCache.factory(OfflineCache.cache(c, played), null)
             val keys = listOfNotNull(entry.audioKey, entry.videoKey)
             keys.forEachIndexed { i, key ->
@@ -313,11 +330,12 @@ class PlaylistDownloads private constructor(private val audioOnly: Boolean) {
                 write(target, from, "mikeneko-hors-ligne://$key", key)
             }
             OfflineCache.remember(c, store, entry.copy(store = store))
+            dropOld(keys.toSet())
             return false
         }
         val info = YouTubeRepository.stream(item.url)
         // La musique dans la qualité choisie pour les téléchargements (3.2.0)
-        val plan = MediaSources.downloadPlan(info, audioOnly, if (audioOnly) null else VIDEO_HEIGHT, AppSettings.downloadQuality.value)
+        val plan = MediaSources.downloadPlan(info, audioOnly, if (audioOnly) null else VIDEO_HEIGHT, quality)
         val http = DefaultHttpDataSource.Factory()
             .setUserAgent(NewPipeDownloader.USER_AGENT)
             .setAllowCrossProtocolRedirects(true)
@@ -344,8 +362,10 @@ class PlaylistDownloads private constructor(private val audioOnly: Boolean) {
                 videoKey = plan.videoKey,
                 height = plan.height,
                 store = store,
+                quality = if (audioOnly) quality else AudioQuality.High,
             ),
         )
+        dropOld(setOfNotNull(plan.audioKey, plan.videoKey))
         return true
     }
 

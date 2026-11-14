@@ -1,5 +1,7 @@
 package app.mikeneko.player
 
+import app.mikeneko.settings.AppSettings
+import app.mikeneko.settings.AudioQuality
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
@@ -61,6 +63,8 @@ object OfflineCache {
         val videoKey: String?,
         val height: Int,
         val store: Store = Store.Music,
+        /** La qualité du son (musique, 3.2.0). Les entrées d'avant n'en ont pas : elles étaient toutes en Haute. */
+        val quality: AudioQuality = AudioQuality.High,
     )
 
     private var database: StandaloneDatabaseProvider? = null
@@ -114,7 +118,7 @@ object OfflineCache {
         val json = JSONObject()
             .put("url", entry.url).put("title", entry.title).put("channel", entry.channel)
             .put("thumbnail", entry.thumbnail ?: "").put("audio", entry.audioKey)
-            .put("video", entry.videoKey ?: "").put("height", entry.height)
+            .put("video", entry.videoKey ?: "").put("height", entry.height).put("quality", entry.quality.id)
             .put("at", System.currentTimeMillis())
         if (!store.persistent) prune(context, store)
         prefs(context, store).edit().putString(entry.videoId, json.toString()).apply()
@@ -134,6 +138,7 @@ object OfflineCache {
                 videoKey = o.optString("video").ifEmpty { null },
                 height = o.optInt("height"),
                 store = store,
+                quality = AudioQuality.of(o.optString("quality").ifEmpty { null }),
             )
         }.getOrNull()
     }
@@ -156,8 +161,18 @@ object OfflineCache {
         val id = videoIdOf(url) ?: return null
         val saved = entry(context, if (audioOnly) Store.SavedMusic else Store.SavedVideos, id)
         if (saved != null || !online(context)) return saved
-        return entry(context, if (audioOnly) Store.Music else Store.Videos, id)
+        val played = entry(context, if (audioOnly) Store.Music else Store.Videos, id) ?: return null
+        // Un morceau gardé dans une autre qualité que celle choisie maintenant (3.2.0) : effacé, il se
+        // relit dans la bonne (et se garde à nouveau)
+        if (audioOnly && played.quality != AppSettings.musicQuality(context)) {
+            forget(context, Store.Music, id)
+            return null
+        }
+        return played
     }
+
+    /** La qualité du son de [videoId] dans [store] (sans vérifier qu'il est entier), null s'il n'y est pas. */
+    fun quality(context: Context, store: Store, videoId: String): AudioQuality? = read(context, store, videoId)?.quality
 
     /** Une connexion à Internet est là (dans le doute, on dit oui). */
     private fun online(context: Context): Boolean = runCatching {

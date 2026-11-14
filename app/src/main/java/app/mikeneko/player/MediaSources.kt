@@ -71,7 +71,15 @@ object MediaSources {
 
     /** La source à jouer, et la hauteur vidéo réellement choisie (0 pour l'audio seul / le direct). */
     /** [fps] : les images par seconde de la vidéo choisie (0 : inconnu ou son seul), pour la fréquence de l'écran (2.26.1). */
-    class Built(val source: MediaSource, val height: Int, val audioKey: String? = null, val videoKey: String? = null, val fps: Int = 0)
+    class Built(
+        val source: MediaSource,
+        val height: Int,
+        val audioKey: String? = null,
+        val videoKey: String? = null,
+        val fps: Int = 0,
+        /** La qualité du son choisie (musique ; une vidéo a toujours le meilleur son). */
+        val audioQuality: AudioQuality = AudioQuality.High,
+    )
 
     fun isLive(info: StreamInfo) =
         info.streamType == StreamType.LIVE_STREAM || info.streamType == StreamType.AUDIO_LIVE_STREAM
@@ -155,7 +163,7 @@ object MediaSources {
         val audioKey = audio?.let { keyOf('a', it) }
 
         if (audioOnly && audio != null) {
-            return Built(progressive.createMediaSource(item(audio.content, key = audioKey)), 0, audioKey)
+            return Built(progressive.createMediaSource(item(audio.content, key = audioKey)), 0, audioKey, audioQuality = audioQuality)
         }
 
         val limit = maxHeight ?: autoMaxHeight
