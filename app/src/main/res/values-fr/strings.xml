@@ -713,7 +713,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">Quoi de neuf dans Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Super !</string>
-    <string name="whats_new_body">🎶 Mikeneko 3.0 : la musique en Opus\n\n• Les morceaux arrivent maintenant dans le meilleur son Opus de YouTube (jusqu\'à ~160 kb/s, 48 kHz), plus fin que l\'AAC d\'avant. Tes téléchargements continuent de marcher tels quels.\n• L\'import de playlists choisit les bons morceaux : fini les autres chansons au même titre.\n• Touche la capsule Mikeneko de l\'accueil pour ouvrir ton profil.\n• Réglages en paysage : les onglets sont sur le côté.\n\n✨ Depuis la 2.26 : un tuto pour les nouveaux (Réglages › À propos › Revoir le tuto), autant de couleurs perso que tu veux, et l\'écran qui suit le rythme de chaque vidéo.</string>
+    <string name="whats_new_body">📌 Mikeneko 3.1 : les playlists épinglées\n\n• Épingle tes playlists en haut : appui long sur l\'une d\'elles dans ta bibliothèque musique puis l\'épingle, ou « Épingler en haut » sur la page d\'une playlist vidéo.\n• Sélectionne plusieurs albums et artistes dans ta bibliothèque musique (appui long) pour les retirer d\'un coup.\n• L\'import garde la version demandée : un morceau « slowed + reverb » ou en live ne devient plus l\'original.\n• Fini les petits gels de toute l\'appli quand la synchro GitHub ou un appareil lié est activé.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Importer des playlists</string>

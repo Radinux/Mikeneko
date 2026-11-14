@@ -181,6 +181,22 @@ fun MusicDockWindow(
             repeat(4) { withFrameNanos { } }
             warm = false
         }
+        // Le doigt posé sur la pilule (3.1.1) : la fenêtre est dessinée tout de suite, invisible, comme pour
+        // la chauffe du lancement. À l'ouverture, la première image demandait ~85 ms au GPU (endormi à
+        // basse fréquence pendant que la pilule ne bouge pas, et les surfaces de la fenêtre à recréer) :
+        // ce travail se fait maintenant pendant l'appui, avant que l'animation parte
+        var pressing by remember { mutableStateOf(false) }
+        // Gardée un peu après le doigt levé : un tap lance l'ouverture à l'image suivante, et retirer la
+        // fenêtre entre les deux libérerait ses surfaces juste avant qu'on en ait besoin
+        var holding by remember { mutableStateOf(false) }
+        LaunchedEffect(pressing) {
+            if (pressing) {
+                holding = true
+            } else {
+                delay(300)
+                holding = false
+            }
+        }
         LiquidGlass(
             backdrop,
             Modifier
@@ -191,7 +207,7 @@ fun MusicDockWindow(
                     layout(constraints.maxWidth, constraints.maxHeight) { placeable.place(r.left.roundToInt(), r.top.roundToInt()) }
                 }
                 .onPlaced { coordinates = it }
-                .pointerInput(geometry) { stretchGesture(state, geometry) { coordinates } }
+                .pointerInput(geometry) { stretchGesture(state, geometry, { coordinates }) { pressing = it } }
                 // Au-delà de l'ouverture (on tire encore, ou le rebond) : la vitre et son contenu
                 // s'étirent un peu ensemble depuis le bas, au lieu de laisser du verre vide en haut
                 .graphicsLayer {
@@ -226,7 +242,8 @@ fun MusicDockWindow(
                         val h = (geometry.bottom - geometry.windowTop).roundToInt()
                         val placeable = measurable.measure(Constraints.fixed(w, h))
                         layout(constraints.maxWidth, constraints.maxHeight) {
-                            if (state.expand.value > 0.3f || state.pulling || warm) placeable.place((constraints.maxWidth - w) / 2, constraints.maxHeight - h)
+                            // Dès le début de l'ouverture (avant : à 30 %), invisible jusque-là : ses surfaces restent prêtes
+                            if (state.expand.value > 0f || state.pulling || warm || holding) placeable.place((constraints.maxWidth - w) / 2, constraints.maxHeight - h)
                         }
                     }
                     // Regarde seulement quand le doigt se lève (ou que le geste est annulé), sans rien consommer
@@ -239,7 +256,8 @@ fun MusicDockWindow(
                             state.endPull()
                         }
                     }
-                    .graphicsLayer { alpha = if (warm && state.expand.value <= 0.3f) 0.004f else ((state.expand.value - 0.3f) / 0.4f).coerceIn(0f, 1f) },
+                    // Jamais tout à fait 0 quand elle est posée : à 0, le système ne la dessinerait pas (pas de chauffe)
+                    .graphicsLayer { alpha = ((state.expand.value - 0.3f) / 0.4f).coerceIn(0.004f, 1f) },
             ) {
                 PlayerWindowContent(state, backdrop, onDownload, onOpenArtist, onOpenAlbum)
             }
@@ -347,9 +365,17 @@ private fun Modifier.placeWhile(visible: () -> Boolean) = layout { measurable, c
  * morceau) et aux réglettes ; un tap reste un tap. Les positions sont prises à l'écran : la vitre
  * bouge sous le doigt pendant le geste.
  */
-private suspend fun PointerInputScope.stretchGesture(state: MusicPlayerState, geometry: WindowGeometry, coordinates: () -> LayoutCoordinates?) {
+private suspend fun PointerInputScope.stretchGesture(
+    state: MusicPlayerState,
+    geometry: WindowGeometry,
+    coordinates: () -> LayoutCoordinates?,
+    /** Le doigt est posé sur la pilule fermée (chauffe de la fenêtre), puis levé ou parti en glissé de côté. */
+    onPress: (Boolean) -> Unit,
+) {
     awaitEachGesture {
         val down = awaitFirstDown(requireUnconsumed = false)
+        if (!state.open) onPress(true)
+        try {
         var vertical = false
         val start = awaitTouchSlopOrCancellation(down.id) { change, over ->
             if (abs(over.y) > abs(over.x)) {
@@ -357,7 +383,9 @@ private suspend fun PointerInputScope.stretchGesture(state: MusicPlayerState, ge
                 change.consume()
             }
         }
+        // Un glissé de côté (changer de morceau) n'ouvrira pas la fenêtre : pas la peine de la dessiner
         if (start == null || !vertical) return@awaitEachGesture
+        onPress(false) // tirée : la fenêtre est posée pendant le geste ([MusicPlayerState.pulling])
         state.stop()
         // Le geste coupé en route (2.22.0 : rotation, vitre reconstruite…) ne posait jamais la vitre :
         // elle restait à mi-course, pilule effacée et fenêtre pas encore là. On la pose quoi qu'il arrive.
@@ -390,6 +418,10 @@ private suspend fun PointerInputScope.stretchGesture(state: MusicPlayerState, ge
         settled = true
         } finally {
             if (!settled) state.settle(state.expand.value > 0.5f)
+        }
+        } finally {
+            // Levé (un tap ouvre la fenêtre : elle reste posée tant qu'elle s'ouvre), ou glissé de côté
+            onPress(false)
         }
     }
 }
