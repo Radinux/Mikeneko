@@ -60,8 +60,8 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ### 3.2
 
-- 3.2.0: **crossfade**: the next song starts while the current one fades out (Settings › Playback ›
-  Music, 2 to 12 s, off by default).
+- 3.2.0: **crossfade**: the next song starts while the current one fades out (Settings › Music, 2 to
+  12 s, off by default).
 - 3.2.0: **sound quality** for music on Wi‑Fi, on mobile data and for downloads: High (~160 kb/s),
   Normal (~70 kb/s) or Data saver (~50 kb/s). Changing it also applies to songs already kept: they are
   fetched or downloaded again in the new quality (a downloaded song stays playable until its new file
