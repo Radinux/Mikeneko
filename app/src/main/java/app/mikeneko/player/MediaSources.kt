@@ -379,7 +379,7 @@ object MediaSources {
     private const val NORMAL_MAX_KBPS = 100
 
     /**
-     * Le son d'un morceau déjà joué, relu pour le fondu enchaîné (3.1.2) : même adresse et même clé
+     * Le son d'un morceau déjà joué, relu pour le fondu enchaîné (3.2.0) : même adresse et même clé
      * de cache que dans le lecteur principal, donc lu depuis le cache (le morceau y est en entier).
      */
     fun cachedAudio(cache: SimpleCache, item: MediaItem): MediaSource {

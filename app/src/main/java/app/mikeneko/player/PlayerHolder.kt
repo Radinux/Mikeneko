@@ -686,7 +686,7 @@ object PlayerHolder {
         preloaded = null
     }
 
-    // ---- Le fondu enchaîné (3.1.2) ----
+    // ---- Le fondu enchaîné (3.2.0) ----
     //
     // Les dernières secondes d'un morceau ([AppSettings.crossfadeSeconds]) : le suivant, déjà préparé,
     // part dans le lecteur principal (qui passe donc au morceau suivant, file et écran compris), pendant

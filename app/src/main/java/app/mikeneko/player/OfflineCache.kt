@@ -189,7 +189,7 @@ object OfflineCache {
     }
 
     /**
-     * Le fondu enchaîné (3.1.2) : [item] (« mikeneko-hors-ligne://clé ») relu depuis le cache qui le
+     * Le fondu enchaîné (3.2.0) : [item] (« mikeneko-hors-ligne://clé ») relu depuis le cache qui le
      * contient (playlists téléchargées, puis sauvegarde de lecture), sans réseau. Null s'il n'y est plus.
      */
     fun sourceForKey(context: Context, key: String, item: MediaItem): MediaSource? {

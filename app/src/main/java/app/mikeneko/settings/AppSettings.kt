@@ -52,7 +52,7 @@ object AppSettings {
     private val _sleepMinutes = MutableStateFlow(60)
     val sleepMinutes: StateFlow<Int> = _sleepMinutes.asStateFlow()
 
-    // La musique (3.1.2) : la qualité du son selon la connexion, celle des téléchargements, et le fondu
+    // La musique (3.2.0) : la qualité du son selon la connexion, celle des téléchargements, et le fondu
     // enchaîné entre deux morceaux (0 : aucun, on passe de l'un à l'autre sans blanc)
     private val _musicQualityWifi = MutableStateFlow(AudioQuality.High)
     val musicQualityWifi: StateFlow<AudioQuality> = _musicQualityWifi.asStateFlow()
@@ -182,7 +182,7 @@ object AppSettings {
 }
 
 /**
- * La qualité du son de la musique (3.1.2), d'après les flux de YouTube : Haute ≈ 130-160 kb/s (Opus),
+ * La qualité du son de la musique (3.2.0), d'après les flux de YouTube : Haute ≈ 130-160 kb/s (Opus),
  * Normale ≈ 70 kb/s, Économe ≈ 50 kb/s. L'Opus d'abord à chaque niveau, l'AAC s'il n'y en a pas.
  */
 enum class AudioQuality(val id: String) {

@@ -1378,7 +1378,7 @@ users: the point is to take them from the videos really watched.
   - importing the `youtube.com/feed/channels` page saved as .mhtml from Chrome (an idea taken from
     youtube-subscription-extractor).
 - Go back to an official NewPipeExtractor release when it ships.
-- 3.1.2: music settings. `AudioQuality` (High/Normal/Low) in `AppSettings`; `MediaSources.bestAudio` picks within
+- 3.2.0: music settings. `AudioQuality` (High/Normal/Low) in `AppSettings`; `MediaSources.bestAudio` picks within
   the Opus family (else AAC, else all) the max bitrate, the max ≤ 100 kb/s, or the min; only for `audioOnly`
   builds and music `downloadPlan`s (a video's sound stays the best). Playback uses
   `AppSettings.musicQuality(context)` = mobile setting when `ConnectivityManager.isActiveNetworkMetered`, else the

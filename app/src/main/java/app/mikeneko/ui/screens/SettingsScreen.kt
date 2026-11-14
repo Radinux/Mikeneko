@@ -695,7 +695,7 @@ private fun PlaybackSection() {
     }
 }
 
-/** La musique (3.1.2) : le fondu entre deux morceaux, la qualité du son selon la connexion, celle des téléchargements. */
+/** La musique (3.2.0) : le fondu entre deux morceaux, la qualité du son selon la connexion, celle des téléchargements. */
 @Composable
 private fun MusicSection() {
     val crossfade by AppSettings.crossfadeSeconds.collectAsState()

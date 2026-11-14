@@ -316,7 +316,7 @@ class PlaylistDownloads private constructor(private val audioOnly: Boolean) {
             return false
         }
         val info = YouTubeRepository.stream(item.url)
-        // La musique dans la qualité choisie pour les téléchargements (3.1.2)
+        // La musique dans la qualité choisie pour les téléchargements (3.2.0)
         val plan = MediaSources.downloadPlan(info, audioOnly, if (audioOnly) null else VIDEO_HEIGHT, AppSettings.downloadQuality.value)
         val http = DefaultHttpDataSource.Factory()
             .setUserAgent(NewPipeDownloader.USER_AGENT)

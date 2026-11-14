@@ -719,7 +719,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">What’s new in Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Nice!</string>
-    <string name="whats_new_body">📌 Mikeneko 3.1: pinned playlists\n\n• Pin your playlists to the top: long-press one in your music library and tap the pin, or “Pin to top” on a video playlist\'s page.\n• Select several albums and artists in your music library (long-press), then remove them at once.\n• Import keeps the version you asked for: a « slowed + reverb » or live song no longer becomes the original.\n• No more short freezes of the whole app when GitHub sync or a linked device is on.</string>
+    <string name="whats_new_body">🎧 Mikeneko 3.2: crossfade and sound quality\n\n• Crossfade: the next song starts while the current one fades out (Settings › Playback › Music, 2 to 12 s).\n• Choose the sound quality on Wi‑Fi, on mobile data, and for your downloads.\n• Pin your playlists to the top, and select several albums or artists at once in your music library.\n• Swipe down to close the video settings and the music menus.\n• The paw tells what it skipped: an intro, credits, a sponsor…</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Import playlists</string>

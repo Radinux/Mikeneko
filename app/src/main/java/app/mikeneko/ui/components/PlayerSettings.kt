@@ -115,7 +115,7 @@ fun PlayerSettingsSheet(backdrop: Backdrop, audioOnly: Boolean = false) {
 
     BackHandler(enabled = page != null) { back() }
 
-    // Glisser vers le bas ferme le panneau (3.1.2), comme les menus de la musique : depuis la poignée et
+    // Glisser vers le bas ferme le panneau (3.2.0), comme les menus de la musique : depuis la poignée et
     // tout le panneau, ou en continuant de tirer quand la liste est déjà en haut
     val scope = rememberCoroutineScope()
     val drag = remember { androidx.compose.animation.core.Animatable(0f) }
@@ -181,7 +181,7 @@ fun PlayerSettingsSheet(backdrop: Backdrop, audioOnly: Boolean = false) {
             visible = page != null,
             modifier = Modifier.align(Alignment.BottomCenter),
             enter = slideInVertically(tween(320)) { it } + fadeIn(tween(200)),
-            // La fermeture se voit (3.1.2) : avant, le fondu (200) finissait avant le glissé (260) et, à
+            // La fermeture se voit (3.2.0) : avant, le fondu (200) finissait avant le glissé (260) et, à
             // vitesse d'animation ×2, le panneau semblait disparaître d'un coup. Il redescend d'abord,
             // et ne s'efface qu'à la fin
             exit = slideOutVertically(tween(360, easing = FastOutLinearInEasing)) { it } + fadeOut(tween(160, delayMillis = 200)),

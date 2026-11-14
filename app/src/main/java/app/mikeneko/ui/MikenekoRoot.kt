@@ -343,7 +343,7 @@ fun MikenekoRoot(
     }
 
     LaunchedEffect(Unit) {
-        // Le passage sauté dit ce qu'il était (3.1.2 : avant, toujours « Sponsor », même pour une intro)
+        // Le passage sauté dit ce qu'il était (3.2.0 : avant, toujours « Sponsor », même pour une intro)
         PlayerHolder.skipped.collect { category ->
             toast(
                 context.getString(
