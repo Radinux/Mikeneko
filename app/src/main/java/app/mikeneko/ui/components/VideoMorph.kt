@@ -1,5 +1,7 @@
 package app.mikeneko.ui.components
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
@@ -48,7 +50,7 @@ import kotlinx.coroutines.withTimeoutOrNull
  * fondu pendant ce temps ; la vraie vidéo prend le relais à l'arrivée.
  */
 object VideoMorph {
-    class Morph(val image: ImageBitmap, val from: Rect, val toMini: Boolean) {
+    class Morph(val image: ImageBitmap, val from: Rect, val toMini: Boolean, /** Le mini-lecteur qui s'agrandit (3.2.1) : un simple zoom. */ val zoom: Boolean = false) {
         /** Le trajet : 0 au départ, 1 à l'arrivée (un peu plus au rebond). */
         val travel = Animatable(0f)
         /** L'atterrissage : 1 = écrasé, puis tremblote jusqu'à 0. */
@@ -68,11 +70,11 @@ object VideoMorph {
         private set
 
     /** Lance l'animation depuis [from] (null = pas d'animation, on passe directement). */
-    fun start(from: Rect?, toMini: Boolean) = startWith(VideoFrames.snapshot()?.asImageBitmap(), from, toMini)
+    fun start(from: Rect?, toMini: Boolean) = startWith(VideoFrames.snapshot()?.asImageBitmap(), from, toMini, zoom = !toMini)
 
     /** Pareil avec une autre image : la miniature d'une carte qui s'envole vers le lecteur. */
-    fun startWith(image: ImageBitmap?, from: Rect?, toMini: Boolean = false) {
-        active = if (image != null && from != null && from.width > 0f) Morph(image, from, toMini) else null
+    fun startWith(image: ImageBitmap?, from: Rect?, toMini: Boolean = false, zoom: Boolean = false) {
+        active = if (image != null && from != null && from.width > 0f) Morph(image, from, toMini, zoom) else null
     }
 
     /** Opacité de la page pendant l'animation (elle apparaît en fondu). */
@@ -90,6 +92,9 @@ object VideoMorph {
 }
 
 private val MINI_CORNER = 18.dp
+
+/** Le zoom vers le grand lecteur (durée Compose : à vitesse d'animation ×2, la moitié en vrai). */
+private const val ZOOM_MS = 520
 private const val TILT_DEGREES = 7f
 
 /** Largeur des images vivantes du morph : assez pour une vidéo qui vole, sans ralentir. */
@@ -119,15 +124,20 @@ fun VideoMorphLayer() {
                     }
                 }
             }
-            // L'atterrissage se déclenche dès qu'on touche la place (pendant le petit rebond du trajet)
-            launch {
-                snapshotFlow { morph.travel.value >= 0.97f }.first { it }
-                morph.landing.snapTo(1f)
-                morph.landing.animateTo(0f, spring(dampingRatio = 0.3f, stiffness = 330f))
+            if (morph.zoom) {
+                // Le mini-lecteur qui s'agrandit (3.2.1) : un simple zoom, droit, sans rebond ni atterrissage
+                morph.travel.animateTo(1f, tween(ZOOM_MS, easing = FastOutSlowInEasing))
+            } else {
+                // L'atterrissage se déclenche dès qu'on touche la place (pendant le petit rebond du trajet)
+                launch {
+                    snapshotFlow { morph.travel.value >= 0.97f }.first { it }
+                    morph.landing.snapTo(1f)
+                    morph.landing.animateTo(0f, spring(dampingRatio = 0.3f, stiffness = 330f))
+                }
+                // Un ressort un peu mou : plus lent qu'avant, il dépasse sa place puis revient
+                morph.travel.animateTo(1f, spring(dampingRatio = 0.68f, stiffness = 85f))
+                snapshotFlow { morph.landing.isRunning }.first { !it }
             }
-            // Un ressort un peu mou : plus lent qu'avant, il dépasse sa place puis revient
-            morph.travel.animateTo(1f, spring(dampingRatio = 0.68f, stiffness = 85f))
-            snapshotFlow { morph.landing.isRunning }.first { !it }
             liveFrames.cancel()
         }
         // Encore deux images : la vraie vidéo est bien affichée dessous avant de retirer la photo
@@ -152,7 +162,13 @@ fun VideoMorphLayer() {
         // plonge ; vers le grand lecteur, elle monte d'abord puis se recentre
         val p0 = morph.from.center
         val p2 = target.center
-        val control = if (morph.toMini) Offset(p2.x, p0.y) else Offset(p0.x, p2.y)
+        // Le zoom du mini-lecteur va tout droit (point de contrôle au milieu : une droite)
+        val zoom = morph.zoom
+        val control = when {
+            zoom -> Offset((p0.x + p2.x) / 2f, (p0.y + p2.y) / 2f)
+            morph.toMini -> Offset(p2.x, p0.y)
+            else -> Offset(p0.x, p2.y)
+        }
         val u = 1f - t
         val center = Offset(
             u * u * p0.x + 2 * u * t * control.x + t * t * p2.x,
@@ -161,23 +177,23 @@ fun VideoMorphLayer() {
         val rect = Rect(center.x - width / 2, center.y - height / 2, center.x + width / 2, center.y + height / 2)
 
         // S'étire avec la vitesse, s'écrase à l'atterrissage puis tremblote
-        val stretch = (abs(morph.travel.velocity) * 0.06f).coerceAtMost(0.18f)
+        val stretch = if (zoom) 0f else (abs(morph.travel.velocity) * 0.06f).coerceAtMost(0.18f)
         val land = morph.landing.value
         val scaleX = (1f - stretch * 0.5f) * (1f + 0.12f * land)
         val scaleY = (1f + stretch) * (1f - 0.12f * land)
         // Et penche un peu pendant le vol
-        val tilt = sin(PI.toFloat() * tIn) * TILT_DEGREES * (if (morph.toMini) 1f else -1f)
+        val tilt = if (zoom) 0f else sin(PI.toFloat() * tIn) * TILT_DEGREES * (if (morph.toMini) 1f else -1f)
 
         val miniSide = if (morph.toMini) tIn else 1f - tIn
         val radius = (if (morph.toMini) lerp(0.dp, MINI_CORNER, tIn) else lerp(MINI_CORNER, 0.dp, tIn)).toPx() +
-            12.dp.toPx() * sin(PI.toFloat() * tIn) // plus arrondie en plein vol : une vraie goutte
+            if (zoom) 0f else 12.dp.toPx() * sin(PI.toFloat() * tIn) // plus arrondie en plein vol : une vraie goutte
 
         withTransform({
             rotate(tilt, center)
             scale(scaleX, scaleY, center)
         }) {
             // L'ombre portée de la carte volante
-            drawRoundRect(
+            if (!zoom) drawRoundRect(
                 Color.Black.copy(alpha = 0.35f * sin(PI.toFloat() * tIn)),
                 topLeft = rect.topLeft + Offset(0f, 10.dp.toPx()),
                 size = rect.size,
