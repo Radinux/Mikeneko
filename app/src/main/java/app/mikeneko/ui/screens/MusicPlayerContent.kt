@@ -200,6 +200,8 @@ internal fun PlayerWindowContent(
                         Modifier.weight(1f),
                         style = TextStyle(fontFamily = Rounded, color = Pelage.Texte, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp, shadow = GlassTextShadow, textAlign = TextAlign.Center),
                     )
+                    // Le Chromecast (3.4.0)
+                    app.mikeneko.ui.components.CastButton(glass, modifier = Modifier.padding(end = 8.dp))
                     GlassCircleButton(
                         glass,
                         MkIcons.Moon,
@@ -343,6 +345,7 @@ internal fun PlayerWindowContent(
                         // Peu de hauteur : le titre partage sa ligne avec la lune et la flèche (pas de « MIX »)
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Box(Modifier.weight(1f)) { titleRow() }
+                            app.mikeneko.ui.components.CastButton(glass)
                             GlassCircleButton(
                                 glass,
                                 MkIcons.Moon,
@@ -455,7 +458,11 @@ private fun DetailsCard(image: String?, round: Boolean, title: String, subtitle:
 private fun SoundInfo(key: String?) {
     val details by PlayerHolder.audioDetails.collectAsState()
     val preset by PlayerHolder.audioPreset.collectAsState()
-    val output = app.mikeneko.ui.components.rememberAudioOutput(key)
+    val castSession by app.mikeneko.cast.Cast.session.collectAsState()
+    val local = app.mikeneko.ui.components.rememberAudioOutput(key)
+    // Pendant le cast (3.4.0) : le son part sur l'appareil
+    val output = castSession?.takeIf { it.phase == app.mikeneko.cast.Cast.Phase.Connected }
+        ?.let { app.mikeneko.ui.components.AudioOutput(it.device.name, MkIcons.Cast) } ?: local
     val style = TextStyle(fontFamily = Rounded, color = Color(0xFFE3DAD2), fontSize = 12.sp, fontWeight = FontWeight.Bold, shadow = GlassTextShadow)
     Row(
         Modifier.fillMaxWidth().padding(top = 6.dp),

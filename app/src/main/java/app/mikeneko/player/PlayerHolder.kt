@@ -209,6 +209,16 @@ object PlayerHolder {
             }
         }
         watchCrossfade()
+        // Pendant le cast (3.4.0) : chaque nouveau morceau / vidéo part sur l'appareil
+        scope.launch {
+            nowPlaying.map { it?.url }.distinctUntilChanged().collect { url ->
+                val now = nowPlaying.value
+                if (url != null && now != null && app.mikeneko.cast.Cast.active && url != app.mikeneko.cast.Cast.loadedUrl) {
+                    player?.pause()
+                    app.mikeneko.cast.Cast.load(context.applicationContext, now)
+                }
+            }
+        }
         // Musique ↔ vidéo : le volume stable est coupé pour la musique, remis pour les vidéos
         scope.launch {
             nowPlaying.map { it?.audioOnly == true }.distinctUntilChanged().collect { applyStableVolume() }
@@ -242,11 +252,19 @@ object PlayerHolder {
                 }
 
                 override fun onIsPlayingChanged(playing: Boolean) {
+                    if (app.mikeneko.cast.Cast.active) return // l'état vient de l'appareil (castState)
                     isPlaying.value = playing
                     if (!playing) saveVideoPosition() // pause, appli quittée…
                 }
 
                 override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                    // Pendant le cast (3.4.0) : le téléphone ne joue pas ; « lecture » (notification,
+                    // écouteurs…) part vers l'appareil
+                    if (playWhenReady && app.mikeneko.cast.Cast.active) {
+                        created.pause()
+                        if (app.mikeneko.cast.Cast.loadedUrl == nowPlaying.value?.url) app.mikeneko.cast.Cast.play()
+                        return
+                    }
                     if (playWhenReady) VideoFrames.forgetPausedFrame()
                     updatePlayRequested(created)
                 }
@@ -742,6 +760,59 @@ object PlayerHolder {
         audioDetails.value = AudioDetails(codec, kbps, format.sampleRate)
     }
 
+    // ---- Le Chromecast (3.4.0, voir app.mikeneko.cast.Cast) ----
+    // Les rappels de l'appareil arrivent sur un autre fil : tout repasse par le fil principal.
+
+    /** Le StreamInfo de [now] s'il est déjà chargé (sinon, Cast le redemande). */
+    internal fun castInfo(now: NowPlaying): StreamInfo? = info?.takeIf { videoIdOf(it.url) == videoIdOf(now.url) }
+
+    /** Une session commence : le téléphone se met en pause (le fondu en cours s'arrête). */
+    fun castStarted() {
+        scope.launch {
+            endCrossfade()
+            player?.pause()
+        }
+    }
+
+    /** La session est finie ; [atMs] : le téléphone reprend là (en pause), sinon il reste où il était. */
+    fun castStopped(atMs: Long?) {
+        scope.launch {
+            val now = nowPlaying.value
+            if (atMs != null && now != null && !now.live) player?.seekTo(atMs)
+            isPlaying.value = false
+            playRequested.value = false
+        }
+    }
+
+    /** L'appareil joue ou est en pause. */
+    fun castState(playing: Boolean) {
+        scope.launch {
+            isPlaying.value = playing
+            playRequested.value = playing
+        }
+    }
+
+    /** L'appareil a fini le morceau / la vidéo : la file continue (ou « répéter le morceau »). */
+    fun castFinished() {
+        scope.launch {
+            val now = nowPlaying.value ?: return@launch
+            if (now.audioOnly && repeat.value == Repeat.One) {
+                app.mikeneko.cast.Cast.seek(0)
+                app.mikeneko.cast.Cast.play()
+            } else {
+                onTrackEnded()
+            }
+        }
+    }
+
+    /** L'appareil n'a pas pu lire : on le dit. */
+    fun castFailed() {
+        scope.launch {
+            val context = appContext ?: return@launch
+            android.widget.Toast.makeText(context, context.getString(app.mikeneko.R.string.cast_failed), android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+
     // ---- Le fondu enchaîné (3.2.0) ----
     //
     // Les dernières secondes d'un morceau ([AppSettings.crossfadeSeconds]) : le suivant, déjà préparé,
@@ -770,7 +841,7 @@ object PlayerHolder {
 
     private fun maybeStartCrossfade() {
         val fade = AppSettings.crossfadeSeconds.value * 1_000L
-        if (fade <= 0 || crossfadeJob?.isActive == true) return
+        if (fade <= 0 || crossfadeJob?.isActive == true || app.mikeneko.cast.Cast.active) return
         val p = player ?: return
         val now = nowPlaying.value ?: return
         if (!now.audioOnly || now.live || preloaded == null || !p.playWhenReady) return
@@ -1136,8 +1207,8 @@ object PlayerHolder {
     suspend fun previous(context: Context, restartFirst: Boolean = true) {
         val p = player
         val now = nowPlaying.value
-        if (restartFirst && p != null && now != null && !now.live && p.currentPosition > 3_000) {
-            p.seekTo(0)
+        if (restartFirst && p != null && now != null && !now.live && progress().first > 3_000) {
+            seekTo(0)
             return
         }
         playAt(context, queueIndex.value - 1)
@@ -1387,6 +1458,10 @@ object PlayerHolder {
 
     /** Pause si la lecture est demandée (même pendant un chargement), sinon lecture ; vidéo finie : on la relance. */
     fun togglePlay() {
+        if (app.mikeneko.cast.Cast.active) {
+            app.mikeneko.cast.Cast.togglePlay()
+            return
+        }
         val p = player ?: return
         when {
             // En erreur, le lecteur est arrêté : « lecture » recharge la vidéo
@@ -1402,6 +1477,7 @@ object PlayerHolder {
     }
 
     fun pause() {
+        if (app.mikeneko.cast.Cast.active) app.mikeneko.cast.Cast.pause()
         player?.pause()
     }
 
@@ -1414,11 +1490,20 @@ object PlayerHolder {
     }
 
     fun seekTo(positionMs: Long) {
+        if (app.mikeneko.cast.Cast.active) {
+            app.mikeneko.cast.Cast.seek(positionMs)
+            return
+        }
         player?.seekTo(positionMs)
     }
 
     /** Avancer (positif) ou reculer (négatif), sans sortir de la vidéo. */
     fun seekBy(deltaMs: Long) {
+        if (app.mikeneko.cast.Cast.active) {
+            val (position, duration) = progress()
+            seekTo((position + deltaMs).coerceIn(0L, if (duration > 0) duration else Long.MAX_VALUE))
+            return
+        }
         val p = player ?: return
         val end = p.duration.takeIf { it > 0 } ?: Long.MAX_VALUE
         p.seekTo((p.currentPosition + deltaMs).coerceIn(0L, end))
@@ -1426,13 +1511,15 @@ object PlayerHolder {
 
     /** Position et durée en ms (durée 0 si inconnue, par exemple en direct). */
     fun progress(): Pair<Long, Long> =
-        player?.let { it.currentPosition to it.duration.coerceAtLeast(0) } ?: (0L to 0L)
+        if (app.mikeneko.cast.Cast.active) app.mikeneko.cast.Cast.progress()
+        else player?.let { it.currentPosition to it.duration.coerceAtLeast(0) } ?: (0L to 0L)
 
     /** Jusqu'où la vidéo / le morceau en cours est déjà chargé (ms). */
-    fun bufferedPosition(): Long = player?.bufferedPosition ?: 0L
+    fun bufferedPosition(): Long = if (app.mikeneko.cast.Cast.active) progress().first else player?.bufferedPosition ?: 0L
 
     fun stop() {
         endCrossfade()
+        app.mikeneko.cast.Cast.disconnect(resumeLocally = false) // le lecteur fermé : l'appareil s'arrête aussi
         playingShort = false
         parkedVideo.value = null
         saveVideoPosition()
@@ -1696,11 +1783,11 @@ object PlayerHolder {
             while (isActive) {
                 val p = player
                 val segments = nowPlaying.value?.segments.orEmpty()
-                if (p != null && autoSkip.value && p.isPlaying && segments.isNotEmpty()) {
-                    val position = p.currentPosition
+                if (p != null && autoSkip.value && isPlaying.value && segments.isNotEmpty()) {
+                    val position = progress().first
                     segments.firstOrNull { it.category in AppSettings.skipCategories.value && position >= it.startMs && position < it.endMs - 500 }
                         ?.let { segment ->
-                            p.seekTo(segment.endMs)
+                            seekTo(segment.endMs)
                             skipped.tryEmit(segment.category)
                         }
                 }

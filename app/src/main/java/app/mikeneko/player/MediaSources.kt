@@ -243,6 +243,80 @@ object MediaSources {
         }
     }
 
+    // ---- Le Chromecast (3.4.0, voir app.mikeneko.cast) ----
+
+    /** Un flux à servir au Chromecast : son adresse YouTube, sa clé dans la sauvegarde, son type. */
+    class CastStream(val url: String, val key: String, val mime: String, val stream: Stream)
+
+    /** Ce que le Chromecast lit : un seul fichier (son, ou vidéo tout-en-un), ou l'image et le son séparés (DASH). */
+    sealed interface CastPlan {
+        class Single(val stream: CastStream) : CastPlan
+        class Dash(val video: CastStream, val audio: CastStream, val durationSeconds: Long) : CastPlan
+    }
+
+    /**
+     * Le plan pour [info]. La musique : son meilleur son dans la qualité [audioQuality]. Une vidéo : l'image
+     * H.264 jusqu'en 1080p et le son AAC, décrits dans un manifeste DASH (ce que le lecteur par défaut du
+     * Chromecast lit partout) ; sinon, la vidéo tout-en-un de YouTube (360p).
+     */
+    fun castPlan(info: StreamInfo, audioOnly: Boolean, audioQuality: AudioQuality): CastPlan {
+        if (audioOnly) {
+            val audio = bestAudio(info.audioStreams, audioQuality) ?: error(AppLocale.string(R.string.no_playable_stream))
+            val mime = if (isOpus(audio) || audio.format == MediaFormat.WEBMA) "audio/webm" else "audio/mp4"
+            return CastPlan.Single(CastStream(audio.content, cacheKey(info, 'a', audio), mime, audio))
+        }
+        fun indexed(s: Stream) = s.isUrl && s.itagItem?.let { it.initEnd > 0 && it.indexEnd > 0 } == true
+        val video = info.videoOnlyStreams
+            .filter { indexed(it) && it.codec?.lowercase()?.startsWith("avc") == true && !isHdr(it) && it.shortSide in 1..1080 }
+            .maxWithOrNull(compareBy<VideoStream>({ it.shortSide }, { it.bitrate }))
+        val aac = info.audioStreams
+            .filter { indexed(it) && it.format == MediaFormat.M4A && it.itagItem?.isDrc != true && it.audioTrackType.let { t -> t == null || t == AudioTrackType.ORIGINAL } }
+            .maxByOrNull { it.averageBitrate }
+        if (video != null && aac != null) {
+            return CastPlan.Dash(
+                CastStream(video.content, cacheKey(info, 'v', video), "video/mp4", video),
+                CastStream(aac.content, cacheKey(info, 'a', aac), "audio/mp4", aac),
+                info.duration,
+            )
+        }
+        val muxed = info.videoStreams.filter { it.isUrl && it.format == MediaFormat.MPEG_4 }.maxByOrNull { it.shortSide }
+            ?: error(AppLocale.string(R.string.no_playable_stream))
+        return CastPlan.Single(CastStream(muxed.content, cacheKey(info, 'm', muxed), "video/mp4", muxed))
+    }
+
+    /**
+     * Le manifeste DASH d'une vidéo pour le Chromecast : une image et un son, chacun en un seul fichier MP4
+     * (« on-demand ») dont on donne les plages d'initialisation et d'index ; [videoUrl] et [audioUrl] sont
+     * les adresses où le téléphone les sert.
+     */
+    fun dashManifest(plan: CastPlan.Dash, videoUrl: String, audioUrl: String): String {
+        val v = plan.video.stream as VideoStream
+        val a = plan.audio.stream as AudioStream
+        val vi = v.itagItem!!
+        val ai = a.itagItem!!
+        fun esc(s: String) = s.replace("&", "&amp;").replace("\"", "&quot;").replace("<", "&lt;")
+        val fps = vi.fps.takeIf { it > 0 } ?: v.fps.takeIf { it > 0 } ?: 30
+        return buildString {
+            append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+            append("<MPD xmlns=\"urn:mpeg:dash:schema:mpd:2011\" profiles=\"urn:mpeg:dash:profile:isoff-on-demand:2011\" type=\"static\" ")
+            append("minBufferTime=\"PT1.5S\" mediaPresentationDuration=\"PT${plan.durationSeconds.coerceAtLeast(1)}S\">\n")
+            append("<Period>\n")
+            append("<AdaptationSet contentType=\"video\" mimeType=\"video/mp4\" subsegmentAlignment=\"true\">\n")
+            append("<Representation id=\"v\" codecs=\"${esc(v.codec ?: "avc1.640028")}\" bandwidth=\"${vi.bitrate.coerceAtLeast(1)}\" ")
+            append("width=\"${v.width}\" height=\"${v.height}\" frameRate=\"$fps\">\n")
+            append("<BaseURL>${esc(videoUrl)}</BaseURL>\n")
+            append("<SegmentBase indexRange=\"${vi.indexStart}-${vi.indexEnd}\"><Initialization range=\"${vi.initStart}-${vi.initEnd}\"/></SegmentBase>\n")
+            append("</Representation>\n</AdaptationSet>\n")
+            append("<AdaptationSet contentType=\"audio\" mimeType=\"audio/mp4\" subsegmentAlignment=\"true\">\n")
+            append("<Representation id=\"a\" codecs=\"${esc(a.codec ?: "mp4a.40.2")}\" bandwidth=\"${ai.bitrate.coerceAtLeast(1)}\" audioSamplingRate=\"${ai.sampleRate.takeIf { it > 0 } ?: 44100}\">\n")
+            append("<AudioChannelConfiguration schemeIdUri=\"urn:mpeg:dash:23003:3:audio_channel_configuration:2011\" value=\"${ai.audioChannels.takeIf { it > 0 } ?: 2}\"/>\n")
+            append("<BaseURL>${esc(audioUrl)}</BaseURL>\n")
+            append("<SegmentBase indexRange=\"${ai.indexStart}-${ai.indexEnd}\"><Initialization range=\"${ai.initStart}-${ai.initEnd}\"/></SegmentBase>\n")
+            append("</Representation>\n</AdaptationSet>\n")
+            append("</Period>\n</MPD>\n")
+        }
+    }
+
     /**
      * La clé d'un flux dans la sauvegarde ([OfflineCache]) : l'id, l'itag et la taille du fichier.
      * YouTube sert parfois des fichiers différents sous le même itag (son « DRC » au volume

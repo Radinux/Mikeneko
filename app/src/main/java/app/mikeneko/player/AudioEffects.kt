@@ -314,7 +314,7 @@ class EffectChain(val preset: AudioPreset, val sampleRate: Int) {
             AudioPreset.Slowed -> {
                 eq(Biquad.lowPass(fs, 10_000.0, 0.6), Biquad.lowShelf(fs, 120.0, 2.0))
                 preGain = db(-2.0)
-                reverb = Reverb(fs, 2.6, 0.20f, 180.0) // 3.3.1 : 0,25 → 0,20 (un peu moins de réverbération)
+                reverb = Reverb(fs, 2.6, 0.20f, 180.0) // 3.4.0 : 0,25 → 0,20 (un peu moins de réverbération)
             }
             AudioPreset.SpedUp, AudioPreset.Nightcore -> eq(Biquad.highShelf(fs, 10_000.0, 2.0))
             AudioPreset.Spatial -> {

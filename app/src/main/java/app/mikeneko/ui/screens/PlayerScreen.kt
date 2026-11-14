@@ -354,7 +354,10 @@ fun PlayerContent(onMinimize: () -> Unit, onDownload: (String) -> Unit, onRadio:
             ) {
                 // Sous-titres remontés au-dessus des boutons quand ils sont affichés
                 val captionLift by animateFloatAsState(if (controls) 0.34f else 0f, tween(250), label = "sous-titres")
-                Box(Modifier.fillMaxSize().backdropSource(video)) { VideoSurface(Modifier.fillMaxSize(), captionLift = captionLift) }
+                Box(Modifier.fillMaxSize().backdropSource(video)) {
+                    VideoSurface(Modifier.fillMaxSize(), captionLift = captionLift)
+                    app.mikeneko.ui.components.CastingOverlay(Modifier.fillMaxSize()) // « Lecture sur … » (3.4.0)
+                }
 
                 // Toute l'image : un tap montre / cache les commandes, un double tap recule / avance de 10 s
                 TapToSeekLayer(
@@ -433,6 +436,7 @@ fun PlayerContent(onMinimize: () -> Unit, onDownload: (String) -> Unit, onRadio:
                                         if (!PlayerHolder.toggleCaptions()) Toast.makeText(context, context.getString(R.string.no_captions), Toast.LENGTH_SHORT).show()
                                         poke++
                                     }
+                                    app.mikeneko.ui.components.CastButton(video) // le Chromecast (3.4.0)
                                     GlassCircleButton(video, MkIcons.Gear, stringResource(R.string.video_settings), size = 44.dp) { PlayerHolder.settingsPage.value = SettingsPage.Menu }
                                     GlassCircleButton(video, MkIcons.Fullscreen, stringResource(R.string.fullscreen), size = 44.dp, onClick = onFullscreen)
                                 }

@@ -151,6 +151,7 @@ fun FullscreenPlayer(onExit: () -> Unit) {
         // Arrivée en tournant le téléphone : la vidéo pivote depuis sa place du portrait (RotationMorph)
         Box(Modifier.fillMaxSize().graphicsLayer { with(RotationMorph) { fullscreenVideo() } }.backdropSource(video)) {
             VideoSurface(Modifier.fillMaxSize(), captionLift = captionLift)
+            app.mikeneko.ui.components.CastingOverlay(Modifier.fillMaxSize()) // « Lecture sur … » (3.4.0)
         }
         // Mode ambiant (3.0.2) : la lueur de la vidéo dans les bandes noires, jamais sur l'image
         BarsGlow(video)
@@ -214,6 +215,8 @@ fun FullscreenPlayer(onExit: () -> Unit) {
                         }
                         Spacer(Modifier.width(10.dp))
                     }
+                    app.mikeneko.ui.components.CastButton(video, onOpen = { act { } }) // le Chromecast (3.4.0)
+                    Spacer(Modifier.width(10.dp))
                     GlassCircleButton(video, MkIcons.Gear, stringResource(R.string.video_settings), size = 44.dp) { act { PlayerHolder.settingsPage.value = SettingsPage.Menu } }
                 }
 

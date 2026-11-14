@@ -119,6 +119,17 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /** Pendant le cast (3.4.0) : les touches de volume règlent l'appareil, pas le téléphone. */
+    override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
+        if (app.mikeneko.cast.Cast.active && (event.keyCode == android.view.KeyEvent.KEYCODE_VOLUME_UP || event.keyCode == android.view.KeyEvent.KEYCODE_VOLUME_DOWN)) {
+            if (event.action == android.view.KeyEvent.ACTION_DOWN) {
+                app.mikeneko.cast.Cast.adjustVolume(if (event.keyCode == android.view.KeyEvent.KEYCODE_VOLUME_UP) 0.05f else -0.05f)
+            }
+            return true
+        }
+        return super.dispatchKeyEvent(event)
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         linkFrom(intent)?.let { links.value = it }

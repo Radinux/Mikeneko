@@ -720,7 +720,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">Quoi de neuf dans Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Super !</string>
-    <string name="whats_new_body">🎛️ Mikeneko 3.3 : les effets audio\n\n• 16 effets audio pour la musique : Slowed + Reverb, Sped Up, Nightcore, 8D, Spatial 360, basses renforcées, ultra basses, cristallin, vieille radio et d\'autres. Touche le bouton des curseurs dans le lecteur musique.\n• Le lecteur musique affiche le son qui joue et où il part (ton casque Bluetooth…).\n• Fondu enchaîné et qualité du son : Réglages › Musique.\n• Glisse vers la droite sur la capsule musique pour revenir au morceau précédent.</string>
+    <string name="whats_new_body">📺 Mikeneko 3.4 : le Chromecast\n\n• Envoie ta musique et tes vidéos sur un Chromecast, une Google TV ou une enceinte Cast du Wi‑Fi : touche le bouton écran-avec-ondes dans le lecteur musique ou vidéo. Sans les services Google.\n• Pendant ce temps, le téléphone sert de télécommande : lecture, pause, suivant, avance, et les touches de volume.\n• Les effets audio de la musique : bouton des curseurs dans le lecteur musique (un peu moins de réverbération qu\'en 3.3).</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Importer des playlists</string>
@@ -898,4 +898,14 @@
     <string name="fx_old_radio_text">Un poste AM des années 50</string>
     <string name="fx_lofi">Lo-fi</string>
     <string name="fx_lofi_text">La vieille radio, un peu ralentie</string>
+    <string name="cast_failed">L\'appareil n\'a pas pu le lire</string>
+    <string name="cast">Caster</string>
+    <string name="cast_title">Caster sur</string>
+    <string name="cast_searching">Recherche des appareils sur le Wi‑Fi…</string>
+    <string name="cast_connecting">Connexion à %1$s…</string>
+    <string name="cast_connect_failed">Impossible de se connecter à %1$s</string>
+    <string name="cast_playing_on">Lecture sur %1$s</string>
+    <string name="cast_volume">Volume</string>
+    <string name="cast_stop">Arrêter de caster</string>
+    <string name="cast_sound_only">son seulement</string>
 </resources>

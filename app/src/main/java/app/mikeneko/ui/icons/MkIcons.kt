@@ -105,6 +105,8 @@ object MkIcons {
     val Reorder = stroke("reordonner", "M8 20V5 M4 9l4-4 4 4 M16 4v15 M12 15l4 4 4-4", width = 2.3f)
     val Mix = stroke("mix", "M12 12c-2-2.67-4-4-6-4a4 4 0 1 0 0 8c2 0 4-1.33 6-4zm0 0c2 2.67 4 4 6 4a4 4 0 0 0 0-8c-2 0-4 1.33-6 4z")
     /** Reconnaître un morceau (2.25.0) : un micro. */
+    // Le Chromecast (3.4.0) : un écran avec les ondes dans le coin
+    val Cast = stroke("caster", "M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6 M2 12a8 8 0 0 1 8 8 M2 16a4 4 0 0 1 4 4 M2 20h.01")
     // Les effets audio (3.3.0) : des curseurs d'égaliseur
     val Equalizer = stroke("effets", "M5 21v-7 M5 10V3 M12 21v-9 M12 8V3 M19 21v-5 M19 12V3 M2 14h6 M9 8h6 M16 16h6")
     // La sortie du son (3.2.0) : casque Bluetooth, casque filaire / USB, haut-parleur
