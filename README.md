@@ -60,6 +60,9 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ### 3.2
 
+- 3.2.2: **deleting the playlist that is playing** stops the music (a deleted video playlist leaves the
+  *Up next* drawer); **swiping right on the music capsule** always goes to the previous song (it used to
+  restart the current one after 3 s).
 - 3.2.1: **Music has its own tab** in Settings (crossfade, sound quality, downloads).
 - 3.2.1: in landscape, the **tabs are on the right**; the *What's new* panel keeps its button visible.
 - 3.2.1: the floating mini player has **play/pause top-left** and **expand in the middle**, and it now
