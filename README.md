@@ -60,6 +60,10 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ### 3.2
 
+- 3.2.1: **Music has its own tab** in Settings (crossfade, sound quality, downloads).
+- 3.2.1: in landscape, the **tabs are on the right**; the *What's new* panel keeps its button visible.
+- 3.2.1: the floating mini player has **play/pause top-left** and **expand in the middle**, and it now
+  grows into the full player with a **simple zoom**.
 - 3.2.0: **crossfade**: the next song starts while the current one fades out (Settings › Music, 2 to
   12 s, off by default).
 - 3.2.0: **sound quality** for music on Wi‑Fi, on mobile data and for downloads: High (~160 kb/s),
