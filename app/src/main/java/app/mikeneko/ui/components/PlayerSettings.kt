@@ -1,5 +1,11 @@
 package app.mikeneko.ui.components
 
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.graphics.graphicsLayer
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 import android.os.Build
 import android.os.SystemClock
 import android.widget.Toast
@@ -109,6 +115,56 @@ fun PlayerSettingsSheet(backdrop: Backdrop, audioOnly: Boolean = false) {
 
     BackHandler(enabled = page != null) { back() }
 
+    // Glisser vers le bas ferme le panneau (3.1.2), comme les menus de la musique : depuis la poignée et
+    // tout le panneau, ou en continuant de tirer quand la liste est déjà en haut
+    val scope = rememberCoroutineScope()
+    val drag = remember { androidx.compose.animation.core.Animatable(0f) }
+    val closeAt = with(androidx.compose.ui.platform.LocalDensity.current) { 120.dp.toPx() }
+    LaunchedEffect(page != null) { if (page != null) drag.snapTo(0f) }
+    fun release(velocity: Float) {
+        scope.launch {
+            if (drag.value > closeAt || (velocity > 1_500f && drag.value > 0f)) close()
+            else drag.animateTo(0f, androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 500f))
+        }
+    }
+    val pullDown = remember {
+        object : androidx.compose.ui.input.nestedscroll.NestedScrollConnection {
+            // Descendu : il remonte d'abord avant que la liste ne défile
+            override fun onPreScroll(available: androidx.compose.ui.geometry.Offset, source: androidx.compose.ui.input.nestedscroll.NestedScrollSource): androidx.compose.ui.geometry.Offset {
+                if (available.y < 0f && drag.value > 0f) {
+                    val used = maxOf(available.y, -drag.value)
+                    scope.launch { drag.snapTo(drag.value + used) }
+                    return androidx.compose.ui.geometry.Offset(0f, used)
+                }
+                return androidx.compose.ui.geometry.Offset.Zero
+            }
+            // La liste est en haut (ou ne défile pas) et on tire encore : c'est le panneau qui descend
+            override fun onPostScroll(consumed: androidx.compose.ui.geometry.Offset, available: androidx.compose.ui.geometry.Offset, source: androidx.compose.ui.input.nestedscroll.NestedScrollSource): androidx.compose.ui.geometry.Offset {
+                if (available.y > 0f && source == androidx.compose.ui.input.nestedscroll.NestedScrollSource.UserInput) {
+                    scope.launch { drag.snapTo(drag.value + available.y) }
+                    return androidx.compose.ui.geometry.Offset(0f, available.y)
+                }
+                return androidx.compose.ui.geometry.Offset.Zero
+            }
+            override suspend fun onPreFling(available: androidx.compose.ui.unit.Velocity): androidx.compose.ui.unit.Velocity {
+                if (drag.value <= 0f) return androidx.compose.ui.unit.Velocity.Zero
+                release(available.y)
+                return available
+            }
+        }
+    }
+    val handle = Modifier.pointerInput(Unit) {
+        val tracker = androidx.compose.ui.input.pointer.util.VelocityTracker()
+        detectVerticalDragGestures(
+            onDragStart = { tracker.resetTracking() },
+            onDragEnd = { release(tracker.calculateVelocity().y) },
+            onDragCancel = { release(0f) },
+        ) { change, amount ->
+            tracker.addPosition(change.uptimeMillis, change.position)
+            scope.launch { drag.snapTo((drag.value + amount).coerceAtLeast(0f)) }
+        }
+    }
+
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val maxSheetHeight = maxHeight * 0.88f
 
@@ -133,6 +189,9 @@ fun PlayerSettingsSheet(backdrop: Backdrop, audioOnly: Boolean = false) {
             LiquidGlass(
                 backdrop = backdrop,
                 modifier = Modifier
+                    .graphicsLayer { translationY = drag.value }
+                    .then(handle)
+                    .nestedScroll(pullDown)
                     .widthIn(max = 520.dp)
                     .fillMaxWidth()
                     .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal))
