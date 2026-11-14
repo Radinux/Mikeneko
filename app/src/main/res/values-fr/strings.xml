@@ -720,7 +720,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">Quoi de neuf dans Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Super !</string>
-    <string name="whats_new_body">🎧 Mikeneko 3.2 : fondu enchaîné et qualité du son\n\n• Fondu enchaîné : le morceau suivant commence pendant que l\'autre s\'efface (Réglages › Lecture › Musique, de 2 à 12 s).\n• Choisis la qualité du son en Wi‑Fi, en données mobiles, et pour tes téléchargements.\n• Épingle tes playlists en haut, et sélectionne plusieurs albums ou artistes d\'un coup dans ta bibliothèque musique.\n• Glisse vers le bas pour fermer les réglages vidéo et les menus de la musique.\n• Le coup de patte dit ce qu\'il a sauté : une intro, un générique, un sponsor…</string>
+    <string name="whats_new_body">🎧 Mikeneko 3.2 : fondu enchaîné et qualité du son\n\n• Fondu enchaîné : le morceau suivant commence pendant que l\'autre s\'efface (Réglages › Musique, de 2 à 12 s).\n• Choisis la qualité du son en Wi‑Fi, en données mobiles, et pour tes téléchargements.\n• Épingle tes playlists en haut, et sélectionne plusieurs albums ou artistes d\'un coup dans ta bibliothèque musique.\n• Glisse vers le bas pour fermer les réglages vidéo et les menus de la musique.\n• Le coup de patte dit ce qu\'il a sauté : une intro, un générique, un sponsor…</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Importer des playlists</string>
@@ -864,4 +864,5 @@
     <string name="output_usb">Audio USB</string>
     <string name="output_speaker">Haut-parleur du téléphone</string>
     <string name="output_other">Sortie audio</string>
+    <string name="settings_tab_music">Musique</string>
 </resources>

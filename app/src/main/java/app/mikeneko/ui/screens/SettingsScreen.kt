@@ -214,10 +214,10 @@ private fun ColumnScope.SettingsTabContent(tab: SettingsTab, list: LazyListState
             }
             SettingsTab.Playback -> {
                 item { PlaybackSection() }
-                item { MusicSection() }
                 item { SponsorBlockSection() }
                 item { OfflineSection(context) }
             }
+            SettingsTab.Music -> item { MusicSection() }
             SettingsTab.ForYou -> item { HistorySection(context) }
             SettingsTab.Sync -> {
                 item { SyncSection() }
@@ -238,6 +238,7 @@ internal object SettingsStart {
 internal enum class SettingsTab(val label: Int) {
     General(R.string.settings_tab_general),
     Playback(R.string.settings_tab_playback),
+    Music(R.string.settings_tab_music), // 3.2.1 : son onglet à part (avant, dans Lecture)
     ForYou(R.string.settings_tab_foryou),
     Sync(R.string.settings_tab_sync),
     About(R.string.settings_tab_about),
