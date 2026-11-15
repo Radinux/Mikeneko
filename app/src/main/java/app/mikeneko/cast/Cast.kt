@@ -68,6 +68,13 @@ object Cast {
     private var transportId: String? = null
     private var appSessionId: String? = null
     @Volatile private var mediaSessionId: Int = 0
+    /** Les statuts d'un média plus ancien que le dernier LOAD (numéro de session plus petit) sont ignorés. */
+    @Volatile private var mediaSessionFloor: Int = 0
+    /** Lecture / pause demandée avant que l'appareil ait donné son numéro de session : appliquée dès qu'il arrive. */
+    @Volatile private var wanted: Boolean? = null
+    private var pollJob: Job? = null
+    private var volumeJob: Job? = null
+    @Volatile private var volumeSetAt = 0L
     /** Ce qui est chargé sur l'appareil (l'adresse de [NowPlaying]). */
     @Volatile var loadedUrl: String? = null
         private set
@@ -172,6 +179,7 @@ object Cast {
                 _session.value = Session(device, Phase.Connected)
                 PlayerHolder.castStarted()
                 PlayerHolder.nowPlaying.value?.let { load(app, it, PlayerHolder.progress().first) }
+                poll(c)
             } catch (e: Exception) {
                 channel?.close()
                 channel = null
@@ -198,18 +206,44 @@ object Cast {
         if (wasActive) PlayerHolder.castStopped(if (resumeLocally) at else null)
     }
 
+    /** La session s'est fermée sans qu'on le demande (lecteur fermé sur l'appareil, Wi-Fi coupé…) : on le dit. */
     private fun onClosed(device: CastDevice) {
         if (channel == null) return
         val at = progress().first
+        val c = channel
         channel = null
+        c?.close()
         cleanUp()
         PlayerHolder.castStopped(at)
+        PlayerHolder.castLost(device.name)
+    }
+
+    /**
+     * Toutes les 3 s, on redemande où en est l'appareil (3.6.0) : sa position, lecture ou pause, son numéro
+     * de session. L'appli reste ainsi d'accord avec l'appareil, même si un statut s'est perdu ou si
+     * quelqu'un a mis pause avec la télécommande de la télé.
+     */
+    private fun poll(c: CastChannel) {
+        pollJob?.cancel()
+        pollJob = scope.launch {
+            while (channel === c) {
+                delay(3_000)
+                val transport = transportId ?: continue
+                c.send(transport, CastMessage.NS_MEDIA, JSONObject().put("type", "GET_STATUS").put("requestId", c.nextId()))
+            }
+        }
     }
 
     private fun cleanUp() {
+        pollJob?.cancel()
+        pollJob = null
+        volumeJob?.cancel()
+        volumeJob = null
         transportId = null
         appSessionId = null
         mediaSessionId = 0
+        mediaSessionFloor = 0
+        wanted = null
         loadedUrl = null
         playing = false
         _session.value = null
@@ -224,6 +258,13 @@ object Cast {
         val transport = transportId ?: return
         loadJob?.cancel()
         loadedUrl = now.url
+        // Le média d'avant ne compte plus : ses statuts (« interrompu »…) sont ignorés, et lecture/pause
+        // attendent le numéro de session du nouveau
+        mediaSessionFloor = mediaSessionId + 1
+        mediaSessionId = 0
+        wanted = null
+        position = startMs
+        positionAt = SystemClock.elapsedRealtime()
         loadJob = scope.launch {
             try {
                 val device = _session.value?.device ?: return@launch
@@ -320,18 +361,16 @@ object Cast {
         c.send(transport, CastMessage.NS_MEDIA, payload)
     }
 
-    fun play() {
-        anchor()
-        playing = true
-        PlayerHolder.castState(true)
-        media("PLAY")
-    }
+    fun play() = command(true)
 
-    fun pause() {
+    fun pause() = command(false)
+
+    private fun command(play: Boolean) {
         anchor()
-        playing = false
-        PlayerHolder.castState(false)
-        media("PAUSE")
+        playing = play
+        PlayerHolder.castState(play)
+        if (mediaSessionId == 0) wanted = play // le média charge encore : appliqué à son premier statut
+        else media(if (play) "PLAY" else "PAUSE")
     }
 
     fun togglePlay() = if (playing) pause() else play()
@@ -343,11 +382,29 @@ object Cast {
     }
 
     /** Le volume de l'appareil : [delta] en plus ou en moins (touches de volume du téléphone). */
-    fun adjustVolume(delta: Float) {
-        val c = channel ?: return
-        val level = (volume.value + delta).coerceIn(0f, 1f)
-        volume.value = level
-        c.send(CastChannel.RECEIVER, CastMessage.NS_RECEIVER, JSONObject().put("type", "SET_VOLUME").put("volume", JSONObject().put("level", level.toDouble())).put("requestId", c.nextId()))
+    fun adjustVolume(delta: Float) = setVolume(volume.value + delta)
+
+    /**
+     * Le volume de l'appareil (0 à 1). 3.6.0 : envoyé au plus toutes les 150 ms (le curseur en envoyait
+     * un à chaque pixel), et les volumes renvoyés par l'appareil pendant le réglage sont ignorés (ils
+     * faisaient sauter le curseur en arrière).
+     */
+    fun setVolume(level: Float) {
+        if (channel == null) return
+        volume.value = level.coerceIn(0f, 1f)
+        volumeSetAt = SystemClock.elapsedRealtime()
+        if (volumeJob?.isActive == true) return
+        volumeJob = scope.launch {
+            var sent = -1f
+            while (true) {
+                val target = volume.value
+                if (target == sent) break
+                val c = channel ?: break
+                c.send(CastChannel.RECEIVER, CastMessage.NS_RECEIVER, JSONObject().put("type", "SET_VOLUME").put("volume", JSONObject().put("level", target.toDouble())).put("requestId", c.nextId()))
+                sent = target
+                delay(150)
+            }
+        }
     }
 
     /** Position et durée sur l'appareil (ms). */
@@ -368,8 +425,10 @@ object Cast {
             CastMessage.NS_MEDIA -> if (json.optString("type") == "MEDIA_STATUS") onMediaStatus(json)
             CastMessage.NS_RECEIVER -> if (json.optString("type") == "RECEIVER_STATUS") {
                 readVolume(json)
-                // Le lecteur a été fermé sur l'appareil (télécommande, quelqu'un d'autre caste) : fin de session
-                if (_session.value?.phase == Phase.Connected && findApp(json) == null) scope.launch { onClosed(_session.value?.device ?: return@launch) }
+                // Le lecteur a été fermé sur l'appareil (télécommande, quelqu'un d'autre caste) : fin de session.
+                // 3.6.0 : seulement si le statut donne bien la liste des applis et que la nôtre n'y est plus ;
+                // un statut de volume sans cette liste coupait la session alors que l'appareil jouait encore
+                if (_session.value?.phase == Phase.Connected && appClosed(json)) scope.launch { onClosed(_session.value?.device ?: return@launch) }
             }
             CastMessage.NS_CONNECTION -> if (json.optString("type") == "CLOSE" && message.source == transportId) {
                 scope.launch { onClosed(_session.value?.device ?: return@launch) }
@@ -379,14 +438,27 @@ object Cast {
 
     private fun onMediaStatus(json: JSONObject) {
         val status = json.optJSONArray("status")?.optJSONObject(0) ?: return
-        status.optInt("mediaSessionId", 0).takeIf { it != 0 }?.let { mediaSessionId = it }
+        val id = status.optInt("mediaSessionId", 0)
+        if (id == 0 || id < mediaSessionFloor) return // le média d'avant
+        mediaSessionId = id
         status.optJSONObject("media")?.optDouble("duration", -1.0)?.takeIf { it > 0 }?.let { duration = (it * 1000).toLong() }
         if (status.has("currentTime")) {
             position = (status.optDouble("currentTime", 0.0) * 1000).toLong()
             positionAt = SystemClock.elapsedRealtime()
         }
         rate = status.optDouble("playbackRate", 1.0).toFloat()
-        when (status.optString("playerState")) {
+        val state = status.optString("playerState")
+        // Lecture / pause demandée pendant le chargement : maintenant que l'appareil a un numéro de session
+        wanted?.let { want ->
+            if (state == "PLAYING" || state == "PAUSED") {
+                wanted = null
+                if (want != (state == "PLAYING")) {
+                    media(if (want) "PLAY" else "PAUSE")
+                    return
+                }
+            }
+        }
+        when (state) {
             "PLAYING" -> { playing = true; PlayerHolder.castState(true) }
             "PAUSED" -> { playing = false; PlayerHolder.castState(false) }
             "BUFFERING" -> Unit
@@ -410,7 +482,19 @@ object Cast {
         return null
     }
 
+    /** Le statut liste les applis lancées sur l'appareil, et notre lecteur n'y est plus. */
+    private fun appClosed(status: JSONObject): Boolean {
+        val apps = status.optJSONObject("status")?.optJSONArray("applications") ?: return false
+        val ours = appSessionId
+        for (i in 0 until apps.length()) {
+            val app = apps.optJSONObject(i) ?: continue
+            if (if (ours.isNullOrEmpty()) app.optString("appId") == DEFAULT_RECEIVER else app.optString("sessionId") == ours) return false
+        }
+        return true
+    }
+
     private fun readVolume(status: JSONObject) {
+        if (SystemClock.elapsedRealtime() - volumeSetAt < 1_000) return // on est en train de le régler
         status.optJSONObject("status")?.optJSONObject("volume")?.optDouble("level", -1.0)?.takeIf { it >= 0 }?.let { volume.value = it.toFloat() }
     }
 

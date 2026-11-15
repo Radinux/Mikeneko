@@ -805,6 +805,14 @@ object PlayerHolder {
         }
     }
 
+    /** La connexion à l'appareil s'est coupée toute seule (3.6.0) : on le dit, plutôt que de faire comme si de rien n'était. */
+    fun castLost(device: String) {
+        scope.launch {
+            val context = appContext ?: return@launch
+            android.widget.Toast.makeText(context, context.getString(app.mikeneko.R.string.cast_lost, device), android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+
     /** L'appareil n'a pas pu lire : on le dit. */
     fun castFailed() {
         scope.launch {

@@ -719,7 +719,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">What’s new in Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Nice!</string>
-    <string name="whats_new_body">🔊 Mikeneko 3.6: cleaner audio effects\n\n• Switching effect while a song plays is now a smooth blend, no click.\n• A new limiter sees loud peaks coming and turns them down gently: strong bass stays clean, even on a speaker.\n• 8D Audio turns around your head more convincingly (headphones).\n• Ultra Bass adds gentle harmonics, so the bass is heard even on small speakers and earbuds.\n• Xstrm Bass hits much harder: the bass at 68 Hz slams, saturated and growling, made for small speakers with passive radiators.</string>
+    <string name="whats_new_body">🔊 Mikeneko 3.6: cleaner audio effects, casting fixed\n\n• Casting stays in sync with the TV or speaker, the volume slider is smooth, and a “Playing on …” capsule shows where the sound goes.\n• Switching effect while a song plays is now a smooth blend, no click.\n• A new limiter sees loud peaks coming and turns them down gently: strong bass stays clean, even on a speaker.\n• 8D Audio turns around your head more convincingly (headphones).\n• Ultra Bass adds gentle harmonics, so the bass is heard even on small speakers and earbuds.\n• Xstrm Bass hits much harder: the bass at 68 Hz slams, saturated and growling, made for small speakers with passive radiators.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Import playlists</string>
@@ -900,6 +900,7 @@
     <string name="fx_lofi">Lo-Fi</string>
     <string name="fx_lofi_text">The old radio, a bit slower</string>
     <string name="cast_failed">The device couldn\'t play this</string>
+    <string name="cast_lost">Lost the connection to %1$s</string>
     <string name="cast">Cast</string>
     <string name="cast_title">Cast to</string>
     <string name="cast_searching">Looking for devices on the Wi‑Fi…</string>

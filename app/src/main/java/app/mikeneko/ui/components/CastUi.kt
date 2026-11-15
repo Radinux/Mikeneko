@@ -89,7 +89,7 @@ fun CastPicker(onDismiss: () -> Unit) {
                             Icon(MkIcons.Speaker, stringResource(R.string.cast_volume), tint = Pelage.Texte, modifier = Modifier.size(20.dp))
                             Slider(
                                 value = volume,
-                                onValueChange = { Cast.adjustVolume(it - volume) },
+                                onValueChange = { Cast.setVolume(it) },
                                 modifier = Modifier.padding(start = 8.dp),
                                 colors = SliderDefaults.colors(thumbColor = Pelage.Roux, activeTrackColor = Pelage.Roux),
                             )
@@ -146,6 +146,38 @@ fun CastPicker(onDismiss: () -> Unit) {
             }
         },
     )
+}
+
+/**
+ * Pendant le cast (3.6.0) : une capsule « Lecture sur … » de la couleur du thème, pour voir d'un coup
+ * d'œil où part le son. Un tap ouvre [CastPicker] (volume, arrêter).
+ */
+@Composable
+fun CastIndicator(modifier: Modifier = Modifier) {
+    val session by Cast.session.collectAsState()
+    val current = session ?: return
+    if (current.phase != Cast.Phase.Connected) return
+    var open by remember { mutableStateOf(false) }
+    Row(
+        modifier
+            .clip(RoundedCornerShape(50))
+            .background(Pelage.Roux.copy(alpha = 0.28f))
+            .clickable(role = Role.Button) { open = true }
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(if (current.device.audioOnly) MkIcons.Speaker else MkIcons.Cast, null, tint = Pelage.RouxClair, modifier = Modifier.size(16.dp))
+        Text(
+            stringResource(R.string.cast_playing_on, current.device.name),
+            Modifier.padding(start = 6.dp),
+            color = Pelage.RouxClair,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.ExtraBold,
+            maxLines = 1,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+        )
+    }
+    if (open) CastPicker { open = false }
 }
 
 /** Sur la vidéo pendant le cast : « Lecture sur … » (le téléphone n'affiche rien d'autre). */

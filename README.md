@@ -68,6 +68,14 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
   every kick slams at full level, and growling harmonics (136, 204 Hz) that carry the note even where the
   speaker runs out of breath.
 
+- 3.6.0: **casting fixed**: the app no longer drops the session on its own (a volume change could end it
+  while the TV kept playing, leaving the app out of sync); it asks the device where it is every 3 s;
+  play/pause tapped while a song loads is applied once it starts; the volume slider is smooth; a lost
+  connection is announced. A **"Playing on …" capsule** in the theme color shows in the music player
+  (tap it for volume and stop).
+- 3.6.0: the **audio effect** name sits on its own centered line under the sound details, in the theme
+  color, so it no longer pushes the audio output off screen.
+
 ### 3.5
 
 - 3.5.0: **Xstrm Bass**, a new audio effect for small speakers with passive radiators: a +7 dB bass

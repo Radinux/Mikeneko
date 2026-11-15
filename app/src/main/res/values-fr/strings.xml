@@ -720,7 +720,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">Quoi de neuf dans Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Super !</string>
-    <string name="whats_new_body">🔊 Mikeneko 3.6 : des effets audio plus propres\n\n• Changer d\'effet pendant une chanson se fait en fondu, sans clic.\n• Un nouveau limiteur voit venir les crêtes et les baisse en douceur : les grosses basses restent propres, même sur une enceinte.\n• Le 8D tourne autour de la tête de façon plus réaliste (casque).\n• Ultra basses ajoute de légères harmoniques : la basse s\'entend même sur de petites enceintes et des écouteurs.\n• Xstrm Bass cogne bien plus fort : les basses à 68 Hz crachent, saturées et grondantes, faites pour les petites enceintes à radiateurs passifs.</string>
+    <string name="whats_new_body">🔊 Mikeneko 3.6 : des effets audio plus propres, le Cast réparé\n\n• Le Cast reste synchronisé avec la télé ou l\'enceinte, le volume se règle en douceur, et une capsule « Lecture sur … » montre où part le son.\n• Changer d\'effet pendant une chanson se fait en fondu, sans clic.\n• Un nouveau limiteur voit venir les crêtes et les baisse en douceur : les grosses basses restent propres, même sur une enceinte.\n• Le 8D tourne autour de la tête de façon plus réaliste (casque).\n• Ultra basses ajoute de légères harmoniques : la basse s\'entend même sur de petites enceintes et des écouteurs.\n• Xstrm Bass cogne bien plus fort : les basses à 68 Hz crachent, saturées et grondantes, faites pour les petites enceintes à radiateurs passifs.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Importer des playlists</string>
@@ -901,6 +901,7 @@
     <string name="fx_lofi">Lo-fi</string>
     <string name="fx_lofi_text">La vieille radio, un peu ralentie</string>
     <string name="cast_failed">L\'appareil n\'a pas pu le lire</string>
+    <string name="cast_lost">Connexion à %1$s perdue</string>
     <string name="cast">Caster</string>
     <string name="cast_title">Caster sur</string>
     <string name="cast_searching">Recherche des appareils sur le Wi‑Fi…</string>

@@ -464,28 +464,38 @@ private fun SoundInfo(key: String?) {
     val output = castSession?.takeIf { it.phase == app.mikeneko.cast.Cast.Phase.Connected }
         ?.let { app.mikeneko.ui.components.AudioOutput(it.device.name, MkIcons.Cast) } ?: local
     val style = TextStyle(fontFamily = Rounded, color = Color(0xFFE3DAD2), fontSize = 12.sp, fontWeight = FontWeight.Bold, shadow = GlassTextShadow)
-    Row(
-        Modifier.fillMaxWidth().padding(top = 6.dp),
-        horizontalArrangement = Arrangement.spacedBy(14.dp, Alignment.CenterHorizontally),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        details?.let { d ->
-            val khz = d.sampleRate.takeIf { it > 0 }?.let { rate ->
-                val k = rate / 1000.0
-                if (k % 1.0 == 0.0) "${k.toInt()} kHz" else String.format(java.util.Locale.getDefault(), "%.1f kHz", k)
+    Column(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(14.dp, Alignment.CenterHorizontally),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            details?.let { d ->
+                val khz = d.sampleRate.takeIf { it > 0 }?.let { rate ->
+                    val k = rate / 1000.0
+                    if (k % 1.0 == 0.0) "${k.toInt()} kHz" else String.format(java.util.Locale.getDefault(), "%.1f kHz", k)
+                }
+                Text(listOfNotNull(d.codec, d.kbps?.let { "$it kb/s" }, khz).joinToString(" · "), style = style, maxLines = 1)
             }
-            Text(listOfNotNull(d.codec, d.kbps?.let { "$it kb/s" }, khz).joinToString(" · "), style = style, maxLines = 1)
+            output?.let { o ->
+                Row(Modifier.weight(1f, fill = false), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(o.icon, null, tint = Color(0xFFE3DAD2), modifier = Modifier.size(15.dp))
+                    Text(o.label, style = style, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 5.dp))
+                }
+            }
         }
-        // L'effet audio en cours, s'il y en a un (3.3.0)
+        // L'effet audio en cours, s'il y en a un (3.3.0) ; 3.6.0 : sur sa propre ligne, centrée, de la
+        // couleur du thème (à côté, il poussait la sortie audio hors de l'écran)
         if (preset != app.mikeneko.player.AudioPreset.Normal) {
-            Text(app.mikeneko.ui.components.presetName(preset), style = style.copy(color = Pelage.RouxClair), maxLines = 1)
+            Text(
+                app.mikeneko.ui.components.presetName(preset),
+                Modifier.padding(top = 3.dp),
+                style = style.copy(color = Pelage.RouxClair, textAlign = TextAlign.Center),
+                maxLines = 1,
+            )
         }
-        output?.let { o ->
-            Row(Modifier.weight(1f, fill = false), verticalAlignment = Alignment.CenterVertically) {
-                Icon(o.icon, null, tint = Color(0xFFE3DAD2), modifier = Modifier.size(15.dp))
-                Text(o.label, style = style, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 5.dp))
-            }
-        }
+        // Pendant le cast (3.6.0) : où part le son, bien visible
+        app.mikeneko.ui.components.CastIndicator(Modifier.padding(top = 8.dp))
     }
 }
 
