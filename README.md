@@ -58,6 +58,13 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ## 🎌 What's new ⸜(｡˃ ᵕ ˂ )⸝♡
 
+### 3.6
+
+- 3.6.0: **cleaner audio effects**: switching effect mid-song is a short blend instead of a click; a
+  new look-ahead limiter turns loud peaks down gently instead of squashing them (nothing above
+  −0.3 dBFS); 8D Audio also delays the far ear a little, so the sound really seems to turn around your
+  head; Ultra Bass adds gentle bass harmonics, heard even on small speakers and earbuds.
+
 ### 3.5
 
 - 3.5.0: **Xstrm Bass**, a new audio effect for small speakers with passive radiators: a +7 dB bass

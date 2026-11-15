@@ -720,7 +720,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">Quoi de neuf dans Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Super !</string>
-    <string name="whats_new_body">🔊 Mikeneko 3.5 : Xstrm Bass\n\n• Un nouvel effet audio pour les petites enceintes à radiateurs passifs : les basses visent les 68 Hz, là où elles tapent le plus fort, et les infra-basses qu\'elles ne savent pas jouer sont coupées pour qu\'elles ne saturent pas. Bouton des curseurs dans le lecteur musique.\n• Depuis la 3.4 : envoie ta musique et tes vidéos sur un Chromecast, une Google TV ou une enceinte Cast avec le bouton écran-avec-ondes, sans les services Google.</string>
+    <string name="whats_new_body">🔊 Mikeneko 3.6 : des effets audio plus propres\n\n• Changer d\'effet pendant une chanson se fait en fondu, sans clic.\n• Un nouveau limiteur voit venir les crêtes et les baisse en douceur : les grosses basses restent propres, même sur une enceinte.\n• Le 8D tourne autour de la tête de façon plus réaliste (casque).\n• Ultra basses ajoute de légères harmoniques : la basse s\'entend même sur de petites enceintes et des écouteurs.\n• Depuis la 3.5 : Xstrm Bass, un effet pour les petites enceintes à radiateurs passifs.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Importer des playlists</string>

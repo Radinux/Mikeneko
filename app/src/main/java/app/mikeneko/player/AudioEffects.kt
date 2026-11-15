@@ -67,6 +67,14 @@ class PresetAudioProcessor(private val which: () -> AudioPreset = { AudioEffects
     private var chain: EffectChain? = null
     private val frame = FloatArray(2)
 
+    // 3.6.0 : au changement de préréglage en pleine lecture, l'ancien son (son effet, ou le son d'origine)
+    // se fond dans le nouveau en quelques millisecondes, au lieu d'un saut qui pouvait claquer
+    private var shown: AudioPreset? = null // le préréglage du dernier tampon (null : rien n'a encore joué)
+    private var fadeFrom: EffectChain? = null // la chaîne qui s'efface (null : le son d'origine)
+    private var fadeLeft = 0
+    private var fadeTotal = 1
+    private val old = FloatArray(2)
+
     override fun onConfigure(inputAudioFormat: AudioFormat): AudioFormat {
         val encoding = inputAudioFormat.encoding
         if ((encoding != C.ENCODING_PCM_16BIT && encoding != C.ENCODING_PCM_FLOAT) || inputAudioFormat.channelCount !in 1..2) {
@@ -84,6 +92,13 @@ class PresetAudioProcessor(private val which: () -> AudioPreset = { AudioEffects
         val out = replaceOutputBuffer(frames * 2 * bytes)
         val preset = which()
         var current = chain
+        val sameRate = current == null || current.sampleRate == format.sampleRate
+        if (shown != null && shown != preset && sameRate) {
+            fadeFrom = current
+            fadeTotal = (format.sampleRate * FADE_SECONDS).toInt().coerceAtLeast(1)
+            fadeLeft = fadeTotal
+        }
+        shown = preset
         if (preset != AudioPreset.Normal && (current == null || current.preset != preset || current.sampleRate != format.sampleRate)) {
             current = EffectChain(preset, format.sampleRate)
             chain = current
@@ -99,6 +114,15 @@ class PresetAudioProcessor(private val which: () -> AudioPreset = { AudioEffects
             frame[0] = l
             frame[1] = r
             current?.process(frame)
+            if (fadeLeft > 0) {
+                old[0] = l
+                old[1] = r
+                fadeFrom?.process(old)
+                val t = fadeLeft.toFloat() / fadeTotal // la part de l'ancien son : de 1 à 0
+                frame[0] += (old[0] - frame[0]) * t
+                frame[1] += (old[1] - frame[1]) * t
+                if (--fadeLeft == 0) fadeFrom = null
+            }
             if (float) {
                 out.putFloat(frame[0])
                 out.putFloat(frame[1])
@@ -113,13 +137,25 @@ class PresetAudioProcessor(private val which: () -> AudioPreset = { AudioEffects
 
     override fun onFlush() {
         chain?.reset() // un saut : les traînes (réverbération, délais) repartent à vide
+        endFade()
     }
 
     override fun onReset() {
         chain = null
+        shown = null
+        endFade()
+    }
+
+    private fun endFade() {
+        fadeFrom = null
+        fadeLeft = 0
     }
 
     private fun toShort(x: Float): Short = (x.coerceIn(-1f, 1f) * 32767f).toInt().toShort()
+
+    private companion object {
+        const val FADE_SECONDS = 0.008
+    }
 }
 
 /** Un filtre du second ordre (formules RBJ), en forme transposée II. */
@@ -281,9 +317,115 @@ private class Reverb(fs: Int, decaySeconds: Double, private val wet: Float, high
 }
 
 /**
+ * Limiteur à anticipation (3.6.0) : il voit les crêtes 5 ms avant qu'elles sortent, et baisse le volume
+ * en douceur juste avant, puis le remonte en ~40 ms. Rien ne dépasse −0,3 dBFS et, contrairement à une
+ * courbe de saturation, la forme du son n'est pas écrasée. Les deux côtés baissent ensemble (l'image
+ * stéréo ne bouge pas). Le son sort avec 5 ms de retard.
+ *
+ * Le gain voulu de chaque trame passe par un minimum glissant sur la fenêtre d'anticipation (file
+ * monotone), une remontée lente, puis une moyenne glissante de même longueur : la moyenne ne contient
+ * que des valeurs ≤ au gain voulu de la trame qui sort, donc aucune crête ne passe.
+ */
+private class Limiter(fs: Int) {
+    private val size = (fs * 0.005).toInt().coerceAtLeast(8)
+    private val delayL = FloatArray(size)
+    private val delayR = FloatArray(size)
+    private var pos = 0
+
+    // Le minimum glissant : une file de (gain, numéro de trame) aux gains croissants
+    private val queueGain = FloatArray(size)
+    private val queueAt = LongArray(size)
+    private var head = 0
+    private var count = 0
+    private var at = 0L
+
+    private val release = (1 - kotlin.math.exp(-1.0 / (0.040 * fs))).toFloat()
+    private var envelope = 1f
+    private val window = FloatArray(size) { 1f }
+    private var windowPos = 0
+    private var sum = size.toDouble()
+
+    fun process(frame: FloatArray) {
+        val peak = maxOf(abs(frame[0]), abs(frame[1]))
+        val wanted = if (peak > CEILING) CEILING / peak else 1f
+        if (count > 0 && queueAt[head] <= at - size) { // sortie de la fenêtre
+            head = (head + 1) % size
+            count--
+        }
+        while (count > 0 && queueGain[(head + count - 1) % size] >= wanted) count--
+        val tail = (head + count) % size
+        queueGain[tail] = wanted
+        queueAt[tail] = at
+        count++
+        at++
+        val lowest = queueGain[head]
+        envelope = minOf(lowest, envelope + (1f - envelope) * release)
+        sum += envelope - window[windowPos]
+        window[windowPos] = envelope
+        windowPos = (windowPos + 1) % size
+        val gain = (sum / size).toFloat().coerceIn(0f, 1f)
+
+        delayL[pos] = frame[0]
+        delayR[pos] = frame[1]
+        pos = (pos + 1) % size // la plus ancienne trame : celle d'il y a (size − 1) trames
+        // (le bornage ne sert qu'à couvrir les arrondis du calcul flottant)
+        frame[0] = (delayL[pos] * gain).coerceIn(-CEILING, CEILING)
+        frame[1] = (delayR[pos] * gain).coerceIn(-CEILING, CEILING)
+    }
+
+    fun reset() {
+        delayL.fill(0f); delayR.fill(0f)
+        window.fill(1f)
+        sum = size.toDouble()
+        envelope = 1f
+        head = 0; count = 0
+    }
+
+    companion object {
+        private const val CEILING = 0.966f // −0,3 dBFS
+    }
+}
+
+/**
+ * Les harmoniques de basses d'Ultra Bass (3.6.0) : les très basses (< 80 Hz) passent dans une
+ * saturation douce (harmoniques impaires) et un carré (harmoniques paires) ; on n'en garde que les
+ * harmoniques (100 à 400 Hz), ajoutées au son. Une petite enceinte ou des écouteurs qui ne descendent
+ * pas à 50 Hz font quand même entendre la note, et la basse d'origine reste intacte.
+ */
+private class BassHarmonics(fs: Int) {
+    private val lowL = Biquad.lowPass24(fs, 80.0)
+    private val lowR = Biquad.lowPass24(fs, 80.0)
+    private val bandL = listOf(Biquad.highPass(fs, 100.0), Biquad.highPass(fs, 100.0), Biquad.lowPass(fs, 400.0))
+    private val bandR = bandL.map { it.copy() }
+
+    fun process(frame: FloatArray) {
+        frame[0] += side(frame[0], lowL, bandL)
+        frame[1] += side(frame[1], lowR, bandR)
+    }
+
+    private fun side(x: Float, low: List<Biquad>, band: List<Biquad>): Float {
+        var sub = x
+        for (i in low.indices) sub = low[i].process(sub)
+        var h = (tanh(sub * DRIVE) / DRIVE - sub) * ODD + sub * sub * EVEN
+        for (i in band.indices) h = band[i].process(h)
+        return h
+    }
+
+    fun reset() {
+        (lowL + lowR + bandL + bandR).forEach { it.reset() }
+    }
+
+    companion object {
+        private const val DRIVE = 2.2f
+        private const val ODD = 2.5f
+        private const val EVEN = 0.9f
+    }
+}
+
+/**
  * La chaîne d'un préréglage, pour un taux d'échantillonnage. [process] modifie une trame stéréo
- * (gauche, droite, de −1 à 1) en place. Toujours un limiteur doux à la fin : un fort renfort de basses
- * ne sature jamais.
+ * (gauche, droite, de −1 à 1) en place. Toujours un limiteur à la fin ([Limiter]) : un fort renfort de
+ * basses ne sature jamais.
  */
 class EffectChain(val preset: AudioPreset, val sampleRate: Int) {
     private val fs = sampleRate
@@ -301,8 +443,9 @@ class EffectChain(val preset: AudioPreset, val sampleRate: Int) {
     // 8D : panoramique tournant (basses au centre)
     private var autoPan: AutoPan? = null
 
-    // Saturation des basses (Ultra Bass) / à lampes (vieille radio)
-    private var bassSaturation: Pair<Biquad, Biquad>? = null
+    // Harmoniques de basses (Ultra Bass) / saturation à lampes (vieille radio)
+    private var bassHarmonics: BassHarmonics? = null
+    private val limiter = if (preset == AudioPreset.Normal) null else Limiter(fs) // « Normal » : le son tel quel
     private var tubeDrive = 0f
     private var mono = false
     private var radio: Radio? = null
@@ -335,7 +478,7 @@ class EffectChain(val preset: AudioPreset, val sampleRate: Int) {
             AudioPreset.UltraBass -> {
                 eq(Biquad.lowShelf(fs, 60.0, 9.0), Biquad.peak(fs, 100.0, 5.0, 1.0), Biquad.peak(fs, 300.0, -3.5, 1.0))
                 preGain = db(-6.0)
-                bassSaturation = Biquad.lowPass(fs, 80.0) to Biquad.lowPass(fs, 80.0)
+                bassHarmonics = BassHarmonics(fs)
             }
             AudioPreset.XstrmBass -> {
                 // 3.5.0 : pour les petites enceintes à radiateurs passifs, qui répondent le plus fort vers
@@ -393,13 +536,6 @@ class EffectChain(val preset: AudioPreset, val sampleRate: Int) {
             l = eqL[i].process(l)
             r = eqR[i].process(r)
         }
-        bassSaturation?.let { (fl, fr) ->
-            // Les basses (sous 80 Hz) arrondies par une saturation douce : des harmoniques, plus d'impact
-            val lowL = fl.process(l)
-            val lowR = fr.process(r)
-            l += tanh(lowL * 1.8f) / 1.8f - lowL
-            r += tanh(lowR * 1.8f) / 1.8f - lowR
-        }
         monoBelow?.let { (fl, fr) ->
             val lowL = fl.process(l)
             val lowR = fr.process(r)
@@ -415,6 +551,7 @@ class EffectChain(val preset: AudioPreset, val sampleRate: Int) {
         }
         frame[0] = l
         frame[1] = r
+        bassHarmonics?.process(frame)
         haas?.process(frame)
         early?.process(frame)
         autoPan?.process(frame)
@@ -425,28 +562,19 @@ class EffectChain(val preset: AudioPreset, val sampleRate: Int) {
         }
         radio?.process(frame)
         reverb?.process(frame)
-        frame[0] = limit(frame[0])
-        frame[1] = limit(frame[1])
+        limiter?.process(frame)
     }
 
     fun reset() {
         eqL.forEach { it.reset() }; eqR.forEach { it.reset() }
         monoBelow?.let { it.first.reset(); it.second.reset() }
-        bassSaturation?.let { it.first.reset(); it.second.reset() }
+        bassHarmonics?.reset()
+        limiter?.reset()
         reverb?.reset()
         haas?.reset()
         early?.reset()
         autoPan?.reset()
         radio?.reset()
-    }
-
-    /** Limiteur doux : rien sous −1 dB, puis une courbe qui n'atteint jamais 0 dBFS. */
-    private fun limit(x: Float): Float {
-        val a = abs(x)
-        if (a <= KNEE) return x
-        val over = (a - KNEE) / (1 - KNEE)
-        val y = KNEE + (1 - KNEE) * tanh(over)
-        return if (x < 0) -y else y
     }
 
     /** Délai croisé de Haas (15 ms) : chaque côté reçoit l'autre en retard, adouci vers 6 kHz. */
@@ -492,10 +620,17 @@ class EffectChain(val preset: AudioPreset, val sampleRate: Int) {
         fun reset() = line.reset()
     }
 
-    /** 8D : le son fait le tour de la tête (un cycle en 7 s) ; les basses restent au centre. */
+    /**
+     * 8D : le son fait le tour de la tête (un cycle en 7 s) ; les basses restent au centre. 3.6.0 : en
+     * plus du volume, l'oreille opposée reçoit le son un peu plus tard (jusqu'à 0,65 ms, l'écart réel
+     * entre deux oreilles) : c'est surtout ce retard qui fait situer un son sur le côté.
+     */
     private class AutoPan(private val fs: Int) {
         private val lowL = Biquad.lowPass(fs, 150.0)
         private val lowR = Biquad.lowPass(fs, 150.0)
+        private val lineL = Delay((fs * 0.002).toInt())
+        private val lineR = Delay((fs * 0.002).toInt())
+        private val earGap = fs * 0.00065f
         private var phase = 0.0
         private val step = 2 * PI / (7.0 * fs)
 
@@ -512,12 +647,15 @@ class EffectChain(val preset: AudioPreset, val sampleRate: Int) {
             val angle = (p + 1) * PI / 4
             val gL = (cos(angle) * sqrt(2.0)).toFloat()
             val gR = (sin(angle) * sqrt(2.0)).toFloat()
-            frame[0] = low + highL * gL
-            frame[1] = low + highR * gR
+            lineL.push(highL)
+            lineR.push(highR)
+            val side = p.toFloat() // +1 : tout à droite (la gauche est en retard), −1 : tout à gauche
+            frame[0] = low + lineL.read(1f + earGap * maxOf(0f, side)) * gL
+            frame[1] = low + lineR.read(1f + earGap * maxOf(0f, -side)) * gR
         }
 
         fun reset() {
-            lowL.reset(); lowR.reset()
+            lowL.reset(); lowR.reset(); lineL.reset(); lineR.reset()
         }
     }
 
@@ -558,9 +696,5 @@ class EffectChain(val preset: AudioPreset, val sampleRate: Int) {
         companion object {
             private val NOISE = 10.0.pow(-38.0 / 20).toFloat()
         }
-    }
-
-    companion object {
-        private const val KNEE = 0.89f // −1 dB
     }
 }

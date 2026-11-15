@@ -719,7 +719,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">What’s new in Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Nice!</string>
-    <string name="whats_new_body">🔊 Mikeneko 3.5: Xstrm Bass\n\n• A new audio effect for small speakers with passive radiators: the bass is aimed at 68 Hz, where they hit hardest, and the deep rumble they can\'t play is cut so they don\'t choke. Tap the sliders button in the music player.\n• Since 3.4: cast your music and videos to a Chromecast, a Google TV or a Cast speaker with the screen-with-waves button, no Google services needed.</string>
+    <string name="whats_new_body">🔊 Mikeneko 3.6: cleaner audio effects\n\n• Switching effect while a song plays is now a smooth blend, no click.\n• A new limiter sees loud peaks coming and turns them down gently: strong bass stays clean, even on a speaker.\n• 8D Audio turns around your head more convincingly (headphones).\n• Ultra Bass adds gentle harmonics, so the bass is heard even on small speakers and earbuds.\n• Since 3.5: Xstrm Bass, an effect for small speakers with passive radiators.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Import playlists</string>

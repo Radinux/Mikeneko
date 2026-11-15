@@ -81,6 +81,60 @@ class AudioEffectsTest {
         assertEquals(0, input.remaining())
     }
 
+    /** Le limiteur à anticipation (3.6.0) : même un son beaucoup trop fort ne dépasse jamais −0,3 dBFS. */
+    @Test fun limiterHoldsTheCeilingOnAVeryLoudSignal() {
+        for (preset in listOf(AudioPreset.UltraBass, AudioPreset.XstrmBass, AudioPreset.BassBoost)) {
+            val chain = EffectChain(preset, 48_000)
+            val frame = FloatArray(2)
+            var peak = 0f
+            for (i in 0 until 48_000 * 2) {
+                // Des rafales : silence, puis d'un coup des basses à pleine échelle avec des aigus
+                val on = (i / 6_000) % 2 == 1
+                val x = if (on) (sin(2 * PI * 60 * i / 48_000.0) + 0.5 * sin(2 * PI * 7_000 * i / 48_000.0)).toFloat() else 0f
+                frame[0] = x
+                frame[1] = -x * 0.8f
+                chain.process(frame)
+                peak = maxOf(peak, abs(frame[0]), abs(frame[1]))
+            }
+            assertTrue("$preset : crête $peak au-dessus de −0,3 dBFS", peak <= 0.9661f)
+        }
+    }
+
+    /** Changer de préréglage en pleine lecture (3.6.0) : un fondu, pas de saut dans le signal. */
+    @Test fun switchingPresetMidStreamDoesNotJump() {
+        var preset = AudioPreset.Normal
+        val processor = PresetAudioProcessor { preset }
+        processor.configure(AudioProcessor.AudioFormat(48_000, 2, C.ENCODING_PCM_FLOAT))
+        processor.flush()
+        var n = 0
+        var last = 0f
+        var worst = 0f
+        fun feed(frames: Int) {
+            val input = ByteBuffer.allocateDirect(frames * 8).order(ByteOrder.nativeOrder())
+            repeat(frames) {
+                val x = (0.5 * sin(2 * PI * 100 * n++ / 48_000.0)).toFloat()
+                input.putFloat(x)
+                input.putFloat(x)
+            }
+            input.flip()
+            processor.queueInput(input)
+            val output = processor.output.order(ByteOrder.nativeOrder())
+            while (output.remaining() >= 8) {
+                val l = output.float
+                output.float
+                worst = maxOf(worst, abs(l - last))
+                last = l
+            }
+        }
+        feed(4_800)
+        for (next in listOf(AudioPreset.UltraBass, AudioPreset.Normal, AudioPreset.Vocal, AudioPreset.XstrmBass, AudioPreset.Normal)) {
+            preset = next
+            feed(4_800)
+        }
+        // Un sinus de 100 Hz à 0,5 bouge de 0,0065 par trame ; un changement sec ferait un saut bien plus grand
+        assertTrue("saut de $worst au changement de préréglage", worst < 0.03f)
+    }
+
     @Test fun multichannelIsLeftAlone() {
         val processor = PresetAudioProcessor { AudioPreset.Slowed }
         val out = processor.configure(AudioProcessor.AudioFormat(48_000, 6, C.ENCODING_PCM_16BIT))
