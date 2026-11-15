@@ -58,24 +58,27 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ## 🎌 What's new ⸜(｡˃ ᵕ ˂ )⸝♡
 
-### 3.6
+### 3.7
 
-- 3.6.1: **Xstrm Bass** now pushes the whole 50–68 Hz zone, not just 68 Hz.
-- 3.6.1: **one Import button** that recognizes the file by itself (Mikeneko backup, NewPipe / FreeTube /
+- 3.7.0: **Xstrm Bass** now pushes the whole 50–68 Hz zone, not just 68 Hz.
+- 3.7.0: **one Import button** that recognizes the file by itself (Mikeneko backup, NewPipe / FreeTube /
   Google Takeout subscriptions, TuneMyMusic playlists) and shows what it found before importing; the
   backup becomes a **`.mikeneko`** file (compressed, with your settings, and parts to tick on import).
-- 3.6.1: Settings: **Hide status bar** is now in General (Appearance), **Import playlists** in Music,
+- 3.7.0: Settings: **Hide status bar** is now in General (Appearance), **Import playlists** in Music,
   **No Shorts** in For you.
-- 3.6.1: in landscape, the **music pill** sits on the left; the **audio effect name** moved between the two
+- 3.7.0: in landscape, the **music pill** sits on the left; the **audio effect name** moved between the two
   times under the progress bar, so the play buttons are no longer cut off.
-- 3.6.1: in landscape with the status bar hidden, **every tab starts higher** (no empty band left for the
+- 3.7.0: in landscape with the status bar hidden, **every tab starts higher** (no empty band left for the
   hidden bar).
-- 3.6.1: swiping up or down on the **home category capsules** scrolls the list the right way (it was reversed).
-- 3.6.1: in landscape, the **dock with the Shorts tab** no longer touches the top and bottom of the screen.
-- 3.6.1: **swiping the video down** to the mini player shows the previous screen underneath right away,
+- 3.7.0: swiping up or down on the **home category capsules** scrolls the list the right way (it was reversed).
+- 3.7.0: in landscape, the **dock with the Shorts tab** no longer touches the top and bottom of the screen.
+- 3.7.0: **swiping the video down** to the mini player shows the previous screen underneath right away,
   the player becoming a card with rounded corners.
-- 3.6.1: the **audio effects** menu of the music player grows out of the button bar like the queue and
+- 3.7.0: the **audio effects** menu of the music player grows out of the button bar like the queue and
   lyrics, with a close button.
+
+### 3.6
+
 - 3.6.0: **cleaner audio effects**: switching effect mid-song is a short blend instead of a click; a
   new look-ahead limiter turns loud peaks down gently instead of squashing them (nothing above
   −0.3 dBFS); 8D Audio also delays the far ear a little, so the sound really seems to turn around your

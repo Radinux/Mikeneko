@@ -393,7 +393,7 @@ private fun githubFailure(reason: app.mikeneko.data.GitHubSync.Reason) = when (r
 }
 
 /**
- * Importer et sauvegarder (3.6.1) : un seul bouton d'import, qui reconnaît le fichier (sauvegarde Mikeneko,
+ * Importer et sauvegarder (3.7.0) : un seul bouton d'import, qui reconnaît le fichier (sauvegarde Mikeneko,
  * abonnements d'une autre appli, playlists d'une appli de musique) et montre ce qu'il a trouvé avant ;
  * l'export écrit un fichier `.mikeneko`.
  */
@@ -583,7 +583,7 @@ private fun AppearanceSection() {
         SwitchRow(MkIcons.Moon, stringResource(R.string.settings_amoled), stringResource(R.string.settings_amoled_text), Appearance.amoled) {
             AppSettings.setAmoled(it)
         }
-        // Masquer la barre d'état (3.6.1 : venu de Lecture, c'est l'affichage de toute l'appli)
+        // Masquer la barre d'état (3.7.0 : venu de Lecture, c'est l'affichage de toute l'appli)
         Divider()
         val hideStatusBar by AppSettings.hideStatusBar.collectAsState()
         SwitchRow(MkIcons.Fullscreen, stringResource(R.string.settings_hide_status_bar), stringResource(R.string.settings_hide_status_bar_text), hideStatusBar) {
@@ -658,7 +658,7 @@ private fun MusicSection() {
             downloads,
             subtitle = stringResource(R.string.settings_download_quality_text),
         ) { AppSettings.setDownloadQuality(it) }
-        // L'import de playlists (3.6.1 : venu de Synchronisation › Sauvegarde, c'est de la musique)
+        // L'import de playlists (3.7.0 : venu de Synchronisation › Sauvegarde, c'est de la musique)
         Divider()
         MusicImportRow()
     }
@@ -736,7 +736,7 @@ private fun HistorySection(context: Context) {
                 ForYou.clearCache()
             }
         }
-        // Pas de Shorts (3.6.1 : venu de Lecture ; il décide de ce que montrent les fils et le dock)
+        // Pas de Shorts (3.7.0 : venu de Lecture ; il décide de ce que montrent les fils et le dock)
         Divider()
         val hideShorts by AppSettings.hideShorts.collectAsState()
         SwitchRow(MkIcons.Shorts, stringResource(R.string.settings_hide_shorts), stringResource(R.string.settings_hide_shorts_text), hideShorts) { AppSettings.setHideShorts(it) }

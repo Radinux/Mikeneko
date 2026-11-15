@@ -710,7 +710,7 @@ private fun HomeCategories(state: HomeState, backdrop: Backdrop) {
             .graphicsLayer { alpha = (1f - state.categoriesShift / gone).coerceIn(0f, 1f) }
             // Glisser verticalement sur une capsule fait défiler la liste dessous (et tire pour
             // rafraîchir en haut), comme si on la touchait elle ; le défilement de côté reste aux capsules.
-            // 3.6.1 : reverseDirection, comme une vraie liste (sinon glisser vers le bas la faisait monter)
+            // 3.7.0 : reverseDirection, comme une vraie liste (sinon glisser vers le bas la faisait monter)
             .then(
                 if (pull != null) {
                     Modifier.pullToRefresh(state.refreshing, pull, onRefresh = { state.onRefresh() })

@@ -517,7 +517,7 @@ private fun TrackProgress(key: String?, active: Boolean) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(formatClock(shown), style = clock)
             // L'effet audio en cours (3.3.0), au milieu de la ligne des temps, de la couleur du thème.
-            // 3.6.1 : ici plutôt que sur une ligne à lui, qui poussait les boutons hors de la fenêtre
+            // 3.7.0 : ici plutôt que sur une ligne à lui, qui poussait les boutons hors de la fenêtre
             Box(Modifier.weight(1f).padding(horizontal = 8.dp), contentAlignment = Alignment.Center) {
                 if (preset != app.mikeneko.player.AudioPreset.Normal) {
                     Text(

@@ -48,7 +48,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * Le bouton « Importer un fichier » (3.6.1) : renvoie de quoi ouvrir le sélecteur de fichiers. Le
+ * Le bouton « Importer un fichier » (3.7.0) : renvoie de quoi ouvrir le sélecteur de fichiers. Le
  * fichier choisi est reconnu ([Importer]) puis présenté avant d'importer : les parties d'une sauvegarde
  * à cocher, le nombre d'abonnements, ou le choix des playlists d'un export de musique.
  */
@@ -76,7 +76,7 @@ fun rememberImportFile(): () -> Unit {
     return { pick.launch(arrayOf("*/*")) }
 }
 
-/** Le bouton « Exporter » (3.6.1) : tout dans un fichier `.mikeneko`. */
+/** Le bouton « Exporter » (3.7.0) : tout dans un fichier `.mikeneko`. */
 @Composable
 fun rememberExportBackup(): () -> Unit {
     val context = LocalContext.current

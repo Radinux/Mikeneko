@@ -161,7 +161,7 @@ object PlayerHolder {
     /** Émis à chaque coup de patte sur un sponsor. */
     val skipped = MutableSharedFlow<String>(extraBufferCapacity = 4)
 
-    /** Les réglages du lecteur, relus (au démarrage, et après l'import d'un fichier `.mikeneko`, 3.6.1). */
+    /** Les réglages du lecteur, relus (au démarrage, et après l'import d'un fichier `.mikeneko`, 3.7.0). */
     fun readSettings(context: Context) {
         val p = context.getSharedPreferences("lecteur", Context.MODE_PRIVATE)
         ambient.value = p.getBoolean("ambiant", true)

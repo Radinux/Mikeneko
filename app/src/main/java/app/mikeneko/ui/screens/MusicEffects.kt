@@ -43,7 +43,7 @@ import app.mikeneko.ui.icons.MkIcons
 import app.mikeneko.ui.theme.Pelage
 
 /**
- * Les effets audio dans le lecteur musique (3.6.1) : comme la file et les paroles, le panneau sort de la
+ * Les effets audio dans le lecteur musique (3.7.0) : comme la file et les paroles, le panneau sort de la
  * capsule des boutons et s'y referme, avec une croix en haut. Avant, il s'ouvrait dans le panneau des
  * réglages, qui monte du bas sans rapport avec le bouton.
  */

@@ -53,7 +53,7 @@ object MikenekoBackup {
         val positions: List<WatchPositions.Saved> = emptyList(),
         /** Ce qui a été retiré (ou remis) sur l'appareil qui a écrit le fichier (2.23.0) : pour la synchro. */
         val removals: Map<String, Deletions.Mark> = emptyMap(),
-        /** Les réglages de l'appli (fichier `.mikeneko` seulement, 3.6.1), voir [SettingsBackup]. */
+        /** Les réglages de l'appli (fichier `.mikeneko` seulement, 3.7.0), voir [SettingsBackup]. */
         val settings: Map<String, Map<String, Any>>? = null,
         /** L'appli et la date qui ont écrit le fichier (pour l'aperçu avant import). */
         val app: String? = null,
@@ -65,7 +65,7 @@ object MikenekoBackup {
         val total get() = channels + playlists + library + videos + history + if (settings) 1 else 0
     }
 
-    /** Tout ce que l'appli garde, pour un fichier `.mikeneko` (3.6.1) : comme [export], plus les réglages. */
+    /** Tout ce que l'appli garde, pour un fichier `.mikeneko` (3.7.0) : comme [export], plus les réglages. */
     fun collect(context: Context): Content {
         val library = MusicLibrary.get(context)
         val videos = VideoLibrary.get(context)
@@ -89,7 +89,7 @@ object MikenekoBackup {
     }
 
     /**
-     * Pour l'aperçu avant import (3.6.1) : combien d'éléments de chaque partie ne sont pas déjà dans
+     * Pour l'aperçu avant import (3.7.0) : combien d'éléments de chaque partie ne sont pas déjà dans
      * l'appli (une playlist : ses morceaux qui manquent à la playlist du même nom).
      */
     fun newCounts(context: Context, content: Content): Map<BackupFile.Part, Int> {

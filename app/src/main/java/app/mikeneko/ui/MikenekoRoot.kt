@@ -468,7 +468,7 @@ fun MikenekoRoot(
                 .backdropSource(backdrop)
                 .background(Pelage.Nuit),
         ) {
-            // Glisser la vidéo vers le mini-lecteur (3.6.1) : l'écran d'avant est déjà là, sous le lecteur, et
+            // Glisser la vidéo vers le mini-lecteur (3.7.0) : l'écran d'avant est déjà là, sous le lecteur, et
             // c'est le même emplacement qu'après la réduction (il n'est pas refait au lâcher). Pas les Shorts
             // (leur écran lance une lecture).
             // (seulement « tiré ou pas » : la racine ne se recompose pas à chaque image du glissé)
@@ -569,7 +569,7 @@ fun MikenekoRoot(
                     backdrop = backdrop,
                     current = route,
                     visible = dockVisible,
-                    // 3.6.1 : une marge en haut et en bas (et la barre de navigation) : avec l'onglet Shorts (5 onglets),
+                    // 3.7.0 : une marge en haut et en bas (et la barre de navigation) : avec l'onglet Shorts (5 onglets),
                     // la colonne était plus haute que l'écran et touchait ses bords ; ses onglets se resserrent
                     modifier = Modifier.align(Alignment.CenterEnd).windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.End + WindowInsetsSides.Bottom))
                         .padding(end = 12.dp, top = railTop + 12.dp, bottom = 12.dp),

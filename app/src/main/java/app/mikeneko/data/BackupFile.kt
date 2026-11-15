@@ -9,7 +9,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Le fichier de sauvegarde `.mikeneko` (3.6.1), qui remplace le `.xml` pour les sauvegardes faites à la
+ * Le fichier de sauvegarde `.mikeneko` (3.7.0), qui remplace le `.xml` pour les sauvegardes faites à la
  * main (la synchro entre appareils garde le XML : un appareil pas encore à jour doit pouvoir la lire).
  *
  * Une archive ZIP (compressée : l'historique pèse lourd en texte) avec :

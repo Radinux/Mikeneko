@@ -17,7 +17,7 @@ import app.mikeneko.settings.AppSettings
  * La place de la barre d'état du téléphone, qu'elle soit affichée ou masquée (réglage) : la mise
  * en page ne bouge pas, et rien ne passe sous l'objectif de la caméra quand elle est cachée.
  *
- * 3.6.1 : en paysage avec la barre masquée, plus de place gardée : la caméra est alors sur le côté
+ * 3.7.0 : en paysage avec la barre masquée, plus de place gardée : la caméra est alors sur le côté
  * (gérée par les marges latérales), et cette bande vide en haut descendait toutes les pages pour rien.
  * Ça suit le réglage, pas la barre qui réapparaît un instant d'un glissé : rien ne saute.
  */

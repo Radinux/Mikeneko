@@ -5,7 +5,7 @@ import app.mikeneko.player.PlayerHolder
 import app.mikeneko.settings.AppSettings
 
 /**
- * Les réglages dans le fichier `.mikeneko` (3.6.1) : une liste fixe de clés, pour ne jamais y mettre ce
+ * Les réglages dans le fichier `.mikeneko` (3.7.0) : une liste fixe de clés, pour ne jamais y mettre ce
  * qui est propre à l'appareil ou secret (identifiant SponsorBlock, comptes, clés de synchro). La langue
  * n'y est pas non plus : un nouveau téléphone garde la sienne.
  */

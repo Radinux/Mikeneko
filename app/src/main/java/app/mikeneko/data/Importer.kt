@@ -1,7 +1,7 @@
 package app.mikeneko.data
 
 /**
- * Un seul bouton « Importer » (3.6.1) : on choisit n'importe quel fichier, et Mikeneko reconnaît ce que
+ * Un seul bouton « Importer » (3.7.0) : on choisit n'importe quel fichier, et Mikeneko reconnaît ce que
  * c'est, d'après son contenu (pas son nom ni son extension, que les applis de partage changent souvent) :
  * - une sauvegarde Mikeneko : le nouveau `.mikeneko` ([BackupFile]) ou l'ancien `.xml` ;
  * - des abonnements : NewPipe (.json), FreeTube (.db), Google Takeout (.csv) ;

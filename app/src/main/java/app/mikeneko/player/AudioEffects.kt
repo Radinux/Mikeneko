@@ -513,7 +513,7 @@ class EffectChain(val preset: AudioPreset, val sampleRate: Int) {
                 // 3.6.0 : bien plus fort (les basses doivent « cracher ») : pic de 7 → 10 dB, la bande des
                 // basses gonflée et saturée ([BassSlam]), et des harmoniques (136, 204 Hz…) qui font
                 // grogner la note même là où l'enceinte s'essouffle.
-                // 3.6.1 : poussé sur toute la zone 50–68 Hz (deux pics qui font un plateau d'environ +12 dB),
+                // 3.7.0 : poussé sur toute la zone 50–68 Hz (deux pics qui font un plateau d'environ +12 dB),
                 // la coupure du bas descendue à 33 Hz pour laisser passer les 50 Hz en entier
                 Biquad.highPass24(fs, 33.0).forEach { eq(it) }
                 eq(Biquad.peak(fs, 50.0, 8.0, 1.4), Biquad.peak(fs, 68.0, 8.0, 1.4), Biquad.peak(fs, 300.0, -3.0, 0.9))

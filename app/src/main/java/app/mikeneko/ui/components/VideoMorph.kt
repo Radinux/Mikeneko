@@ -56,7 +56,7 @@ object VideoMorph {
         val from: Rect,
         val toMini: Boolean,
         /** Le mini-lecteur qui s'agrandit (3.2.1) : un simple zoom. */ val zoom: Boolean = false,
-        /** La page d'arrivée apparaît en fondu (pas après un glissé : elle est déjà visible, 3.6.1). */ val fadePage: Boolean = true,
+        /** La page d'arrivée apparaît en fondu (pas après un glissé : elle est déjà visible, 3.7.0). */ val fadePage: Boolean = true,
     ) {
         /** Le trajet : 0 au départ, 1 à l'arrivée (un peu plus au rebond). */
         val travel = Animatable(0f)
@@ -76,7 +76,7 @@ object VideoMorph {
     var active by mutableStateOf<Morph?>(null)
         private set
 
-    /** Le lecteur tiré vers le bas, vers le mini-lecteur (en px, 0 = pas tiré) : l'écran d'avant se montre dessous (3.6.1). */
+    /** Le lecteur tiré vers le bas, vers le mini-lecteur (en px, 0 = pas tiré) : l'écran d'avant se montre dessous (3.7.0). */
     var pull by mutableFloatStateOf(0f)
 
     /** Lance l'animation depuis [from] (null = pas d'animation, on passe directement). */

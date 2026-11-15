@@ -294,7 +294,7 @@ fun PlayerContent(onMinimize: () -> Unit, onDownload: (String) -> Unit, onRadio:
         }
     }
 
-    // L'écran d'avant se montre sous le lecteur pendant qu'on le tire (3.6.1, voir MikenekoRoot)
+    // L'écran d'avant se montre sous le lecteur pendant qu'on le tire (3.7.0, voir MikenekoRoot)
     LaunchedEffect(Unit) { snapshotFlow { pull.value }.collect { VideoMorph.pull = it } }
     DisposableEffect(Unit) { onDispose { VideoMorph.pull = 0f } }
     val pullCorner = with(density) { 28.dp.toPx() }

@@ -313,7 +313,7 @@ blur) and `onClick`.
 
 ## 8. Mikeneko backup in .xml (1.15.0)
 
-> 3.6.1: manual backups are now `.mikeneko` files (see 8 bis below); the XML described here is still
+> 3.7.0: manual backups are now `.mikeneko` files (see 8 bis below); the XML described here is still
 > read by the import and still used by device-to-device sync (LocalSync, GitHubSync, AutoSync), so a
 > device not yet updated keeps syncing. `Content` gained `settings`, `app`, `date`.
 
@@ -1395,7 +1395,7 @@ users: the point is to take them from the videos really watched.
   `seekToNextMediaItem()` (the usual `adoptPreloaded` path) and an equal-power volume ramp. `endCrossfade()` in
   `play()` and `stop()`; `player.volume` is otherwise always 1.
 
-## 8 bis. One import button and the `.mikeneko` file (3.6.1)
+## 8 bis. One import button and the `.mikeneko` file (3.7.0)
 
 - `data/BackupFile.kt`: ZIP with `manifest.json` (`format` = `mikeneko-backup`, `version` = 2, `app`,
   `date`, `counts` per `Part`) and `data.json` (org.json, same fields as `Content`; settings typed as
