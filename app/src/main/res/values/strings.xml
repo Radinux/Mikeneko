@@ -719,7 +719,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">What’s new in Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Nice!</string>
-    <string name="whats_new_body">📺 Mikeneko 3.4: Chromecast\n\n• Cast your music and videos to a Chromecast, a Google TV or a Cast speaker on your Wi‑Fi: tap the screen-with-waves button in the music player or the video player. No Google services needed.\n• While casting, the phone is the remote: play, pause, skip, seek, and the volume keys.\n• Audio effects for music: tap the sliders button in the music player (a bit less reverb than in 3.3).</string>
+    <string name="whats_new_body">🔊 Mikeneko 3.5: Xstrm Bass\n\n• A new audio effect for small speakers with passive radiators: the bass is aimed at 68 Hz, where they hit hardest, and the deep rumble they can\'t play is cut so they don\'t choke. Tap the sliders button in the music player.\n• Since 3.4: cast your music and videos to a Chromecast, a Google TV or a Cast speaker with the screen-with-waves button, no Google services needed.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Import playlists</string>
@@ -881,6 +881,8 @@
     <string name="fx_bass_boost_text">Deep, clean bass that leaves the voice alone</string>
     <string name="fx_ultra_bass">Ultra Bass</string>
     <string name="fx_ultra_bass_text">Maximum impact, like a subwoofer</string>
+    <string name="fx_xstrm_bass">Xstrm Bass</string>
+    <string name="fx_xstrm_bass_text">Deep bass tuned for small speakers with passive radiators (68 Hz)</string>
     <string name="fx_crispy">Crispy Clear</string>
     <string name="fx_crispy_text">Crystal-clear and airy</string>
     <string name="fx_v_balance">V-Balance</string>

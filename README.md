@@ -58,6 +58,13 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ## 🎌 What's new ⸜(｡˃ ᵕ ˂ )⸝♡
 
+### 3.5
+
+- 3.5.0: **Xstrm Bass**, a new audio effect for small speakers with passive radiators: a +7 dB bass
+  peak aimed at 68 Hz, where those radiators answer loudest, the rumble below ~40 Hz cut (they can't
+  play it, it only pushes the cone and triggers the speaker's own limiter), mono bass, a slight dip
+  around 300 Hz to keep it clear.
+
 ### 3.4
 
 - 3.4.0: **Chromecast**, without Google services (the way VLC does it): send your music and videos to a

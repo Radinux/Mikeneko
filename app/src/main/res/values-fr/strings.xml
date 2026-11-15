@@ -720,7 +720,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">Quoi de neuf dans Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Super !</string>
-    <string name="whats_new_body">📺 Mikeneko 3.4 : le Chromecast\n\n• Envoie ta musique et tes vidéos sur un Chromecast, une Google TV ou une enceinte Cast du Wi‑Fi : touche le bouton écran-avec-ondes dans le lecteur musique ou vidéo. Sans les services Google.\n• Pendant ce temps, le téléphone sert de télécommande : lecture, pause, suivant, avance, et les touches de volume.\n• Les effets audio de la musique : bouton des curseurs dans le lecteur musique (un peu moins de réverbération qu\'en 3.3).</string>
+    <string name="whats_new_body">🔊 Mikeneko 3.5 : Xstrm Bass\n\n• Un nouvel effet audio pour les petites enceintes à radiateurs passifs : les basses visent les 68 Hz, là où elles tapent le plus fort, et les infra-basses qu\'elles ne savent pas jouer sont coupées pour qu\'elles ne saturent pas. Bouton des curseurs dans le lecteur musique.\n• Depuis la 3.4 : envoie ta musique et tes vidéos sur un Chromecast, une Google TV ou une enceinte Cast avec le bouton écran-avec-ondes, sans les services Google.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Importer des playlists</string>
@@ -882,6 +882,8 @@
     <string name="fx_bass_boost_text">Des basses profondes et propres, la voix intacte</string>
     <string name="fx_ultra_bass">Ultra basses</string>
     <string name="fx_ultra_bass_text">Impact maximal, comme un caisson de basses</string>
+    <string name="fx_xstrm_bass">Xstrm Bass</string>
+    <string name="fx_xstrm_bass_text">Basses profondes pour les petites enceintes à radiateurs passifs (68 Hz)</string>
     <string name="fx_crispy">Cristallin</string>
     <string name="fx_crispy_text">Ultra net et aéré</string>
     <string name="fx_v_balance">Courbe en V</string>

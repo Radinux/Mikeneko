@@ -30,6 +30,7 @@ enum class AudioPreset(val id: String, val speed: Float) {
     EightD("8d", 1f),
     BassBoost("bass_boost", 1f),
     UltraBass("ultra_bass", 1f),
+    XstrmBass("xstrm_bass", 1f),
     Crispy("crispy", 1f),
     VBalance("v_balance", 1f),
     Vocal("vocal", 1f),
@@ -335,6 +336,17 @@ class EffectChain(val preset: AudioPreset, val sampleRate: Int) {
                 eq(Biquad.lowShelf(fs, 60.0, 9.0), Biquad.peak(fs, 100.0, 5.0, 1.0), Biquad.peak(fs, 300.0, -3.5, 1.0))
                 preGain = db(-6.0)
                 bassSaturation = Biquad.lowPass(fs, 80.0) to Biquad.lowPass(fs, 80.0)
+            }
+            AudioPreset.XstrmBass -> {
+                // 3.5.0 : pour les petites enceintes à radiateurs passifs, qui répondent le plus fort vers
+                // 68 Hz. Le pic vise cette fréquence ; tout ce qui est sous ~40 Hz est coupé (24 dB/oct) :
+                // l'enceinte ne le rend pas, il ne ferait que pousser la membrane et déclencher son propre
+                // limiteur, qui écraserait le reste. Basses en mono (sous 120 Hz) pour que les deux côtés
+                // poussent les radiateurs ensemble, et un léger creux vers 300 Hz pour garder la clarté.
+                Biquad.highPass24(fs, 40.0).forEach { eq(it) }
+                eq(Biquad.peak(fs, 68.0, 7.0, 1.2), Biquad.peak(fs, 300.0, -2.0, 0.9))
+                monoBelow = Biquad.lowPass(fs, 120.0) to Biquad.lowPass(fs, 120.0)
+                preGain = db(-6.0)
             }
             AudioPreset.Crispy -> {
                 eq(
