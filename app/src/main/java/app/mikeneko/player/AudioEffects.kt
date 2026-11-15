@@ -219,6 +219,9 @@ class Biquad private constructor(private val b0: Float, private val b1: Float, p
         /** Une pente de 24 dB/octave : deux filtres de Butterworth à la suite. */
         fun lowPass24(fs: Int, f: Double) = listOf(lowPass(fs, f, 0.5412), lowPass(fs, f, 1.3066))
         fun highPass24(fs: Int, f: Double) = listOf(highPass(fs, f, 0.5412), highPass(fs, f, 1.3066))
+
+        /** Une pente de 48 dB/octave (3.7.1) : quatre filtres de Butterworth à la suite (ordre 8). */
+        fun highPass48(fs: Int, f: Double) = listOf(0.5098, 0.6013, 0.9000, 2.5629).map { highPass(fs, f, it) }
     }
 }
 
@@ -505,18 +508,16 @@ class EffectChain(val preset: AudioPreset, val sampleRate: Int) {
                 bassHarmonics = BassHarmonics(fs)
             }
             AudioPreset.XstrmBass -> {
-                // Pour les petites enceintes à radiateurs passifs, qui répondent le plus fort vers 68 Hz. Le
-                // pic vise cette fréquence ; tout ce qui est sous ~40 Hz est coupé (24 dB/oct) : l'enceinte
-                // ne le rend pas, il ne ferait que pousser la membrane et déclencher son propre limiteur, qui
-                // écraserait le reste. Basses en mono (sous 120 Hz) pour que les deux côtés poussent les
-                // radiateurs ensemble, et un creux vers 300 Hz pour garder la clarté.
-                // 3.6.0 : bien plus fort (les basses doivent « cracher ») : pic de 7 → 10 dB, la bande des
-                // basses gonflée et saturée ([BassSlam]), et des harmoniques (136, 204 Hz…) qui font
-                // grogner la note même là où l'enceinte s'essouffle.
-                // 3.7.0 : poussé sur toute la zone 50–68 Hz (deux pics qui font un plateau d'environ +12 dB),
-                // la coupure du bas descendue à 33 Hz pour laisser passer les 50 Hz en entier
-                Biquad.highPass24(fs, 33.0).forEach { eq(it) }
-                eq(Biquad.peak(fs, 50.0, 8.0, 1.4), Biquad.peak(fs, 68.0, 8.0, 1.4), Biquad.peak(fs, 300.0, -3.0, 0.9))
+                // Pour les petites enceintes à radiateurs passifs, qui répondent le plus fort vers 68 Hz.
+                // 3.7.1, la courbe voulue : sous 48 Hz, coupé net (48 dB/octave : l'enceinte ne le rend pas,
+                // il ne ferait que pousser la membrane et déclencher son propre limiteur) ; de 48 à 68 Hz,
+                // ça monte (+7 → +12 dB, le pic à 68) ; de 70 à 250 Hz, une descente arrondie (un plateau
+                // en pente douce : +10 dB à 90 Hz, +4 à 150, +1 à 250) ; au-dessus, rien ne change.
+                // Mesuré : 40 Hz −3 dB, 35 Hz −12, 30 Hz −24. Basses en mono sous 120 Hz (les deux côtés
+                // poussent les radiateurs ensemble), gonflées et saturées ([BassSlam]), avec des
+                // harmoniques qui font grogner la note là où l'enceinte s'essouffle.
+                Biquad.highPass48(fs, 46.0).forEach { eq(it) }
+                eq(Biquad.peak(fs, 68.0, 8.0, 1.0), Biquad.lowShelf(fs, 150.0, 4.0))
                 monoBelow = Biquad.lowPass(fs, 120.0) to Biquad.lowPass(fs, 120.0)
                 bassSlam = BassSlam(fs, 120.0, gain = 1.6f, cap = 0.6f)
                 bassHarmonics = BassHarmonics(fs, below = 100.0, from = 110.0, to = 450.0, drive = 3f, odd = 3.5f, even = 1.2f)

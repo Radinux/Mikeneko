@@ -60,6 +60,8 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ### 3.7
 
+- 3.7.1: **Xstrm Bass** reshaped: cut hard below 48 Hz, rising to its peak at 68 Hz, then a rounded
+  descent down to 250 Hz.
 - 3.7.0: **Xstrm Bass** now pushes the whole 50–68 Hz zone, not just 68 Hz.
 - 3.7.0: **one Import button** that recognizes the file by itself (Mikeneko backup, NewPipe / FreeTube /
   Google Takeout subscriptions, TuneMyMusic playlists) and shows what it found before importing; the
