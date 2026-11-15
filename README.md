@@ -61,6 +61,8 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 ### 3.6
 
 - 3.6.1: **Xstrm Bass** now pushes the whole 50–68 Hz zone, not just 68 Hz.
+- 3.6.1: in landscape with the status bar hidden, **every tab starts higher** (no empty band left for the
+  hidden bar).
 - 3.6.1: swiping up or down on the **home category capsules** scrolls the list the right way (it was reversed).
 - 3.6.1: in landscape, the **dock with the Shorts tab** no longer touches the top and bottom of the screen.
 - 3.6.1: **swiping the video down** to the mini player shows the previous screen underneath right away,
