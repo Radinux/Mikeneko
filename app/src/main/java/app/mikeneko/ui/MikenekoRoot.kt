@@ -569,8 +569,10 @@ fun MikenekoRoot(
                     backdrop = backdrop,
                     current = route,
                     visible = dockVisible,
-                    modifier = Modifier.align(Alignment.CenterEnd).windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.End))
-                        .padding(end = 12.dp, top = railTop),
+                    // 3.6.1 : une marge en haut et en bas (et la barre de navigation) : avec l'onglet Shorts (5 onglets),
+                    // la colonne était plus haute que l'écran et touchait ses bords ; ses onglets se resserrent
+                    modifier = Modifier.align(Alignment.CenterEnd).windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.End + WindowInsetsSides.Bottom))
+                        .padding(end = 12.dp, top = railTop + 12.dp, bottom = 12.dp),
                     vertical = true,
                     onSelect = ::selectTab,
                 )
