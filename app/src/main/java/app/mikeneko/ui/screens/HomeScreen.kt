@@ -654,7 +654,7 @@ fun HomeOverlay(state: HomeState, backdrop: Backdrop, onSettings: () -> Unit) {
                         .offset { IntOffset(0, -shift.coerceAtMost(4 * gone.toInt())) }
                         .graphicsLayer { alpha = (1f - shift / gone).coerceIn(0f, 1f) }
                         // Glisser verticalement sur une capsule fait défiler les résultats dessous
-                        .then(if (searchList != null) Modifier.scrollable(searchList, Orientation.Vertical) else Modifier),
+                        .then(if (searchList != null) Modifier.scrollable(searchList, Orientation.Vertical, reverseDirection = true) else Modifier),
                     contentPadding = PaddingValues(horizontal = 20.dp, vertical = 6.dp),
                     horizontalArrangement = Arrangement.spacedBy(CONNECTED_GAP),
                 ) {
@@ -709,13 +709,14 @@ private fun HomeCategories(state: HomeState, backdrop: Backdrop) {
             .offset { IntOffset(0, -state.categoriesShift.coerceAtMost(4 * gone.toInt())) }
             .graphicsLayer { alpha = (1f - state.categoriesShift / gone).coerceIn(0f, 1f) }
             // Glisser verticalement sur une capsule fait défiler la liste dessous (et tire pour
-            // rafraîchir en haut), comme si on la touchait elle ; le défilement de côté reste aux capsules
+            // rafraîchir en haut), comme si on la touchait elle ; le défilement de côté reste aux capsules.
+            // 3.6.1 : reverseDirection, comme une vraie liste (sinon glisser vers le bas la faisait monter)
             .then(
                 if (pull != null) {
                     Modifier.pullToRefresh(state.refreshing, pull, onRefresh = { state.onRefresh() })
                 } else Modifier,
             )
-            .then(if (list != null) Modifier.scrollable(list, Orientation.Vertical) else Modifier),
+            .then(if (list != null) Modifier.scrollable(list, Orientation.Vertical, reverseDirection = true) else Modifier),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(CONNECTED_GAP),
     ) {
