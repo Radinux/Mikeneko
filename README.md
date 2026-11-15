@@ -58,6 +58,15 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ## 🎌 What's new ⸜(｡˃ ᵕ ˂ )⸝♡
 
+### 3.4
+
+- 3.4.0: **Chromecast**, without Google services (the way VLC does it): send your music and videos to a
+  Chromecast, a Google TV or a Cast speaker on your Wi‑Fi with the screen-with-waves button in the music
+  player, the video page or full screen. Videos go in HD (up to 1080p), downloaded songs and phone files
+  too; a speaker gets the sound of a video. The phone becomes the remote: play/pause, seek, next,
+  SponsorBlock, and the volume keys drive the device. *Stop casting* resumes on the phone where the TV was.
+- 3.4.0: audio effects: a bit less reverb.
+
 ### 3.3
 
 - 3.3.0: **audio effects for music**: 16 presets — Slowed + Reverb, Sped Up, Nightcore, 360 Spatial, 8D,
