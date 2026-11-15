@@ -719,7 +719,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">What’s new in Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Nice!</string>
-    <string name="whats_new_body">🔊 Mikeneko 3.6: cleaner audio effects\n\n• Switching effect while a song plays is now a smooth blend, no click.\n• A new limiter sees loud peaks coming and turns them down gently: strong bass stays clean, even on a speaker.\n• 8D Audio turns around your head more convincingly (headphones).\n• Ultra Bass adds gentle harmonics, so the bass is heard even on small speakers and earbuds.\n• Since 3.5: Xstrm Bass, an effect for small speakers with passive radiators.</string>
+    <string name="whats_new_body">🔊 Mikeneko 3.6: cleaner audio effects\n\n• Switching effect while a song plays is now a smooth blend, no click.\n• A new limiter sees loud peaks coming and turns them down gently: strong bass stays clean, even on a speaker.\n• 8D Audio turns around your head more convincingly (headphones).\n• Ultra Bass adds gentle harmonics, so the bass is heard even on small speakers and earbuds.\n• Xstrm Bass hits much harder: the bass at 68 Hz slams, saturated and growling, made for small speakers with passive radiators.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Import playlists</string>
@@ -882,7 +882,7 @@
     <string name="fx_ultra_bass">Ultra Bass</string>
     <string name="fx_ultra_bass_text">Maximum impact, like a subwoofer</string>
     <string name="fx_xstrm_bass">Xstrm Bass</string>
-    <string name="fx_xstrm_bass_text">Deep bass tuned for small speakers with passive radiators (68 Hz)</string>
+    <string name="fx_xstrm_bass_text">Slamming bass for small speakers with passive radiators (68 Hz)</string>
     <string name="fx_crispy">Crispy Clear</string>
     <string name="fx_crispy_text">Crystal-clear and airy</string>
     <string name="fx_v_balance">V-Balance</string>

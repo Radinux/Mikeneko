@@ -392,10 +392,18 @@ private class Limiter(fs: Int) {
  * harmoniques (100 à 400 Hz), ajoutées au son. Une petite enceinte ou des écouteurs qui ne descendent
  * pas à 50 Hz font quand même entendre la note, et la basse d'origine reste intacte.
  */
-private class BassHarmonics(fs: Int) {
-    private val lowL = Biquad.lowPass24(fs, 80.0)
-    private val lowR = Biquad.lowPass24(fs, 80.0)
-    private val bandL = listOf(Biquad.highPass(fs, 100.0), Biquad.highPass(fs, 100.0), Biquad.lowPass(fs, 400.0))
+private class BassHarmonics(
+    fs: Int,
+    below: Double = 80.0,
+    from: Double = 100.0,
+    to: Double = 400.0,
+    private val drive: Float = 2.2f,
+    private val odd: Float = 2.5f,
+    private val even: Float = 0.9f,
+) {
+    private val lowL = Biquad.lowPass24(fs, below)
+    private val lowR = Biquad.lowPass24(fs, below)
+    private val bandL = listOf(Biquad.highPass(fs, from), Biquad.highPass(fs, from), Biquad.lowPass(fs, to))
     private val bandR = bandL.map { it.copy() }
 
     fun process(frame: FloatArray) {
@@ -406,7 +414,7 @@ private class BassHarmonics(fs: Int) {
     private fun side(x: Float, low: List<Biquad>, band: List<Biquad>): Float {
         var sub = x
         for (i in low.indices) sub = low[i].process(sub)
-        var h = (tanh(sub * DRIVE) / DRIVE - sub) * ODD + sub * sub * EVEN
+        var h = (tanh(sub * drive) / drive - sub) * odd + sub * sub * even
         for (i in band.indices) h = band[i].process(h)
         return h
     }
@@ -414,11 +422,26 @@ private class BassHarmonics(fs: Int) {
     fun reset() {
         (lowL + lowR + bandL + bandR).forEach { it.reset() }
     }
+}
 
-    companion object {
-        private const val DRIVE = 2.2f
-        private const val ODD = 2.5f
-        private const val EVEN = 0.9f
+/**
+ * Le « coup » des basses de Xstrm Bass (3.6.0) : la bande sous [below] Hz passe dans une saturation
+ * qui la gonfle de [gain] quand elle est faible et l'écrase vers [cap] quand elle est forte. Les basses
+ * calmes remontent, les fortes tapent toujours au même niveau, dense et saturé : elles « crachent ».
+ */
+private class BassSlam(fs: Int, below: Double, private val gain: Float, private val cap: Float) {
+    private val lowL = Biquad.lowPass(fs, below)
+    private val lowR = Biquad.lowPass(fs, below)
+
+    fun process(frame: FloatArray) {
+        val l = lowL.process(frame[0])
+        val r = lowR.process(frame[1])
+        frame[0] += cap * tanh(l * gain / cap) - l
+        frame[1] += cap * tanh(r * gain / cap) - r
+    }
+
+    fun reset() {
+        lowL.reset(); lowR.reset()
     }
 }
 
@@ -445,6 +468,7 @@ class EffectChain(val preset: AudioPreset, val sampleRate: Int) {
 
     // Harmoniques de basses (Ultra Bass) / saturation à lampes (vieille radio)
     private var bassHarmonics: BassHarmonics? = null
+    private var bassSlam: BassSlam? = null
     private val limiter = if (preset == AudioPreset.Normal) null else Limiter(fs) // « Normal » : le son tel quel
     private var tubeDrive = 0f
     private var mono = false
@@ -481,14 +505,19 @@ class EffectChain(val preset: AudioPreset, val sampleRate: Int) {
                 bassHarmonics = BassHarmonics(fs)
             }
             AudioPreset.XstrmBass -> {
-                // 3.5.0 : pour les petites enceintes à radiateurs passifs, qui répondent le plus fort vers
-                // 68 Hz. Le pic vise cette fréquence ; tout ce qui est sous ~40 Hz est coupé (24 dB/oct) :
-                // l'enceinte ne le rend pas, il ne ferait que pousser la membrane et déclencher son propre
-                // limiteur, qui écraserait le reste. Basses en mono (sous 120 Hz) pour que les deux côtés
-                // poussent les radiateurs ensemble, et un léger creux vers 300 Hz pour garder la clarté.
+                // Pour les petites enceintes à radiateurs passifs, qui répondent le plus fort vers 68 Hz. Le
+                // pic vise cette fréquence ; tout ce qui est sous ~40 Hz est coupé (24 dB/oct) : l'enceinte
+                // ne le rend pas, il ne ferait que pousser la membrane et déclencher son propre limiteur, qui
+                // écraserait le reste. Basses en mono (sous 120 Hz) pour que les deux côtés poussent les
+                // radiateurs ensemble, et un creux vers 300 Hz pour garder la clarté.
+                // 3.6.0 : bien plus fort (les basses doivent « cracher ») : pic de 7 → 10 dB, la bande des
+                // basses gonflée et saturée ([BassSlam]), et des harmoniques (136, 204 Hz…) qui font
+                // grogner la note même là où l'enceinte s'essouffle.
                 Biquad.highPass24(fs, 40.0).forEach { eq(it) }
-                eq(Biquad.peak(fs, 68.0, 7.0, 1.2), Biquad.peak(fs, 300.0, -2.0, 0.9))
+                eq(Biquad.peak(fs, 68.0, 10.0, 1.0), Biquad.peak(fs, 300.0, -3.0, 0.9))
                 monoBelow = Biquad.lowPass(fs, 120.0) to Biquad.lowPass(fs, 120.0)
+                bassSlam = BassSlam(fs, 120.0, gain = 1.6f, cap = 0.6f)
+                bassHarmonics = BassHarmonics(fs, below = 100.0, from = 110.0, to = 450.0, drive = 3f, odd = 3.5f, even = 1.2f)
                 preGain = db(-6.0)
             }
             AudioPreset.Crispy -> {
@@ -551,6 +580,7 @@ class EffectChain(val preset: AudioPreset, val sampleRate: Int) {
         }
         frame[0] = l
         frame[1] = r
+        bassSlam?.process(frame)
         bassHarmonics?.process(frame)
         haas?.process(frame)
         early?.process(frame)
@@ -568,6 +598,7 @@ class EffectChain(val preset: AudioPreset, val sampleRate: Int) {
     fun reset() {
         eqL.forEach { it.reset() }; eqR.forEach { it.reset() }
         monoBelow?.let { it.first.reset(); it.second.reset() }
+        bassSlam?.reset()
         bassHarmonics?.reset()
         limiter?.reset()
         reverb?.reset()

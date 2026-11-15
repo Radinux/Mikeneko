@@ -64,6 +64,9 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
   new look-ahead limiter turns loud peaks down gently instead of squashing them (nothing above
   −0.3 dBFS); 8D Audio also delays the far ear a little, so the sound really seems to turn around your
   head; Ultra Bass adds gentle bass harmonics, heard even on small speakers and earbuds.
+- 3.6.0: **Xstrm Bass hits much harder**: a +10 dB peak at 68 Hz, the bass band pumped up and saturated so
+  every kick slams at full level, and growling harmonics (136, 204 Hz) that carry the note even where the
+  speaker runs out of breath.
 
 ### 3.5
 

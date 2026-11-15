@@ -720,7 +720,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">Quoi de neuf dans Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Super !</string>
-    <string name="whats_new_body">🔊 Mikeneko 3.6 : des effets audio plus propres\n\n• Changer d\'effet pendant une chanson se fait en fondu, sans clic.\n• Un nouveau limiteur voit venir les crêtes et les baisse en douceur : les grosses basses restent propres, même sur une enceinte.\n• Le 8D tourne autour de la tête de façon plus réaliste (casque).\n• Ultra basses ajoute de légères harmoniques : la basse s\'entend même sur de petites enceintes et des écouteurs.\n• Depuis la 3.5 : Xstrm Bass, un effet pour les petites enceintes à radiateurs passifs.</string>
+    <string name="whats_new_body">🔊 Mikeneko 3.6 : des effets audio plus propres\n\n• Changer d\'effet pendant une chanson se fait en fondu, sans clic.\n• Un nouveau limiteur voit venir les crêtes et les baisse en douceur : les grosses basses restent propres, même sur une enceinte.\n• Le 8D tourne autour de la tête de façon plus réaliste (casque).\n• Ultra basses ajoute de légères harmoniques : la basse s\'entend même sur de petites enceintes et des écouteurs.\n• Xstrm Bass cogne bien plus fort : les basses à 68 Hz crachent, saturées et grondantes, faites pour les petites enceintes à radiateurs passifs.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Importer des playlists</string>
@@ -883,7 +883,7 @@
     <string name="fx_ultra_bass">Ultra basses</string>
     <string name="fx_ultra_bass_text">Impact maximal, comme un caisson de basses</string>
     <string name="fx_xstrm_bass">Xstrm Bass</string>
-    <string name="fx_xstrm_bass_text">Basses profondes pour les petites enceintes à radiateurs passifs (68 Hz)</string>
+    <string name="fx_xstrm_bass_text">Des basses qui crachent, pour les petites enceintes à radiateurs passifs (68 Hz)</string>
     <string name="fx_crispy">Cristallin</string>
     <string name="fx_crispy_text">Ultra net et aéré</string>
     <string name="fx_v_balance">Courbe en V</string>
