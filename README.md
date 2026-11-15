@@ -61,6 +61,8 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 ### 3.6
 
 - 3.6.1: **Xstrm Bass** now pushes the whole 50–68 Hz zone, not just 68 Hz.
+- 3.6.1: in landscape, the **music pill** sits on the left; the **audio effect name** moved between the two
+  times under the progress bar, so the play buttons are no longer cut off.
 - 3.6.1: in landscape with the status bar hidden, **every tab starts higher** (no empty band left for the
   hidden bar).
 - 3.6.1: swiping up or down on the **home category capsules** scrolls the list the right way (it was reversed).

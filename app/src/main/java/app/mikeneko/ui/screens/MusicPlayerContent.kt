@@ -455,7 +455,6 @@ private fun DetailsCard(image: String?, round: Boolean, title: String, subtitle:
 @Composable
 private fun SoundInfo(key: String?) {
     val details by PlayerHolder.audioDetails.collectAsState()
-    val preset by PlayerHolder.audioPreset.collectAsState()
     val castSession by app.mikeneko.cast.Cast.session.collectAsState()
     val local = app.mikeneko.ui.components.rememberAudioOutput(key)
     // Pendant le cast (3.4.0) : le son part sur l'appareil
@@ -482,16 +481,7 @@ private fun SoundInfo(key: String?) {
                 }
             }
         }
-        // L'effet audio en cours, s'il y en a un (3.3.0) ; 3.6.0 : sur sa propre ligne, centrée, de la
-        // couleur du thème (à côté, il poussait la sortie audio hors de l'écran)
-        if (preset != app.mikeneko.player.AudioPreset.Normal) {
-            Text(
-                app.mikeneko.ui.components.presetName(preset),
-                Modifier.padding(top = 3.dp),
-                style = style.copy(color = Pelage.RouxClair, textAlign = TextAlign.Center),
-                maxLines = 1,
-            )
-        }
+        // (L'effet audio en cours est sur la ligne des temps, au-dessus : voir TrackProgress)
         // Pendant le cast (3.6.0) : où part le son, bien visible
         app.mikeneko.ui.components.CastIndicator(Modifier.padding(top = 8.dp))
     }
@@ -522,10 +512,23 @@ private fun TrackProgress(key: String?, active: Boolean) {
             onSeek = { f -> if (duration > 0) PlayerHolder.seekTo((f * duration).toLong()) },
             onScrub = { scrub = it },
         )
-        Row(Modifier.fillMaxWidth()) {
-            Text(formatClock(shown), style = TextStyle(fontFamily = Rounded, color = Color(0xFFE3DAD2), fontSize = 12.sp, fontWeight = FontWeight.Bold, shadow = GlassTextShadow))
-            Spacer(Modifier.weight(1f))
-            Text(if (duration > 0) formatClock(duration) else "", style = TextStyle(fontFamily = Rounded, color = Color(0xFFE3DAD2), fontSize = 12.sp, fontWeight = FontWeight.Bold, shadow = GlassTextShadow))
+        val preset by PlayerHolder.audioPreset.collectAsState()
+        val clock = TextStyle(fontFamily = Rounded, color = Color(0xFFE3DAD2), fontSize = 12.sp, fontWeight = FontWeight.Bold, shadow = GlassTextShadow)
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(formatClock(shown), style = clock)
+            // L'effet audio en cours (3.3.0), au milieu de la ligne des temps, de la couleur du thème.
+            // 3.6.1 : ici plutôt que sur une ligne à lui, qui poussait les boutons hors de la fenêtre
+            Box(Modifier.weight(1f).padding(horizontal = 8.dp), contentAlignment = Alignment.Center) {
+                if (preset != app.mikeneko.player.AudioPreset.Normal) {
+                    Text(
+                        app.mikeneko.ui.components.presetName(preset),
+                        style = clock.copy(color = Pelage.RouxClair, textAlign = TextAlign.Center),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+            Text(if (duration > 0) formatClock(duration) else "", style = clock)
         }
     }
 }

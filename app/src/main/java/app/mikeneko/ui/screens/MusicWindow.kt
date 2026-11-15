@@ -108,13 +108,13 @@ fun MusicDockWindow(
         val geometry = remember(width, height, statusTop, navBottom, density, landscape, startInset, endInset) {
             with(density) {
                 if (landscape) {
-                    // Paysage : la pilule en bas à droite, juste avant le dock en colonne (plus étroite), la fenêtre à sa gauche
+                    // Paysage : la pilule en bas à gauche (3.6.1 ; avant, à droite, collée au dock en colonne), plus étroite
                     val pillBottom = height - (navBottom + 14.dp).toPx()
-                    val pillRight = width - (endInset + 16.dp).toPx()
-                    val pillWidth = minOf(420.dp.toPx(), pillRight - (startInset + 16.dp).toPx())
+                    val pillLeft = (startInset + 16.dp).toPx()
+                    val pillWidth = minOf(420.dp.toPx(), width - (endInset + 16.dp).toPx() - pillLeft)
                     return@with WindowGeometry(
-                        pillLeft = pillRight - pillWidth,
-                        pillRight = pillRight,
+                        pillLeft = pillLeft,
+                        pillRight = pillLeft + pillWidth,
                         pillTop = pillBottom - MUSIC_DOCK_HEIGHT.toPx(),
                         bottom = pillBottom,
                         windowLeft = (startInset + 10.dp).toPx(),
