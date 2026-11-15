@@ -517,7 +517,7 @@
     <string name="update_now">Install</string>
     <string name="update_later">Later</string>
     <string name="backup_export">Export to a file</string>
-    <string name="backup_export_text">Subscriptions, music and video playlists, saved albums and artists, favorite radios, Watch later and liked videos, your topics and watch history, in one .xml file.</string>
+    <string name="backup_export_text">Everything in one .mikeneko file: subscriptions, music and video playlists, saved albums and artists, favorites, Watch later and likes, your topics, watch history and settings.</string>
     <string name="backup_import">Import a file</string>
     <string name="backup_import_text">A Mikeneko .xml file: what\'s missing is added, nothing is erased.</string>
     <string name="backup_exported">Backup saved</string>
@@ -910,4 +910,25 @@
     <string name="cast_volume">Volume</string>
     <string name="cast_stop">Stop casting</string>
     <string name="cast_sound_only">sound only</string>
+    <string name="import_file">Import a file</string>
+    <string name="import_file_text">A Mikeneko backup, subscriptions (NewPipe, FreeTube, Google Takeout) or playlists (TuneMyMusic export): Mikeneko recognizes the file and shows what it found before importing. Nothing is erased.</string>
+    <string name="import_unknown">Mikeneko doesn\'t recognize this file</string>
+    <string name="import_backup_title">Mikeneko backup</string>
+    <string name="import_backup_from">Made with Mikeneko %1$s on %2$s</string>
+    <string name="import_part_subscriptions">Subscriptions</string>
+    <string name="import_part_music">Music playlists</string>
+    <string name="import_part_videos">Video playlists</string>
+    <string name="import_part_library">Saved albums and artists</string>
+    <string name="import_part_saved">Favorites, Watch later, likes</string>
+    <string name="import_part_history">History and For you</string>
+    <string name="import_part_settings">Settings</string>
+    <string name="import_part_count">%1$d · %2$d new</string>
+    <string name="import_part_settings_note">Replaces your current settings</string>
+    <string name="import_do">Import</string>
+    <string name="import_subs_title">Subscriptions</string>
+    <string name="settings_restored">Settings restored</string>
+    <plurals name="import_subs_found">
+        <item quantity="one">%1$d channel, %2$d new</item>
+        <item quantity="other">%1$d channels, %2$d new</item>
+    </plurals>
 </resources>

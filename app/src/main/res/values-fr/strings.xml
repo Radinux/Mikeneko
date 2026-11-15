@@ -517,7 +517,7 @@
     <string name="sync_unlink_confirm">Touche encore pour arrêter</string>
     <string name="sync_auto_text">Les appareils liés se synchronisent tout seuls dès que quelque chose change, quand ils sont sur le même réseau privé (et Mikeneko ouvert).</string>
     <string name="backup_export">Exporter dans un fichier</string>
-    <string name="backup_export_text">Abonnements, playlists musique et vidéo, albums et artistes sauvegardés, radios favorites, À regarder plus tard, vidéos aimées, tes sujets et ton historique, dans un fichier .xml.</string>
+    <string name="backup_export_text">Tout dans un fichier .mikeneko : abonnements, playlists musique et vidéo, albums et artistes sauvegardés, favoris, À regarder plus tard et j\'aime, tes sujets, l\'historique et les réglages.</string>
     <string name="backup_import">Importer un fichier</string>
     <string name="backup_import_text">Un fichier .xml de Mikeneko : ce qui manque est ajouté, rien n\'est effacé.</string>
     <string name="backup_exported">Sauvegarde enregistrée</string>
@@ -911,4 +911,26 @@
     <string name="cast_volume">Volume</string>
     <string name="cast_stop">Arrêter de caster</string>
     <string name="cast_sound_only">son seulement</string>
+    <string name="import_file">Importer un fichier</string>
+    <string name="import_file_text">Une sauvegarde Mikeneko, des abonnements (NewPipe, FreeTube, Google Takeout) ou des playlists (export TuneMyMusic) : Mikeneko reconnaît le fichier et montre ce qu\'il a trouvé avant d\'importer. Rien n\'est effacé.</string>
+    <string name="import_unknown">Mikeneko ne reconnaît pas ce fichier</string>
+    <string name="import_backup_title">Sauvegarde Mikeneko</string>
+    <string name="import_backup_from">Faite avec Mikeneko %1$s le %2$s</string>
+    <string name="import_part_subscriptions">Abonnements</string>
+    <string name="import_part_music">Playlists musique</string>
+    <string name="import_part_videos">Playlists vidéo</string>
+    <string name="import_part_library">Albums et artistes sauvegardés</string>
+    <string name="import_part_saved">Favoris, À regarder plus tard, j\'aime</string>
+    <string name="import_part_history">Historique et Pour toi</string>
+    <string name="import_part_settings">Réglages</string>
+    <string name="import_part_count">%1$d · %2$d nouveaux</string>
+    <string name="import_part_settings_note">Remplace tes réglages actuels</string>
+    <string name="import_do">Importer</string>
+    <string name="import_subs_title">Abonnements</string>
+    <string name="settings_restored">Réglages repris</string>
+    <plurals name="import_subs_found">
+        <item quantity="one">%1$d chaîne, dont %2$d nouvelle(s)</item>
+        <item quantity="many">%1$d chaînes, dont %2$d nouvelle(s)</item>
+        <item quantity="other">%1$d chaînes, dont %2$d nouvelle(s)</item>
+    </plurals>
 </resources>

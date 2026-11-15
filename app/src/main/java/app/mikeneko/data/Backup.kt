@@ -53,11 +53,71 @@ object MikenekoBackup {
         val positions: List<WatchPositions.Saved> = emptyList(),
         /** Ce qui a été retiré (ou remis) sur l'appareil qui a écrit le fichier (2.23.0) : pour la synchro. */
         val removals: Map<String, Deletions.Mark> = emptyMap(),
+        /** Les réglages de l'appli (fichier `.mikeneko` seulement, 3.6.1), voir [SettingsBackup]. */
+        val settings: Map<String, Map<String, Any>>? = null,
+        /** L'appli et la date qui ont écrit le fichier (pour l'aperçu avant import). */
+        val app: String? = null,
+        val date: String? = null,
     )
 
     /** Ce que l'import a ajouté. */
-    class Added(val channels: Int, val playlists: Int, val library: Int, val videos: Int, val history: Int = 0) {
-        val total get() = channels + playlists + library + videos + history
+    class Added(val channels: Int, val playlists: Int, val library: Int, val videos: Int, val history: Int = 0, val settings: Boolean = false) {
+        val total get() = channels + playlists + library + videos + history + if (settings) 1 else 0
+    }
+
+    /** Tout ce que l'appli garde, pour un fichier `.mikeneko` (3.6.1) : comme [export], plus les réglages. */
+    fun collect(context: Context): Content {
+        val library = MusicLibrary.get(context)
+        val videos = VideoLibrary.get(context)
+        val tastes = Tastes.get(context)
+        return Content(
+            subscriptions = SubscriptionStore.get(context).items.value,
+            musicPlaylists = Playlists.get(context).items.value.map { it.name to it.items },
+            videoPlaylists = Playlists.videos(context).items.value.map { it.name to it.items },
+            albums = library.albums.value,
+            artists = library.artists.value,
+            favorites = Favorites.get(context).items.value,
+            later = videos.later.value,
+            liked = videos.liked.value,
+            shorts = videos.shorts.value,
+            tastes = tastes.chosen.value,
+            tastesSkipped = tastes.skipped.value,
+            history = WatchHistory.get(context).snapshot().map { it.copy(related = emptyList()) },
+            positions = WatchPositions.all(context),
+            settings = SettingsBackup.capture(context),
+        )
+    }
+
+    /**
+     * Pour l'aperçu avant import (3.6.1) : combien d'éléments de chaque partie ne sont pas déjà dans
+     * l'appli (une playlist : ses morceaux qui manquent à la playlist du même nom).
+     */
+    fun newCounts(context: Context, content: Content): Map<BackupFile.Part, Int> {
+        fun key(url: String) = videoIdOf(url) ?: url
+        fun missing(incoming: List<VideoItem>, have: List<VideoItem>): Int {
+            val known = have.mapTo(HashSet()) { key(it.url) }
+            return incoming.distinctBy { key(it.url) }.count { key(it.url) !in known }
+        }
+        fun playlists(store: Playlists, incoming: List<Pair<String, List<VideoItem>>>): Int {
+            val byName = store.items.value.associateBy { it.name }
+            return incoming.sumOf { (name, items) -> missing(items, byName[name]?.items.orEmpty()) }
+        }
+        val subs = SubscriptionStore.get(context).items.value.mapTo(HashSet()) { it.channelId }
+        val library = MusicLibrary.get(context)
+        val albums = library.albums.value.mapTo(HashSet()) { library.albumKey(it) }
+        val artists = library.artists.value.mapTo(HashSet()) { library.artistKey(it) }
+        val videos = VideoLibrary.get(context)
+        val history = WatchHistory.get(context).snapshot().mapTo(HashSet()) { key(it.url) to it.at }
+        return mapOf(
+            BackupFile.Part.Subscriptions to content.subscriptions.distinctBy { it.channelId }.count { it.channelId !in subs },
+            BackupFile.Part.MusicPlaylists to playlists(Playlists.get(context), content.musicPlaylists),
+            BackupFile.Part.VideoPlaylists to playlists(Playlists.videos(context), content.videoPlaylists),
+            BackupFile.Part.Library to content.albums.count { library.albumKey(it) !in albums } + content.artists.count { library.artistKey(it) !in artists },
+            BackupFile.Part.Saved to missing(content.favorites, Favorites.get(context).items.value) + missing(content.later, videos.later.value) +
+                missing(content.liked, videos.liked.value) + missing(content.shorts, videos.shorts.value),
+            BackupFile.Part.History to content.history.count { (key(it.url) to it.at) !in history },
+            BackupFile.Part.Settings to BackupFile.count(content, BackupFile.Part.Settings),
+        )
     }
 
     /** Un fichier de Mikeneko ? (pour l'import des abonnements, qui accepte aussi le reste) */
@@ -200,6 +260,8 @@ object MikenekoBackup {
         val positions = mutableListOf<WatchPositions.Saved>()
         val removals = HashMap<String, Deletions.Mark>()
 
+        var app: String? = null
+        var date: String? = null
         var section: String? = null // subscriptions, playlists, library, favorites, later, liked, shorts
         var playlistKind: String? = null
         var playlistName: String? = null
@@ -209,6 +271,7 @@ object MikenekoBackup {
         while (parser.next() != XmlPullParser.END_DOCUMENT) {
             when (parser.eventType) {
                 XmlPullParser.START_TAG -> when (parser.name) {
+                    "mikeneko" -> { app = a("app"); date = a("date") }
                     "subscriptions", "library", "favorites", "later", "liked", "shorts" -> section = parser.name
                     "playlists" -> { section = "playlists"; playlistKind = a("kind") }
                     "playlist" -> { playlistName = a("name"); playlistItems = mutableListOf() }
@@ -275,7 +338,7 @@ object MikenekoBackup {
                 }
             }
         }
-        return Content(subscriptions, music, videosLists, albums, artists, favorites, later, liked, shorts, tastes, tastesSkipped, history, positions, removals)
+        return Content(subscriptions, music, videosLists, albums, artists, favorites, later, liked, shorts, tastes, tastesSkipped, history, positions, removals, app = app, date = date)
     }
 
     /**
@@ -347,6 +410,8 @@ object MikenekoBackup {
         Tastes.get(context).merge(content.tastes, content.tastesSkipped)
         val history = WatchHistory.get(context).merge(content.history)
         WatchPositions.merge(context, content.positions)
-        return Added(channels, playlists, library, added, history)
+        // Les réglages (fichier `.mikeneko`, seulement si on les a cochés) : ceux du fichier remplacent les nôtres
+        val settings = content.settings?.takeIf { it.isNotEmpty() }?.let { SettingsBackup.apply(context, it); true } ?: false
+        return Added(channels, playlists, library, added, history, settings)
     }
 }

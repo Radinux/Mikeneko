@@ -161,19 +161,25 @@ object PlayerHolder {
     /** Émis à chaque coup de patte sur un sponsor. */
     val skipped = MutableSharedFlow<String>(extraBufferCapacity = 4)
 
-    /** Au démarrage de l'app : relit les réglages gardés (mode ambiant, volume stable). */
-    fun init(context: Context) {
+    /** Les réglages du lecteur, relus (au démarrage, et après l'import d'un fichier `.mikeneko`, 3.6.1). */
+    fun readSettings(context: Context) {
         val p = context.getSharedPreferences("lecteur", Context.MODE_PRIVATE)
-        prefs = p
         ambient.value = p.getBoolean("ambiant", true)
         stableVolume.value = p.getBoolean("volume_stable", false) && StableVolume.supported
         quality.value = p.getInt("qualite", 0).takeIf { it > 0 } // 0 = Auto
         autoSkip.value = p.getBoolean("sponsorblock_auto", true)
         autoplay.value = p.getBoolean("lecture_auto", true)
-        repeat.value = runCatching { Repeat.valueOf(p.getString("repeter", null) ?: "Off") }.getOrDefault(Repeat.Off)
-        shuffle.value = p.getBoolean("aleatoire", false)
         audioPreset.value = AudioPreset.of(p.getString("effet_audio", null))
         AudioEffects.preset = audioPreset.value
+    }
+
+    /** Au démarrage de l'app : relit les réglages gardés (mode ambiant, volume stable). */
+    fun init(context: Context) {
+        val p = context.getSharedPreferences("lecteur", Context.MODE_PRIVATE)
+        prefs = p
+        readSettings(context)
+        repeat.value = runCatching { Repeat.valueOf(p.getString("repeter", null) ?: "Off") }.getOrDefault(Repeat.Off)
+        shuffle.value = p.getBoolean("aleatoire", false)
         // Musique ↔ vidéo (3.3.0) : les effets audio et leur vitesse ne s'appliquent qu'à la musique
         scope.launch {
             nowPlaying.map { it != null && it.audioOnly && !it.live }.distinctUntilChanged().collect { music ->

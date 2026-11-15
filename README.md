@@ -32,7 +32,7 @@ No ads · no Google account · with cat ears (=^･ω･^=)
   "For you" and "Your mixes", synced lyrics, a dancing spectrum wave, your own playlists.
 - 🎶 **Bring your music**: import your playlists, liked artists and saved albums
   from other music apps through a TuneMyMusic export (CSV or TXT), duplicates merged.
-- 💾 **Mikeneko backup** (`.xml`): your whole Mikeneko in one file, to move to a new phone or keep
+- 💾 **Mikeneko backup** (`.mikeneko`): your whole Mikeneko in one file, to move to a new phone or keep
   safe (details below).
 - 🍙 **yt-dlp downloads**: video, MP3, FLAC, Opus, M4A, sponsors cut out, offline listening.
 - 🐾 **PiP mini player** with cat ears inside the app, and real system PiP when you leave it.
@@ -61,6 +61,9 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 ### 3.6
 
 - 3.6.1: **Xstrm Bass** now pushes the whole 50–68 Hz zone, not just 68 Hz.
+- 3.6.1: **one Import button** that recognizes the file by itself (Mikeneko backup, NewPipe / FreeTube /
+  Google Takeout subscriptions, TuneMyMusic playlists) and shows what it found before importing; the
+  backup becomes a **`.mikeneko`** file (compressed, with your settings, and parts to tick on import).
 - 3.6.1: Settings: **Hide status bar** is now in General (Appearance), **Import playlists** in Music,
   **No Shorts** in For you.
 - 3.6.1: in landscape, the **music pill** sits on the left; the **audio effect name** moved between the two
@@ -607,36 +610,33 @@ language.
 
 ## 💾 The Mikeneko backup
 
-**Settings › Backup › Export to a file** writes a readable `.xml` file with everything you built up
-in the app:
+**Settings › Sync › Export to a file** writes a `.mikeneko` file with everything you built up in the
+app:
 
 - subscriptions;
 - music and video playlists (with their songs and videos);
 - saved albums and artists, favourite radios;
-- "Watch later", liked videos and "Your shorts".
+- "Watch later", liked videos and "Your shorts";
+- your For you topics, watch history and resume positions;
+- your settings (theme color, sound quality, SponsorBlock, crossfade… — never your language, accounts
+  or sync keys).
 
-**Import a file** reads it back on any phone. Import **merges**: it adds what is missing and never
-erases anything (a playlist with the same name gets the songs it lacks), then says what it added;
-importing the same file twice adds nothing. The Subscriptions "Import" button accepts this file too
-(it only takes the subscriptions from it). The format is plain XML, so other apps can read it:
+**Import a file** is the one import button for everything: pick any file and Mikeneko recognizes it from
+its content — a `.mikeneko` backup (or an older `.xml` one), subscriptions from NewPipe (.json), FreeTube
+(.db) or Google Takeout (.csv), or a TuneMyMusic playlist export (CSV or TXT). Before importing it shows
+what it found: for a backup, each part with how many items it holds and how many are new here, to tick
+or untick (settings are unticked by default, since they replace yours). Import **merges**: it adds what
+is missing and never erases anything (a playlist with the same name gets the songs it lacks).
 
-```xml
-<mikeneko version="1" app="2.6.7" date="…">
-  <subscriptions><channel id="…" name="…" url="…" avatar="…"/></subscriptions>
-  <playlists kind="music|videos">
-    <playlist name="…"><video url="…" title="…" channel="…" thumbnail="…" duration="…"/></playlist>
-  </playlists>
-  <library><album …/><artist …/></library>
-  <favorites>…</favorites> <later>…</later> <liked>…</liked> <shorts>…</shorts>
-</mikeneko>
-```
-
-Code: `data/Backup.kt` (`MikenekoBackup`).
+The file is a ZIP archive with a `manifest.json` (format, version, app, date, counts per part) and a
+`data.json` holding the content, so other tools can read it too. Code: `data/BackupFile.kt` (format),
+`data/Importer.kt` (detection), `data/Backup.kt` (`MikenekoBackup`: collect, merge; device-to-device sync
+still uses the XML so older versions keep syncing).
 
 ## 🌑 No Google account (￢_￢)
 
 There is no Google sign-in: subscriptions are imported from NewPipe (.json), FreeTube (.db), Google
-Takeout (.csv) or a Mikeneko backup (Settings › Backup), and comments are read without an account.
+Takeout (.csv) or a Mikeneko backup (Settings › Sync › Import a file), and comments are read without an account.
 The only account Mikeneko knows is an optional GitHub one, used as an encrypted locker for sync (2.19).
 
 ## 🎋 Structure

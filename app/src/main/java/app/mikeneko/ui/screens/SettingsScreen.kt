@@ -222,7 +222,7 @@ private fun ColumnScope.SettingsTabContent(tab: SettingsTab, list: LazyListState
             SettingsTab.Sync -> {
                 item { SyncSection() }
                 item { GitHubSection() }
-                item { BackupSection(context) }
+                item { BackupSection() }
             }
             SettingsTab.About -> item { AboutSection(context) }
         }
@@ -392,65 +392,20 @@ private fun githubFailure(reason: app.mikeneko.data.GitHubSync.Reason) = when (r
     app.mikeneko.data.GitHubSync.Reason.TimedOut -> R.string.github_failed_timeout
 }
 
-/** Le fichier de sauvegarde Mikeneko (.xml) : l'exporter, ou en importer un (sans rien effacer). */
+/**
+ * Importer et sauvegarder (3.6.1) : un seul bouton d'import, qui reconnaît le fichier (sauvegarde Mikeneko,
+ * abonnements d'une autre appli, playlists d'une appli de musique) et montre ce qu'il a trouvé avant ;
+ * l'export écrit un fichier `.mikeneko`.
+ */
 @Composable
-private fun BackupSection(context: Context) {
-    val scope = androidx.compose.runtime.rememberCoroutineScope()
-    fun toast(text: String) = Toast.makeText(context, text, Toast.LENGTH_LONG).show()
-    val export = androidx.activity.compose.rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/xml")) { uri ->
-        if (uri == null) return@rememberLauncherForActivityResult
-        scope.launch {
-            val ok = kotlinx.coroutines.withContext(Dispatchers.IO) {
-                runCatching {
-                    val version = context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty()
-                    context.contentResolver.openOutputStream(uri)?.use { MikenekoBackup.export(context, it, version) } ?: error("")
-                }.isSuccess
-            }
-            toast(context.getString(if (ok) R.string.backup_exported else R.string.backup_export_failed))
-        }
-    }
-    val import = androidx.activity.compose.rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri == null) return@rememberLauncherForActivityResult
-        scope.launch {
-            val content = kotlinx.coroutines.withContext(Dispatchers.IO) {
-                runCatching { context.contentResolver.openInputStream(uri)?.use { MikenekoBackup.read(it) } }.getOrNull()
-            }
-            if (content == null) {
-                toast(context.getString(R.string.backup_import_failed))
-                return@launch
-            }
-            val added = MikenekoBackup.import(context, content)
-            toast(
-                if (added.total == 0) context.getString(R.string.backup_import_nothing)
-                else addedSummary(context, added),
-            )
-        }
-    }
-    // Les abonnements d'autres applis (NewPipe .json, FreeTube .db, Google Takeout .csv) : venu de
-    // l'onglet Abonnements en 1.18.0, où la grande carte d'import restait toujours affichée
-    val importSubs = androidx.activity.compose.rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri == null) return@rememberLauncherForActivityResult
-        scope.launch {
-            val text = kotlinx.coroutines.withContext(Dispatchers.IO) {
-                runCatching { context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() } }.getOrNull().orEmpty()
-            }
-            val list = SubscriptionImport.parse(text)
-            SubscriptionStore.get(context).addAll(list)
-            toast(if (list.isEmpty()) context.getString(R.string.subs_import_none) else context.resources.getQuantityString(R.plurals.subs_imported_count, list.size, list.size))
-        }
-    }
+private fun BackupSection() {
+    val importFile = rememberImportFile()
+    val export = rememberExportBackup()
     Section(stringResource(R.string.settings_section_backup)) {
-        ActionRow(MkIcons.Subscriptions, stringResource(R.string.settings_import_subs), stringResource(R.string.settings_import_subs_text), Pelage.Texte) {
-            importSubs.launch(arrayOf("application/json", "text/*", "application/xml", "application/octet-stream"))
-        }
+        ActionRow(MkIcons.Download, stringResource(R.string.import_file), stringResource(R.string.import_file_text), Pelage.Texte) { importFile() }
+        PlaylistImportProgress()
         Divider()
-        ActionRow(MkIcons.Share, stringResource(R.string.backup_export), stringResource(R.string.backup_export_text), Pelage.Texte) {
-            export.launch("mikeneko-${LocalDate.now()}.xml")
-        }
-        Divider()
-        ActionRow(MkIcons.Download, stringResource(R.string.backup_import), stringResource(R.string.backup_import_text), Pelage.Texte) {
-            import.launch(arrayOf("text/xml", "application/xml", "text/*", "application/octet-stream"))
-        }
+        ActionRow(MkIcons.Share, stringResource(R.string.backup_export), stringResource(R.string.backup_export_text), Pelage.Texte) { export() }
     }
 }
 
@@ -709,31 +664,11 @@ private fun MusicSection() {
     }
 }
 
-/** Playlists d'autres services, exportées avec TuneMyMusic (2.8.0) : on choisit quoi importer. */
+/** Importer sa musique d'une autre appli (TuneMyMusic) : le même import que dans Sauvegarde, qui reconnaît le fichier. */
 @Composable
 private fun MusicImportRow() {
-    val context = LocalContext.current
-    val scope = androidx.compose.runtime.rememberCoroutineScope()
-    var importPreview by remember { mutableStateOf<PlaylistImport.Preview?>(null) }
-    val importPlaylists = androidx.activity.compose.rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri == null) return@rememberLauncherForActivityResult
-        scope.launch {
-            val preview = kotlinx.coroutines.withContext(Dispatchers.IO) {
-                runCatching {
-                    val name = context.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)
-                        ?.use { c -> if (c.moveToFirst()) c.getString(0) else null }.orEmpty()
-                    val text = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }.orEmpty()
-                    PlaylistImport.preview(text, name)
-                }.getOrNull()
-            }
-            if (preview == null || preview.items.isEmpty()) Toast.makeText(context, context.getString(R.string.import_empty), Toast.LENGTH_LONG).show() else importPreview = preview
-        }
-    }
-    importPreview?.let { PlaylistImportPicker(it) { importPreview = null } }
-    PlaylistImportSummary()
-    ActionRow(MkIcons.Music, stringResource(R.string.import_playlists), stringResource(R.string.import_playlists_text), Pelage.Texte) {
-        importPlaylists.launch(arrayOf("text/csv", "text/comma-separated-values", "application/csv", "text/plain", "text/*", "application/octet-stream"))
-    }
+    val importFile = rememberImportFile()
+    ActionRow(MkIcons.Music, stringResource(R.string.import_playlists), stringResource(R.string.import_playlists_text), Pelage.Texte) { importFile() }
     PlaylistImportProgress()
 }
 

@@ -313,6 +313,10 @@ blur) and `onClick`.
 
 ## 8. Mikeneko backup in .xml (1.15.0)
 
+> 3.6.1: manual backups are now `.mikeneko` files (see 8 bis below); the XML described here is still
+> read by the import and still used by device-to-device sync (LocalSync, GitHubSync, AutoSync), so a
+> device not yet updated keeps syncing. `Content` gained `settings`, `app`, `date`.
+
 `data/Backup.kt`, object `MikenekoBackup`:
 - `export(context, out, appVersion)`;
 - `read(input)` / `read(text)` returns a `Content`;
@@ -1390,3 +1394,28 @@ users: the point is to take them from the videos really watched.
   prepared at `position + 400 ms`, started when the main player reaches it; then `jumping = Forward` +
   `seekToNextMediaItem()` (the usual `adoptPreloaded` path) and an equal-power volume ramp. `endCrossfade()` in
   `play()` and `stop()`; `player.volume` is otherwise always 1.
+
+## 8 bis. One import button and the `.mikeneko` file (3.6.1)
+
+- `data/BackupFile.kt`: ZIP with `manifest.json` (`format` = `mikeneko-backup`, `version` = 2, `app`,
+  `date`, `counts` per `Part`) and `data.json` (org.json, same fields as `Content`; settings typed as
+  `{"b"|"i"|"l"|"f"|"s"|"set": value}` per prefs file). `Part` = Subscriptions, MusicPlaylists,
+  VideoPlaylists, Library, Saved, History (history + positions + tastes), Settings; `only(content, parts)`
+  filters, `count(content, part)` counts (a playlist counts its tracks). Removals are not written (sync
+  only). Tests: `BackupFileTest` (round trip, parts, detection) — needs `testImplementation
+  org.json:json` because android.jar only has stubs.
+- `data/Importer.kt`: `detect(bytes, name)` by content, in this order: `.mikeneko` zip → other zip =
+  unknown → binary (NUL / U+FFFD in the first 4 KB) = unknown → old XML backup → `SubscriptionImport`
+  (needs UC ids or a JSON `subscriptions` list) → `PlaylistImport.preview` last (a TXT « Artist - Title »
+  looks like many things). Files over 64 MB are refused.
+- `data/SettingsBackup.kt`: a fixed key list per prefs file (`reglages`, `lecteur`), never language,
+  SponsorBlock user id, accounts or sync keys. `apply` writes them, then `AppSettings.init` and
+  `PlayerHolder.readSettings` (split out of `PlayerHolder.init`, which also starts coroutines).
+- `MikenekoBackup.collect` builds the `Content` from the stores (history without `related`);
+  `newCounts` computes what is new here per part for the preview; `importAll` applies settings when
+  present (only when ticked) and reports `Added.settings`.
+- UI `ui/screens/ImportUi.kt`: `rememberImportFile()` (OpenDocument `*/*` → detect → `BackupPreview` with
+  a checkbox per part showing « total · new », settings unticked by default / `SubscriptionsPreview` /
+  the existing `PlaylistImportPicker`; unknown → toast) and `rememberExportBackup()` (CreateDocument
+  `application/octet-stream`, `mikeneko-<date>.mikeneko`). Used by Settings › Sync › Backup (Import a
+  file, Export) and Settings › Music (Import playlists, same detector).

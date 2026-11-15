@@ -110,6 +110,8 @@ android {
 
 dependencies {
     testImplementation(libs.junit)
+    // La vraie bibliothèque JSON pour les tests JVM (celle d'Android n'y est qu'une coquille vide) : BackupFileTest
+    testImplementation("org.json:json:20240303")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
