@@ -655,9 +655,6 @@ private fun PlaybackSection() {
         Divider()
         SwitchRow(MkIcons.Next, stringResource(R.string.autoplay), stringResource(R.string.autoplay_text), autoplay) { PlayerHolder.setAutoplay(it) }
         Divider()
-        val hideShorts by AppSettings.hideShorts.collectAsState()
-        SwitchRow(MkIcons.Shorts, stringResource(R.string.settings_hide_shorts), stringResource(R.string.settings_hide_shorts_text), hideShorts) { AppSettings.setHideShorts(it) }
-        Divider()
         SwitchRow(MkIcons.Bubble, stringResource(R.string.settings_auto_pip), stringResource(R.string.settings_auto_pip_text), autoPip) { AppSettings.setAutoPip(it) }
         if (ambientSupported) {
             Divider()
@@ -804,6 +801,10 @@ private fun HistorySection(context: Context) {
                 ForYou.clearCache()
             }
         }
+        // Pas de Shorts (3.6.1 : venu de Lecture ; il décide de ce que montrent les fils et le dock)
+        Divider()
+        val hideShorts by AppSettings.hideShorts.collectAsState()
+        SwitchRow(MkIcons.Shorts, stringResource(R.string.settings_hide_shorts), stringResource(R.string.settings_hide_shorts_text), hideShorts) { AppSettings.setHideShorts(it) }
         Divider()
         SwitchRow(MkIcons.Clock, stringResource(R.string.settings_history_pause), stringResource(R.string.settings_history_pause_text), paused) {
             AppSettings.setHistoryPaused(it)

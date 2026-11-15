@@ -61,7 +61,8 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 ### 3.6
 
 - 3.6.1: **Xstrm Bass** now pushes the whole 50–68 Hz zone, not just 68 Hz.
-- 3.6.1: Settings: **Hide status bar** is now in General (Appearance), **Import playlists** in Music.
+- 3.6.1: Settings: **Hide status bar** is now in General (Appearance), **Import playlists** in Music,
+  **No Shorts** in For you.
 - 3.6.1: in landscape, the **music pill** sits on the left; the **audio effect name** moved between the two
   times under the progress bar, so the play buttons are no longer cut off.
 - 3.6.1: in landscape with the status bar hidden, **every tab starts higher** (no empty band left for the
@@ -270,7 +271,7 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 - **Shorts tab** in the dock: a feed of shorts from the channels you follow, mixed with shorts on the
   topics you watch most, already seen ones last. The dock stays on screen; leaving the tab stops the
-  short. The tab disappears with Settings › Playback › **No Shorts**.
+  short. The tab disappears with Settings › For you › **No Shorts**.
 - **Shorts start right away**: the next 3 are prepared while you watch (their page is read and the
   start of the video is already stored), and the previous 2 stay ready when you swipe back.
 - **Settings in tabs**: General, Playback, For you, Sync, About, instead of one very long page. The
