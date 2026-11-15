@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import app.mikeneko.player.PlayerHolder
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
@@ -50,7 +51,13 @@ import kotlinx.coroutines.withTimeoutOrNull
  * fondu pendant ce temps ; la vraie vidéo prend le relais à l'arrivée.
  */
 object VideoMorph {
-    class Morph(val image: ImageBitmap, val from: Rect, val toMini: Boolean, /** Le mini-lecteur qui s'agrandit (3.2.1) : un simple zoom. */ val zoom: Boolean = false) {
+    class Morph(
+        val image: ImageBitmap,
+        val from: Rect,
+        val toMini: Boolean,
+        /** Le mini-lecteur qui s'agrandit (3.2.1) : un simple zoom. */ val zoom: Boolean = false,
+        /** La page d'arrivée apparaît en fondu (pas après un glissé : elle est déjà visible, 3.6.1). */ val fadePage: Boolean = true,
+    ) {
         /** Le trajet : 0 au départ, 1 à l'arrivée (un peu plus au rebond). */
         val travel = Animatable(0f)
         /** L'atterrissage : 1 = écrasé, puis tremblote jusqu'à 0. */
@@ -69,16 +76,20 @@ object VideoMorph {
     var active by mutableStateOf<Morph?>(null)
         private set
 
+    /** Le lecteur tiré vers le bas, vers le mini-lecteur (en px, 0 = pas tiré) : l'écran d'avant se montre dessous (3.6.1). */
+    var pull by mutableFloatStateOf(0f)
+
     /** Lance l'animation depuis [from] (null = pas d'animation, on passe directement). */
-    fun start(from: Rect?, toMini: Boolean) = startWith(VideoFrames.snapshot()?.asImageBitmap(), from, toMini, zoom = !toMini)
+    fun start(from: Rect?, toMini: Boolean, fadePage: Boolean = true) =
+        startWith(VideoFrames.snapshot()?.asImageBitmap(), from, toMini, zoom = !toMini, fadePage = fadePage)
 
     /** Pareil avec une autre image : la miniature d'une carte qui s'envole vers le lecteur. */
-    fun startWith(image: ImageBitmap?, from: Rect?, toMini: Boolean = false, zoom: Boolean = false) {
-        active = if (image != null && from != null && from.width > 0f) Morph(image, from, toMini, zoom) else null
+    fun startWith(image: ImageBitmap?, from: Rect?, toMini: Boolean = false, zoom: Boolean = false, fadePage: Boolean = true) {
+        active = if (image != null && from != null && from.width > 0f) Morph(image, from, toMini, zoom, fadePage) else null
     }
 
     /** Opacité de la page pendant l'animation (elle apparaît en fondu). */
-    fun pageAlpha(): Float = active?.travel?.value?.coerceIn(0f, 1f) ?: 1f
+    fun pageAlpha(): Float = active?.takeIf { it.fadePage }?.travel?.value?.coerceIn(0f, 1f) ?: 1f
 
     /** Le mini-lecteur se cache pendant qu'on rétrécit vers lui (c'est la photo qui arrive). */
     fun hidesMini(): Boolean = active?.toMini == true

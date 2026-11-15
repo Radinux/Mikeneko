@@ -243,7 +243,8 @@ fun MikenekoRoot(
 
     /** Retour à l'écran d'avant : la vidéo rétrécit jusqu'au mini-lecteur. */
     fun minimizePlayer() {
-        if (now?.audioOnly == false) VideoMorph.start(VideoMorph.playerBounds, toMini = true)
+        // Après un glissé, la page est déjà visible sous le lecteur : pas de fondu (elle clignoterait)
+        if (now?.audioOnly == false) VideoMorph.start(VideoMorph.playerBounds, toMini = true, fadePage = VideoMorph.pull == 0f)
         route = beforePlayer
     }
 
@@ -467,8 +468,15 @@ fun MikenekoRoot(
                 .backdropSource(backdrop)
                 .background(Pelage.Nuit),
         ) {
-            Box(Modifier.fillMaxSize().then(contentInset).then(enterLayer)) {
-                when (route) {
+            // Glisser la vidéo vers le mini-lecteur (3.6.1) : l'écran d'avant est déjà là, sous le lecteur, et
+            // c'est le même emplacement qu'après la réduction (il n'est pas refait au lâcher). Pas les Shorts
+            // (leur écran lance une lecture).
+            // (seulement « tiré ou pas » : la racine ne se recompose pas à chaque image du glissé)
+            val pulled by remember { androidx.compose.runtime.derivedStateOf { VideoMorph.pull != 0f } } // != 0 : aussi pendant le rebond du retour
+            val peek = route == Route.Lecteur && Shorts.session == null && pulled && beforePlayer != Route.Shorts
+            val base = if (route != Route.Lecteur) route else if (peek) beforePlayer else null
+            val screen: @Composable (Route) -> Unit = { shown ->
+                when (shown) {
                     // Faire défiler la page range les suggestions de recherche et le clavier
                     Route.Accueil -> Box(Modifier.fillMaxSize().onUserScroll({ home.suggesting }) { home.dismissSuggestions(); keyboard?.hide() }) {
                         HomeContent(home, onOpen = { openVideo(it.url) })
@@ -506,6 +514,10 @@ fun MikenekoRoot(
                         onOpen = { openVideo(it.url) },
                     )
                 }
+            }
+            Box(Modifier.fillMaxSize().then(contentInset).then(enterLayer)) {
+                if (base != null) androidx.compose.runtime.key(base) { screen(base) }
+                if (route == Route.Lecteur) screen(Route.Lecteur)
             }
         }
 

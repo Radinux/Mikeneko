@@ -52,6 +52,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -293,15 +294,26 @@ fun PlayerContent(onMinimize: () -> Unit, onDownload: (String) -> Unit, onRadio:
         }
     }
 
+    // L'écran d'avant se montre sous le lecteur pendant qu'on le tire (3.6.1, voir MikenekoRoot)
+    LaunchedEffect(Unit) { snapshotFlow { pull.value }.collect { VideoMorph.pull = it } }
+    DisposableEffect(Unit) { onDispose { VideoMorph.pull = 0f } }
+    val pullCorner = with(density) { 28.dp.toPx() }
     Box(
         Modifier
             .fillMaxSize()
             .graphicsLayer {
                 translationY = pull.value
-                val shrink = 1f - 0.08f * (pull.value / minimizeDistance).coerceIn(0f, 1f)
+                val progress = (pull.value / minimizeDistance).coerceIn(0f, 1f)
+                val shrink = 1f - 0.08f * progress
                 scaleX = shrink
                 scaleY = shrink
-            },
+                // Tiré, le lecteur devient une carte aux coins arrondis, posée sur l'écran d'avant
+                if (pull.value != 0f) {
+                    shape = RoundedCornerShape(pullCorner * progress)
+                    clip = true
+                }
+            }
+            .background(Pelage.Nuit), // opaque : c'est l'écran d'avant qui est derrière, plus le fond
     ) {
         // Mode ambiant : la vidéo floutée et agrandie déborde derrière le lecteur
         if (ambient && ambientSupported && now?.audioOnly == false) {
