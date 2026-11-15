@@ -312,9 +312,7 @@ internal fun PlayerWindowContent(
                         }
                         ActionSlot(MkIcons.Lyrics, stringResource(R.string.lyrics), enabled = !live && now != null) { state.lyricsOpen = true }
                         // Les effets audio (3.3.0)
-                        ActionSlot(MkIcons.Equalizer, stringResource(R.string.audio_effects), enabled = !live && now != null) {
-                            PlayerHolder.settingsPage.value = app.mikeneko.player.SettingsPage.Effets
-                        }
+                        ActionSlot(MkIcons.Equalizer, stringResource(R.string.audio_effects), enabled = !live && now != null) { state.effectsOpen = true }
                         ActionSlot(MkIcons.PlaylistAdd, stringResource(R.string.playlist_add), enabled = now != null) {
                             current()?.let { MusicSheet.open.value = MusicSheet.AddToPlaylist(it) }
                         }

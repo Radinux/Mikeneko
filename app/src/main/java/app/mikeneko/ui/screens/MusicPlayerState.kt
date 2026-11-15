@@ -46,6 +46,7 @@ class MusicPlayerState(private val scope: CoroutineScope) {
         private set
     var queueOpen by mutableStateOf(false)
     var lyricsOpen by mutableStateOf(false)
+    var effectsOpen by mutableStateOf(false)
     /** Où est la barre de boutons du lecteur (dans la fenêtre) : les paroles en sortent et y rentrent (2.15.2). */
     var lyricsAnchor by mutableStateOf<androidx.compose.ui.geometry.Rect?>(null)
 
@@ -71,6 +72,7 @@ class MusicPlayerState(private val scope: CoroutineScope) {
         if (!target) {
             queueOpen = false
             lyricsOpen = false
+            effectsOpen = false
             PlayerHolder.settingsPage.value = null
         }
         scope.launch {

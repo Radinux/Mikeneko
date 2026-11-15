@@ -359,7 +359,7 @@ fun presetName(preset: app.mikeneko.player.AudioPreset): String = stringResource
 )
 
 @Composable
-private fun presetVibe(preset: app.mikeneko.player.AudioPreset): String = stringResource(
+fun presetVibe(preset: app.mikeneko.player.AudioPreset): String = stringResource(
     when (preset) {
         app.mikeneko.player.AudioPreset.Normal -> R.string.fx_normal_text
         app.mikeneko.player.AudioPreset.Slowed -> R.string.fx_slowed_text
