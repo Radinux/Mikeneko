@@ -439,30 +439,7 @@ private fun BackupSection(context: Context) {
             toast(if (list.isEmpty()) context.getString(R.string.subs_import_none) else context.resources.getQuantityString(R.plurals.subs_imported_count, list.size, list.size))
         }
     }
-    // Playlists d'autres services, exportées avec TuneMyMusic (2.8.0) : on choisit quoi importer
-    var importPreview by remember { mutableStateOf<PlaylistImport.Preview?>(null) }
-    val importPlaylists = androidx.activity.compose.rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri == null) return@rememberLauncherForActivityResult
-        scope.launch {
-            val preview = kotlinx.coroutines.withContext(Dispatchers.IO) {
-                runCatching {
-                    val name = context.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)
-                        ?.use { c -> if (c.moveToFirst()) c.getString(0) else null }.orEmpty()
-                    val text = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }.orEmpty()
-                    PlaylistImport.preview(text, name)
-                }.getOrNull()
-            }
-            if (preview == null || preview.items.isEmpty()) toast(context.getString(R.string.import_empty)) else importPreview = preview
-        }
-    }
-    importPreview?.let { PlaylistImportPicker(it) { importPreview = null } }
-    PlaylistImportSummary()
     Section(stringResource(R.string.settings_section_backup)) {
-        ActionRow(MkIcons.Music, stringResource(R.string.import_playlists), stringResource(R.string.import_playlists_text), Pelage.Texte) {
-            importPlaylists.launch(arrayOf("text/csv", "text/comma-separated-values", "application/csv", "text/plain", "text/*", "application/octet-stream"))
-        }
-        PlaylistImportProgress()
-        Divider()
         ActionRow(MkIcons.Subscriptions, stringResource(R.string.settings_import_subs), stringResource(R.string.settings_import_subs_text), Pelage.Texte) {
             importSubs.launch(arrayOf("application/json", "text/*", "application/xml", "application/octet-stream"))
         }
@@ -651,6 +628,12 @@ private fun AppearanceSection() {
         SwitchRow(MkIcons.Moon, stringResource(R.string.settings_amoled), stringResource(R.string.settings_amoled_text), Appearance.amoled) {
             AppSettings.setAmoled(it)
         }
+        // Masquer la barre d'état (3.6.1 : venu de Lecture, c'est l'affichage de toute l'appli)
+        Divider()
+        val hideStatusBar by AppSettings.hideStatusBar.collectAsState()
+        SwitchRow(MkIcons.Fullscreen, stringResource(R.string.settings_hide_status_bar), stringResource(R.string.settings_hide_status_bar_text), hideStatusBar) {
+            AppSettings.setHideStatusBar(it)
+        }
     }
 }
 
@@ -658,7 +641,6 @@ private fun AppearanceSection() {
 private fun PlaybackSection() {
     val quality by PlayerHolder.quality.collectAsState()
     val autoPip by AppSettings.autoPip.collectAsState()
-    val hideStatusBar by AppSettings.hideStatusBar.collectAsState()
     val ambient by PlayerHolder.ambient.collectAsState()
     val stable by PlayerHolder.stableVolume.collectAsState()
     val autoplay by PlayerHolder.autoplay.collectAsState()
@@ -677,10 +659,6 @@ private fun PlaybackSection() {
         SwitchRow(MkIcons.Shorts, stringResource(R.string.settings_hide_shorts), stringResource(R.string.settings_hide_shorts_text), hideShorts) { AppSettings.setHideShorts(it) }
         Divider()
         SwitchRow(MkIcons.Bubble, stringResource(R.string.settings_auto_pip), stringResource(R.string.settings_auto_pip_text), autoPip) { AppSettings.setAutoPip(it) }
-        Divider()
-        SwitchRow(MkIcons.Fullscreen, stringResource(R.string.settings_hide_status_bar), stringResource(R.string.settings_hide_status_bar_text), hideStatusBar) {
-            AppSettings.setHideStatusBar(it)
-        }
         if (ambientSupported) {
             Divider()
             SwitchRow(MkIcons.Ambient, stringResource(R.string.ambient_mode), stringResource(R.string.ambient_mode_text), ambient) { PlayerHolder.setAmbient(it) }
@@ -728,7 +706,38 @@ private fun MusicSection() {
             downloads,
             subtitle = stringResource(R.string.settings_download_quality_text),
         ) { AppSettings.setDownloadQuality(it) }
+        // L'import de playlists (3.6.1 : venu de Synchronisation › Sauvegarde, c'est de la musique)
+        Divider()
+        MusicImportRow()
     }
+}
+
+/** Playlists d'autres services, exportées avec TuneMyMusic (2.8.0) : on choisit quoi importer. */
+@Composable
+private fun MusicImportRow() {
+    val context = LocalContext.current
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    var importPreview by remember { mutableStateOf<PlaylistImport.Preview?>(null) }
+    val importPlaylists = androidx.activity.compose.rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            val preview = kotlinx.coroutines.withContext(Dispatchers.IO) {
+                runCatching {
+                    val name = context.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)
+                        ?.use { c -> if (c.moveToFirst()) c.getString(0) else null }.orEmpty()
+                    val text = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }.orEmpty()
+                    PlaylistImport.preview(text, name)
+                }.getOrNull()
+            }
+            if (preview == null || preview.items.isEmpty()) Toast.makeText(context, context.getString(R.string.import_empty), Toast.LENGTH_LONG).show() else importPreview = preview
+        }
+    }
+    importPreview?.let { PlaylistImportPicker(it) { importPreview = null } }
+    PlaylistImportSummary()
+    ActionRow(MkIcons.Music, stringResource(R.string.import_playlists), stringResource(R.string.import_playlists_text), Pelage.Texte) {
+        importPlaylists.launch(arrayOf("text/csv", "text/comma-separated-values", "application/csv", "text/plain", "text/*", "application/octet-stream"))
+    }
+    PlaylistImportProgress()
 }
 
 /** Les durées de fondu proposées, en secondes (0 : aucun). */

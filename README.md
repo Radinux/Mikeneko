@@ -61,6 +61,7 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 ### 3.6
 
 - 3.6.1: **Xstrm Bass** now pushes the whole 50–68 Hz zone, not just 68 Hz.
+- 3.6.1: Settings: **Hide status bar** is now in General (Appearance), **Import playlists** in Music.
 - 3.6.1: in landscape, the **music pill** sits on the left; the **audio effect name** moved between the two
   times under the progress bar, so the play buttons are no longer cut off.
 - 3.6.1: in landscape with the status bar hidden, **every tab starts higher** (no empty band left for the
@@ -445,7 +446,7 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ### 2.8
 
-- **Import your music from other services**: Settings › Backup › Import playlists. Export your
+- **Import your music from other services**: Settings › Music › Import playlists. Export your
   library from another music app with [TuneMyMusic](https://www.tunemymusic.com) to a CSV or
   TXT file, then tick the playlists to import (with the number of songs and the estimated time).
   - every song is found on YouTube Music (or among videos if it isn't a YouTube Music song), at an
