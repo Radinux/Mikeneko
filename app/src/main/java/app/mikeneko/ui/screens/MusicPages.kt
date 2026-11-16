@@ -114,7 +114,6 @@ fun MusicContent(state: MusicState, onPlayStations: (List<VideoItem>, Int) -> Un
         is MusicPage.MyPlaylist -> MyPlaylistContent(state, page.id)
         is MusicPage.AddSongs -> AddSongsContent(state, page.id)
         is MusicPage.EditSongs -> EditSongsContent(state, page.id)
-        MusicPage.Downloads -> DownloadsLibraryContent(state)
         MusicPage.Library -> MusicLibraryContent(state)
         is MusicPage.Generated -> GeneratedMixContent(state, page.mix)
     }
@@ -559,47 +558,6 @@ private fun AddSongsContent(state: MusicState, id: String) {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Téléchargés : les fichiers audio de yt-dlp, hors ligne
-// ---------------------------------------------------------------------------------------------
-
-@Composable
-private fun DownloadsLibraryContent(state: MusicState) {
-    val context = LocalContext.current
-    val tracks by LocalMusic.tracks.collectAsState()
-    val now by PlayerHolder.nowPlaying.collectAsState()
-    LaunchedEffect(Unit) { LocalMusic.refresh(context) }
-    val scroll = rememberLazyListState()
-    val play = PageBarEffect(state, scroll, stringResource(R.string.music_downloaded), playInOrder(context, tracks.orEmpty()))
-    LazyColumn(Modifier.fillMaxSize(), state = scroll, contentPadding = PaddingValues(bottom = BOTTOM_SPACE)) {
-        item(key = "entete") {
-            val count = tracks?.size ?: 0
-            PageHeader(
-                stringResource(R.string.music_downloaded),
-                pluralStringResource(R.plurals.track_count, count, count),
-                null,
-                icon = MkIcons.Download,
-                onPlay = playInOrder(context, tracks.orEmpty()),
-                play = play,
-            ) { ShuffleButton(tracks.orEmpty()) }
-        }
-        val list = tracks
-        when {
-            list == null -> item(key = "chargement") { Loading(Modifier.padding(top = 30.dp)) }
-            list.isEmpty() -> item(key = "vide") {
-                EmptyCat(stringResource(R.string.music_downloaded_none), stringResource(R.string.music_downloaded_none_text), Modifier.padding(top = 20.dp))
-            }
-            else -> itemsIndexed(list, key = { _, it -> it.url }) { index, track ->
-                TrackRow(
-                    track,
-                    playing = now?.url == track.url,
-                    onMore = { MusicSheet.open.value = MusicSheet.Track(track) },
-                ) { playTracks(context, list, index) }
-            }
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------------------------
 // Ta bibliothèque : playlists, albums et artistes sauvegardés, téléchargés — avec des filtres
 // ---------------------------------------------------------------------------------------------
 
@@ -638,7 +596,6 @@ internal fun libraryFilterLabel(filter: LibraryFilter) = when (filter) {
     LibraryFilter.Playlists -> R.string.music_playlists
     LibraryFilter.Albums -> R.string.music_albums
     LibraryFilter.Artists -> R.string.music_artists
-    LibraryFilter.Downloaded -> R.string.music_downloaded
 }
 
 @Composable
@@ -648,12 +605,8 @@ private fun MusicLibraryContent(state: MusicState) {
     val albums by library.albums.collectAsState()
     val artists by library.artists.collectAsState()
     val playlists by remember { Playlists.get(context) }.items.collectAsState()
-    val downloaded by LocalMusic.tracks.collectAsState()
-    val now by PlayerHolder.nowPlaying.collectAsState()
-    LaunchedEffect(Unit) { LocalMusic.refresh(context) }
     val filter = state.libraryFilter
     val all = filter == LibraryFilter.All
-    val count = downloaded?.size ?: 0
 
     // Plusieurs à la fois (3.0.1 les playlists, 3.1.1 les albums et artistes aussi) : un appui long en
     // coche un et ouvre la sélection. Les clés : « pl:<id> », et celles de MusicLibrary (« al: », « ar: »)
@@ -677,34 +630,9 @@ private fun MusicLibraryContent(state: MusicState) {
     FixedPageBar(state, stringResource(R.string.music_library))
     Box(Modifier.fillMaxSize()) {
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(top = pageTop() + CHIPS_SPACE + if (selection != null) 62.dp else 0.dp, bottom = BOTTOM_SPACE)) {
-        if (filter == LibraryFilter.Downloaded) {
-            val list = downloaded
-            when {
-                list == null -> item(key = "chargement") { Loading(Modifier.padding(top = 30.dp)) }
-                list.isEmpty() -> item(key = "vide") {
-                    EmptyCat(stringResource(R.string.music_downloaded_none), stringResource(R.string.music_downloaded_none_text), Modifier.padding(top = 20.dp))
-                }
-                else -> {
-                    item(key = "aleatoire") { Row(Modifier.padding(horizontal = 18.dp, vertical = 4.dp)) { ShuffleButton(list) } }
-                    itemsIndexed(list, key = { _, it -> "dl:" + it.url }) { index, track ->
-                        TrackRow(
-                            track,
-                            playing = now?.url == track.url,
-                            onMore = { MusicSheet.open.value = MusicSheet.Track(track) },
-                        ) { playTracks(context, list, index) }
-                    }
-                }
-            }
-            return@LazyColumn
-        }
         if (all || filter == LibraryFilter.Playlists) {
             item(key = "nouvelle") {
                 CollectionRow(stringResource(R.string.playlist_new), "", null, icon = MkIcons.Plus) { MusicSheet.open.value = MusicSheet.NewPlaylist() }
-            }
-            item(key = "telecharges") {
-                CollectionRow(stringResource(R.string.music_downloaded), pluralStringResource(R.plurals.track_count, count, count), null, icon = MkIcons.Download) {
-                    state.open(MusicPage.Downloads)
-                }
             }
             items(playlists.pinnedFirst(), key = { "pl:" + it.id }) { pl ->
                 CollectionRow(

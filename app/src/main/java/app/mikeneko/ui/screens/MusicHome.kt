@@ -92,11 +92,9 @@ internal fun MusicHome(state: MusicState, onPlayStations: (List<VideoItem>, Int)
     val favorites by remember { Favorites.get(context) }.items.collectAsState()
     val playlists by remember { Playlists.get(context) }.items.collectAsState()
     val recent by remember { MusicHistory.get(context) }.items.collectAsState()
-    val downloaded by LocalMusic.tracks.collectAsState()
     val library = remember { MusicLibrary.get(context) }
     val savedAlbums by library.albums.collectAsState()
     val savedArtists by library.artists.collectAsState()
-    LaunchedEffect(Unit) { LocalMusic.refresh(context) }
     val ambiance = Music.ambiance(state.ambiance)
     val stations by produceState(initialValue = Music.cachedLives(ambiance), ambiance) {
         value = Music.cachedLives(ambiance) // autre ambiance : on ne garde pas la liste d'avant
@@ -114,11 +112,10 @@ internal fun MusicHome(state: MusicState, onPlayStations: (List<VideoItem>, Int)
     /** Un morceau récent : son mix (un direct, lui, se relance tel quel). */
     fun replay(item: VideoItem) = if (item.isLive) playTracks(context, listOf(item), 0) else playMix(context, item)
 
-    // L'accès rapide : ta bibliothèque, téléchargés, tes playlists, puis tes derniers morceaux (6 tuiles au plus)
-    val count = downloaded?.size ?: 0
+    // L'accès rapide : ta bibliothèque, tes playlists, puis tes derniers morceaux (6 tuiles au plus).
+    // 3.8.0 : plus de « Téléchargés » : une musique téléchargée est un fichier du téléphone (Download/Mikeneko)
     val quick = buildList {
         add(QuickTile(context.getString(R.string.music_library), null, MkIcons.Library) { state.open(MusicPage.Library) })
-        add(QuickTile(context.getString(R.string.music_downloaded), null, MkIcons.Download) { state.open(MusicPage.Downloads) })
         playlists.pinnedFirst().take(3).forEach { pl -> add(QuickTile(pl.name, pl.coverModel(), MkIcons.Music) { state.open(MusicPage.MyPlaylist(pl.id)) }) }
         recent.take((6 - size).coerceAtLeast(0)).forEach { track -> add(QuickTile(track.title, track.thumbnail, MkIcons.Music) { replay(track) }) }
     }
@@ -195,11 +192,6 @@ internal fun MusicHome(state: MusicState, onPlayStations: (List<VideoItem>, Int)
                 }
                 items(savedArtists, key = { "artiste:" + it.url + it.name }) { artist ->
                     SquareCard(artist.avatar, artist.name, stringResource(R.string.music_artist), round = true) { state.open(MusicPage.Artist(artist)) }
-                }
-                item(key = "telecharges") {
-                    SquareCard(null, stringResource(R.string.music_downloaded), pluralStringResource(R.plurals.track_count, count, count), icon = MkIcons.Download) {
-                        state.open(MusicPage.Downloads)
-                    }
                 }
             }
         }

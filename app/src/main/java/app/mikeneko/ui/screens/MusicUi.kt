@@ -127,8 +127,7 @@ sealed interface MusicPage {
     data class AddSongs(val id: String) : MusicPage
     /** Modifier les morceaux d'une playlist perso : retirer (⊖) et déplacer (≡), sur sa page à elle (2.11.13). */
     data class EditSongs(val id: String) : MusicPage
-    data object Downloads : MusicPage
-    /** Ta bibliothèque : playlists, albums et artistes sauvegardés, téléchargés (avec des filtres). */
+    /** Ta bibliothèque : playlists, albums et artistes sauvegardés (avec des filtres). */
     data object Library : MusicPage
     /** Un mix fabriqué d'après ton écoute (« Tes mix », 2.6.0). */
     data class Generated(val mix: GeneratedMix) : MusicPage
@@ -243,7 +242,7 @@ private val SIDE_FROM = 150.dp
 private val SIDE_DONE = 66.dp
 
 /** Les filtres de la bibliothèque musique. */
-enum class LibraryFilter { All, Playlists, Albums, Artists, Downloaded }
+enum class LibraryFilter { All, Playlists, Albums, Artists }
 
 /** Gardé par MikenekoRoot : on retrouve la Musique comme on l'a laissée en changeant d'onglet. */
 class MusicState(context: Context) {

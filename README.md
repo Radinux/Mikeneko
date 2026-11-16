@@ -61,6 +61,8 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 ### 3.8
 
 - 3.8.0: the **Downloads** screen lists every file you downloaded, to open or delete.
+- 3.8.0: Music no longer has a « Downloaded » playlist: a downloaded song is a file on your phone; offline
+  listening in the app is for downloaded playlists and albums.
 - 3.8.0: **downloads go to Download/Mikeneko** (Music and Videos), easy to find in any file manager and kept
   if the app is uninstalled; earlier downloads are moved there.
 - 3.8.0: **Deep Bass** replaces Ultra Bass: extra-deep sub-bass around 30–35 Hz, felt more than heard
