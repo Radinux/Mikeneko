@@ -768,6 +768,37 @@ object PlayerHolder {
         audioDetails.value = AudioDetails(codec, kbps, format.sampleRate)
     }
 
+    // ---- La playlist du morceau en cours (3.9.3, pour la session média : montres, applis compagnon) ----
+
+    private var playlistMemo: Triple<Any?, Any?, Any?>? = null
+    private var playlistAnswer: Pair<String, String>? = null
+
+    /**
+     * La playlist d'où vient le morceau en cours : (identifiant, nom), ou null. Celle des playlists perso
+     * (et des Favoris) qui contient le morceau et recouvre le mieux la file d'attente : pas besoin de
+     * savoir d'où la lecture a été lancée. Gardée tant que le morceau, la file et les playlists ne changent pas.
+     */
+    fun currentPlaylist(): Pair<String, String>? {
+        val context = appContext ?: return null
+        val now = nowPlaying.value?.takeIf { it.audioOnly } ?: return null
+        val store = app.mikeneko.data.Playlists.get(context).items.value
+        val favorites = app.mikeneko.data.Favorites.get(context).items.value
+        val key = Triple(now.url, queue.value, store to favorites)
+        if (key == playlistMemo) return playlistAnswer
+        fun id(url: String) = videoIdOf(url) ?: url
+        val current = id(now.url)
+        val inQueue = queue.value.mapTo(HashSet()) { id(it.url) }
+        val candidates = store.map { Triple(it.id, it.name, it.items) } +
+            Triple(app.mikeneko.data.Favorites.PLAYLIST_ID, context.getString(app.mikeneko.R.string.favorites_title), favorites.filter { !it.isLive })
+        val answer = candidates
+            .filter { (_, _, items) -> items.any { id(it.url) == current } }
+            .maxByOrNull { (_, _, items) -> items.count { id(it.url) in inQueue } }
+            ?.let { (pid, name, _) -> pid to name }
+        playlistMemo = key
+        playlistAnswer = answer
+        return answer
+    }
+
     // ---- Le Chromecast (3.4.0, voir app.mikeneko.cast.Cast) ----
     // Les rappels de l'appareil arrivent sur un autre fil : tout repasse par le fil principal.
 

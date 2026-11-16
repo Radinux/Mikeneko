@@ -1421,3 +1421,28 @@ users: the point is to take them from the videos really watched.
   the existing `PlaylistImportPicker`; unknown → toast) and `rememberExportBackup()` (CreateDocument
   `application/octet-stream`, `mikeneko-<date>.mikeneko`). Used by Settings › Sync › Backup (Import a
   file, Export) and Settings › Music (Import playlists, same detector).
+
+## 8 ter. The media API (watches, companion apps) (3.9.3)
+
+Mikeneko exposes what plays and its controls through the standard Android media session (Media3
+`MediaSession` in `player/PlaybackService.kt`, exported). Anything that speaks to Android media sessions
+can read and drive it: a smartwatch bridge (the watch maker's app, Gadgetbridge…), or your own companion app.
+
+**Connect**
+- Media3 (recommended): `MediaController.Builder(context, SessionToken(context, ComponentName("app.mikeneko",
+  "app.mikeneko.player.PlaybackService"))).buildAsync()`; no permission needed, the service accepts every controller.
+- Platform API: `MediaSessionManager.getActiveSessions(listener)` (needs a notification listener, as watch
+  bridges already have), then the `MediaController` of package `app.mikeneko`.
+
+**Read** (`MediaController.mediaMetadata` / platform `getMetadata()`)
+- title, artist, artwork (`artworkUri`; the platform metadata carries the bitmap `METADATA_KEY_ALBUM_ART`
+  / `ART`), duration; state, position and speed from the player / `PlaybackState`.
+- The playlist of the current song: extras `app.mikeneko.PLAYLIST` (name) and `app.mikeneko.PLAYLIST_ID`
+  (`favoris` for the Favorites playlist, the playlist id otherwise); also the album field when the song has
+  none (what watches show under the title) and the queue title (`playlistMetadata.title` / `getQueueTitle()`).
+  The playlist is the user playlist (or Favorites) that contains the song and overlaps the queue most
+  (`PlayerHolder.currentPlaylist`, memoised); null for a song outside any playlist and for videos.
+
+**Drive**: play, pause, `seekTo(ms)`, next / previous (the queue's, or related videos for a video).
+Changes are pushed to the controller (`Player.Listener.onMediaMetadataChanged`,
+`onIsPlayingChanged`…): no polling needed.

@@ -7,6 +7,7 @@ import android.os.Looper
 import android.os.Process
 import androidx.annotation.OptIn
 import androidx.media3.common.ForwardingPlayer
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaSession
@@ -82,6 +83,28 @@ private class SkipPlayer(player: Player) : ForwardingPlayer(player) {
 
     override fun isCommandAvailable(command: Int): Boolean = command in skips || super.isCommandAvailable(command)
 
+    /**
+     * 3.9.3 : la playlist du morceau, pour les montres et les applis compagnon (voir TECHNICAL-NOTES,
+     * « The media API ») : dans les extras (`app.mikeneko.PLAYLIST`, `app.mikeneko.PLAYLIST_ID`), et dans
+     * l'album quand il est vide (c'est ce que les montres affichent sous le titre).
+     */
+    override fun getMediaMetadata(): MediaMetadata {
+        val base = super.getMediaMetadata()
+        val (id, name) = PlayerHolder.currentPlaylist() ?: return base
+        val extras = android.os.Bundle(base.extras ?: android.os.Bundle()).apply {
+            putString(EXTRA_PLAYLIST, name)
+            putString(EXTRA_PLAYLIST_ID, id)
+        }
+        return base.buildUpon()
+            .setExtras(extras)
+            .apply { if (base.albumTitle.isNullOrBlank()) setAlbumTitle(name) }
+            .build()
+    }
+
+    /** Le nom de la playlist comme titre de la file (le champ standard d'Android, `queueTitle`). */
+    override fun getPlaylistMetadata(): MediaMetadata =
+        PlayerHolder.currentPlaylist()?.let { (_, name) -> MediaMetadata.Builder().setTitle(name).build() } ?: super.getPlaylistMetadata()
+
     override fun hasNextMediaItem() = true
     override fun hasPreviousMediaItem() = true
     override fun seekToNext() = PlayerHolder.skipFromSystem(forward = true)
@@ -89,3 +112,7 @@ private class SkipPlayer(player: Player) : ForwardingPlayer(player) {
     override fun seekToPrevious() = PlayerHolder.skipFromSystem(forward = false)
     override fun seekToPreviousMediaItem() = PlayerHolder.skipFromSystem(forward = false)
 }
+
+/** Les extras de la session média (3.9.3) : le nom et l'identifiant de la playlist du morceau. */
+const val EXTRA_PLAYLIST = "app.mikeneko.PLAYLIST"
+const val EXTRA_PLAYLIST_ID = "app.mikeneko.PLAYLIST_ID"
