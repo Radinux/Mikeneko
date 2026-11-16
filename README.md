@@ -58,6 +58,11 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ## 🎌 What's new ⸜(｡˃ ᵕ ˂ )⸝♡
 
+### 3.9
+
+- 3.9.0: **lights behind the cover** in the music player: a glow that breathes with the bass, light beams that
+  turn like stage spotlights, and a flash each time the beat hits.
+
 ### 3.8
 
 - 3.8.1: **Deep Bass** works like a « bass boosted » track: deep bass pushed up, the octave below added, and

@@ -214,6 +214,9 @@ internal fun PlayerWindowContent(
                 }
             }
             val coverArt: @Composable () -> Unit = {
+                // Derrière la pochette (3.9.0) : des lumières qui tapent avec la basse et les temps forts
+                Box(contentAlignment = Alignment.Center) {
+                if (now != null && !live) CoverLights(coverColor, Modifier.matchParentSize())
                 Box(
                     Modifier
                         .fillMaxWidth(0.9f)
@@ -227,7 +230,13 @@ internal fun PlayerWindowContent(
                                 if (known == null || abs(known.left - box.left) > 0.5f || abs(known.top - box.top) > 0.5f || abs(known.width - box.width) > 0.5f) state.coverInWindow = box
                             }
                         }
-                        .graphicsLayer { alpha = if (state.coverFlying) 0f else 1f }
+                        .graphicsLayer {
+                            alpha = if (state.coverFlying) 0f else 1f
+                            // Elle « tape » sur les temps forts (lu au dessin : rien ne se recompose)
+                            val beat = beatScale()
+                            scaleX = beat
+                            scaleY = beat
+                        }
                         .shadow(22.dp, RoundedCornerShape(26.dp))
                         .border(3.dp, Pelage.Creme, RoundedCornerShape(26.dp))
                         .clip(RoundedCornerShape(26.dp))
@@ -238,6 +247,7 @@ internal fun PlayerWindowContent(
                         Icon(MkIcons.Music, null, tint = Pelage.Texte.copy(alpha = 0.6f), modifier = Modifier.size(72.dp))
                     }
                     AsyncImage(now?.thumbnail, stringResource(R.string.artwork), contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+                }
                 }
             
             }
@@ -648,6 +658,7 @@ private fun SpectrumWave(active: Boolean, cover: Color, backdrop: Backdrop, modi
                 if (now - drawn < WAVE_FRAME_NANOS) return@withFrameNanos
                 drawn = now
                 AudioSpectrum.bandsAt(playhead.toLong(), bands)
+                BeatLights.feed(bands, PlayerHolder.isPlaying.value, now) // les lumières de la pochette (3.9.0)
                 // Lissée avec ses voisines : une vague, pas des pics isolés
                 for (i in bands.indices) {
                     val l = bands[(i - 1).coerceAtLeast(0)]
