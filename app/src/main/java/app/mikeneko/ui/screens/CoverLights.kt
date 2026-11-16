@@ -4,11 +4,6 @@ import android.os.Build
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
-import kotlin.math.sin
-import kotlin.math.cos
-import kotlin.math.abs
-import kotlin.math.PI
-import androidx.compose.ui.graphics.Path
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -17,68 +12,83 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.cos
 import kotlin.math.pow
 import kotlin.math.roundToInt
+import kotlin.math.sin
 
 /**
- * Le rythme de ce qui joue, pour le ferrofluide derrière la pochette (3.9.0, 3.9.1) : la force de la
- * basse ([bass], lissée), les temps forts ([kick]) et les pointes du liquide ([spike] : leur hauteur, de
- * 0 à ~1). Nourri par la vague du lecteur musique ([SpectrumWave]), qui analyse déjà le son à chaque image
- * quand la fenêtre est ouverte. Lu pendant le dessin seulement : rien ne se recompose.
+ * Le son de ce qui joue, pour la lumière derrière la pochette (3.9.0 ; 3.9.2 : la fréquence dominante et
+ * la puissance) : [dominant] (0 = les graves, 1 = les aigus, lissée : la lumière glisse), [power] (le
+ * volume, 0 à 1), [bass] et les temps forts ([kick]). Nourri par la vague du lecteur musique
+ * ([SpectrumWave]), qui analyse déjà le son à chaque image quand la fenêtre est ouverte. Lu pendant le
+ * dessin seulement : rien ne se recompose.
  */
 object BeatLights {
     var bass by mutableFloatStateOf(0f)
         private set
-    /** La force du dernier temps fort, qui s'éteint (la pochette qui « tape »). */
+    /** La force du dernier temps fort, qui s'éteint (la pochette qui « tape », la lumière qui pulse). */
     var kick by mutableFloatStateOf(0f)
         private set
-    /** Compté à chaque image analysée : ce qui fait redessiner le liquide. */
+    /** Où est l'énergie du son : 0 = tout en bas (graves), 1 = tout en haut (aigus). */
+    var dominant by mutableFloatStateOf(0.1f)
+        private set
+    /** La puissance du son (0 à 1). */
+    var power by mutableFloatStateOf(0f)
+        private set
+    /** Compté à chaque image analysée : ce qui fait redessiner la lumière. */
     var frame by mutableIntStateOf(0)
         private set
-    /** Le temps qui passe (s) : la rotation lente et le tremblement du liquide. */
-    var time = 0f
-        private set
-
-    /** La hauteur de chaque pointe (0 au repos, ~1 sur un fort temps fort), et sa vitesse. */
-    val spike = FloatArray(SPIKES)
-    private val speed = FloatArray(SPIKES)
-    /** Chaque pointe réagit un peu différemment (comme un vrai liquide sous un aimant). */
-    private val gain = FloatArray(SPIKES) { 0.55f + 0.9f * (((it * 7919 + 13) % 97) / 97f) }
 
     private var average = 0f
     private var lastBeat = 0L
-    private var lastFrame = 0L
 
     /** Une image analysée : [bands] (0 à 1, des graves aux aigus, voir AudioSpectrum), à [now] (ns). */
     fun feed(bands: FloatArray, playing: Boolean, now: Long) {
-        val dt = if (lastFrame == 0L) 1f / 30 else ((now - lastFrame) / 1e9f).coerceIn(0.005f, 0.1f)
-        lastFrame = now
-        time += dt
-        var power = 0f
-        if (playing) {
+        if (playing && bands.isNotEmpty()) {
             // Les graves : les 6 premières bandes (~40 à 100 Hz)
-            var sum = 0f
-            for (i in 0 until minOf(6, bands.size)) sum += bands[i]
-            val level = sum / 6f
+            var low = 0f
+            for (i in 0 until minOf(6, bands.size)) low += bands[i]
+            val level = low / 6f
             bass = if (level > bass) bass + (level - bass) * 0.6f else bass + (level - bass) * 0.15f
+            // La fréquence dominante : le centre de gravité du spectre (au-dessus d'un plancher, pour
+            // que le souffle ne compte pas), puis lissé : la lumière glisse d'une place à l'autre
+            var sum = 0f
+            var weighted = 0f
+            var total = 0f
+            for (i in bands.indices) {
+                val e = (bands[i] - 0.25f).coerceAtLeast(0f).let { it * it }
+                sum += e
+                weighted += e * i
+                total += bands[i]
+            }
+            if (sum > 1e-4f) {
+                val target = weighted / sum / (bands.size - 1)
+                dominant += (target - dominant) * 0.08f
+            }
+            val loud = (total / bands.size).coerceIn(0f, 1f)
+            power += (loud - power) * if (loud > power) 0.5f else 0.12f
             // Un temps fort : la basse saute nettement au-dessus de sa moyenne récente (≤ 5 par seconde)
             val rise = level - average
             average += (level - average) * 0.06f
             if (rise > RISE && level > 0.35f && now - lastBeat > 200_000_000L) {
-                power = (0.55f + rise * 5f).coerceAtMost(1f)
-                kick = power
+                kick = (0.55f + rise * 5f).coerceAtMost(1f)
                 lastBeat = now
             } else {
                 kick *= 0.8f
@@ -86,38 +96,24 @@ object BeatLights {
         } else {
             bass *= 0.9f
             kick *= 0.8f
-        }
-        // Les pointes : des ressorts peu amortis (elles retombent en vibrant), tirés vers une hauteur qui
-        // suit la basse, et lancés vers le haut à chaque temps fort
-        for (k in 0 until SPIKES) {
-            if (power > 0f) speed[k] += power * gain[k] * KICK
-            val rest = 0.22f * bass * gain[k]
-            val accel = -STIFF * (spike[k] - rest) - DAMP * speed[k]
-            speed[k] += accel * dt
-            spike[k] = (spike[k] + speed[k] * dt).coerceIn(-0.15f, 1.4f)
+            power *= 0.9f
         }
         frame++
     }
 
-    const val SPIKES = 18
     private const val RISE = 0.05f
-    private const val STIFF = 520f // ~3,6 Hz : une vibration qu'on voit
-    private const val DAMP = 15f // peu amorti : elle rebondit quelques fois
-    private const val KICK = 9f
 }
 
-/** Le dessin déborde de la pochette de ce facteur (les pointes sortent de derrière elle). */
-private const val SPREAD = 1.9f
-
-/** Les points du contour du liquide. */
-private const val POINTS = 240
+/** Le dessin déborde de la pochette de ce facteur (la lumière sort de derrière elle). */
+private const val SPREAD = 2.0f
 
 /**
- * Derrière la pochette (3.9.0, refait en 3.9.1) : un ferrofluide qui réagit à un aimant en vibration.
- * Au repos, une masse de la forme de la pochette, cachée juste derrière elle ; des pointes s'en dressent
- * tout autour, un peu avec la basse, et jaillissent à chaque temps fort avant de retomber en vibrant.
- * De la couleur de la pochette, avivée : un halo flou dessous, le liquide aux bords adoucis dessus
- * (flou d'Android 12+ ; avant, sans flou). Il tourne lentement et tremble un peu.
+ * Derrière la pochette (3.9.0 ; 3.9.2, à la demande : « un cercle qui plie la lumière derrière, placé
+ * selon la fréquence dominante et la puissance ») : un seul cercle de lumière, comme une lentille qui
+ * courbe la lumière (presque transparent au centre, un anneau brillant au bord, un halo autour). Il fait
+ * le tour de la pochette selon la fréquence dominante (en bas les graves, sur le côté les médiums, en
+ * haut les aigus) et dépasse de derrière son bord ; sa taille et son éclat suivent la puissance, avec
+ * une impulsion sur les temps forts. Ajouté (pas posé) sur ce qu'il y a derrière, flouté par Android 12+.
  */
 @Composable
 fun CoverLights(cover: Color, modifier: Modifier = Modifier, corner: Dp = 26.dp) {
@@ -128,10 +124,9 @@ fun CoverLights(cover: Color, modifier: Modifier = Modifier, corner: Dp = 26.dp)
         hsv[2] = 1f
         Color(android.graphics.Color.HSVToColor(hsv))
     }
-    val color by animateColorAsState(bright, tween(600), label = "lumieres")
+    val color by animateColorAsState(bright, tween(600), label = "lumiere")
     val blur = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-    val path = remember { Path() }
-    // Plus grand que la pochette, centré sur elle : les pointes ont la place de sortir
+    // Plus grand que la pochette, centré sur elle : la lumière a la place de sortir
     val spread = Modifier.layout { measurable, constraints ->
         val w = (constraints.maxWidth * SPREAD).roundToInt()
         val h = (constraints.maxHeight * SPREAD).roundToInt()
@@ -140,81 +135,75 @@ fun CoverLights(cover: Color, modifier: Modifier = Modifier, corner: Dp = 26.dp)
             placeable.place((constraints.maxWidth - w) / 2, (constraints.maxHeight - h) / 2)
         }
     }
-    // 3.9.1 : de la lumière, pas un liquide peint : un dégradé presque blanc contre la pochette, de sa
-    // couleur ensuite, transparent au bout des pointes, ajouté (pas posé) sur ce qu'il y a derrière
-    fun DrawScope.light(alpha: Float): Brush {
-        val half = size.minDimension / SPREAD / 2f
-        val tips = half * 1.6f
-        return Brush.radialGradient(
-            0f to androidx.compose.ui.graphics.lerp(color, Color.White, 0.55f).copy(alpha = alpha),
-            (half * 0.98f / tips) to androidx.compose.ui.graphics.lerp(color, Color.White, 0.25f).copy(alpha = alpha),
-            (half * 1.12f / tips) to color.copy(alpha = alpha * 0.85f),
-            1f to color.copy(alpha = 0f),
-            center = center,
-            radius = tips,
-        )
-    }
     Box(modifier) {
-        // Le halo : la même lumière, très floue
+        // Le halo : très flou
         Canvas(
             Modifier.matchParentSize().then(spread).graphicsLayer {
-                if (blur) renderEffect = BlurEffect(34.dp.toPx(), 34.dp.toPx(), TileMode.Decal)
+                if (blur) renderEffect = BlurEffect(30.dp.toPx(), 30.dp.toPx(), TileMode.Decal)
                 blendMode = BlendMode.Plus
             },
         ) {
             BeatLights.frame // (redessine à chaque image analysée)
-            if (fluid(path, corner.toPx())) drawPath(path, light(0.8f))
+            lens(color, corner.toPx(), halo = true)
         }
-        // Le cœur de la lumière, aux bords adoucis
+        // La lentille : l'anneau de lumière courbée, aux bords adoucis
         Canvas(
             Modifier.matchParentSize().then(spread).graphicsLayer {
-                if (blur) renderEffect = BlurEffect(9.dp.toPx(), 9.dp.toPx(), TileMode.Decal)
+                if (blur) renderEffect = BlurEffect(4.dp.toPx(), 4.dp.toPx(), TileMode.Decal)
                 blendMode = BlendMode.Plus
             },
         ) {
             BeatLights.frame
-            if (fluid(path, corner.toPx())) drawPath(path, light(0.75f))
+            lens(color, corner.toPx(), halo = false)
         }
     }
 }
 
-/**
- * Le contour du liquide dans [path] : un carré arrondi (la pochette, un peu plus grand) d'où sortent les
- * pointes. Renvoie false s'il n'y a rien à dessiner (silence).
- */
-private fun DrawScope.fluid(path: Path, cornerPx: Float): Boolean {
-    val b = BeatLights.bass
-    var tallest = 0f
-    for (h in BeatLights.spike) tallest = maxOf(tallest, h)
-    if (b < 0.02f && tallest < 0.02f) return false
+/** Dessine le cercle de lumière à sa place (voir [CoverLights]) ; [halo] : la lueur autour, sinon la lentille. */
+private fun DrawScope.lens(color: Color, cornerPx: Float, halo: Boolean) {
+    val p = BeatLights.power
+    val k = BeatLights.kick
+    if (p < 0.02f && k < 0.02f) return
     val half = size.minDimension / SPREAD / 2f // la demi-taille de la pochette
-    val c = center
-    val t = BeatLights.time
-    val spin = t * 0.08f // une rotation très lente
-    val n = BeatLights.SPIKES
-    // La forme de la pochette : un « superellipse » (carré aux coins arrondis), à peine plus grand
+    // Où : on fait le tour de la pochette, des graves (en bas) aux aigus (en haut), par la droite
+    val angle = (PI / 2 - BeatLights.dominant * PI * 1.6).toFloat()
+    val ca = cos(angle)
+    val sa = sin(angle)
+    // Le bord de la pochette dans cette direction (un carré aux coins arrondis), un peu au-delà
     val squareness = 6f - 2f * (cornerPx / half).coerceIn(0f, 1f)
-    val base = half * (1.0f + 0.03f * b)
-    val reach = half * 0.55f // la hauteur d'une pointe pleinement dressée
-    path.reset()
-    for (p in 0..POINTS) {
-        val a = (2 * PI * p / POINTS).toFloat()
-        val ca = cos(a)
-        val sa = sin(a)
-        val r0 = base / (abs(ca).pow(squareness) + abs(sa).pow(squareness)).pow(1f / squareness)
-        // La pointe la plus proche, et à quelle distance de son axe on est
-        val pos = (a - spin) / (2 * PI).toFloat() * n
-        val k = ((pos.roundToInt() % n) + n) % n
-        val off = pos - pos.roundToInt() // -0,5…0,5 : 0 sur l'axe de la pointe
-        val shape = cos(off * PI.toFloat()).let { if (it <= 0f) 0f else it.pow(9f) } // fine et pointue
-        val tremble = 1f + 0.06f * sin(t * 23f + k * 1.7f) // le tremblement de l'aimant
-        val r = r0 + reach * BeatLights.spike[k].coerceAtLeast(0f) * shape * tremble
-        val x = c.x + ca * r
-        val y = c.y + sa * r
-        if (p == 0) path.moveTo(x, y) else path.lineTo(x, y)
+    val edge = half / (abs(ca).pow(squareness) + abs(sa).pow(squareness)).pow(1f / squareness)
+    val at = Offset(center.x + ca * edge * (1.0f + 0.08f * p), center.y + sa * edge * (1.0f + 0.08f * p))
+    // Sa taille : la puissance, et une impulsion sur les temps forts
+    val r = half * (0.28f + 0.42f * p + 0.12f * k)
+    val glow = (0.35f + 0.6f * p + 0.3f * k).coerceAtMost(1f)
+    if (halo) {
+        drawCircle(
+            Brush.radialGradient(
+                0f to color.copy(alpha = 0.55f * glow),
+                0.6f to color.copy(alpha = 0.35f * glow),
+                1f to Color.Transparent,
+                center = at,
+                radius = r * 1.9f,
+            ),
+            radius = r * 1.9f,
+            center = at,
+        )
+        return
     }
-    path.close()
-    return true
+    // La lentille : presque rien au centre, la lumière courbée se concentre en anneau sur le bord
+    drawCircle(
+        Brush.radialGradient(
+            0f to color.copy(alpha = 0.08f * glow),
+            0.62f to color.copy(alpha = 0.3f * glow),
+            0.86f to lerp(color, Color.White, 0.6f).copy(alpha = 0.95f * glow),
+            0.93f to color.copy(alpha = 0.6f * glow),
+            1f to Color.Transparent,
+            center = at,
+            radius = r,
+        ),
+        radius = r,
+        center = at,
+    )
 }
 
 /** La pochette « tape » sur les temps forts : un léger gonflement, lu au dessin (voir [CoverLights]). */
