@@ -768,6 +768,13 @@ object PlayerHolder {
         audioDetails.value = AudioDetails(codec, kbps, format.sampleRate)
     }
 
+    /** Un morceau ou une playlist choisis dans la bibliothèque de la session (une montre…, 3.9.3). */
+    fun playFromLibrary(mediaId: String) {
+        val context = appContext ?: return
+        val (items, start) = MediaLibraryTree.toPlay(context, mediaId) ?: return
+        launchPlayback { playQueue(context, items, start) } // (playQueue fait déjà le fondu de changement)
+    }
+
     // ---- La playlist du morceau en cours (3.9.3, pour la session média : montres, applis compagnon) ----
 
     private var playlistMemo: Triple<Any?, Any?, Any?>? = null

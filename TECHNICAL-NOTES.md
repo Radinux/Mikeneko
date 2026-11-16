@@ -1443,6 +1443,16 @@ can read and drive it: a smartwatch bridge (the watch maker's app, Gadgetbridge�
   The playlist is the user playlist (or Favorites) that contains the song and overlaps the queue most
   (`PlayerHolder.currentPlaylist`, memoised); null for a song outside any playlist and for videos.
 
+**Browse and pick** (the session is a `MediaLibraryService`; manifest actions
+`androidx.media3.session.MediaLibraryService` and `android.media.browse.MediaBrowserService`): with a Media3
+`MediaBrowser` (same `SessionToken`), `getLibraryRoot()` → `root`; `getChildren("root")` → the playlists
+(Favorites first, then the user's; browsable and playable, title, track count, artwork of the first song),
+media ids `pl:<id>` (`pl:favoris` for Favorites); `getChildren("pl:<id>")` → its songs in playlist order,
+media ids `pl:<id>/<n>` (title, artist, album = playlist name, artwork, track number). Lives are left out.
+To play: `browser.setMediaItem(item)` then `play()`: a song starts its playlist from it, a playlist from its
+first song, played by Mikeneko itself (`SkipPlayer` intercepts `pl:` ids → `PlayerHolder.playFromLibrary`
+→ `playQueue`). Code: `player/MediaLibraryTree.kt`, `LibraryCallback` in `PlaybackService.kt`.
+
 **Drive**: play, pause, `seekTo(ms)`, next / previous (the queue's, or related videos for a video).
 Changes are pushed to the controller (`Player.Listener.onMediaMetadataChanged`,
 `onIsPlayingChanged`…): no polling needed.
