@@ -60,8 +60,8 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ### 3.9
 
-- 3.9.1: the **cover lights** are redone: on each beat, a soft glow bursts out from behind the cover and fades
-  away fast, like an impact.
+- 3.9.1: the **cover lights** are redone as light behaving like a ferrofluid: spikes of light shoot out from
+  behind the cover on each beat and fall back vibrating, as if a magnet were shaking under it.
 - 3.9.0: the **music player buttons** are neumorphic: in the color of the window, raised, and they sink in when
   pressed (shuffle and repeat stay pressed in when on).
 - 3.9.0: **lights behind the cover** in the music player: a glow that breathes with the bass, light beams that
