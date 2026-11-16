@@ -354,17 +354,16 @@ private fun failed(context: Context) =
  * animation sans fin dans une page redessine la page à chaque image (et le verre de la barre du
  * haut avec), ce qui faisait accrocher le défilement dès qu'un morceau était chargé.
  *
- * 2.23.1 : elles se figent aussi pendant que la page défile ([PlayingBarsClock.scrolling]). Sur la
- * playlist qui joue, leur animation tombait en plein pendant le trajet du bouton lecture vers la barre
- * du haut, qui accrochait un court instant à chaque retour en haut de la page. Elles reprennent là où
- * elles en étaient dès que la page s'arrête.
+ * 2.23.1 : elles se figeaient pendant que la page défilait (le bouton lecture qui voyageait vers la
+ * barre du haut accrochait). 3.9.1 : ce bouton n'existe plus (deux boutons depuis 3.8.0), elles bougent
+ * aussi pendant le défilement (l'utilisateur les voyait se figer) ; elles ne font que redessiner.
  */
 @Composable
 fun PlayingBars(modifier: Modifier = Modifier, color: Color = Pelage.RouxClair) {
     val playingLabel = stringResource(R.string.playing_now)
     val running by PlayerHolder.isPlaying.collectAsState()
     val m = modifier.size(16.dp, 14.dp).semantics { contentDescription = playingLabel }
-    val moving = running && !PlayingBarsClock.scrolling
+    val moving = running
     // Le temps de l'animation (ms) : il n'avance que quand les barres bougent
     val time = remember { mutableFloatStateOf(0f) }
     LaunchedEffect(moving) {
@@ -385,11 +384,6 @@ fun PlayingBars(modifier: Modifier = Modifier, color: Color = Pelage.RouxClair) 
             0.25f + 0.75f * wave * wave
         }
     }
-}
-
-/** Les pages de la musique disent ici quand leur liste défile : les barres attendent. */
-object PlayingBarsClock {
-    var scrolling by mutableStateOf(false)
 }
 
 private val PAUSED_BARS = floatArrayOf(0.45f, 0.8f, 0.6f)
