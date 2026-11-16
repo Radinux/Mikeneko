@@ -91,13 +91,14 @@ fun NeuButton(
     iconSize: Dp = size * 0.46f,
     enabled: Boolean = true,
     checked: Boolean = false,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val down = (pressed && enabled) || checked
     Box(
-        Modifier
+        modifier
             .size(size)
             .graphicsLayer {
                 val s = if (pressed && enabled) 0.97f else 1f

@@ -57,6 +57,7 @@ fun CastButton(backdrop: Backdrop, size: Dp = 44.dp, modifier: Modifier = Modifi
             size = size,
             fill = if (connected) Pelage.Roux else null,
             content = if (connected) Pelage.Encre else Color.White,
+            modifier = modifier, // (3.9.3 : la marge donnée n'était pas appliquée : Cast et lune se touchaient)
         ) {
             onOpen()
             open = true

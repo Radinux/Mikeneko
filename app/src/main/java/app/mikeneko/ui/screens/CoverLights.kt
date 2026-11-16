@@ -146,7 +146,7 @@ object BeatLights {
 }
 
 /** Le dessin déborde de la pochette de ce facteur (le halo sort de derrière elle). */
-private const val SPREAD = 2.0f
+private const val SPREAD = 2.8f
 
 /**
  * Le liquide autour de la pochette (3.9.2), en AGSL (Android 13+) : chaque point autour de la pochette
@@ -185,11 +185,18 @@ half4 main(float2 p) {
     half4 red = content.eval(base + dir * spread);
     half4 green = content.eval(base);
     half4 blue = content.eval(base - dir * spread);
-    // Le halo : il s'estompe en s'éloignant, plus grand avec la basse et les temps forts
-    float reach = halfSize * (0.32 + 0.3 * bass + 0.22 * kick);
-    float fade = exp(-outside / reach) * (0.55 + 0.45 * bass + 0.3 * kick);
+    float3 col = float3(red.r, green.g, blue.b);
+    // 3.9.3 : de la lumière, même d'une partie sombre de la pochette : la couleur éclaircie et ravivée
+    float luma = dot(col, float3(0.299, 0.587, 0.114));
+    col = mix(float3(luma), col, 1.6);
+    col = clamp(col, 0.0, 1.0);
+    col = 1.0 - (1.0 - col) * (1.0 - col);
+    col = max(col, float3(0.18));
+    // Le halo : il s'estompe en s'éloignant, plus grand avec la basse et les temps forts (3.9.3 : plus large, plus lumineux)
+    float reach = halfSize * (0.65 + 0.55 * bass + 0.4 * kick);
+    float fade = exp(-outside / reach) * (1.3 + 0.9 * bass + 0.6 * kick);
     fade = clamp(fade, 0.0, 1.0);
-    return half4(red.r * fade, green.g * fade, blue.b * fade, fade);
+    return half4(col * fade, fade);
 }
 """
 
@@ -241,7 +248,7 @@ fun CoverLights(cover: Color, model: Any?, modifier: Modifier = Modifier, corner
                     shader.setFloatUniform("dispersion", 4.dp.toPx() * (0.6f + BeatLights.bass + BeatLights.kick))
                     val liquid = android.graphics.RenderEffect.createRuntimeShaderEffect(shader, "content")
                     // Puis un flou : le halo n'a aucun contour
-                    val soft = android.graphics.RenderEffect.createBlurEffect(14.dp.toPx(), 14.dp.toPx(), android.graphics.Shader.TileMode.DECAL)
+                    val soft = android.graphics.RenderEffect.createBlurEffect(18.dp.toPx(), 18.dp.toPx(), android.graphics.Shader.TileMode.DECAL)
                     renderEffect = android.graphics.RenderEffect.createChainEffect(soft, liquid).asComposeRenderEffect()
                 } catch (e: Exception) {
                     broken = true
