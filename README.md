@@ -60,6 +60,8 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ### 3.8
 
+- 3.8.1: changing song is now a **quick fade** (the old song fades out fast, the new one fades in), without
+  the two songs overlapping.
 - 3.8.0: the **music player buttons** are Material 3 (the play button turns into a rounded square while
   playing); in landscape the title gets its whole row and the button bar is no longer cut off.
 - 3.8.0: on playlist and album pages, the **play button** is two buttons: one in the header, one in the top

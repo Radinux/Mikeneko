@@ -264,7 +264,7 @@ object PlayerHolder {
                 }
 
                 override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
-                    if (!playWhenReady) endSwitchFade() // en pause : le morceau qu'on quittait en fondu se tait aussi
+                    if (!playWhenReady) endSwitchFade() // en pause : le fondu s'arrête (volume rendu)
                     // Pendant le cast (3.4.0) : le téléphone ne joue pas ; « lecture » (notification,
                     // écouteurs…) part vers l'appareil
                     if (playWhenReady && app.mikeneko.cast.Cast.active) {
@@ -510,7 +510,7 @@ object PlayerHolder {
         short: Boolean = false,
     ) {
         endCrossfade() // une autre lecture : le morceau qui finissait en fondu s'arrête
-        if (!audioOnly) endSwitchFade() // une vidéo : le morceau qu'on quittait en fondu se tait
+        if (!audioOnly) endSwitchFade() // une vidéo : pas de fondu de musique en cours
         // Un short : il tourne en boucle, repart toujours du début et ne prend pas de place dans la reprise
         playingShort = short && !audioOnly
         // Le morceau déjà en cours (musique), touché à nouveau : il repart du début, sans rien
@@ -941,69 +941,64 @@ object PlayerHolder {
         return t
     }
 
-    // ---- Le fondu au changement de morceau (3.8.0) ----
+    // ---- Le fondu au changement de morceau (3.8.0 ; 3.8.1 : un simple fondu rapide) ----
     //
-    // Suivant, précédent, un autre morceau choisi (liste, file) : le morceau qu'on quitte continue dans
-    // un second lecteur, [switchTail], pendant que le nouveau se charge, puis les deux se croisent en
-    // [SWITCH_FADE_MS]. Pas pour la fin naturelle d'un morceau (c'est le fondu enchaîné, plus haut).
+    // Suivant, précédent, un autre morceau choisi (liste, file) : le morceau en cours baisse vite
+    // ([SWITCH_OUT_MS]), puis le nouveau monte dès qu'il joue ([SWITCH_IN_MS]). 3.8.0 faisait se croiser
+    // les deux morceaux (l'ancien continuait dans un second lecteur) : l'utilisateur n'en voulait pas.
+    // Pas pour la fin naturelle d'un morceau (c'est le fondu enchaîné, plus haut, s'il est réglé).
 
-    private const val SWITCH_FADE_MS = 2_000L
-    private const val SWITCH_LEAD_MS = 250L
-    private var switchTail: ExoPlayer? = null
+    private const val SWITCH_OUT_MS = 300L
+    private const val SWITCH_IN_MS = 700L
     private var switchJob: Job? = null
 
     private suspend fun <T> withSwitchFade(block: suspend () -> T): T {
         endSwitchFade()
         val p = player
         val now = nowPlaying.value
-        val context = appContext
-        if (p == null || context == null || now == null || !now.audioOnly || now.live || !p.isPlaying || app.mikeneko.cast.Cast.active) return block()
+        if (p == null || now == null || !now.audioOnly || now.live || !p.isPlaying || app.mikeneko.cast.Cast.active) return block()
         endCrossfade()
-        val t = runCatching { startTail(context, p, SWITCH_LEAD_MS, readyWithinMs = 700) { switchTail = it } }.getOrNull()
-        if (t == null) {
-            endSwitchFade()
-            return block()
+        // L'ancien baisse vite
+        val start = android.os.SystemClock.uptimeMillis()
+        while (true) {
+            val f = ((android.os.SystemClock.uptimeMillis() - start).toFloat() / SWITCH_OUT_MS).coerceIn(0f, 1f)
+            if (player !== p || !p.playWhenReady) break
+            p.volume = 1f - f
+            if (f >= 1f) break
+            delay(16)
         }
         p.volume = 0f
         val result = try {
             block()
         } catch (e: Throwable) {
-            endSwitchFade()
+            p.volume = 1f
             throw e
         }
+        // Le nouveau monte dès qu'il joue (il se charge peut-être encore : au plus 8 s, sinon plein volume)
         switchJob = scope.launch {
             try {
-                // Le nouveau morceau se charge : l'ancien continue à plein volume (au plus 8 s)
                 withTimeoutOrNull(8_000) {
-                    while (player === p && p.playWhenReady && !(p.isPlaying && !loading.value)) delay(30)
+                    while (player === p && p.playWhenReady && !(p.isPlaying && !loading.value)) delay(20)
                 }
-                val start = android.os.SystemClock.uptimeMillis()
-                while (true) {
-                    val f = ((android.os.SystemClock.uptimeMillis() - start).toFloat() / SWITCH_FADE_MS).coerceIn(0f, 1f)
-                    if (player !== p || !p.playWhenReady) break
-                    p.volume = kotlin.math.sin(f * Math.PI / 2).toFloat()
-                    t.volume = kotlin.math.cos(f * Math.PI / 2).toFloat()
+                val from = android.os.SystemClock.uptimeMillis()
+                while (player === p && p.playWhenReady) {
+                    val f = ((android.os.SystemClock.uptimeMillis() - from).toFloat() / SWITCH_IN_MS).coerceIn(0f, 1f)
+                    p.volume = f * f // monte doucement au début, comme l'oreille
                     if (f >= 1f) break
-                    delay(30)
+                    delay(16)
                 }
             } finally {
-                if (switchTail === t) {
-                    t.release()
-                    switchTail = null
-                }
                 if (player === p) p.volume = 1f
             }
         }
         return result
     }
 
-    /** Arrête un fondu de changement en cours : l'ancien morceau se tait, le nouveau reprend tout son volume. */
+    /** Arrête un fondu de changement en cours : le nouveau morceau reprend tout son volume. */
     private fun endSwitchFade() {
-        val active = switchJob != null || switchTail != null
+        val active = switchJob != null
         switchJob?.cancel()
         switchJob = null
-        switchTail?.release()
-        switchTail = null
         if (active) player?.volume = 1f
     }
 
