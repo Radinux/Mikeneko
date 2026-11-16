@@ -90,50 +90,6 @@ import kotlin.math.roundToInt
 fun MusicOverlay(state: MusicState, backdrop: Backdrop) {
     Box(Modifier.fillMaxSize().onPlaced { state.overlayRoot = it }) {
         MusicHeader(state, backdrop)
-        TravellingPlayButton(state)
-    }
-}
-
-/**
- * Le bouton lecture d'une page (album, playlist…) quand il a quitté l'en-tête : il glisse et rétrécit
- * jusqu'à sa place dans la pilule de la barre du haut, et y reste (voir [PlayAnchor]).
- */
-@Composable
-private fun TravellingPlayButton(state: MusicState) {
-    val bar = state.bar ?: return
-    val anchor = bar.play ?: return
-    val onPlay = bar.onPlay ?: return
-    if (state.page == null) return
-    // (cette couche remplit celle de la barre du haut : les positions du bouton sont déjà dans son repère)
-    Box(Modifier.fillMaxSize()) {
-        Box(
-            Modifier
-                .layout { measurable, _ ->
-                    val big = PLAY_BIG.roundToPx()
-                    val placeable = measurable.measure(Constraints.fixed(big, big))
-                    layout(big, big) {
-                        // Posé seulement une fois parti de l'en-tête (sinon il arrêterait les taps dessous)
-                        val spot = anchor.spot(this@layout)
-                        if (spot != null && spot.t > 0f) {
-                            placeable.place((spot.center.x - big / 2f).roundToInt(), (spot.center.y - big / 2f).roundToInt())
-                        }
-                    }
-                }
-                .graphicsLayer {
-                    val t = anchor.spot(this)?.t ?: 0f
-                    val scale = 1f + (PLAY_SMALL / PLAY_BIG - 1f) * t
-                    scaleX = scale
-                    scaleY = scale
-                    shadowElevation = (1f - t) * 10.dp.toPx()
-                    shape = CircleShape
-                    clip = true
-                }
-                .background(Pelage.Roux)
-                .jellyClickable(role = Role.Button, onClickLabel = stringResource(R.string.play_all), onClick = onPlay),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(MkIcons.Play, stringResource(R.string.play_all), tint = Pelage.Encre, modifier = Modifier.size(28.dp))
-        }
     }
 }
 
@@ -175,6 +131,10 @@ private fun MusicHeader(state: MusicState, backdrop: Backdrop) {
                         state.overlayRoot?.takeIf { it.isAttached }?.let { state.barPill = it.localBoundingBoxOf(c, clipBounds = false) }
                     }) {
                         if (bar != null && !(filtering && morph.value >= 0.999f)) Box(Modifier.graphicsLayer { alpha = 1f - morph.value }) {
+                            // Visible, elle arrête les taps (sinon ils traversent jusqu'au morceau dessous) : un
+                            // bloqueur à part (2.11.5), sous la vitre (3.8.0 : le bouton lecture de la pilule, lui,
+                            // reçoit ses taps)
+                            PillTapBlocker(state, Modifier.matchParentSize())
                             LiquidGlass(
                                 backdrop,
                                 Modifier
@@ -205,15 +165,26 @@ private fun MusicHeader(state: MusicState, backdrop: Backdrop) {
                                         overflow = TextOverflow.Ellipsis,
                                         style = TextStyle(shadow = GlassTextShadow),
                                     )
-                                    // La place du bouton lecture : c'est celui de l'en-tête qui vient s'y ranger
-                                    // (dessiné par TravellingPlayButton, au-dessus de la pilule)
-                                    if (bar.onPlay != null) Spacer(Modifier.padding(start = 8.dp).size(PLAY_SMALL))
+                                    // 3.8.0 : le bouton lecture de la pilule, à lui (avant, celui de l'en-tête venait
+                                    // s'y ranger en voyageant) ; il arrive avec la pilule
+                                    val onPlay = bar.onPlay
+                                    if (onPlay != null) {
+                                        Box(
+                                            Modifier
+                                                .padding(start = 8.dp)
+                                                .size(PLAY_SMALL)
+                                                .clip(CircleShape)
+                                                .background(Pelage.Roux)
+                                                .jellyClickable(role = Role.Button, onClickLabel = stringResource(R.string.play_all)) {
+                                                    if (state.barProgress > 0.5f) onPlay() // (pilule encore invisible : rien)
+                                                },
+                                            contentAlignment = Alignment.Center,
+                                        ) {
+                                            Icon(MkIcons.Play, stringResource(R.string.play_all), tint = Pelage.Encre, modifier = Modifier.size(21.dp))
+                                        }
+                                    }
                                 }
                             }
-                            // Visible, elle arrête les taps (sinon ils traversent jusqu'au morceau dessous) : un
-                            // bloqueur à part (2.11.5). Avant, le détecteur était ajouté / retiré sur la vitre
-                            // elle-même, qui était reconstruite à mi-course, en plein défilement (un petit arrêt).
-                            PillTapBlocker(state, Modifier.matchParentSize())
                         }
                     }
                     // Playlist perso : une loupe pour chercher dedans (2.11.3, à la place du ⋮ : renommer et

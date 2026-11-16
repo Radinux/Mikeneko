@@ -60,6 +60,8 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ### 3.8
 
+- 3.8.0: on playlist and album pages, the **play button** is two buttons: one in the header, one in the top
+  bar that appears as you scroll (no more travelling button).
 - 3.8.0: a **Favorites** playlist, always there and never deletable: every song you heart lands in it; it can
   be downloaded for offline listening like any playlist.
 - 3.8.0: the **Downloads** screen lists every file you downloaded, to open or delete.
