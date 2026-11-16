@@ -60,6 +60,8 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ### 3.9
 
+- 3.9.0: the **music player buttons** are neumorphic: in the color of the window, raised, and they sink in when
+  pressed (shuffle and repeat stay pressed in when on).
 - 3.9.0: **lights behind the cover** in the music player: a glow that breathes with the bass, light beams that
   turn like stage spotlights, and a flash each time the beat hits.
 

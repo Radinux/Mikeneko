@@ -49,16 +49,18 @@ fun CastButton(backdrop: Backdrop, size: Dp = 44.dp, modifier: Modifier = Modifi
     val session by Cast.session.collectAsState()
     var open by remember { mutableStateOf(false) }
     val connected = session?.phase == Cast.Phase.Connected
-    // Le lecteur musique (3.8.0) : un bouton Material 3 (sur son fond uni, le verre ne se voyait pas)
+    // Le lecteur musique (3.8.0 Material 3, 3.9.0 neumorphique) : de la couleur du fond, roux en cast
     if (material) {
-        androidx.compose.material3.FilledTonalIconButton(
-            onClick = { onOpen(); open = true },
-            modifier = modifier.size(size),
-            colors = androidx.compose.material3.IconButtonDefaults.filledTonalIconButtonColors(
-                containerColor = if (connected) Pelage.Roux else Color.White.copy(alpha = 0.14f),
-                contentColor = if (connected) Pelage.Encre else Color.White,
-            ),
-        ) { Icon(MkIcons.Cast, stringResource(R.string.cast), modifier = Modifier.size(size * 0.46f)) }
+        NeuButton(
+            MkIcons.Cast,
+            stringResource(R.string.cast),
+            size = size,
+            fill = if (connected) Pelage.Roux else null,
+            content = if (connected) Pelage.Encre else Color.White,
+        ) {
+            onOpen()
+            open = true
+        }
         if (open) CastPicker { open = false }
         return
     }

@@ -106,6 +106,7 @@ import app.mikeneko.player.SleepTimer
 import app.mikeneko.ui.components.GlassCircleButton
 import app.mikeneko.ui.components.ProgressWithSegments
 import app.mikeneko.ui.components.Tag
+import app.mikeneko.ui.components.neumorphic
 import app.mikeneko.ui.components.rememberCoverColor
 import app.mikeneko.ui.components.shareLink
 import app.mikeneko.ui.glass.LiquidGlass
@@ -190,13 +191,16 @@ internal fun PlayerWindowContent(
         val scroll = rememberScrollState()
         LaunchedEffect(state.open) { if (!state.open) scroll.scrollTo(0) }
         LaunchedEffect(now?.url) { scroll.animateScrollTo(0) }
+        // Le fond des boutons neumorphiques (3.9.0) : le milieu du dégradé de la fenêtre, opaque
+        val neuBase = lerp(coverColor, Pelage.Nuit, 0.62f)
+        androidx.compose.runtime.CompositionLocalProvider(app.mikeneko.ui.components.LocalNeuBase provides neuBase) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
             // Les morceaux de la fenêtre, rangés en colonne (portrait) ou en deux parties (paysage)
             val sleepButton: @Composable () -> Unit = {
                 TonalButton(
                     MkIcons.Moon,
                     stringResource(if (timer == SleepTimer.Off) R.string.sleep_timer else R.string.sleep_timer_active),
-                    container = if (timer == SleepTimer.Off) Color.White.copy(alpha = 0.14f) else Pelage.Roux,
+                    container = if (timer == SleepTimer.Off) null else Pelage.Roux,
                     content = if (timer == SleepTimer.Off) Color.White else Pelage.Encre,
                 ) { PlayerHolder.settingsPage.value = SettingsPage.Minuteur }
             }
@@ -302,12 +306,10 @@ internal fun PlayerWindowContent(
                     ) { PlayerHolder.cycleRepeat() }
                 }
                 Spacer(Modifier.height(if (landscape) 10.dp else 16.dp))
-                // 3.8.0 : une surface Material 3 (la capsule en verre ne se voyait pas sur le fond uni de la fenêtre)
-                androidx.compose.material3.Surface(
-                    Modifier.fillMaxWidth().height(54.dp).onGloballyPositioned { state.lyricsAnchor = it.boundsInWindow() },
-                    shape = RoundedCornerShape(27.dp),
-                    color = Color.White.copy(alpha = 0.10f),
-                    contentColor = Color.White,
+                // 3.9.0 : un plateau creusé dans la fenêtre (neumorphisme), les boutons dedans
+                Box(
+                    Modifier.fillMaxWidth().height(54.dp).onGloballyPositioned { state.lyricsAnchor = it.boundsInWindow() }
+                        .neumorphic(RoundedCornerShape(27.dp), app.mikeneko.ui.components.LocalNeuBase.current, pressed = true),
                 ) {
                     Row(Modifier.fillMaxSize().padding(horizontal = 6.dp)) {
                         ActionSlot(MkIcons.Queue, stringResource(R.string.queue)) {
@@ -374,6 +376,7 @@ internal fun PlayerWindowContent(
                     MusicDetails(now, wanted = scroll.value > 0, onOpenArtist, onOpenAlbum)
                 }
             }
+        }
         }
     }
 }
@@ -532,61 +535,51 @@ private fun TrackProgress(key: String?, active: Boolean) {
     }
 }
 
-// ---- Les boutons du lecteur musique, en Material 3 (3.8.0 ; avant, des cercles « en verre » : sur le
-// fond uni de la fenêtre, l'effet ne se voyait pas)
+// ---- Les boutons du lecteur musique : Material 3 (3.8.0), puis neumorphiques (3.9.0) : de la couleur
+// du fond de la fenêtre, en relief, qui s'enfoncent à l'appui (voir NeuButton)
 
-/** Un bouton tonal rond : un fond clair translucide sur la fenêtre sombre. */
+/** Un bouton rond en relief ; [container] : une autre couleur que le fond (le minuteur en marche). */
 @Composable
 private fun TonalButton(
     icon: ImageVector,
     label: String,
     size: androidx.compose.ui.unit.Dp = 44.dp,
-    container: Color = Color.White.copy(alpha = 0.14f),
+    container: Color? = null,
     content: Color = Color.White,
     enabled: Boolean = true,
     onClick: () -> Unit,
-) {
-    androidx.compose.material3.FilledTonalIconButton(
-        onClick = onClick,
-        modifier = Modifier.size(size),
-        enabled = enabled,
-        colors = androidx.compose.material3.IconButtonDefaults.filledTonalIconButtonColors(
-            containerColor = container,
-            contentColor = content,
-            disabledContainerColor = Color.White.copy(alpha = 0.06f),
-            disabledContentColor = Color.White.copy(alpha = 0.35f),
-        ),
-    ) { Icon(icon, label, modifier = Modifier.size(size * 0.46f)) }
-}
+) = app.mikeneko.ui.components.NeuButton(icon, label, size = size, fill = container, content = content, enabled = enabled, onClick = onClick)
 
-/** Lecture / pause : plein, de la couleur du thème ; rond en pause, carré arrondi pendant la lecture. */
+/** Lecture / pause : en relief, de la couleur du thème ; rond en pause, carré arrondi pendant la lecture. */
 @Composable
 private fun PlayButton(playing: Boolean, onClick: () -> Unit) {
     val corner by androidx.compose.animation.core.animateDpAsState(if (playing) 24.dp else 38.dp, label = "lecture")
-    androidx.compose.material3.FilledIconButton(
-        onClick = onClick,
-        modifier = Modifier.size(76.dp),
+    app.mikeneko.ui.components.NeuButton(
+        if (playing) MkIcons.Pause else MkIcons.Play,
+        stringResource(if (playing) R.string.pause else R.string.play),
+        size = 76.dp,
         shape = RoundedCornerShape(corner),
-        colors = androidx.compose.material3.IconButtonDefaults.filledIconButtonColors(containerColor = Pelage.Roux, contentColor = Pelage.Encre),
-    ) {
-        Icon(if (playing) MkIcons.Pause else MkIcons.Play, stringResource(if (playing) R.string.pause else R.string.play), modifier = Modifier.size(34.dp))
-    }
+        fill = Pelage.Roux,
+        content = Pelage.Encre,
+        iconSize = 34.dp,
+        onClick = onClick,
+    )
 }
 
-/** Aléatoire / répéter : un bouton bascule qui s'allume en couleur du thème (avec un point dessous) quand c'est actif. */
+/** Aléatoire / répéter : actif, le bouton reste enfoncé, l'icône de la couleur du thème (et un point dessous). */
 @Composable
 private fun ModeToggle(icon: ImageVector, label: String, active: Boolean, onClick: () -> Unit) {
-    Box(contentAlignment = Alignment.Center) {
-        androidx.compose.material3.IconToggleButton(
+    Box(Modifier.semantics { stateDescription = if (active) "✓" else "" }, contentAlignment = Alignment.Center) {
+        app.mikeneko.ui.components.NeuButton(
+            icon,
+            label,
+            size = 46.dp,
+            content = if (active) Pelage.RouxClair else Color.White.copy(alpha = 0.85f),
+            iconSize = 22.dp,
             checked = active,
-            onCheckedChange = { onClick() },
-            modifier = Modifier.size(48.dp).semantics { contentDescription = label },
-            colors = androidx.compose.material3.IconButtonDefaults.iconToggleButtonColors(
-                contentColor = Color.White.copy(alpha = 0.85f),
-                checkedContentColor = Pelage.RouxClair,
-            ),
-        ) { Icon(icon, null, modifier = Modifier.size(24.dp)) }
-        if (active) Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 4.dp).size(5.dp).clip(CircleShape).background(Pelage.RouxClair))
+            onClick = onClick,
+        )
+        if (active) Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 5.dp).size(4.dp).clip(CircleShape).background(Pelage.RouxClair))
     }
 }
 
