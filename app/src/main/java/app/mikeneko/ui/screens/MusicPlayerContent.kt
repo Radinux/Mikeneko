@@ -220,7 +220,7 @@ internal fun PlayerWindowContent(
             val coverArt: @Composable () -> Unit = {
                 // Derrière la pochette (3.9.0) : des lumières qui tapent avec la basse et les temps forts
                 Box(contentAlignment = Alignment.Center) {
-                if (now != null && !live) CoverLights(coverColor, Modifier.matchParentSize())
+                if (now != null && !live) CoverLights(coverColor, now?.thumbnail, Modifier.matchParentSize())
                 Box(
                     Modifier
                         .fillMaxWidth(0.9f)

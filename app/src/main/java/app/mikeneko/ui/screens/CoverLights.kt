@@ -5,6 +5,8 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.graphics.asComposeRenderEffect
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -66,6 +68,9 @@ object BeatLights {
     val particleDistance = FloatArray(PARTICLES) { 1f + (it % 9) * 0.1f }
     private var seed = 7
     private var lastFrame = 0L
+    /** Le temps qui passe (s) : l'ondulation du liquide autour de la pochette (3.9.2). */
+    var time = 0f
+        private set
 
     private var average = 0f
     private var lastBeat = 0L
@@ -74,6 +79,7 @@ object BeatLights {
     fun feed(bands: FloatArray, playing: Boolean, now: Long) {
         val dt = if (lastFrame == 0L) 1f / 30 else ((now - lastFrame) / 1e9f).coerceIn(0.005f, 0.1f)
         lastFrame = now
+        time += dt
         // Le spectre, ramené à [LEVELS] valeurs et lissé (monte vite, retombe doucement)
         for (i in 0 until LEVELS) {
             val v = if (playing && bands.isNotEmpty()) {
@@ -139,22 +145,63 @@ object BeatLights {
     const val PARTICLES = 40
 }
 
-/** Le dessin déborde de la pochette de ce facteur (la lumière sort de derrière elle). */
+/** Le dessin déborde de la pochette de ce facteur (le halo sort de derrière elle). */
 private const val SPREAD = 2.0f
 
-/** Les points du contour, les barres autour de la pochette. */
-private const val POINTS = 180
-private const val BARS = 72
+/**
+ * Le liquide autour de la pochette (3.9.2), en AGSL (Android 13+) : chaque point autour de la pochette
+ * va chercher sa couleur dans la pochette elle-même, près de son bord (ses « UV » prolongés vers
+ * l'extérieur), avec une ondulation liquide qui s'amplifie avec la basse ; le rouge, le vert et le bleu
+ * sont pris à des distances un peu différentes (dispersion chromatique), et tout s'estompe en
+ * s'éloignant (un halo sans contour). Sous la pochette : rien (elle est dessinée par-dessus).
+ */
+private const val LIQUID_SHADER = """
+uniform shader content;
+uniform float2 center;
+uniform float halfSize;
+uniform float squareness;
+uniform float time;
+uniform float bass;
+uniform float kick;
+uniform float dispersion;
+
+half4 main(float2 p) {
+    float2 d = p - center;
+    float r = length(d);
+    float2 dir = d / max(r, 1.0);
+    float edge = halfSize / pow(pow(abs(dir.x), squareness) + pow(abs(dir.y), squareness), 1.0 / squareness);
+    float outside = r - edge;
+    if (outside <= 0.0) return half4(0.0);
+    float angle = atan(d.y, d.x);
+    // L'ondulation du liquide : quelques vagues qui tournent, plus fortes avec la basse et les temps forts
+    float wave = sin(angle * 5.0 + time * 1.3) * 0.55 + sin(angle * 9.0 - time * 1.9) * 0.3 + sin(angle * 2.0 + time * 0.6) * 0.45;
+    float bend = halfSize * 0.05 * (0.35 + bass + kick) * wave;
+    // On va chercher la couleur dans la pochette, plus profond quand on s'éloigne (la lumière courbée)
+    float depth = 3.0 + outside * 0.35 + bend;
+    float2 tangent = float2(-dir.y, dir.x);
+    float2 base = center + dir * (edge - max(depth, 2.0)) + tangent * bend * 0.6;
+    // La dispersion : chaque couleur un peu décalée le long du rayon, de plus en plus loin du bord
+    float spread = dispersion * (1.0 + outside / halfSize * 2.0);
+    half4 red = content.eval(base + dir * spread);
+    half4 green = content.eval(base);
+    half4 blue = content.eval(base - dir * spread);
+    // Le halo : il s'estompe en s'éloignant, plus grand avec la basse et les temps forts
+    float reach = halfSize * (0.32 + 0.3 * bass + 0.22 * kick);
+    float fade = exp(-outside / reach) * (0.55 + 0.45 * bass + 0.3 * kick);
+    fade = clamp(fade, 0.0, 1.0);
+    return half4(red.r * fade, green.g * fade, blue.b * fade, fade);
+}
+"""
 
 /**
- * Autour de la pochette (3.9.0 ; 3.9.2, l'ambiance des visualiseurs de musique en vidéo) : le spectre
- * fait le tour de la pochette, en suivant sa forme (graves en bas, aigus en haut, en miroir gauche /
- * droite). Une forme de lumière qui se déforme avec lui (floue, ajoutée à ce qu'il y a derrière), des
- * barres fines et nettes par-dessus, des particules qui s'envolent plus vite avec la basse ; le tout
- * pulse sur les temps forts, et la pochette « tape ». De la couleur de la pochette, avivée.
+ * Autour de la pochette (3.9.0 ; 3.9.2, à la demande : « de la réfraction liquide des UV de la pochette,
+ * dispersion chroma, halo sans contours ») : la pochette elle-même déborde de ses bords comme à travers
+ * un liquide qui ondule avec la basse, ses couleurs se séparent (rouge, vert, bleu) en s'éloignant, et
+ * tout s'estompe en un halo flou, plus grand avec la basse et sur les temps forts. Android 13+ (AGSL) ;
+ * avant, une lueur floue de la couleur de la pochette.
  */
 @Composable
-fun CoverLights(cover: Color, modifier: Modifier = Modifier, corner: Dp = 26.dp) {
+fun CoverLights(cover: Color, model: Any?, modifier: Modifier = Modifier, corner: Dp = 26.dp) {
     val bright = remember(cover) {
         val hsv = FloatArray(3)
         android.graphics.Color.colorToHSV(cover.toArgb(), hsv)
@@ -163,9 +210,7 @@ fun CoverLights(cover: Color, modifier: Modifier = Modifier, corner: Dp = 26.dp)
         Color(android.graphics.Color.HSVToColor(hsv))
     }
     val color by animateColorAsState(bright, tween(600), label = "lumiere")
-    val blur = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-    val path = remember { Path() }
-    // Plus grand que la pochette, centré sur elle : la lumière a la place de sortir
+    // Plus grand que la pochette, centré sur elle : le halo a la place de sortir
     val spread = Modifier.layout { measurable, constraints ->
         val w = (constraints.maxWidth * SPREAD).roundToInt()
         val h = (constraints.maxHeight * SPREAD).roundToInt()
@@ -174,103 +219,60 @@ fun CoverLights(cover: Color, modifier: Modifier = Modifier, corner: Dp = 26.dp)
             placeable.place((constraints.maxWidth - w) / 2, (constraints.maxHeight - h) / 2)
         }
     }
-    Box(modifier) {
-        // La forme de lumière qui se déforme : floue, ajoutée
-        Canvas(
-            Modifier.matchParentSize().then(spread).graphicsLayer {
-                if (blur) renderEffect = BlurEffect(20.dp.toPx(), 20.dp.toPx(), TileMode.Decal)
+    // Le shader n'est compilé que sur le téléphone : s'il échoue (ou un réglage refusé), la lueur simple
+    // prend le relais au lieu d'un plantage
+    val shader = remember {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) runCatching { android.graphics.RuntimeShader(LIQUID_SHADER) }.getOrNull() else null
+    }
+    var broken by remember { androidx.compose.runtime.mutableStateOf(false) }
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && model != null && shader != null && !broken) {
+        Box(
+            modifier.then(spread).graphicsLayer {
+                BeatLights.frame // (refait l'effet à chaque image analysée)
+                val half = size.minDimension / SPREAD / 2f
+                if (half <= 0f) return@graphicsLayer
+                try {
+                    shader.setFloatUniform("center", size.width / 2f, size.height / 2f)
+                    shader.setFloatUniform("halfSize", half)
+                    shader.setFloatUniform("squareness", 6f - 2f * (corner.toPx() / half).coerceIn(0f, 1f))
+                    shader.setFloatUniform("time", BeatLights.time)
+                    shader.setFloatUniform("bass", BeatLights.bass)
+                    shader.setFloatUniform("kick", BeatLights.kick)
+                    shader.setFloatUniform("dispersion", 4.dp.toPx() * (0.6f + BeatLights.bass + BeatLights.kick))
+                    val liquid = android.graphics.RenderEffect.createRuntimeShaderEffect(shader, "content")
+                    // Puis un flou : le halo n'a aucun contour
+                    val soft = android.graphics.RenderEffect.createBlurEffect(14.dp.toPx(), 14.dp.toPx(), android.graphics.Shader.TileMode.DECAL)
+                    renderEffect = android.graphics.RenderEffect.createChainEffect(soft, liquid).asComposeRenderEffect()
+                } catch (e: Exception) {
+                    broken = true
+                }
                 blendMode = BlendMode.Plus
             },
         ) {
-            BeatLights.frame // (redessine à chaque image analysée)
-            if (!contour(path, corner.toPx())) return@Canvas
-            val half = size.minDimension / SPREAD / 2f
-            drawPath(
-                path,
-                Brush.radialGradient(
-                    0f to color.copy(alpha = 0.9f),
-                    (half * 1.0f / (half * 1.5f)) to lerp(color, Color.White, 0.3f).copy(alpha = 0.85f),
-                    1f to color.copy(alpha = 0f),
-                    center = center,
-                    radius = half * 1.5f,
-                ),
+            // La pochette, à sa place (au centre, à sa taille) : c'est elle que le liquide prolonge
+            coil3.compose.AsyncImage(
+                model,
+                null,
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                modifier = Modifier.align(androidx.compose.ui.Alignment.Center).fillMaxSize(1f / SPREAD),
             )
         }
-        // Les barres, les particules et le fil du contour : nets
-        Canvas(Modifier.matchParentSize().then(spread).graphicsLayer { blendMode = BlendMode.Plus }) {
+    } else {
+        // Avant Android 13 : une lueur floue de la couleur de la pochette, qui suit la basse
+        Canvas(
+            modifier.then(spread).graphicsLayer {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) renderEffect = BlurEffect(30.dp.toPx(), 30.dp.toPx(), TileMode.Decal)
+                blendMode = BlendMode.Plus
+            },
+        ) {
             BeatLights.frame
-            sharp(color, corner.toPx())
-            if (contour(path, corner.toPx())) {
-                drawPath(path, lerp(color, Color.White, 0.6f).copy(alpha = 0.7f), style = Stroke(width = 1.5.dp.toPx()))
-            }
+            val half = size.minDimension / SPREAD / 2f
+            val p = (0.35f + 0.5f * BeatLights.bass + 0.3f * BeatLights.kick).coerceAtMost(1f)
+            drawCircle(
+                Brush.radialGradient(0f to color.copy(alpha = 0.7f * p), 0.7f to color.copy(alpha = 0.35f * p), 1f to Color.Transparent, center = center, radius = half * 1.7f),
+                radius = half * 1.7f,
+            )
         }
-    }
-}
-
-/** La place du bord de la pochette dans la direction (cos, sin) : un carré aux coins arrondis. */
-private fun edge(half: Float, cornerPx: Float, ca: Float, sa: Float): Float {
-    val squareness = 6f - 2f * (cornerPx / half).coerceIn(0f, 1f)
-    return half / (abs(ca).pow(squareness) + abs(sa).pow(squareness)).pow(1f / squareness)
-}
-
-/** Le niveau du spectre dans la direction [angle] (0 = vers la droite) : graves en bas, aigus en haut, en miroir. */
-private fun levelAt(angle: Float): Float {
-    // 0 en bas, 1 en haut, pareil à gauche et à droite
-    val fromBottom = abs(((angle - PI.toFloat() / 2 + 3 * PI.toFloat()) % (2 * PI.toFloat())) - PI.toFloat()) / PI.toFloat()
-    val s = fromBottom // (0 en bas : les graves)
-    val x = s * (BeatLights.LEVELS - 1)
-    val a = x.toInt().coerceIn(0, BeatLights.LEVELS - 1)
-    val b = (a + 1).coerceAtMost(BeatLights.LEVELS - 1)
-    val v = BeatLights.levels[a] + (BeatLights.levels[b] - BeatLights.levels[a]) * (x - a)
-    return v.pow(1.4f) // les pointes ressortent, le bas reste calme
-}
-
-/** Le contour du spectre autour de la pochette dans [path] ; false s'il n'y a rien à dessiner (silence). */
-private fun DrawScope.contour(path: Path, cornerPx: Float): Boolean {
-    if (BeatLights.power < 0.02f && BeatLights.kick < 0.02f) return false
-    val half = size.minDimension / SPREAD / 2f
-    val reach = half * 0.24f * (1f + 0.35f * BeatLights.kick)
-    path.reset()
-    for (p in 0..POINTS) {
-        val a = (2 * PI * p / POINTS).toFloat()
-        val ca = cos(a)
-        val sa = sin(a)
-        val r = edge(half, cornerPx, ca, sa) * 1.02f + reach * levelAt(a)
-        val x = center.x + ca * r
-        val y = center.y + sa * r
-        if (p == 0) path.moveTo(x, y) else path.lineTo(x, y)
-    }
-    path.close()
-    return true
-}
-
-/** Les barres fines autour de la pochette et les particules. */
-private fun DrawScope.sharp(color: Color, cornerPx: Float) {
-    if (BeatLights.power < 0.02f && BeatLights.kick < 0.02f) return
-    val half = size.minDimension / SPREAD / 2f
-    val reach = half * 0.3f * (1f + 0.35f * BeatLights.kick)
-    val line = lerp(color, Color.White, 0.75f)
-    val width = 2.5.dp.toPx()
-    for (i in 0 until BARS) {
-        val a = (2 * PI * i / BARS).toFloat()
-        val ca = cos(a)
-        val sa = sin(a)
-        val v = levelAt(a)
-        if (v < 0.03f) continue
-        val inner = edge(half, cornerPx, ca, sa) * 1.06f
-        val outer = inner + reach * v
-        drawLine(line.copy(alpha = 0.35f + 0.6f * v), Offset(center.x + ca * inner, center.y + sa * inner), Offset(center.x + ca * outer, center.y + sa * outer), width, cap = StrokeCap.Round)
-    }
-    // Les particules : de petits points qui s'éteignent en s'éloignant
-    val dot = 2.dp.toPx()
-    for (i in 0 until BeatLights.PARTICLES) {
-        val a = BeatLights.particleAngle[i]
-        val d = BeatLights.particleDistance[i]
-        val ca = cos(a)
-        val sa = sin(a)
-        val r = edge(half, cornerPx, ca, sa) * d
-        val fade = (1f - (d - 1f) / 0.9f).coerceIn(0f, 1f)
-        drawCircle(line.copy(alpha = 0.8f * fade * (0.3f + 0.7f * BeatLights.power)), radius = dot * (0.6f + 0.6f * fade), center = Offset(center.x + ca * r, center.y + sa * r))
     }
 }
 
