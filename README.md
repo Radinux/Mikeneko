@@ -60,6 +60,9 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ### 3.8
 
+- 3.8.1: **Deep Bass** works like a « bass boosted » track: deep bass pushed up, the octave below added, and
+  the rest of the song stepping back each time the bass hits. **Xstrm Bass** keeps its punch, with a lighter
+  version of that step-back.
 - 3.8.1: the music player's **panels** (lyrics, queue, effects, menus) are Material 3, in the colors of the
   cover; in landscape they take the full height.
 - 3.8.1: changing song is now a **quick fade** (the old song fades out fast, the new one fades in), without

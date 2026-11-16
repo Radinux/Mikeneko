@@ -135,6 +135,36 @@ class AudioEffectsTest {
         assertTrue("saut de $worst au changement de préréglage", worst < 0.03f)
     }
 
+    /** Deep Bass (3.8.1) : l'octave en dessous apparaît, et le reste baisse quand la basse frappe. */
+    @Test fun deepBassAddsTheOctaveBelowAndDucksTheRest() {
+        val fs = 48_000
+        fun level(signal: (Int) -> Float, probe: Double): Double {
+            val chain = EffectChain(AudioPreset.DeepBass, fs)
+            val frame = FloatArray(2)
+            var re = 0.0
+            var im = 0.0
+            for (i in 0 until fs * 3) {
+                val x = signal(i)
+                frame[0] = x
+                frame[1] = x
+                chain.process(frame)
+                if (i >= fs) { // après la première seconde (les filtres et le limiteur posés)
+                    re += frame[0] * kotlin.math.cos(2 * PI * probe * i / fs)
+                    im += frame[0] * sin(2 * PI * probe * i / fs)
+                }
+            }
+            return kotlin.math.sqrt(re * re + im * im) / (fs * 2)
+        }
+        val bass = { i: Int -> (0.5 * sin(2 * PI * 64 * i / 48_000.0)).toFloat() }
+        val voice = { i: Int -> (0.2 * sin(2 * PI * 1_000 * i / 48_000.0)).toFloat() }
+        // Une basse à 64 Hz fait naître du 32 Hz
+        assertTrue("pas d'octave en dessous", level(bass, 32.0) > 0.01)
+        // Le 1 kHz seul, puis avec la basse : il baisse nettement
+        val alone = level(voice, 1_000.0)
+        val ducked = level({ voice(it) + bass(it) }, 1_000.0)
+        assertTrue("le reste ne baisse pas ($alone → $ducked)", ducked < alone * 0.6)
+    }
+
     @Test fun multichannelIsLeftAlone() {
         val processor = PresetAudioProcessor { AudioPreset.Slowed }
         val out = processor.configure(AudioProcessor.AudioFormat(48_000, 6, C.ENCODING_PCM_16BIT))

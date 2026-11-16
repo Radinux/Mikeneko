@@ -449,6 +449,75 @@ private class BassSlam(fs: Int, below: Double, private val gain: Float, private 
 }
 
 /**
+ * La basse fait baisser le reste (3.8.1) : comme sur les morceaux « bass boosted », quand la basse
+ * (sous [crossover] Hz) frappe, tout ce qui est au-dessus baisse, jusqu'à [depthDb] quand elle atteint
+ * [full] ; il remonte en ~150 ms. La basse prend la place, le reste lui laisse le passage.
+ */
+private class BassDucker(fs: Int, crossover: Double, private val depthDb: Float, private val full: Float) {
+    private val lowL = Biquad.lowPass24(fs, crossover)
+    private val lowR = Biquad.lowPass24(fs, crossover)
+    private val attack = (1 - kotlin.math.exp(-1.0 / (0.004 * fs))).toFloat()
+    private val release = (1 - kotlin.math.exp(-1.0 / (0.150 * fs))).toFloat()
+    private var envelope = 0f
+
+    fun process(frame: FloatArray) {
+        var l = frame[0]
+        var r = frame[1]
+        for (f in lowL) l = f.process(l)
+        for (f in lowR) r = f.process(r)
+        val level = maxOf(abs(l), abs(r))
+        envelope += (level - envelope) * if (level > envelope) attack else release
+        val amount = (envelope / full).coerceIn(0f, 1f)
+        val gain = 10.0.pow(-depthDb * amount / 20.0).toFloat()
+        // Le haut = ce qui n'est pas la basse ; seul lui baisse
+        frame[0] = l + (frame[0] - l) * gain
+        frame[1] = r + (frame[1] - r) * gain
+    }
+
+    fun reset() {
+        (lowL + lowR).forEach { it.reset() }
+        envelope = 0f
+    }
+}
+
+/**
+ * L'octave en dessous (3.8.1, Deep Bass) : la basse (50–110 Hz) est suivie, et une note une octave plus
+ * bas (25–55 Hz) est fabriquée et ajoutée. Un signe qui bascule à chaque passage par zéro (montant) de la
+ * basse donne une onde carrée à la moitié de sa fréquence, au volume de la basse ; lissée par un filtre
+ * passe-bas, elle devient une sinusoïde grave, comme les 808 qui plongent d'une octave.
+ */
+private class SubOctave(fs: Int, private val mix: Float) {
+    private val band = Biquad.highPass24(fs, 50.0) + Biquad.lowPass24(fs, 110.0)
+    private val smooth = Biquad.lowPass24(fs, 55.0) + Biquad.lowPass(fs, 55.0)
+    private val attack = (1 - kotlin.math.exp(-1.0 / (0.002 * fs))).toFloat()
+    private val release = (1 - kotlin.math.exp(-1.0 / (0.030 * fs))).toFloat()
+    private var envelope = 0f
+    private var previous = 0f
+    private var sign = 1f
+
+    fun process(frame: FloatArray) {
+        var b = (frame[0] + frame[1]) * 0.5f
+        for (f in band) b = f.process(b)
+        val level = abs(b)
+        envelope += (level - envelope) * if (level > envelope) attack else release
+        // Un passage par zéro en montant (et assez de basse : pas de bascules sur un souffle)
+        if (previous < 0f && b >= 0f && envelope > 1e-4f) sign = -sign
+        previous = b
+        var sub = sign * envelope
+        for (f in smooth) sub = f.process(sub)
+        frame[0] += sub * mix
+        frame[1] += sub * mix
+    }
+
+    fun reset() {
+        (band + smooth).forEach { it.reset() }
+        envelope = 0f
+        previous = 0f
+        sign = 1f
+    }
+}
+
+/**
  * La chaîne d'un préréglage, pour un taux d'échantillonnage. [process] modifie une trame stéréo
  * (gauche, droite, de −1 à 1) en place. Toujours un limiteur à la fin ([Limiter]) : un fort renfort de
  * basses ne sature jamais.
@@ -472,6 +541,8 @@ class EffectChain(val preset: AudioPreset, val sampleRate: Int) {
     // Harmoniques de basses (Xstrm Bass) / saturation à lampes (vieille radio)
     private var bassHarmonics: BassHarmonics? = null
     private var bassSlam: BassSlam? = null
+    private var ducker: BassDucker? = null
+    private var subOctave: SubOctave? = null
     private val limiter = if (preset == AudioPreset.Normal) null else Limiter(fs) // « Normal » : le son tel quel
     private var tubeDrive = 0f
     private var mono = false
@@ -503,14 +574,17 @@ class EffectChain(val preset: AudioPreset, val sampleRate: Int) {
                 preGain = db(-4.0)
             }
             AudioPreset.DeepBass -> {
-                // 3.8.0 (remplace Ultra Bass) : des sub-basses extra profondes, qu'on sent plus qu'on n'entend
-                // (casque, caisson) : environ +12,5 dB vers 30–35 Hz, +8 dB à 20 Hz, à plat vers 100 Hz ; un
-                // léger creux vers 120–280 Hz pour que le grave profond ne soit pas noyé. Sous 16 Hz, coupé
-                // (des infrasons : ils ne font que pousser les membranes). Propre, sans saturation.
-                Biquad.highPass24(fs, 20.0).forEach { eq(it) }
-                eq(Biquad.lowShelf(fs, 60.0, 9.0), Biquad.peak(fs, 35.0, 5.0, 1.0), Biquad.peak(fs, 120.0, -2.0, 1.0), Biquad.peak(fs, 280.0, -3.0, 0.9))
-                monoBelow = Biquad.lowPass(fs, 100.0) to Biquad.lowPass(fs, 100.0)
-                preGain = db(-9.0)
+                // 3.8.1 : la recette des morceaux « bass boosted » (mesurée sur l'un d'eux) : les graves de
+                // 30 à 70 Hz montés d'environ +10 dB, un creux de 120 à 250 Hz, l'octave en dessous ajoutée
+                // ([SubOctave] : la note de la basse rejouée une octave plus bas, 25–55 Hz), le reste qui
+                // baisse jusqu'à −10 dB quand la basse frappe ([BassDucker]), basses en mono, et le limiteur.
+                // Sous 18 Hz, coupé (des infrasons : ils ne font que pousser les membranes).
+                Biquad.highPass24(fs, 18.0).forEach { eq(it) }
+                eq(Biquad.lowShelf(fs, 75.0, 10.0), Biquad.peak(fs, 40.0, 3.0, 0.8), Biquad.peak(fs, 180.0, -4.0, 0.7))
+                monoBelow = Biquad.lowPass(fs, 120.0) to Biquad.lowPass(fs, 120.0)
+                subOctave = SubOctave(fs, mix = 0.9f)
+                ducker = BassDucker(fs, crossover = 120.0, depthDb = 10f, full = 0.35f)
+                preGain = db(-10.0)
             }
             AudioPreset.XstrmBass -> {
                 // Pour les petites enceintes à radiateurs passifs, qui répondent le plus fort vers 68 Hz.
@@ -529,6 +603,9 @@ class EffectChain(val preset: AudioPreset, val sampleRate: Int) {
                 monoBelow = Biquad.lowPass(fs, 120.0) to Biquad.lowPass(fs, 120.0)
                 bassSlam = BassSlam(fs, 120.0, gain = 1.6f, cap = 0.6f)
                 bassHarmonics = BassHarmonics(fs, below = 100.0, from = 110.0, to = 450.0, drive = 3f, odd = 3.5f, even = 1.2f)
+                // 3.8.1 : inspiré de Deep Bass, en plus léger : le reste baisse d'environ 4 dB quand la basse
+                // frappe (le punch des coups ; les voix restent devant). La courbe ne change pas.
+                ducker = BassDucker(fs, crossover = 120.0, depthDb = 4f, full = 0.4f)
                 preGain = db(-6.0)
             }
             AudioPreset.Crispy -> {
@@ -593,6 +670,8 @@ class EffectChain(val preset: AudioPreset, val sampleRate: Int) {
         frame[1] = r
         bassSlam?.process(frame)
         bassHarmonics?.process(frame)
+        subOctave?.process(frame)
+        ducker?.process(frame)
         haas?.process(frame)
         early?.process(frame)
         autoPan?.process(frame)
@@ -610,6 +689,8 @@ class EffectChain(val preset: AudioPreset, val sampleRate: Int) {
         eqL.forEach { it.reset() }; eqR.forEach { it.reset() }
         monoBelow?.let { it.first.reset(); it.second.reset() }
         bassSlam?.reset()
+        ducker?.reset()
+        subOctave?.reset()
         bassHarmonics?.reset()
         limiter?.reset()
         reverb?.reset()
