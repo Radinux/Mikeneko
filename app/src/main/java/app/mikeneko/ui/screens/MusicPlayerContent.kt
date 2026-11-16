@@ -213,7 +213,7 @@ internal fun PlayerWindowContent(
                         style = TextStyle(fontFamily = Rounded, color = Pelage.Texte, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp, shadow = GlassTextShadow, textAlign = TextAlign.Center),
                     )
                     // Le Chromecast (3.4.0)
-                    app.mikeneko.ui.components.CastButton(glass, modifier = Modifier.padding(end = 8.dp), material = true)
+                    app.mikeneko.ui.components.CastButton(glass, modifier = Modifier.padding(end = 16.dp), material = true) // (3.9.1 : 8 → 16 dp, les reliefs se touchaient)
                     sleepButton()
                 }
             }
@@ -347,7 +347,7 @@ internal fun PlayerWindowContent(
                     // n'avait plus que quelques lettres) ; la pochette prend le reste de la hauteur
                     Column(Modifier.fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Box(Modifier.weight(1f).aspectRatio(1f, matchHeightConstraintsFirst = true), contentAlignment = Alignment.Center) { coverArt() }
-                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
                             TonalButton(MkIcons.ChevronDown, stringResource(R.string.player_minimize)) { state.collapse() }
                             app.mikeneko.ui.components.CastButton(glass, material = true)
                             sleepButton()
