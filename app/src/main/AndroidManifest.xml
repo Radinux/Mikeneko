@@ -14,8 +14,11 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!-- Mises à jour depuis GitHub : Mikeneko installe sa nouvelle version (sans appui sur Android 12+) -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- Les téléchargements dans Download/Mikeneko (3.8.0) : Android 11+ n'en a pas besoin pour ses propres fichiers -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
 
     <application
+        android:requestLegacyExternalStorage="true"
         android:name=".MikenekoApp"
         android:allowBackup="true"
         android:enableOnBackInvokedCallback="true"

@@ -2,7 +2,6 @@ package app.mikeneko.data
 
 import android.content.Context
 import android.util.Log
-import android.os.Environment
 import app.mikeneko.R
 import app.mikeneko.player.MediaSources
 import app.mikeneko.player.PlayerHolder
@@ -126,10 +125,8 @@ object Downloads {
         val task = Task(UUID.randomUUID().toString(), url, format)
         _tasks.update { listOf(task) + it }
         scope.launch {
-            val folder = File(
-                context.getExternalFilesDir(if (format.audio) Environment.DIRECTORY_MUSIC else Environment.DIRECTORY_MOVIES),
-                "Mikeneko",
-            ).apply { mkdirs() }
+            // 3.8.0 : yt-dlp travaille dans un dossier privé ; le fichier fini part dans Download/Mikeneko
+            val folder = File(DownloadFolder.staging(context), task.id).apply { mkdirs() }
             // yt-dlp écrit ici le chemin final du fichier (après conversion et déplacement)
             val report = File(context.cacheDir, "telechargement-${task.id}.txt").apply { delete() }
             val request = YoutubeDLRequest(url).apply {
@@ -183,6 +180,9 @@ object Downloads {
                     .lastOrNull { it.isNotBlank() }
                     ?.let(::File)
                     ?.takeIf { it.exists() }
+                    ?.let { DownloadFolder.publish(context, it, format.audio) }
+                // Ce qui reste du travail de yt-dlp (miniatures, morceaux) : la place est rendue
+                if (file != null && file.parentFile != folder) folder.deleteRecursively()
                 change(task.id) { it.copy(status = Status.TERMINE, progress = 1f, file = file) }
                 // Un morceau audio : il apparaît tout de suite dans « Téléchargés » de la Musique
                 if (format.audio) runCatching { LocalMusic.refresh(context) }

@@ -3,7 +3,6 @@ package app.mikeneko.data
 import android.content.Context
 import android.media.MediaMetadataRetriever
 import android.net.Uri
-import android.os.Environment
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,7 +11,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 
 /**
- * La musique téléchargée avec yt-dlp (dossier Musique/Mikeneko de l'appli), jouable hors ligne
+ * La musique téléchargée avec yt-dlp (Download/Mikeneko/Music depuis 3.8.0, voir [DownloadFolder] ;
+ * avant, le dossier privé Musique/Mikeneko de l'appli, encore lu), jouable hors ligne
  * depuis la Musique. Chaque fichier devient un [VideoItem] dont l'adresse est `file://…`.
  */
 object LocalMusic {
@@ -27,14 +27,13 @@ object LocalMusic {
 
     fun isLocal(url: String?) = url?.startsWith("file:") == true
 
-    fun folder(context: Context) = File(context.getExternalFilesDir(Environment.DIRECTORY_MUSIC), "Mikeneko")
-
     fun fileOf(url: String): File? = Uri.parse(url).path?.let(::File)
 
     /** Relit le dossier (au premier affichage, et après chaque téléchargement terminé). */
     suspend fun refresh(context: Context) = withContext(Dispatchers.IO) {
         val covers = File(context.cacheDir, "pochettes").apply { mkdirs() }
-        val files = folder(context).listFiles().orEmpty()
+        DownloadFolder.migrate(context) // une fois : les anciens téléchargements partent dans Download/Mikeneko
+        val files = DownloadFolder.musicFolders(context).flatMap { it.listFiles().orEmpty().toList() }
             .filter { it.isFile && it.extension.lowercase() in AUDIO && it.length() > 0 }
             .sortedByDescending { it.lastModified() }
         val list = files.map { file ->
@@ -46,7 +45,10 @@ object LocalMusic {
 
     /** Supprime le fichier du téléphone. */
     suspend fun delete(context: Context, url: String) = withContext(Dispatchers.IO) {
-        fileOf(url)?.delete()
+        fileOf(url)?.let { file ->
+            file.delete()
+            DownloadFolder.forget(context, file)
+        }
         refresh(context)
     }
 

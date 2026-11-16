@@ -2,4 +2,7 @@
 <paths>
     <external-files-path name="musique" path="Music/" />
     <external-files-path name="videos" path="Movies/" />
+    <external-files-path name="en_cours" path="telechargements/" />
+    <!-- 3.8.0 : les téléchargements rangés dans Download/Mikeneko -->
+    <external-path name="telechargements" path="Download/Mikeneko/" />
 </paths>
