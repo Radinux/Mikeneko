@@ -158,7 +158,7 @@ fun LyricsSheet(backdrop: Backdrop, visible: Boolean, anchor: Rect?, onClose: ()
 
     // Le panneau sort de la capsule des boutons et s'y referme ; on le tire vers le bas pour le fermer
     // (2.4.0, 2.15.2, 2.15.3 : tout ça vit maintenant dans MorphSheet, partagé avec la file et les menus)
-    MorphSheet(backdrop, visible, anchor, onClose, closeLabel = stringResource(R.string.lyrics_close)) { handle ->
+    MorphSheet(backdrop, visible, anchor, onClose, closeLabel = stringResource(R.string.lyrics_close), material = app.mikeneko.ui.components.musicSheetColor()) { handle ->
                     Row(
                         Modifier.fillMaxWidth().then(handle).padding(start = 22.dp, end = 8.dp, top = 6.dp),
                         verticalAlignment = Alignment.CenterVertically,

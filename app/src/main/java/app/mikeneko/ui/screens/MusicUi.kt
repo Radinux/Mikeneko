@@ -716,6 +716,7 @@ fun MusicSheetHost(backdrop: Backdrop, anchor: Rect? = null, onPlaylistDeleted: 
         closeLabel = stringResource(R.string.menu_close),
         heightFraction = null,
         maxWidth = 520.dp,
+        material = app.mikeneko.ui.components.musicSheetColor(),
         tint = Color(0xC71A1613),
         frost = 28.dp,
     ) { handle ->

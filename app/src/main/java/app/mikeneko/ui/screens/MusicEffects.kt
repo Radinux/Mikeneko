@@ -55,6 +55,7 @@ internal fun EffectsSheet(backdrop: Backdrop, visible: Boolean, anchor: Rect?, o
         backdrop, visible, anchor, onClose,
         closeLabel = stringResource(R.string.sync_close),
         heightFraction = 0.7f,
+        material = app.mikeneko.ui.components.musicSheetColor(),
         tint = Color(0xC71A1613),
         frost = 28.dp,
     ) { handle ->

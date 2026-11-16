@@ -20,7 +20,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -79,6 +81,11 @@ fun MorphSheet(
     tint: Color = Color(0xD01A1613),
     frost: Dp = 30.dp,
     canPull: () -> Boolean = { true },
+    /**
+     * 3.8.1 : un panneau Material 3 (surface unie de cette couleur, coins de 28 dp, poignée M3, ombre) au
+     * lieu de la vitre. Le lecteur musique y passe la couleur de la pochette ([musicSheetColor]).
+     */
+    material: Color? = null,
     content: @Composable ColumnScope.(handle: Modifier) -> Unit,
 ) {
     val density = LocalDensity.current
@@ -168,8 +175,13 @@ fun MorphSheet(
         val fullH = constraints.maxHeight.toFloat()
         // Le panneau ouvert : en bas, à 10 dp des bords
         val room = (fullH - bottomInset - 2 * margin).coerceAtLeast(1f)
-        val openW = (fullW - 2 * margin).let { w -> if (maxWidth != Dp.Unspecified) minOf(w, with(density) { maxWidth.toPx() }) else w }
-        val openH = if (heightFraction != null) room * heightFraction else measured.toFloat().coerceIn(1f, room)
+        // 3.8.1 : un panneau Material 3 en paysage prend toute la hauteur, sur 640 dp de large au plus
+        val wide = material != null && fullW > fullH
+        val widest = if (wide) minOf(with(density) { 640.dp.toPx() }, if (maxWidth != Dp.Unspecified) with(density) { maxWidth.toPx() } else Float.MAX_VALUE)
+            else if (maxWidth != Dp.Unspecified) with(density) { maxWidth.toPx() } else Float.MAX_VALUE
+        val openW = minOf(fullW - 2 * margin, widest)
+        val fraction = if (wide && heightFraction != null) 1f else heightFraction
+        val openH = if (fraction != null) room * fraction else measured.toFloat().coerceIn(1f, room)
         val openLeft = (fullW - openW) / 2f
         val openTop = fullH - bottomInset - margin - openH
         // Le bouton d'où il sort (sans lui : une capsule en bas de l'écran)
@@ -181,43 +193,68 @@ fun MorphSheet(
         val top = mix(from.top, openTop)
         val width = mix(from.width, openW).coerceAtLeast(1f)
         val height = mix(from.height, openH).coerceAtLeast(1f)
-        val corner = with(density) { mix(minOf(from.height, from.width) / 2f, 30.dp.toPx()).toDp() }
+        val corner = with(density) { mix(minOf(from.height, from.width) / 2f, (if (material != null) 28.dp else 30.dp).toPx()).toDp() }
 
         // Le voile derrière, qui suit l'ouverture
         Box(
             Modifier.fillMaxSize().graphicsLayer { alpha = p.coerceIn(0f, 1f) }.background(Color.Black.copy(alpha = 0.4f))
                 .then(if (visible) Modifier.clickable(interactionSource = null, indication = null, onClickLabel = closeLabel, onClick = close) else Modifier),
         )
-        LiquidGlass(
-            backdrop = backdrop,
-            modifier = Modifier
-                .offset { IntOffset(left.roundToInt(), top.roundToInt()) }
-                .size(with(density) { width.toDp() }, with(density) { height.toDp() })
-                .nestedScroll(pullDown),
-            cornerRadius = corner,
-            bezel = 26.dp,
-            refraction = 26.dp,
-            tint = tint,
-            frost = frost,
-        ) {
-            // Le contenu garde la taille du panneau ouvert (pas de texte qui se réarrange à chaque image),
-            // coupé par la vitre ; il apparaît dans la seconde moitié de l'ouverture
-            Box(Modifier.fillMaxSize().clipToBounds().graphicsLayer { alpha = ((p - 0.45f) / 0.55f).coerceIn(0f, 1f) }) {
-                Box(Modifier.align(Alignment.TopCenter).wrapContentSize(Alignment.TopCenter, unbounded = true)) {
-                    val sized = Modifier.width(with(density) { openW.toDp() }).let {
-                        if (heightFraction != null) it.then(Modifier.size(with(density) { openW.toDp() }, with(density) { openH.toDp() }))
-                        else it.heightIn(max = with(density) { room.toDp() }).onSizeChanged { size -> measured = size.height }
-                    }
-                    Column(sized) {
-                        // La barre du haut : on l'attrape pour tirer le panneau vers le bas
-                        Box(
-                            Modifier.align(Alignment.CenterHorizontally).then(handle).padding(top = 8.dp, start = 40.dp, end = 40.dp)
-                                .size(40.dp, 4.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.3f)),
-                        )
-                        content(handle)
+        val placed = Modifier
+            .offset { IntOffset(left.roundToInt(), top.roundToInt()) }
+            .size(with(density) { width.toDp() }, with(density) { height.toDp() })
+            .nestedScroll(pullDown)
+        val inside: @Composable () -> Unit = {
+                // Le contenu garde la taille du panneau ouvert (pas de texte qui se réarrange à chaque image),
+                // coupé par la vitre ; il apparaît dans la seconde moitié de l'ouverture
+                Box(Modifier.fillMaxSize().clipToBounds().graphicsLayer { alpha = ((p - 0.45f) / 0.55f).coerceIn(0f, 1f) }) {
+                    Box(Modifier.align(Alignment.TopCenter).wrapContentSize(Alignment.TopCenter, unbounded = true)) {
+                        val sized = Modifier.width(with(density) { openW.toDp() }).let {
+                            if (fraction != null) it.then(Modifier.size(with(density) { openW.toDp() }, with(density) { openH.toDp() }))
+                            else it.heightIn(max = with(density) { room.toDp() }).onSizeChanged { size -> measured = size.height }
+                        }
+                        Column(sized) {
+                            // La barre du haut : on l'attrape pour tirer le panneau vers le bas
+                            Box(
+                                Modifier.align(Alignment.CenterHorizontally).then(handle).padding(top = if (material != null) 12.dp else 8.dp, start = 40.dp, end = 40.dp)
+                                    .size(if (material != null) 32.dp else 40.dp, 4.dp).clip(CircleShape)
+                                    .background(Color.White.copy(alpha = if (material != null) 0.4f else 0.3f)),
+                            )
+                            content(handle)
+                        }
                     }
                 }
-            }
+        }
+        if (material != null) {
+            androidx.compose.material3.Surface(
+                placed,
+                shape = RoundedCornerShape(corner),
+                color = material,
+                contentColor = Color.White,
+                tonalElevation = 3.dp,
+                shadowElevation = 12.dp,
+            ) { inside() }
+        } else {
+            LiquidGlass(
+                backdrop = backdrop,
+                modifier = placed,
+                cornerRadius = corner,
+                bezel = 26.dp,
+                refraction = 26.dp,
+                tint = tint,
+                frost = frost,
+            ) { inside() }
         }
     }
+}
+
+/**
+ * La couleur des panneaux du lecteur musique (3.8.1) : celle de la pochette en cours, assombrie pour que
+ * le texte blanc reste lisible ; sans pochette, le brun nuit de l'appli.
+ */
+@Composable
+fun musicSheetColor(): Color {
+    val now by app.mikeneko.player.PlayerHolder.nowPlaying.collectAsState()
+    val cover by rememberCoverColor(now?.thumbnail, fallback = Color(0xFF1A1613))
+    return androidx.compose.ui.graphics.lerp(cover, Color(0xFF0E0C0B), 0.68f)
 }
