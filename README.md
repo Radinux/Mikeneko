@@ -60,8 +60,9 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ### 3.9
 
-- 3.9.2: the **cover light** is now a single lens of light behind the cover: it moves around it with the
-  dominant pitch (bass at the bottom, treble at the top) and grows with the power of the sound.
+- 3.9.2: the **cover lights** become a music visualizer around the cover: a spectrum that follows its shape
+  (bass at the bottom, treble at the top), a glowing shape that bends with it, thin bars and particles flying
+  off with the bass, all pulsing on the beat.
 - 3.9.1: the **Favorites** playlist holds songs only; favorite live radios stay in their own section of the
   Music page.
 - 3.9.1: the **cover lights** are redone as light behaving like a ferrofluid: spikes of light shoot out from
