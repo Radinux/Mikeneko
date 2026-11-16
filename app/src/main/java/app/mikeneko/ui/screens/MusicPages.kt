@@ -286,7 +286,9 @@ private fun byArtistAlbums(list: List<MusicCollection>, name: String): List<Musi
 @Composable
 private fun FavoritesContent(state: MusicState) {
     val context = LocalContext.current
-    val items by remember { app.mikeneko.data.Favorites.get(context) }.items.collectAsState()
+    val all by remember { app.mikeneko.data.Favorites.get(context) }.items.collectAsState()
+    // Les morceaux seulement : les directs (radios) en favori ont leur rubrique sur la page Musique (3.9.1)
+    val items = remember(all) { all.filter { !it.isLive } }
     val now by PlayerHolder.nowPlaying.collectAsState()
     val list = rememberLazyListState()
     val id = app.mikeneko.data.Favorites.PLAYLIST_ID
@@ -649,7 +651,7 @@ private fun MusicLibraryContent(state: MusicState) {
     val albums by library.albums.collectAsState()
     val artists by library.artists.collectAsState()
     val playlists by remember { Playlists.get(context) }.items.collectAsState()
-    val favorites by remember { app.mikeneko.data.Favorites.get(context) }.items.collectAsState()
+    val favorites = remember { app.mikeneko.data.Favorites.get(context) }.items.collectAsState().value.filter { !it.isLive }
     val filter = state.libraryFilter
     val all = filter == LibraryFilter.All
 
@@ -681,7 +683,7 @@ private fun MusicLibraryContent(state: MusicState) {
             }
             // La playlist « Favoris » (3.8.0), toujours là, en premier ; pas de sélection (pas supprimable)
             item(key = "favoris") {
-                CollectionRow(stringResource(R.string.favorites_title), pluralStringResource(R.plurals.track_count, favorites.size, favorites.size), favorites.firstOrNull { !it.isLive }?.thumbnail, icon = MkIcons.HeartFilled) {
+                CollectionRow(stringResource(R.string.favorites_title), pluralStringResource(R.plurals.track_count, favorites.size, favorites.size), favorites.firstOrNull()?.thumbnail, icon = MkIcons.HeartFilled) {
                     state.open(MusicPage.Favorites)
                 }
             }

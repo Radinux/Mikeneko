@@ -60,6 +60,8 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ### 3.9
 
+- 3.9.1: the **Favorites** playlist holds songs only; favorite live radios stay in their own section of the
+  Music page.
 - 3.9.1: the **cover lights** are redone as light behaving like a ferrofluid: spikes of light shoot out from
   behind the cover on each beat and fall back vibrating, as if a magnet were shaking under it.
 - 3.9.0: the **music player buttons** are neumorphic: in the color of the window, raised, and they sink in when

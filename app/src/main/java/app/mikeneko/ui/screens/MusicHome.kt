@@ -184,7 +184,8 @@ internal fun MusicHome(state: MusicState, onPlayStations: (List<VideoItem>, Int)
                     SquareCard(null, stringResource(R.string.playlist_new), "", icon = MkIcons.Plus) { MusicSheet.open.value = MusicSheet.NewPlaylist() }
                 }
                 item(key = "favoris") {
-                    SquareCard(favorites.firstOrNull { !it.isLive }?.thumbnail, stringResource(R.string.favorites_title), pluralStringResource(R.plurals.track_count, favorites.size, favorites.size), icon = MkIcons.HeartFilled) {
+                    val songs = favorites.count { !it.isLive } // (les directs ont leur rubrique, plus bas)
+                    SquareCard(favorites.firstOrNull { !it.isLive }?.thumbnail, stringResource(R.string.favorites_title), pluralStringResource(R.plurals.track_count, songs, songs), icon = MkIcons.HeartFilled) {
                         state.open(MusicPage.Favorites)
                     }
                 }
