@@ -112,6 +112,7 @@ fun MusicContent(state: MusicState, onPlayStations: (List<VideoItem>, Int) -> Un
         is MusicPage.Album -> AlbumContent(state, page.collection)
         is MusicPage.Artist -> ArtistContent(state, page.artist)
         is MusicPage.MyPlaylist -> MyPlaylistContent(state, page.id)
+        MusicPage.Favorites -> FavoritesContent(state)
         is MusicPage.AddSongs -> AddSongsContent(state, page.id)
         is MusicPage.EditSongs -> EditSongsContent(state, page.id)
         MusicPage.Library -> MusicLibraryContent(state)
@@ -278,6 +279,49 @@ private fun byArtistAlbums(list: List<MusicCollection>, name: String): List<Musi
 // ---------------------------------------------------------------------------------------------
 
 @OptIn(ExperimentalFoundationApi::class)
+/**
+ * La playlist « Favoris » (3.8.0) : les morceaux du cœur du lecteur, rangés comme une playlist. Créée
+ * d'office et pas supprimable (pas de panneau Infos) ; un morceau en sort par son menu ou par le cœur.
+ */
+@Composable
+private fun FavoritesContent(state: MusicState) {
+    val context = LocalContext.current
+    val items by remember { app.mikeneko.data.Favorites.get(context) }.items.collectAsState()
+    val now by PlayerHolder.nowPlaying.collectAsState()
+    val list = rememberLazyListState()
+    val id = app.mikeneko.data.Favorites.PLAYLIST_ID
+    val title = stringResource(R.string.favorites_title)
+    val play = PageBarEffect(state, list, title, playInOrder(context, items))
+    LazyColumn(Modifier.fillMaxSize(), state = list, contentPadding = PaddingValues(bottom = BOTTOM_SPACE)) {
+        item(key = "entete") {
+            PageHeader(
+                title,
+                tracksSummary(items),
+                items.firstOrNull { !it.isLive }?.thumbnail,
+                icon = MkIcons.HeartFilled,
+                onPlay = playInOrder(context, items),
+                play = play,
+                actions = {
+                    PlaylistDownloadCircle(PlaylistDownloads.music, id, items)
+                    ShuffleButton(items)
+                },
+            )
+        }
+        if (items.isEmpty()) {
+            item(key = "vide") { EmptyCat(stringResource(R.string.favorites_empty), stringResource(R.string.favorites_empty_text), Modifier.padding(top = 20.dp)) }
+        }
+        itemsIndexed(items, key = { _, it -> it.url }) { index, track ->
+            TrackRow(
+                track,
+                modifier = Modifier.animateItem(),
+                playing = sameTrack(now?.url, track.url),
+                onMore = { MusicSheet.open.value = MusicSheet.Track(track, playlistId = id, index = index) },
+                trailing = { DownloadedMark(PlaylistDownloads.music, track.url) },
+            ) { playTracks(context, items, index) }
+        }
+    }
+}
+
 @Composable
 private fun MyPlaylistContent(state: MusicState, id: String) {
     val context = LocalContext.current
@@ -605,6 +649,7 @@ private fun MusicLibraryContent(state: MusicState) {
     val albums by library.albums.collectAsState()
     val artists by library.artists.collectAsState()
     val playlists by remember { Playlists.get(context) }.items.collectAsState()
+    val favorites by remember { app.mikeneko.data.Favorites.get(context) }.items.collectAsState()
     val filter = state.libraryFilter
     val all = filter == LibraryFilter.All
 
@@ -633,6 +678,12 @@ private fun MusicLibraryContent(state: MusicState) {
         if (all || filter == LibraryFilter.Playlists) {
             item(key = "nouvelle") {
                 CollectionRow(stringResource(R.string.playlist_new), "", null, icon = MkIcons.Plus) { MusicSheet.open.value = MusicSheet.NewPlaylist() }
+            }
+            // La playlist « Favoris » (3.8.0), toujours là, en premier ; pas de sélection (pas supprimable)
+            item(key = "favoris") {
+                CollectionRow(stringResource(R.string.favorites_title), pluralStringResource(R.plurals.track_count, favorites.size, favorites.size), favorites.firstOrNull { !it.isLive }?.thumbnail, icon = MkIcons.HeartFilled) {
+                    state.open(MusicPage.Favorites)
+                }
             }
             items(playlists.pinnedFirst(), key = { "pl:" + it.id }) { pl ->
                 CollectionRow(

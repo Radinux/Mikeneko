@@ -12,6 +12,7 @@ import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.cache.CacheWriter
 import androidx.media3.datasource.cache.SimpleCache
 import app.mikeneko.data.NewPipeDownloader
+import app.mikeneko.data.Favorites
 import app.mikeneko.data.Playlists
 import app.mikeneko.data.VideoItem
 import app.mikeneko.data.YouTubeRepository
@@ -108,6 +109,10 @@ class PlaylistDownloads private constructor(private val audioOnly: Boolean) {
 
     private fun playlistStore(context: Context) = if (audioOnly) Playlists.get(context) else Playlists.videos(context)
 
+    /** La playlist « Favoris » (3.8.0, musique) : ses morceaux, si elle est à garder hors ligne. */
+    private fun favoriteItems(context: Context): List<VideoItem> =
+        if (audioOnly && Favorites.PLAYLIST_ID in _playlists.value) Favorites.get(context).items.value else emptyList()
+
     private fun prefs(context: Context) = context.getSharedPreferences(
         if (audioOnly) "playlists_telechargees_musique" else "playlists_telechargees_videos",
         Context.MODE_PRIVATE,
@@ -123,6 +128,7 @@ class PlaylistDownloads private constructor(private val audioOnly: Boolean) {
             // La qualité des téléchargements change (3.2.0) : les morceaux déjà là se refont
             if (audioOnly) launch { AppSettings.downloadQuality.drop(1).collect { sync() } }
             // Une playlist modifiée (morceau ajouté, retiré, playlist supprimée) : on se met à jour
+            if (audioOnly) launch { Favorites.get(c).items.drop(1).collect { sync() } } // un favori ajouté, retiré
             playlistStore(c).items.collect { sync() }
         }
     }
@@ -133,7 +139,8 @@ class PlaylistDownloads private constructor(private val audioOnly: Boolean) {
         prefs(c).edit().putStringSet("ids", _playlists.value).apply()
         if (on) {
             // Remis (ou mis) en téléchargement : tout est réessayé, les indisponibles compris
-            val ids = playlistStore(c).items.value.firstOrNull { it.id == id }?.items.orEmpty().mapNotNull { videoIdOf(it.url) }.toSet()
+            val items = if (audioOnly && id == Favorites.PLAYLIST_ID) Favorites.get(c).items.value else playlistStore(c).items.value.firstOrNull { it.id == id }?.items.orEmpty()
+            val ids = items.mapNotNull { videoIdOf(it.url) }.toSet()
             ids.forEach {
                 retryAt.remove(it)
                 failures.remove(it)
@@ -145,9 +152,7 @@ class PlaylistDownloads private constructor(private val audioOnly: Boolean) {
 
     /** Ce qui doit être hors ligne : les éléments des playlists téléchargées (sans les directs). */
     private fun wanted(c: Context): List<Pair<String, VideoItem>> =
-        playlistStore(c).items.value
-            .filter { it.id in _playlists.value }
-            .flatMap { it.items }
+        (playlistStore(c).items.value.filter { it.id in _playlists.value }.flatMap { it.items } + favoriteItems(c))
             .filter { !it.isLive }
             .mapNotNull { item -> videoIdOf(item.url)?.let { it to item } }
             .distinctBy { it.first }
@@ -156,7 +161,7 @@ class PlaylistDownloads private constructor(private val audioOnly: Boolean) {
     private fun sync() {
         val c = app ?: return
         // Une playlist supprimée n'est plus à télécharger
-        val existing = playlistStore(c).items.value.map { it.id }.toSet()
+        val existing = playlistStore(c).items.value.map { it.id }.toSet() + if (audioOnly) setOf(Favorites.PLAYLIST_ID) else emptySet()
         if (!existing.containsAll(_playlists.value)) {
             _playlists.value = _playlists.value intersect existing
             prefs(c).edit().putStringSet("ids", _playlists.value).apply()

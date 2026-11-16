@@ -72,6 +72,12 @@ class Favorites private constructor(context: Context) {
     }
 
     companion object {
+        /**
+         * La playlist « Favoris » (3.8.0) : les favoris montrés comme une playlist, créée d'office et qu'on
+         * ne peut pas supprimer. Cet identifiant réservé sert à sa page et à son téléchargement hors ligne.
+         */
+        const val PLAYLIST_ID = "favoris"
+
         @Volatile private var instance: Favorites? = null
         fun get(context: Context): Favorites =
             instance ?: synchronized(this) { instance ?: Favorites(context.applicationContext).also { instance = it } }

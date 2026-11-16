@@ -127,6 +127,8 @@ sealed interface MusicPage {
     data class AddSongs(val id: String) : MusicPage
     /** Modifier les morceaux d'une playlist perso : retirer (⊖) et déplacer (≡), sur sa page à elle (2.11.13). */
     data class EditSongs(val id: String) : MusicPage
+    /** La playlist « Favoris » (3.8.0) : les morceaux du cœur, créée d'office, pas supprimable. */
+    data object Favorites : MusicPage
     /** Ta bibliothèque : playlists, albums et artistes sauvegardés (avec des filtres). */
     data object Library : MusicPage
     /** Un mix fabriqué d'après ton écoute (« Tes mix », 2.6.0). */
@@ -793,7 +795,14 @@ private fun TrackMenu(context: Context, sheet: MusicSheet.Track, close: () -> Un
             close()
         }
     }
-    if (sheet.playlistId != null) {
+    if (sheet.playlistId == app.mikeneko.data.Favorites.PLAYLIST_ID) {
+        // La playlist « Favoris » (3.8.0) : le morceau quitte les favoris (le cœur s'éteint)
+        SheetRow(MkIcons.Trash, stringResource(R.string.favorites_remove)) {
+            val favorites = app.mikeneko.data.Favorites.get(context)
+            if (favorites.contains(track.url)) favorites.toggle(track)
+            close()
+        }
+    } else if (sheet.playlistId != null) {
         SheetRow(MkIcons.Trash, stringResource(R.string.playlist_remove_track)) {
             Playlists.get(context).remove(sheet.playlistId, sheet.index)
             close()

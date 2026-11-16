@@ -933,4 +933,8 @@
     </plurals>
     <string name="downloads_files">On this phone</string>
     <string name="downloads_where">In Download › Mikeneko › Music and Videos, easy to find in your file manager</string>
+    <string name="favorites_title">Favorites</string>
+    <string name="favorites_empty">No favorites yet</string>
+    <string name="favorites_empty_text">Tap the heart in the music player: the song lands here.</string>
+    <string name="favorites_remove">Remove from favorites</string>
 </resources>

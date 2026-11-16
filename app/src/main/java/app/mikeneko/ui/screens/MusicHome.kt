@@ -116,6 +116,7 @@ internal fun MusicHome(state: MusicState, onPlayStations: (List<VideoItem>, Int)
     // 3.8.0 : plus de « Téléchargés » : une musique téléchargée est un fichier du téléphone (Download/Mikeneko)
     val quick = buildList {
         add(QuickTile(context.getString(R.string.music_library), null, MkIcons.Library) { state.open(MusicPage.Library) })
+        add(QuickTile(context.getString(R.string.favorites_title), favorites.firstOrNull { !it.isLive }?.thumbnail, MkIcons.HeartFilled) { state.open(MusicPage.Favorites) })
         playlists.pinnedFirst().take(3).forEach { pl -> add(QuickTile(pl.name, pl.coverModel(), MkIcons.Music) { state.open(MusicPage.MyPlaylist(pl.id)) }) }
         recent.take((6 - size).coerceAtLeast(0)).forEach { track -> add(QuickTile(track.title, track.thumbnail, MkIcons.Music) { replay(track) }) }
     }
@@ -181,6 +182,11 @@ internal fun MusicHome(state: MusicState, onPlayStations: (List<VideoItem>, Int)
             Shelf(stringResource(R.string.music_library), onMore = { state.open(MusicPage.Library) }) {
                 item(key = "nouvelle") {
                     SquareCard(null, stringResource(R.string.playlist_new), "", icon = MkIcons.Plus) { MusicSheet.open.value = MusicSheet.NewPlaylist() }
+                }
+                item(key = "favoris") {
+                    SquareCard(favorites.firstOrNull { !it.isLive }?.thumbnail, stringResource(R.string.favorites_title), pluralStringResource(R.plurals.track_count, favorites.size, favorites.size), icon = MkIcons.HeartFilled) {
+                        state.open(MusicPage.Favorites)
+                    }
                 }
                 items(playlists, key = { "pl:" + it.id }) { pl ->
                     SquareCard(pl.coverModel(), pl.name, pluralStringResource(R.plurals.track_count, pl.items.size, pl.items.size)) {

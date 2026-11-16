@@ -60,6 +60,8 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ### 3.8
 
+- 3.8.0: a **Favorites** playlist, always there and never deletable: every song you heart lands in it; it can
+  be downloaded for offline listening like any playlist.
 - 3.8.0: the **Downloads** screen lists every file you downloaded, to open or delete.
 - 3.8.0: Music no longer has a « Downloaded » playlist: a downloaded song is a file on your phone; offline
   listening in the app is for downloaded playlists and albums.

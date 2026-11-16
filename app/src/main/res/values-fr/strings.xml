@@ -935,4 +935,8 @@
     </plurals>
     <string name="downloads_files">Sur ce téléphone</string>
     <string name="downloads_where">Dans Téléchargements › Mikeneko › Music et Videos, faciles à retrouver dans tes fichiers</string>
+    <string name="favorites_title">Favoris</string>
+    <string name="favorites_empty">Pas encore de favoris</string>
+    <string name="favorites_empty_text">Touche le cœur dans le lecteur musique : le morceau arrive ici.</string>
+    <string name="favorites_remove">Retirer des favoris</string>
 </resources>
