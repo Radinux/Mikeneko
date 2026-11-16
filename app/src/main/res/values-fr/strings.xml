@@ -720,7 +720,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">Quoi de neuf dans Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Super !</string>
-    <string name="whats_new_body">🎧 Mikeneko 3.8 : une musique plus douce\n\n• Changer de morceau se fait en fondu de 2 secondes, et le fondu enchaîné ne rejoue plus la fin de l\'ancien morceau.\n• Une playlist Favoris, toujours là : chaque morceau mis en cœur y arrive.\n• Les téléchargements vont dans Téléchargements › Mikeneko (Music, Videos), et l\'écran Téléchargements permet de les ouvrir ou de les supprimer.\n• Des boutons Material 3 dans le lecteur musique ; Deep Bass remplace Ultra Bass et Xstrm Bass met les voix en avant.</string>
+    <string name="whats_new_body">✨ Mikeneko 3.9 : un lecteur musique plus vivant\n\n• Des lumières derrière la pochette : un halo qui respire avec la basse, des faisceaux qui tournent comme des projecteurs de scène, et un flash à chaque temps fort.\n• Des boutons neumorphiques dans le lecteur musique, aux couleurs de la pochette : ils s\'enfoncent quand on appuie.\n• Depuis la 3.8 : fondu rapide entre les morceaux, panneaux Material 3 aux couleurs de la pochette, Deep Bass et Xstrm Bass retravaillés.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Importer des playlists</string>
