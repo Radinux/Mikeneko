@@ -880,10 +880,10 @@
     <string name="fx_8d_text">Le son tourne autour de la tête (au casque)</string>
     <string name="fx_bass_boost">Basses renforcées</string>
     <string name="fx_bass_boost_text">Des basses profondes et propres, la voix intacte</string>
-    <string name="fx_ultra_bass">Ultra basses</string>
-    <string name="fx_ultra_bass_text">Impact maximal, comme un caisson de basses</string>
+    <string name="fx_deep_bass">Deep Bass</string>
+    <string name="fx_deep_bass_text">Des sub-basses extra profondes, qu\'on sent plus qu\'on n\'entend (casque, caisson)</string>
     <string name="fx_xstrm_bass">Xstrm Bass</string>
-    <string name="fx_xstrm_bass_text">Des basses qui crachent, pour les petites enceintes à radiateurs passifs (68 Hz)</string>
+    <string name="fx_xstrm_bass_text">Des basses qui crachent pour les petites enceintes à radiateurs passifs (68 Hz), voix bien devant</string>
     <string name="fx_crispy">Cristallin</string>
     <string name="fx_crispy_text">Ultra net et aéré</string>
     <string name="fx_v_balance">Courbe en V</string>

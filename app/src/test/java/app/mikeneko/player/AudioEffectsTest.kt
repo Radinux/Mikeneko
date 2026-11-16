@@ -83,7 +83,7 @@ class AudioEffectsTest {
 
     /** Le limiteur à anticipation (3.6.0) : même un son beaucoup trop fort ne dépasse jamais −0,3 dBFS. */
     @Test fun limiterHoldsTheCeilingOnAVeryLoudSignal() {
-        for (preset in listOf(AudioPreset.UltraBass, AudioPreset.XstrmBass, AudioPreset.BassBoost)) {
+        for (preset in listOf(AudioPreset.DeepBass, AudioPreset.XstrmBass, AudioPreset.BassBoost)) {
             val chain = EffectChain(preset, 48_000)
             val frame = FloatArray(2)
             var peak = 0f
@@ -127,7 +127,7 @@ class AudioEffectsTest {
             }
         }
         feed(4_800)
-        for (next in listOf(AudioPreset.UltraBass, AudioPreset.Normal, AudioPreset.Vocal, AudioPreset.XstrmBass, AudioPreset.Normal)) {
+        for (next in listOf(AudioPreset.DeepBass, AudioPreset.Normal, AudioPreset.Vocal, AudioPreset.XstrmBass, AudioPreset.Normal)) {
             preset = next
             feed(4_800)
         }

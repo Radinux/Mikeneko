@@ -879,10 +879,10 @@
     <string name="fx_8d_text">The sound turns around your head (headphones)</string>
     <string name="fx_bass_boost">Bass Boost</string>
     <string name="fx_bass_boost_text">Deep, clean bass that leaves the voice alone</string>
-    <string name="fx_ultra_bass">Ultra Bass</string>
-    <string name="fx_ultra_bass_text">Maximum impact, like a subwoofer</string>
+    <string name="fx_deep_bass">Deep Bass</string>
+    <string name="fx_deep_bass_text">Extra-deep sub-bass, felt more than heard (headphones, subwoofer)</string>
     <string name="fx_xstrm_bass">Xstrm Bass</string>
-    <string name="fx_xstrm_bass_text">Slamming bass for small speakers with passive radiators (68 Hz)</string>
+    <string name="fx_xstrm_bass_text">Slamming bass for small speakers with passive radiators (68 Hz), voices up front</string>
     <string name="fx_crispy">Crispy Clear</string>
     <string name="fx_crispy_text">Crystal-clear and airy</string>
     <string name="fx_v_balance">V-Balance</string>

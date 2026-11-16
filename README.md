@@ -60,6 +60,8 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ### 3.8
 
+- 3.8.0: **Deep Bass** replaces Ultra Bass: extra-deep sub-bass around 30–35 Hz, felt more than heard
+  (headphones, subwoofer). **Xstrm Bass** brings the voices further forward.
 - 3.8.0: **changing song fades**: next, previous or a song picked in a list or the queue blend into each
   other over 2 seconds (the old song keeps playing while the new one loads).
 - 3.8.0: the **crossfade** no longer replays the end of the previous song over a song you just picked.

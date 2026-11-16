@@ -345,7 +345,7 @@ fun presetName(preset: app.mikeneko.player.AudioPreset): String = stringResource
         app.mikeneko.player.AudioPreset.Spatial -> R.string.fx_spatial
         app.mikeneko.player.AudioPreset.EightD -> R.string.fx_8d
         app.mikeneko.player.AudioPreset.BassBoost -> R.string.fx_bass_boost
-        app.mikeneko.player.AudioPreset.UltraBass -> R.string.fx_ultra_bass
+        app.mikeneko.player.AudioPreset.DeepBass -> R.string.fx_deep_bass
         app.mikeneko.player.AudioPreset.XstrmBass -> R.string.fx_xstrm_bass
         app.mikeneko.player.AudioPreset.Crispy -> R.string.fx_crispy
         app.mikeneko.player.AudioPreset.VBalance -> R.string.fx_v_balance
@@ -368,7 +368,7 @@ fun presetVibe(preset: app.mikeneko.player.AudioPreset): String = stringResource
         app.mikeneko.player.AudioPreset.Spatial -> R.string.fx_spatial_text
         app.mikeneko.player.AudioPreset.EightD -> R.string.fx_8d_text
         app.mikeneko.player.AudioPreset.BassBoost -> R.string.fx_bass_boost_text
-        app.mikeneko.player.AudioPreset.UltraBass -> R.string.fx_ultra_bass_text
+        app.mikeneko.player.AudioPreset.DeepBass -> R.string.fx_deep_bass_text
         app.mikeneko.player.AudioPreset.XstrmBass -> R.string.fx_xstrm_bass_text
         app.mikeneko.player.AudioPreset.Crispy -> R.string.fx_crispy_text
         app.mikeneko.player.AudioPreset.VBalance -> R.string.fx_v_balance_text

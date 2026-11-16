@@ -29,7 +29,7 @@ enum class AudioPreset(val id: String, val speed: Float) {
     Spatial("spatial", 1f),
     EightD("8d", 1f),
     BassBoost("bass_boost", 1f),
-    UltraBass("ultra_bass", 1f),
+    DeepBass("deep_bass", 1f), // 3.8.0 : remplace Ultra Bass (« ultra_bass » y mène encore)
     XstrmBass("xstrm_bass", 1f),
     Crispy("crispy", 1f),
     VBalance("v_balance", 1f),
@@ -41,7 +41,7 @@ enum class AudioPreset(val id: String, val speed: Float) {
     LoFi("lofi", 0.96f);
 
     companion object {
-        fun of(id: String?): AudioPreset = entries.firstOrNull { it.id == id } ?: Normal
+        fun of(id: String?): AudioPreset = if (id == "ultra_bass") DeepBass else entries.firstOrNull { it.id == id } ?: Normal
     }
 }
 
@@ -390,7 +390,7 @@ private class Limiter(fs: Int) {
 }
 
 /**
- * Les harmoniques de basses d'Ultra Bass (3.6.0) : les très basses (< 80 Hz) passent dans une
+ * Les harmoniques de basses (3.6.0, pour Ultra Bass ; 3.8.0 : Xstrm Bass) : les très basses (< 80 Hz) passent dans une
  * saturation douce (harmoniques impaires) et un carré (harmoniques paires) ; on n'en garde que les
  * harmoniques (100 à 400 Hz), ajoutées au son. Une petite enceinte ou des écouteurs qui ne descendent
  * pas à 50 Hz font quand même entendre la note, et la basse d'origine reste intacte.
@@ -469,7 +469,7 @@ class EffectChain(val preset: AudioPreset, val sampleRate: Int) {
     // 8D : panoramique tournant (basses au centre)
     private var autoPan: AutoPan? = null
 
-    // Harmoniques de basses (Ultra Bass) / saturation à lampes (vieille radio)
+    // Harmoniques de basses (Xstrm Bass) / saturation à lampes (vieille radio)
     private var bassHarmonics: BassHarmonics? = null
     private var bassSlam: BassSlam? = null
     private val limiter = if (preset == AudioPreset.Normal) null else Limiter(fs) // « Normal » : le son tel quel
@@ -502,10 +502,15 @@ class EffectChain(val preset: AudioPreset, val sampleRate: Int) {
                 eq(Biquad.peak(fs, 60.0, 5.0, 0.9), Biquad.peak(fs, 150.0, 3.0, 1.0), Biquad.peak(fs, 320.0, -2.5, 0.9))
                 preGain = db(-4.0)
             }
-            AudioPreset.UltraBass -> {
-                eq(Biquad.lowShelf(fs, 60.0, 9.0), Biquad.peak(fs, 100.0, 5.0, 1.0), Biquad.peak(fs, 300.0, -3.5, 1.0))
-                preGain = db(-6.0)
-                bassHarmonics = BassHarmonics(fs)
+            AudioPreset.DeepBass -> {
+                // 3.8.0 (remplace Ultra Bass) : des sub-basses extra profondes, qu'on sent plus qu'on n'entend
+                // (casque, caisson) : environ +12,5 dB vers 30–35 Hz, +8 dB à 20 Hz, à plat vers 100 Hz ; un
+                // léger creux vers 120–280 Hz pour que le grave profond ne soit pas noyé. Sous 16 Hz, coupé
+                // (des infrasons : ils ne font que pousser les membranes). Propre, sans saturation.
+                Biquad.highPass24(fs, 20.0).forEach { eq(it) }
+                eq(Biquad.lowShelf(fs, 60.0, 9.0), Biquad.peak(fs, 35.0, 5.0, 1.0), Biquad.peak(fs, 120.0, -2.0, 1.0), Biquad.peak(fs, 280.0, -3.0, 0.9))
+                monoBelow = Biquad.lowPass(fs, 100.0) to Biquad.lowPass(fs, 100.0)
+                preGain = db(-9.0)
             }
             AudioPreset.XstrmBass -> {
                 // Pour les petites enceintes à radiateurs passifs, qui répondent le plus fort vers 68 Hz.
@@ -518,6 +523,9 @@ class EffectChain(val preset: AudioPreset, val sampleRate: Int) {
                 // harmoniques qui font grogner la note là où l'enceinte s'essouffle.
                 Biquad.highPass48(fs, 46.0).forEach { eq(it) }
                 eq(Biquad.peak(fs, 68.0, 8.0, 1.0), Biquad.lowShelf(fs, 150.0, 4.0))
+                // 3.8.0 : plus de voix (la courbe des basses ne bouge pas) : +2 dB vers 1,1 kHz, +4 dB vers
+                // 3 kHz, la présence des voix, qui passe au-dessus des basses
+                eq(Biquad.peak(fs, 1_100.0, 2.0, 0.9), Biquad.peak(fs, 3_000.0, 4.0, 0.8))
                 monoBelow = Biquad.lowPass(fs, 120.0) to Biquad.lowPass(fs, 120.0)
                 bassSlam = BassSlam(fs, 120.0, gain = 1.6f, cap = 0.6f)
                 bassHarmonics = BassHarmonics(fs, below = 100.0, from = 110.0, to = 450.0, drive = 3f, odd = 3.5f, even = 1.2f)
