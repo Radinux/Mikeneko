@@ -28,7 +28,9 @@ Code comments are in French.
   the debug APK is neither shrunk nor compressed (~120 MB). yt-dlp installs itself (~125 MB unpacked
   in `no_backup/`) only the first time the Downloaded tab opens, and checks for its update at most
   once a day. Thumbnails: disk cache capped at 64 MB (`MikenekoApp.newImageLoader`). Downloaded files
-  (`Android/data/app.mikeneko/files/Movies` and `Music`) count in the app's "data" for Android.
+  go to `Download/Mikeneko/Music` and `Download/Mikeneko/Videos` since 3.8.0 (`data/DownloadFolder.kt`), so
+  they no longer count in the app's data; before, they sat in `Android/data/app.mikeneko/files/Movies`
+  and `Music` (moved once, still read).
 - **Dependencies**: all versions are in `gradle/libs.versions.toml`; keep **NewPipeExtractor** up to
   date (it follows YouTube's changes).
 - **Animation speed**: `MainActivity` hands `setContent` its own recomposer (`fixedSpeedRecomposer()`
