@@ -61,6 +61,24 @@ object DownloadFolder {
         return moveTo(file, legacy) ?: file
     }
 
+    /**
+     * Tous les fichiers téléchargés présents sur le téléphone (3.8.0), les plus récents d'abord : ceux de
+     * Download/Mikeneko et ceux restés dans les anciens dossiers privés.
+     */
+    fun allFiles(context: Context): List<File> =
+        listOf(publicMusic(), publicVideos(), legacyMusic(context), legacyVideos(context))
+            .flatMap { it.listFiles().orEmpty().toList() }
+            .filter { it.isFile && it.length() > 0 && !it.name.endsWith(".part") }
+            .distinctBy { it.absolutePath }
+            .sortedByDescending { it.lastModified() }
+
+    /** Supprime un fichier téléchargé (et le retire des applis de musique, de la galerie). */
+    fun delete(context: Context, file: File): Boolean {
+        val gone = file.delete() || !file.exists()
+        if (gone) forget(context, file)
+        return gone
+    }
+
     /** Signale au système qu'un fichier a été supprimé (il disparaît des applis de musique, de la galerie). */
     fun forget(context: Context, file: File) {
         MediaScannerConnection.scanFile(context, arrayOf(file.absolutePath), null, null)

@@ -48,9 +48,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
 import androidx.core.content.FileProvider
 import app.mikeneko.R
+import app.mikeneko.data.DownloadFolder
 import app.mikeneko.data.Downloads
+import app.mikeneko.data.LocalMusic
 import app.mikeneko.data.youtubeLinkIn
 import app.mikeneko.ui.components.EmptyCat
 import app.mikeneko.ui.icons.MkIcons
@@ -63,7 +66,19 @@ import app.mikeneko.ui.theme.statusBarSpace
 @Composable
 fun DownloadsContent(prefilledLink: String, top: Dp = 24.dp) {
     val context = LocalContext.current
-    val tasks by Downloads.tasks.collectAsState()
+    val allTasks by Downloads.tasks.collectAsState()
+    // 3.8.0 : un téléchargement fini rejoint la liste des fichiers (en dessous) ; ici, ceux en cours ou ratés
+    val tasks = allTasks.filter { it.status != Downloads.Status.TERMINE || it.file == null }
+    val finished = allTasks.count { it.status == Downloads.Status.TERMINE }
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    var files by remember { mutableStateOf<List<java.io.File>?>(null) }
+    var reload by remember { mutableStateOf(0) }
+    LaunchedEffect(finished, reload) {
+        files = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            DownloadFolder.migrate(context)
+            DownloadFolder.allFiles(context)
+        }
+    }
     // yt-dlp s'installe dès qu'on ouvre l'onglet : il sera prêt quand on lancera le téléchargement
     LaunchedEffect(Unit) { Downloads.prepare(context) }
     var link by remember { mutableStateOf(prefilledLink) }
@@ -139,7 +154,7 @@ fun DownloadsContent(prefilledLink: String, top: Dp = 24.dp) {
                 }
             }
         }
-        if (tasks.isEmpty()) {
+        if (tasks.isEmpty() && files?.isEmpty() == true) {
             item { EmptyCat(stringResource(R.string.downloads_empty), stringResource(R.string.downloads_empty_text)) }
         }
         items(tasks, key = { it.id }) { task ->
@@ -174,8 +189,66 @@ fun DownloadsContent(prefilledLink: String, top: Dp = 24.dp) {
                 }
             }
         }
+        // Les fichiers sur le téléphone (3.8.0) : on les ouvre, on les supprime
+        val list = files.orEmpty()
+        if (list.isNotEmpty()) {
+            item(key = "fichiers") {
+                Column(Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(stringResource(R.string.downloads_files), color = Pelage.Texte, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(R.string.downloads_where), color = Pelage.Gris, fontSize = 12.sp)
+                }
+            }
+        }
+        items(list, key = { it.absolutePath }) { file ->
+            DownloadedFile(file) {
+                scope.launch {
+                    val audio = file.extension.lowercase() in setOf("mp3", "flac", "opus", "m4a", "ogg", "oga", "aac", "wav")
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { DownloadFolder.delete(context, file) }
+                    if (audio) LocalMusic.refresh(context)
+                    reload++
+                }
+            }
+        }
     }
 }
+
+/** Un fichier téléchargé : son nom, sa taille et son dossier ; Ouvrir, et Supprimer (deux appuis). */
+@Composable
+private fun DownloadedFile(file: java.io.File, onDelete: () -> Unit) {
+    val context = LocalContext.current
+    var confirm by remember(file.absolutePath) { mutableStateOf(false) }
+    LaunchedEffect(confirm) {
+        if (confirm) {
+            kotlinx.coroutines.delay(3_000)
+            confirm = false
+        }
+    }
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Text(file.nameWithoutExtension, color = Pelage.Texte, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(
+                listOf(file.extension.uppercase(), android.text.format.Formatter.formatShortFileSize(context, file.length()), file.parentFile?.name.orEmpty())
+                    .filter { it.isNotEmpty() }.joinToString(" · "),
+                color = Pelage.Gris,
+                fontSize = 12.sp,
+            )
+        }
+        FilledTonalButton(onClick = {
+            runCatching {
+                val uri = FileProvider.getUriForFile(context, "${context.packageName}.fichiers", file)
+                val open = Intent(Intent.ACTION_VIEW).setDataAndType(uri, context.contentResolver.getType(uri)).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                context.startActivity(open)
+            }
+        }) { Text(stringResource(R.string.open), fontSize = 13.sp, fontWeight = FontWeight.ExtraBold) }
+        FilledTonalIconButton(onClick = { if (confirm) onDelete() else confirm = true }) {
+            Icon(MkIcons.Trash, stringResource(if (confirm) R.string.confirm_touch_again else R.string.file_delete), tint = if (confirm) androidx.compose.ui.graphics.Color(0xFFFF8A80) else Pelage.Texte, modifier = Modifier.size(18.dp))
+        }
+    }
+    if (confirm) {
+        Text(stringResource(R.string.confirm_touch_again), color = androidx.compose.ui.graphics.Color(0xFFFF8A80), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+    }
+}
+
 
 /** « Vidéo » / « Video » ; les formats audio gardent leur nom (MP3, FLAC…). */
 @Composable

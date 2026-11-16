@@ -57,7 +57,7 @@
     <string name="downloads_empty_text">Colle un lien, ou partage une vidéo vers Mikeneko depuis n\'importe quelle app.</string>
     <string name="downloads_link_label">Lien d\'une vidéo, playlist ou chaîne</string>
     <string name="downloads_paste_link">Colle un lien YouTube</string>
-    <string name="downloads_subtitle">Rangés dans les dossiers Vidéos et Musique de Mikeneko</string>
+    <string name="downloads_subtitle">Rangés dans Téléchargements › Mikeneko</string>
     <string name="downloads_title">Téléchargements</string>
     <string name="duration_hours">%1$d h</string>
     <string name="duration_hours_minutes">%1$d h %2$02d</string>
@@ -933,4 +933,6 @@
         <item quantity="many">%1$d chaînes, dont %2$d nouvelle(s)</item>
         <item quantity="other">%1$d chaînes, dont %2$d nouvelle(s)</item>
     </plurals>
+    <string name="downloads_files">Sur ce téléphone</string>
+    <string name="downloads_where">Dans Téléchargements › Mikeneko › Music et Videos, faciles à retrouver dans tes fichiers</string>
 </resources>

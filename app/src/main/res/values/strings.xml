@@ -58,7 +58,7 @@
     <string name="downloads_empty_text">Paste a link, or share a video to Mikeneko from any app.</string>
     <string name="downloads_link_label">Link to a video, playlist or channel</string>
     <string name="downloads_paste_link">Paste a YouTube link</string>
-    <string name="downloads_subtitle">Saved in Mikeneko\'s Videos and Music folders</string>
+    <string name="downloads_subtitle">Saved in Download › Mikeneko</string>
     <string name="downloads_title">Downloads</string>
     <string name="duration_hours">%1$d h</string>
     <string name="duration_hours_minutes">%1$d h %2$02d</string>
@@ -931,4 +931,6 @@
         <item quantity="one">%1$d channel, %2$d new</item>
         <item quantity="other">%1$d channels, %2$d new</item>
     </plurals>
+    <string name="downloads_files">On this phone</string>
+    <string name="downloads_where">In Download › Mikeneko › Music and Videos, easy to find in your file manager</string>
 </resources>
