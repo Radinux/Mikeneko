@@ -192,24 +192,25 @@ internal fun PlayerWindowContent(
         LaunchedEffect(now?.url) { scroll.animateScrollTo(0) }
         BoxWithConstraints(Modifier.fillMaxSize()) {
             // Les morceaux de la fenêtre, rangés en colonne (portrait) ou en deux parties (paysage)
+            val sleepButton: @Composable () -> Unit = {
+                TonalButton(
+                    MkIcons.Moon,
+                    stringResource(if (timer == SleepTimer.Off) R.string.sleep_timer else R.string.sleep_timer_active),
+                    container = if (timer == SleepTimer.Off) Color.White.copy(alpha = 0.14f) else Pelage.Roux,
+                    content = if (timer == SleepTimer.Off) Color.White else Pelage.Encre,
+                ) { PlayerHolder.settingsPage.value = SettingsPage.Minuteur }
+            }
             val topRow: @Composable () -> Unit = {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    GlassCircleButton(glass, MkIcons.ChevronDown, stringResource(R.string.player_minimize), size = 44.dp) { state.collapse() }
+                    TonalButton(MkIcons.ChevronDown, stringResource(R.string.player_minimize)) { state.collapse() }
                     Text(
                         stringResource(if (PlayerHolder.autoMix.collectAsState().value) R.string.radio_mode_mix else R.string.radio_mode),
                         Modifier.weight(1f),
                         style = TextStyle(fontFamily = Rounded, color = Pelage.Texte, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp, shadow = GlassTextShadow, textAlign = TextAlign.Center),
                     )
                     // Le Chromecast (3.4.0)
-                    app.mikeneko.ui.components.CastButton(glass, modifier = Modifier.padding(end = 8.dp))
-                    GlassCircleButton(
-                        glass,
-                        MkIcons.Moon,
-                        stringResource(if (timer == SleepTimer.Off) R.string.sleep_timer else R.string.sleep_timer_active),
-                        size = 44.dp,
-                        tint = if (timer == SleepTimer.Off) Color(0x40100D0B) else Pelage.Roux.copy(alpha = 0.7f),
-                        iconTint = if (timer == SleepTimer.Off) Color.White else Pelage.Encre,
-                    ) { PlayerHolder.settingsPage.value = SettingsPage.Minuteur }
+                    app.mikeneko.ui.components.CastButton(glass, modifier = Modifier.padding(end = 8.dp), material = true)
+                    sleepButton()
                 }
             }
             val coverArt: @Composable () -> Unit = {
@@ -246,12 +247,11 @@ internal fun PlayerWindowContent(
                         Text(now?.title ?: stringResource(R.string.radio_pick), style = TextStyle(fontFamily = Rounded, color = Pelage.Texte, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold, shadow = GlassTextShadow), maxLines = 2, overflow = TextOverflow.Ellipsis)
                         Text(now?.channel.orEmpty(), style = TextStyle(fontFamily = Rounded, color = Color(0xFFE3DAD2), fontSize = 14.sp, shadow = GlassTextShadow), maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
-                    GlassCircleButton(
-                        glass,
+                    TonalButton(
                         if (liked) MkIcons.HeartFilled else MkIcons.Heart,
                         stringResource(if (liked) R.string.favorite_remove else R.string.favorite_add),
                         size = 46.dp,
-                        iconTint = if (liked) Pelage.Rose else Color.White,
+                        content = if (liked) Pelage.Rose else Color.White,
                         enabled = now != null,
                     ) {
                         current()?.let { item ->
@@ -276,16 +276,9 @@ internal fun PlayerWindowContent(
                     ModeToggle(MkIcons.Shuffle, stringResource(if (shuffle) R.string.shuffle_off else R.string.shuffle_on), active = shuffle) {
                         PlayerHolder.setShuffle(!shuffle)
                     }
-                    GlassCircleButton(glass, MkIcons.Previous, stringResource(R.string.radio_previous), size = 58.dp, enabled = canSkip || (now != null && !live)) { skip { PlayerHolder.previous(context) } }
-                    GlassCircleButton(
-                        glass,
-                        if (playing) MkIcons.Pause else MkIcons.Play,
-                        stringResource(if (playing) R.string.pause else R.string.play),
-                        size = 76.dp,
-                        tint = Pelage.Roux.copy(alpha = 0.68f),
-                        iconTint = Pelage.Encre,
-                    ) { if (now != null) PlayerHolder.togglePlay() } // pas la vidéo qui joue peut-être en ce moment
-                    GlassCircleButton(glass, MkIcons.Next, stringResource(R.string.radio_next), size = 58.dp, enabled = canSkip) { skip { PlayerHolder.next(context) } }
+                    TonalButton(MkIcons.Previous, stringResource(R.string.radio_previous), size = 58.dp, enabled = canSkip || (now != null && !live)) { skip { PlayerHolder.previous(context) } }
+                    PlayButton(playing) { if (now != null) PlayerHolder.togglePlay() } // pas la vidéo qui joue peut-être en ce moment
+                    TonalButton(MkIcons.Next, stringResource(R.string.radio_next), size = 58.dp, enabled = canSkip) { skip { PlayerHolder.next(context) } }
                     ModeToggle(
                         if (repeat == Repeat.One) MkIcons.RepeatOne else MkIcons.Repeat,
                         stringResource(
@@ -298,13 +291,13 @@ internal fun PlayerWindowContent(
                         active = repeat != Repeat.Off,
                     ) { PlayerHolder.cycleRepeat() }
                 }
-                Spacer(Modifier.height(16.dp))
-                LiquidGlass(
-                    glass,
+                Spacer(Modifier.height(if (landscape) 10.dp else 16.dp))
+                // 3.8.0 : une surface Material 3 (la capsule en verre ne se voyait pas sur le fond uni de la fenêtre)
+                androidx.compose.material3.Surface(
                     Modifier.fillMaxWidth().height(54.dp).onGloballyPositioned { state.lyricsAnchor = it.boundsInWindow() },
-                    cornerRadius = 27.dp,
-                    bezel = 18.dp,
-                    refraction = 18.dp,
+                    shape = RoundedCornerShape(27.dp),
+                    color = Color.White.copy(alpha = 0.10f),
+                    contentColor = Color.White,
                 ) {
                     Row(Modifier.fillMaxSize().padding(horizontal = 6.dp)) {
                         ActionSlot(MkIcons.Queue, stringResource(R.string.queue)) {
@@ -338,22 +331,18 @@ internal fun PlayerWindowContent(
             if (landscape) {
                 // Paysage : la pochette à gauche, le reste à droite (qui défile : artiste, album)
                 Row(Modifier.fillMaxSize().padding(start = 18.dp, end = 18.dp, top = 14.dp, bottom = 14.dp), horizontalArrangement = Arrangement.spacedBy(18.dp)) {
-                    Box(Modifier.fillMaxHeight().aspectRatio(1f, matchHeightConstraintsFirst = true), contentAlignment = Alignment.Center) { coverArt() }
-                    Column(Modifier.weight(1f).fillMaxHeight().nestedScroll(state.scrollConnection).verticalScroll(scroll)) {
-                        // Peu de hauteur : le titre partage sa ligne avec la lune et la flèche (pas de « MIX »)
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Box(Modifier.weight(1f)) { titleRow() }
-                            app.mikeneko.ui.components.CastButton(glass)
-                            GlassCircleButton(
-                                glass,
-                                MkIcons.Moon,
-                                stringResource(if (timer == SleepTimer.Off) R.string.sleep_timer else R.string.sleep_timer_active),
-                                size = 44.dp,
-                                tint = if (timer == SleepTimer.Off) Color(0x40100D0B) else Pelage.Roux.copy(alpha = 0.7f),
-                                iconTint = if (timer == SleepTimer.Off) Color.White else Pelage.Encre,
-                            ) { PlayerHolder.settingsPage.value = SettingsPage.Minuteur }
-                            GlassCircleButton(glass, MkIcons.ChevronDown, stringResource(R.string.player_minimize), size = 44.dp) { state.collapse() }
+                    // 3.8.0 : réduire, Cast et minuteur sous la pochette (avant, sur la ligne du titre, qui
+                    // n'avait plus que quelques lettres) ; la pochette prend le reste de la hauteur
+                    Column(Modifier.fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Box(Modifier.weight(1f).aspectRatio(1f, matchHeightConstraintsFirst = true), contentAlignment = Alignment.Center) { coverArt() }
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                            TonalButton(MkIcons.ChevronDown, stringResource(R.string.player_minimize)) { state.collapse() }
+                            app.mikeneko.ui.components.CastButton(glass, material = true)
+                            sleepButton()
                         }
+                    }
+                    Column(Modifier.weight(1f).fillMaxHeight().nestedScroll(state.scrollConnection).verticalScroll(scroll)) {
+                        titleRow()
                         controls()
                         MusicDetails(now, wanted = scroll.value > 0, onOpenArtist, onOpenAlbum)
                     }
@@ -533,26 +522,73 @@ private fun TrackProgress(key: String?, active: Boolean) {
     }
 }
 
-/** Aléatoire / répéter : une icône qui s'allume en roux (avec un point dessous) quand c'est actif. */
+// ---- Les boutons du lecteur musique, en Material 3 (3.8.0 ; avant, des cercles « en verre » : sur le
+// fond uni de la fenêtre, l'effet ne se voyait pas)
+
+/** Un bouton tonal rond : un fond clair translucide sur la fenêtre sombre. */
+@Composable
+private fun TonalButton(
+    icon: ImageVector,
+    label: String,
+    size: androidx.compose.ui.unit.Dp = 44.dp,
+    container: Color = Color.White.copy(alpha = 0.14f),
+    content: Color = Color.White,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+) {
+    androidx.compose.material3.FilledTonalIconButton(
+        onClick = onClick,
+        modifier = Modifier.size(size),
+        enabled = enabled,
+        colors = androidx.compose.material3.IconButtonDefaults.filledTonalIconButtonColors(
+            containerColor = container,
+            contentColor = content,
+            disabledContainerColor = Color.White.copy(alpha = 0.06f),
+            disabledContentColor = Color.White.copy(alpha = 0.35f),
+        ),
+    ) { Icon(icon, label, modifier = Modifier.size(size * 0.46f)) }
+}
+
+/** Lecture / pause : plein, de la couleur du thème ; rond en pause, carré arrondi pendant la lecture. */
+@Composable
+private fun PlayButton(playing: Boolean, onClick: () -> Unit) {
+    val corner by androidx.compose.animation.core.animateDpAsState(if (playing) 24.dp else 38.dp, label = "lecture")
+    androidx.compose.material3.FilledIconButton(
+        onClick = onClick,
+        modifier = Modifier.size(76.dp),
+        shape = RoundedCornerShape(corner),
+        colors = androidx.compose.material3.IconButtonDefaults.filledIconButtonColors(containerColor = Pelage.Roux, contentColor = Pelage.Encre),
+    ) {
+        Icon(if (playing) MkIcons.Pause else MkIcons.Play, stringResource(if (playing) R.string.pause else R.string.play), modifier = Modifier.size(34.dp))
+    }
+}
+
+/** Aléatoire / répéter : un bouton bascule qui s'allume en couleur du thème (avec un point dessous) quand c'est actif. */
 @Composable
 private fun ModeToggle(icon: ImageVector, label: String, active: Boolean, onClick: () -> Unit) {
-    Box(
-        Modifier.size(48.dp).clip(CircleShape).clickable(role = Role.Button, onClickLabel = label, onClick = onClick)
-            .semantics { contentDescription = label; stateDescription = if (active) "✓" else "" },
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(icon, null, tint = if (active) Pelage.RouxClair else Color.White.copy(alpha = 0.85f), modifier = Modifier.size(24.dp))
+    Box(contentAlignment = Alignment.Center) {
+        androidx.compose.material3.IconToggleButton(
+            checked = active,
+            onCheckedChange = { onClick() },
+            modifier = Modifier.size(48.dp).semantics { contentDescription = label },
+            colors = androidx.compose.material3.IconButtonDefaults.iconToggleButtonColors(
+                contentColor = Color.White.copy(alpha = 0.85f),
+                checkedContentColor = Pelage.RouxClair,
+            ),
+        ) { Icon(icon, null, modifier = Modifier.size(24.dp)) }
         if (active) Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 4.dp).size(5.dp).clip(CircleShape).background(Pelage.RouxClair))
     }
 }
 
 @Composable
 private fun RowScope.ActionSlot(icon: ImageVector, label: String, enabled: Boolean = true, onClick: () -> Unit) {
-    Box(
-        Modifier.weight(1f).fillMaxHeight().clickable(enabled = enabled, role = Role.Button, onClickLabel = label, onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(icon, label, tint = Color.White.copy(alpha = if (enabled) 1f else 0.35f), modifier = Modifier.size(23.dp))
+    Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.Center) {
+        androidx.compose.material3.IconButton(
+            onClick = onClick,
+            enabled = enabled,
+            modifier = Modifier.size(48.dp),
+            colors = androidx.compose.material3.IconButtonDefaults.iconButtonColors(contentColor = Color.White, disabledContentColor = Color.White.copy(alpha = 0.35f)),
+        ) { Icon(icon, label, modifier = Modifier.size(23.dp)) }
     }
 }
 
