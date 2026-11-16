@@ -264,6 +264,7 @@ object PlayerHolder {
                 }
 
                 override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                    if (!playWhenReady) endSwitchFade() // en pause : le morceau qu'on quittait en fondu se tait aussi
                     // Pendant le cast (3.4.0) : le téléphone ne joue pas ; « lecture » (notification,
                     // écouteurs…) part vers l'appareil
                     if (playWhenReady && app.mikeneko.cast.Cast.active) {
@@ -390,14 +391,14 @@ object PlayerHolder {
         if (items.isEmpty()) return
         setQueue(items, start.coerceIn(items.indices), mix)
         val target = queueIndex.value
-        play(context, queue.value[target].url, audioOnly = true)
+        withSwitchFade { play(context, queue.value[target].url, audioOnly = true) }
         prefetchMix()
     }
 
     /** Lance un morceau suivi de son mix : une file sans fin de titres proches. */
     suspend fun startMix(context: Context, item: VideoItem) {
         setQueue(listOf(item), 0, mix = true)
-        play(context, item.url, audioOnly = true)
+        withSwitchFade { play(context, item.url, audioOnly = true) }
         prefetchMix()
     }
 
@@ -509,6 +510,7 @@ object PlayerHolder {
         short: Boolean = false,
     ) {
         endCrossfade() // une autre lecture : le morceau qui finissait en fondu s'arrête
+        if (!audioOnly) endSwitchFade() // une vidéo : le morceau qu'on quittait en fondu se tait
         // Un short : il tourne en boucle, repart toujours du début et ne prend pas de place dans la reprise
         playingShort = short && !audioOnly
         // Le morceau déjà en cours (musique), touché à nouveau : il repart du début, sans rien
@@ -776,6 +778,7 @@ object PlayerHolder {
     fun castStarted() {
         scope.launch {
             endCrossfade()
+            endSwitchFade()
             player?.pause()
         }
     }
@@ -879,41 +882,22 @@ object PlayerHolder {
     }
 
     private suspend fun crossfade(context: Context, p: ExoPlayer, fade: Long) {
-        val leaving = p.currentMediaItem ?: return
-        val source = tailSource(context, leaving) ?: return
         val index = p.currentMediaItemIndex
-        // Avec les mêmes effets audio et la même vitesse que le morceau qu'il finit (3.3.0)
-        val t = ExoPlayer.Builder(context, EffectsRenderersFactory(context))
-            .setAudioAttributes(AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(), false)
-            .build()
-        t.playbackParameters = p.playbackParameters
-        tail = t
-        // Prêt un peu en avance, à l'endroit où en sera le morceau, puis lancé pile à ce moment-là
-        var target = p.currentPosition + CROSSFADE_LEAD_MS
-        t.setMediaSource(source, target)
-        t.prepare()
-        repeat(3) {
-            withTimeoutOrNull(2_000) { while (t.playbackState != Player.STATE_READY) delay(15) } ?: return
-            if (p.currentPosition <= target) return@repeat
-            // Prêt trop tard : on le recale un peu plus loin
-            target = p.currentPosition + CROSSFADE_LEAD_MS
-            t.seekTo(target)
-        }
-        val reached = withTimeoutOrNull(CROSSFADE_LEAD_MS + 1_000) { while (p.currentPosition < target) delay(4) }
+        val t = startTail(context, p, CROSSFADE_LEAD_MS, readyWithinMs = 2_000) { tail = it } ?: return
         // Entre-temps : un autre morceau, une pause, un saut en arrière… pas de fondu
-        if (reached == null || player !== p || p.currentMediaItemIndex != index || !p.playWhenReady || preloaded == null) return
+        if (player !== p || p.currentMediaItemIndex != index || !p.playWhenReady || preloaded == null) return
         if (p.mediaItemCount <= index + 1) return
-        t.volume = 1f
-        t.play()
         p.volume = 0f
         jumping = Jump.Forward
         p.seekToNextMediaItem()
+        val arrived = p.currentMediaItemIndex
         val start = android.os.SystemClock.uptimeMillis()
         try {
             while (true) {
                 val f = ((android.os.SystemClock.uptimeMillis() - start).toFloat() / fade).coerceIn(0f, 1f)
-                // Mis en pause pendant le fondu : le morceau qu'on quitte s'arrête là
-                if (player !== p || !p.playWhenReady) break
+                // Mis en pause pendant le fondu : le morceau qu'on quitte s'arrête là. 3.8.0 : un autre morceau
+                // choisi pendant le fondu aussi (avant, la fin du morceau d'avant continuait par-dessus)
+                if (player !== p || !p.playWhenReady || p.currentMediaItemIndex != arrived) break
                 p.volume = kotlin.math.sin(f * Math.PI / 2).toFloat()
                 t.volume = kotlin.math.cos(f * Math.PI / 2).toFloat()
                 if (f >= 1f) break
@@ -922,6 +906,105 @@ object PlayerHolder {
         } finally {
             p.volume = 1f
         }
+    }
+
+    /**
+     * Le morceau en cours, repris dans un second lecteur (mêmes effets audio et vitesse), lancé pile à
+     * l'endroit où en est le lecteur principal, [leadMs] plus tard (le temps qu'il soit prêt). Null s'il
+     * n'est pas prêt dans [readyWithinMs] ou si le morceau a changé entre-temps. [keep] reçoit le lecteur
+     * dès sa création (pour pouvoir l'arrêter de dehors).
+     */
+    private suspend fun startTail(context: Context, p: ExoPlayer, leadMs: Long, readyWithinMs: Long, keep: (ExoPlayer) -> Unit): ExoPlayer? {
+        val leaving = p.currentMediaItem ?: return null
+        val source = tailSource(context, leaving) ?: return null
+        val index = p.currentMediaItemIndex
+        val t = ExoPlayer.Builder(context, EffectsRenderersFactory(context))
+            .setAudioAttributes(AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(), false)
+            .build()
+        keep(t)
+        t.playbackParameters = p.playbackParameters
+        // Prêt un peu en avance, à l'endroit où en sera le morceau, puis lancé pile à ce moment-là
+        var target = p.currentPosition + leadMs
+        t.setMediaSource(source, target)
+        t.prepare()
+        repeat(3) {
+            withTimeoutOrNull(readyWithinMs) { while (t.playbackState != Player.STATE_READY) delay(15) } ?: return null
+            if (p.currentPosition <= target) return@repeat
+            // Prêt trop tard : on le recale un peu plus loin
+            target = p.currentPosition + leadMs
+            t.seekTo(target)
+        }
+        val reached = withTimeoutOrNull(leadMs + 1_000) { while (p.currentPosition < target) delay(4) }
+        if (reached == null || player !== p || p.currentMediaItemIndex != index) return null
+        t.volume = 1f
+        t.play()
+        return t
+    }
+
+    // ---- Le fondu au changement de morceau (3.8.0) ----
+    //
+    // Suivant, précédent, un autre morceau choisi (liste, file) : le morceau qu'on quitte continue dans
+    // un second lecteur, [switchTail], pendant que le nouveau se charge, puis les deux se croisent en
+    // [SWITCH_FADE_MS]. Pas pour la fin naturelle d'un morceau (c'est le fondu enchaîné, plus haut).
+
+    private const val SWITCH_FADE_MS = 2_000L
+    private const val SWITCH_LEAD_MS = 250L
+    private var switchTail: ExoPlayer? = null
+    private var switchJob: Job? = null
+
+    private suspend fun <T> withSwitchFade(block: suspend () -> T): T {
+        endSwitchFade()
+        val p = player
+        val now = nowPlaying.value
+        val context = appContext
+        if (p == null || context == null || now == null || !now.audioOnly || now.live || !p.isPlaying || app.mikeneko.cast.Cast.active) return block()
+        endCrossfade()
+        val t = runCatching { startTail(context, p, SWITCH_LEAD_MS, readyWithinMs = 700) { switchTail = it } }.getOrNull()
+        if (t == null) {
+            endSwitchFade()
+            return block()
+        }
+        p.volume = 0f
+        val result = try {
+            block()
+        } catch (e: Throwable) {
+            endSwitchFade()
+            throw e
+        }
+        switchJob = scope.launch {
+            try {
+                // Le nouveau morceau se charge : l'ancien continue à plein volume (au plus 8 s)
+                withTimeoutOrNull(8_000) {
+                    while (player === p && p.playWhenReady && !(p.isPlaying && !loading.value)) delay(30)
+                }
+                val start = android.os.SystemClock.uptimeMillis()
+                while (true) {
+                    val f = ((android.os.SystemClock.uptimeMillis() - start).toFloat() / SWITCH_FADE_MS).coerceIn(0f, 1f)
+                    if (player !== p || !p.playWhenReady) break
+                    p.volume = kotlin.math.sin(f * Math.PI / 2).toFloat()
+                    t.volume = kotlin.math.cos(f * Math.PI / 2).toFloat()
+                    if (f >= 1f) break
+                    delay(30)
+                }
+            } finally {
+                if (switchTail === t) {
+                    t.release()
+                    switchTail = null
+                }
+                if (player === p) p.volume = 1f
+            }
+        }
+        return result
+    }
+
+    /** Arrête un fondu de changement en cours : l'ancien morceau se tait, le nouveau reprend tout son volume. */
+    private fun endSwitchFade() {
+        val active = switchJob != null || switchTail != null
+        switchJob?.cancel()
+        switchJob = null
+        switchTail?.release()
+        switchTail = null
+        if (active) player?.volume = 1f
     }
 
     /** Le son du morceau en cours pour [tail] : depuis le cache (lu en entier pendant sa lecture), ou le fichier du téléphone. */
@@ -943,10 +1026,12 @@ object PlayerHolder {
 
     /** Arrête un fondu en cours : le morceau qu'on quittait se tait, le principal reprend tout son volume. */
     private fun endCrossfade() {
+        val active = crossfadeJob != null || tail != null
         crossfadeJob?.cancel()
         crossfadeJob = null
         releaseTail()
-        player?.volume = 1f
+        // (seulement si un fondu tournait : sinon, il couperait le fondu de changement de morceau)
+        if (active) player?.volume = 1f
     }
 
     // ---- Le morceau précédent, gardé ----
@@ -1211,8 +1296,11 @@ object PlayerHolder {
     /** Suivant (bouton) : au bout de la file, le mix se prolonge, sinon on repart au début. */
     suspend fun next(context: Context) {
         if (autoMix.value && queueIndex.value >= queue.value.size - 1) extendMix()
-        playAt(context, queueIndex.value + 1)
+        withSwitchFade { playAt(context, queueIndex.value + 1) }
     }
+
+    /** Un morceau de la file touché (3.8.0) : comme [playAt], avec le fondu de changement. */
+    suspend fun chooseInQueue(context: Context, position: Int) = withSwitchFade { playAt(context, position) }
 
     /**
      * Précédent : après 3 s d'un morceau, on revient à son début (comme tous les lecteurs de musique).
@@ -1225,7 +1313,7 @@ object PlayerHolder {
             seekTo(0)
             return
         }
-        playAt(context, queueIndex.value - 1)
+        withSwitchFade { playAt(context, queueIndex.value - 1) }
     }
 
     /** Un morceau de la file vient de finir : le suivant, ou fin de la file (sauf répéter tout / mix). */
@@ -1420,6 +1508,7 @@ object PlayerHolder {
             // Déjà chargé juste après (suivant préparé) ou juste avant (morceau gardé) : on y saute
             val pre = preloaded
             if (pre != null && pre.index == target && sameTrack(items[target].url, pre.url) && p.mediaItemCount > p.currentMediaItemIndex + 1) {
+                endCrossfade() // 3.8.0 : le morceau qui finissait en fondu se tait
                 jumping = Jump.Forward
                 p.seekToNextMediaItem()
                 p.play()
@@ -1427,6 +1516,7 @@ object PlayerHolder {
             }
             val back = kept
             if (back != null && sameTrack(items[target].url, back.url) && p.currentMediaItemIndex > 0) {
+                endCrossfade()
                 jumping = Jump.Back
                 p.seekTo(p.currentMediaItemIndex - 1, 0L)
                 p.play()
@@ -1533,6 +1623,7 @@ object PlayerHolder {
 
     fun stop() {
         endCrossfade()
+        endSwitchFade()
         app.mikeneko.cast.Cast.disconnect(resumeLocally = false) // le lecteur fermé : l'appareil s'arrête aussi
         playingShort = false
         parkedVideo.value = null

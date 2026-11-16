@@ -58,6 +58,12 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ## 🎌 What's new ⸜(｡˃ ᵕ ˂ )⸝♡
 
+### 3.8
+
+- 3.8.0: **changing song fades**: next, previous or a song picked in a list or the queue blend into each
+  other over 2 seconds (the old song keeps playing while the new one loads).
+- 3.8.0: the **crossfade** no longer replays the end of the previous song over a song you just picked.
+
 ### 3.7
 
 - 3.7.1: **Xstrm Bass** reshaped: cut hard below 48 Hz, rising to its peak at 68 Hz, then a rounded

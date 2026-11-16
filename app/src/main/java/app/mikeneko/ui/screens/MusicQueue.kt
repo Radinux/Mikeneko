@@ -122,7 +122,7 @@ internal fun QueueSheet(backdrop: Backdrop, visible: Boolean, anchor: Rect?, onC
                         .fillMaxWidth()
                         .clickable(role = Role.Button) {
                             if (!playing) scope.launch {
-                                runCatching { PlayerHolder.playAt(context, index) }
+                                runCatching { PlayerHolder.chooseInQueue(context, index) }
                                     .onFailure { Toast.makeText(context, context.getString(R.string.radio_station_failed), Toast.LENGTH_SHORT).show() }
                             }
                         }
