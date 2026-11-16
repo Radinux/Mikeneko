@@ -719,7 +719,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">What’s new in Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Nice!</string>
-    <string name="whats_new_body">📦 Mikeneko 3.7: one Import button\n\n• Settings › Sync › Import a file: pick any file, Mikeneko recognizes it (backup, subscriptions from NewPipe, FreeTube or Google Takeout, TuneMyMusic playlists) and shows what it found before importing.\n• Backups are now .mikeneko files: smaller, with your settings, and you tick what to bring back.\n• Audio effects open from the button bar of the music player; Xstrm Bass pushes 50–68 Hz.\n• Swiping the video down shows the previous screen right away; in landscape every tab starts higher and the music pill sits on the left.</string>
+    <string name="whats_new_body">🎧 Mikeneko 3.8: smoother music\n\n• Changing song fades over 2 seconds, and the crossfade no longer replays the end of the old song.\n• A Favorites playlist, always there: every song you heart lands in it.\n• Downloads go to Download › Mikeneko (Music, Videos), and the Downloads screen lets you open or delete them.\n• Material 3 buttons in the music player; Deep Bass replaces Ultra Bass and Xstrm Bass brings the voices forward.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Import playlists</string>
