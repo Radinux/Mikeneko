@@ -39,7 +39,7 @@ class PlaybackService : MediaLibraryService() {
             Intent(this, MainActivity::class.java),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
-        // 3.9.3 : une bibliothèque qu'on parcourt (les playlists, leurs morceaux), pour l'appli d'une montre
+        // 3.10.0 : une bibliothèque qu'on parcourt (les playlists, leurs morceaux), pour l'appli d'une montre
         // ou une appli compagnon : voir [MusicLibrary] et TECHNICAL-NOTES « The media API »
         session = MediaLibrarySession.Builder(this, SkipPlayer(PlayerHolder.get(this)), LibraryCallback(this))
             .setSessionActivity(openApp)
@@ -94,7 +94,7 @@ private class SkipPlayer(player: Player) : ForwardingPlayer(player) {
     override fun isCommandAvailable(command: Int): Boolean = command in skips || super.isCommandAvailable(command)
 
     /**
-     * 3.9.3 : la playlist du morceau, pour les montres et les applis compagnon (voir TECHNICAL-NOTES,
+     * 3.10.0 : la playlist du morceau, pour les montres et les applis compagnon (voir TECHNICAL-NOTES,
      * « The media API ») : dans les extras (`app.mikeneko.PLAYLIST`, `app.mikeneko.PLAYLIST_ID`), et dans
      * l'album quand il est vide (c'est ce que les montres affichent sous le titre).
      */
@@ -143,12 +143,12 @@ private class SkipPlayer(player: Player) : ForwardingPlayer(player) {
     override fun seekToPreviousMediaItem() = PlayerHolder.skipFromSystem(forward = false)
 }
 
-/** Les extras de la session média (3.9.3) : le nom et l'identifiant de la playlist du morceau. */
+/** Les extras de la session média (3.10.0) : le nom et l'identifiant de la playlist du morceau. */
 const val EXTRA_PLAYLIST = "app.mikeneko.PLAYLIST"
 const val EXTRA_PLAYLIST_ID = "app.mikeneko.PLAYLIST_ID"
 
 /**
- * La bibliothèque de la session (3.9.3) : la racine liste les playlists (Favoris d'abord, puis les
+ * La bibliothèque de la session (3.10.0) : la racine liste les playlists (Favoris d'abord, puis les
  * playlists perso), chaque playlist ses morceaux. Choisir un morceau lance sa playlist à partir de lui ;
  * une playlist, depuis le début (voir [SkipPlayer] et [PlayerHolder.playFromLibrary]).
  */

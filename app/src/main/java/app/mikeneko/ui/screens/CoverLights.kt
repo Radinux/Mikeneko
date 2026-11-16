@@ -186,13 +186,13 @@ half4 main(float2 p) {
     half4 green = content.eval(base);
     half4 blue = content.eval(base - dir * spread);
     float3 col = float3(red.r, green.g, blue.b);
-    // 3.9.3 : de la lumière, même d'une partie sombre de la pochette : la couleur éclaircie et ravivée
+    // 3.10.0 : de la lumière, même d'une partie sombre de la pochette : la couleur éclaircie et ravivée
     float luma = dot(col, float3(0.299, 0.587, 0.114));
     col = mix(float3(luma), col, 1.6);
     col = clamp(col, 0.0, 1.0);
     col = 1.0 - (1.0 - col) * (1.0 - col);
     col = max(col, float3(0.18));
-    // Le halo : il s'estompe en s'éloignant, plus grand avec la basse et les temps forts (3.9.3 : plus large, plus lumineux)
+    // Le halo : il s'estompe en s'éloignant, plus grand avec la basse et les temps forts (3.10.0 : plus large, plus lumineux)
     float reach = halfSize * (0.65 + 0.55 * bass + 0.4 * kick);
     float fade = exp(-outside / reach) * (1.3 + 0.9 * bass + 0.6 * kick);
     fade = clamp(fade, 0.0, 1.0);

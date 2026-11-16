@@ -720,7 +720,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">Quoi de neuf dans Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Super !</string>
-    <string name="whats_new_body">✨ Mikeneko 3.9 : un lecteur musique plus vivant\n\n• Des lumières derrière la pochette : un halo qui respire avec la basse, des faisceaux qui tournent comme des projecteurs de scène, et un flash à chaque temps fort.\n• Des boutons neumorphiques dans le lecteur musique, aux couleurs de la pochette : ils s\'enfoncent quand on appuie.\n• Depuis la 3.8 : fondu rapide entre les morceaux, panneaux Material 3 aux couleurs de la pochette, Deep Bass et Xstrm Bass retravaillés.</string>
+    <string name="whats_new_body">⌚ Mikeneko 3.10 : ta musique sur ta montre\n\n• Les montres et les applis compagnon peuvent parcourir tes playlists, choisir un morceau, voir le titre, la pochette et la playlist, et piloter la lecture.\n• Un halo plus lumineux et plus large autour de la pochette, fait de la pochette elle-même.\n• Depuis la 3.9 : des lumières et des boutons neumorphiques dans le lecteur musique.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Importer des playlists</string>

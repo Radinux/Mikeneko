@@ -10,7 +10,7 @@ import app.mikeneko.data.Playlists
 import app.mikeneko.data.VideoItem
 
 /**
- * L'arbre de la bibliothèque de la session média (3.9.3) : ce qu'une montre ou une appli compagnon
+ * L'arbre de la bibliothèque de la session média (3.10.0) : ce qu'une montre ou une appli compagnon
  * parcourt. Identifiants : `root` ; `pl:<id>` une playlist (`pl:favoris` les Favoris) ; `pl:<id>/<n>` son
  * morceau n° n (dans l'ordre de la playlist).
  */

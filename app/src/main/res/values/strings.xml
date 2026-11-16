@@ -719,7 +719,7 @@
     <!-- La page « Quoi de neuf » après une mise à jour (WhatsNew.kt) : à réécrire à chaque version -->
     <string name="whats_new_title">What’s new in Mikeneko %1$s ✨</string>
     <string name="whats_new_ok">Nice!</string>
-    <string name="whats_new_body">✨ Mikeneko 3.9: a livelier music player\n\n• Lights behind the cover: a glow that breathes with the bass, light beams turning like stage spotlights, and a flash on every beat.\n• Neumorphic buttons in the music player, in the colors of the cover: they sink in when you press them.\n• Since 3.8: quick fade between songs, Material 3 panels in the cover\'s colors, Deep Bass and Xstrm Bass reworked.</string>
+    <string name="whats_new_body">⌚ Mikeneko 3.10: your music on your watch\n\n• Watches and companion apps can browse your playlists, pick a song, see the title, cover and playlist, and drive playback.\n• A brighter, wider halo around the cover, made from the cover itself.\n• Since 3.9: lights and neumorphic buttons in the music player.</string>
 
     <!-- Import TuneMyMusic (PlaylistImport.kt) -->
     <string name="import_playlists">Import playlists</string>

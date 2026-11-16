@@ -1422,7 +1422,7 @@ users: the point is to take them from the videos really watched.
   `application/octet-stream`, `mikeneko-<date>.mikeneko`). Used by Settings › Sync › Backup (Import a
   file, Export) and Settings › Music (Import playlists, same detector).
 
-## 8 ter. The media API (watches, companion apps) (3.9.3)
+## 8 ter. The media API (watches, companion apps) (3.10.0)
 
 Mikeneko exposes what plays and its controls through the standard Android media session (Media3
 `MediaSession` in `player/PlaybackService.kt`, exported). Anything that speaks to Android media sessions
