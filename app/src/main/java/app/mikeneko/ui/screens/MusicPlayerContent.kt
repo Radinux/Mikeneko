@@ -1,8 +1,5 @@
 package app.mikeneko.ui.screens
 
-import kotlin.math.abs
-import androidx.compose.ui.layout.onPlaced
-import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.graphics.FilterQuality
 import coil3.request.ImageRequest
 import android.content.res.Configuration
@@ -83,6 +80,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import androidx.media3.common.util.UnstableApi
@@ -166,8 +164,7 @@ internal fun PlayerWindowContent(
     val glass = rememberBackdrop()
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 
-    var windowRoot by remember { mutableStateOf<LayoutCoordinates?>(null) }
-    Box(Modifier.fillMaxSize().onPlaced { windowRoot = it }) {
+    Box(Modifier.fillMaxSize()) {
         // Le fond, que réfractent les boutons : un dégradé de la couleur de la pochette vers la nuit (il
         // change avec le morceau). Plus d'image de la pochette dessous (2.11.5) : la couleur suffit, et
         // l'image agrandie se voyait en pixels
@@ -225,17 +222,7 @@ internal fun PlayerWindowContent(
                     Modifier
                         .fillMaxWidth(0.9f)
                         .aspectRatio(1f, matchHeightConstraintsFirst = true)
-                        // Sa place dans la fenêtre : la pochette de la pilule vole jusqu'ici (2.22.0), et
-                        // celle-ci ne se montre qu'une fois la fenêtre ouverte
-                        .onGloballyPositioned { c ->
-                            windowRoot?.takeIf { it.isAttached }?.let { root ->
-                                val box = root.localBoundingBoxOf(c, clipBounds = false)
-                                val known = state.coverInWindow
-                                if (known == null || abs(known.left - box.left) > 0.5f || abs(known.top - box.top) > 0.5f || abs(known.width - box.width) > 0.5f) state.coverInWindow = box
-                            }
-                        }
                         .graphicsLayer {
-                            alpha = if (state.coverFlying) 0f else 1f
                             // Elle « tape » sur les temps forts (lu au dessin : rien ne se recompose)
                             val beat = beatScale()
                             scaleX = beat
@@ -346,7 +333,7 @@ internal fun PlayerWindowContent(
                     // 3.8.0 : réduire, Cast et minuteur sous la pochette (avant, sur la ligne du titre, qui
                     // n'avait plus que quelques lettres) ; la pochette prend le reste de la hauteur
                     Column(Modifier.fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Box(Modifier.weight(1f).aspectRatio(1f, matchHeightConstraintsFirst = true), contentAlignment = Alignment.Center) { coverArt() }
+                        Box(Modifier.weight(1f).aspectRatio(1f, matchHeightConstraintsFirst = true).zIndex(-1f), contentAlignment = Alignment.Center) { coverArt() }
                         Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
                             TonalButton(MkIcons.ChevronDown, stringResource(R.string.player_minimize)) { state.collapse() }
                             app.mikeneko.ui.components.CastButton(glass, material = true)
@@ -367,8 +354,9 @@ internal fun PlayerWindowContent(
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         topRow()
-                        // La pochette prend la place qui reste
-                        Box(Modifier.weight(1f).fillMaxWidth().padding(vertical = 14.dp), contentAlignment = Alignment.Center) { coverArt() }
+                        // La pochette prend la place qui reste. Dessinée avant les autres (3.10.1) : son halo
+                        // passait par-dessus les boutons du haut
+                        Box(Modifier.weight(1f).fillMaxWidth().padding(vertical = 14.dp).zIndex(-1f), contentAlignment = Alignment.Center) { coverArt() }
                         titleRow()
                         controls()
                     }

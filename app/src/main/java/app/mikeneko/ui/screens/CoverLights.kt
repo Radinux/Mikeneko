@@ -145,15 +145,19 @@ object BeatLights {
     const val PARTICLES = 40
 }
 
-/** Le dessin déborde de la pochette de ce facteur (le halo sort de derrière elle). */
-private const val SPREAD = 2.8f
+/**
+ * Le dessin déborde de la pochette de ce facteur (le halo sort de derrière elle). 3.10.1 : 2,8 → 1,6, à
+ * la demande (le halo allait jusqu'aux boutons du haut et aux bords de l'écran).
+ */
+private const val SPREAD = 1.6f
 
 /**
  * Le liquide autour de la pochette (3.9.2), en AGSL (Android 13+) : chaque point autour de la pochette
  * va chercher sa couleur dans la pochette elle-même, près de son bord (ses « UV » prolongés vers
- * l'extérieur), avec une ondulation liquide qui s'amplifie avec la basse ; le rouge, le vert et le bleu
- * sont pris à des distances un peu différentes (dispersion chromatique), et tout s'estompe en
+ * l'extérieur), avec une ondulation liquide qui s'amplifie avec la basse, et tout s'estompe en
  * s'éloignant (un halo sans contour). Sous la pochette : rien (elle est dessinée par-dessus).
+ * 3.10.1, à la demande : plus de dispersion chromatique (rouge, vert et bleu décalés), et un halo
+ * borné, éteint bien avant le bord du calque.
  */
 private const val LIQUID_SHADER = """
 uniform shader content;
@@ -163,7 +167,6 @@ uniform float squareness;
 uniform float time;
 uniform float bass;
 uniform float kick;
-uniform float dispersion;
 
 half4 main(float2 p) {
     float2 d = p - center;
@@ -180,31 +183,26 @@ half4 main(float2 p) {
     float depth = 3.0 + outside * 0.35 + bend;
     float2 tangent = float2(-dir.y, dir.x);
     float2 base = center + dir * (edge - max(depth, 2.0)) + tangent * bend * 0.6;
-    // La dispersion : chaque couleur un peu décalée le long du rayon, de plus en plus loin du bord
-    float spread = dispersion * (1.0 + outside / halfSize * 2.0);
-    half4 red = content.eval(base + dir * spread);
-    half4 green = content.eval(base);
-    half4 blue = content.eval(base - dir * spread);
-    float3 col = float3(red.r, green.g, blue.b);
+    float3 col = content.eval(base).rgb;
     // 3.10.0 : de la lumière, même d'une partie sombre de la pochette : la couleur éclaircie et ravivée
     float luma = dot(col, float3(0.299, 0.587, 0.114));
     col = mix(float3(luma), col, 1.6);
     col = clamp(col, 0.0, 1.0);
     col = 1.0 - (1.0 - col) * (1.0 - col);
     col = max(col, float3(0.18));
-    // Le halo : il s'estompe en s'éloignant, plus grand avec la basse et les temps forts (3.10.0 : plus large, plus lumineux)
-    float reach = halfSize * (0.65 + 0.55 * bass + 0.4 * kick);
-    float fade = exp(-outside / reach) * (1.3 + 0.9 * bass + 0.6 * kick);
-    fade = clamp(fade, 0.0, 1.0);
+    // Le halo : il s'estompe en s'éloignant, un peu plus grand avec la basse et les temps forts.
+    // 3.10.1 : plus court, et éteint pour de bon à 45 % d'une demi-pochette du bord, quoi qu'il arrive
+    float reach = halfSize * (0.2 + 0.12 * bass + 0.08 * kick);
+    float fade = exp(-outside / reach) * (1.2 + 0.6 * bass + 0.4 * kick);
+    fade = clamp(fade, 0.0, 1.0) * (1.0 - smoothstep(halfSize * 0.25, halfSize * 0.45, outside));
     return half4(col * fade, fade);
 }
 """
 
 /**
  * Autour de la pochette (3.9.0 ; 3.9.2, à la demande : « de la réfraction liquide des UV de la pochette,
- * dispersion chroma, halo sans contours ») : la pochette elle-même déborde de ses bords comme à travers
- * un liquide qui ondule avec la basse, ses couleurs se séparent (rouge, vert, bleu) en s'éloignant, et
- * tout s'estompe en un halo flou, plus grand avec la basse et sur les temps forts. Android 13+ (AGSL) ;
+ * halo sans contours » ; la dispersion est partie en 3.10.1) : la pochette elle-même déborde de ses bords
+ * comme à travers un liquide qui ondule avec la basse, et tout s'estompe en un halo flou, plus grand avec la basse et sur les temps forts. Android 13+ (AGSL) ;
  * avant, une lueur floue de la couleur de la pochette.
  */
 @Composable
@@ -245,10 +243,9 @@ fun CoverLights(cover: Color, model: Any?, modifier: Modifier = Modifier, corner
                     shader.setFloatUniform("time", BeatLights.time)
                     shader.setFloatUniform("bass", BeatLights.bass)
                     shader.setFloatUniform("kick", BeatLights.kick)
-                    shader.setFloatUniform("dispersion", 4.dp.toPx() * (0.6f + BeatLights.bass + BeatLights.kick))
                     val liquid = android.graphics.RenderEffect.createRuntimeShaderEffect(shader, "content")
                     // Puis un flou : le halo n'a aucun contour
-                    val soft = android.graphics.RenderEffect.createBlurEffect(18.dp.toPx(), 18.dp.toPx(), android.graphics.Shader.TileMode.DECAL)
+                    val soft = android.graphics.RenderEffect.createBlurEffect(10.dp.toPx(), 10.dp.toPx(), android.graphics.Shader.TileMode.DECAL)
                     renderEffect = android.graphics.RenderEffect.createChainEffect(soft, liquid).asComposeRenderEffect()
                 } catch (e: Exception) {
                     broken = true
@@ -268,7 +265,7 @@ fun CoverLights(cover: Color, model: Any?, modifier: Modifier = Modifier, corner
         // Avant Android 13 : une lueur floue de la couleur de la pochette, qui suit la basse
         Canvas(
             modifier.then(spread).graphicsLayer {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) renderEffect = BlurEffect(30.dp.toPx(), 30.dp.toPx(), TileMode.Decal)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) renderEffect = BlurEffect(14.dp.toPx(), 14.dp.toPx(), TileMode.Decal)
                 blendMode = BlendMode.Plus
             },
         ) {
@@ -276,8 +273,8 @@ fun CoverLights(cover: Color, model: Any?, modifier: Modifier = Modifier, corner
             val half = size.minDimension / SPREAD / 2f
             val p = (0.35f + 0.5f * BeatLights.bass + 0.3f * BeatLights.kick).coerceAtMost(1f)
             drawCircle(
-                Brush.radialGradient(0f to color.copy(alpha = 0.7f * p), 0.7f to color.copy(alpha = 0.35f * p), 1f to Color.Transparent, center = center, radius = half * 1.7f),
-                radius = half * 1.7f,
+                Brush.radialGradient(0f to color.copy(alpha = 0.7f * p), 0.7f to color.copy(alpha = 0.35f * p), 1f to Color.Transparent, center = center, radius = half * 1.35f),
+                radius = half * 1.35f,
             )
         }
     }

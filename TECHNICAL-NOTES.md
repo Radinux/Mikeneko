@@ -1144,6 +1144,9 @@ users: the point is to take them from the videos really watched.
   image, no remeasure per frame) and moves linearly with the glass (an eased flight left the glass
   through the top and got clipped). `stretchGesture` settles the glass in a `finally`: a gesture cut
   by a restarted `pointerInput` used to leave it half-open, pill faded and window not shown yet.
+  3.11.0: the flying cover was removed at the user's request (and the pill's cover became a round
+  vinyl, which a square flight no longer matched); `coverInWindow` / `coverFlying` are gone, each
+  cover simply fades with its layer.
 - 2.23.0, removals in sync: `data/Deletions` keeps marks `key → (time, gone | back)` in prefs
   `suppressions` (kept one year, 5000 at most), initialised first in `MikenekoApp`. Stores mark what
   the user removes (`gone`) and what comes back after having been removed (`back`); nothing is marked

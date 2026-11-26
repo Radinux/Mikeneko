@@ -58,6 +58,13 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
 
 ## 🎌 What's new ⸜(｡˃ ᵕ ˂ )⸝♡
 
+### 3.11
+
+- 3.11.0: the **little music player** shows the song as a **vinyl** that spins while it plays, the cover
+  as its label, and a **band runs along the capsule's outline** to show how far into the song you are.
+- 3.11.0: the **cover halo** stays close to the cover, without the color split, and no longer covers the
+  buttons at the top of the player; the cover no longer flies between the little player and the window.
+
 ### 3.10
 
 - 3.10.0: **watches and companion apps** see the playlist of the current song, drive playback, and can browse

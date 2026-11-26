@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -67,6 +66,18 @@ import coil3.compose.AsyncImage
 import kotlin.math.abs
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathMeasure
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import kotlinx.coroutines.flow.collectLatest
 
 // La pilule de la musique : pochette, titre, lecture / suivant.
 
@@ -75,7 +86,10 @@ import kotlinx.coroutines.launch
  * de morceau (le titre suit le doigt).
  */
 @Composable
-internal fun MusicDockRow(hideCover: () -> Boolean = { false }) {
+internal fun MusicDockRow(
+    /** La pilule se voit : le vinyle tourne (sinon, fenêtre ouverte, il s'arrête et rien ne se redessine). */
+    spinning: () -> Boolean = { true },
+) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     // Une vidéo qui joue n'est pas de la musique : on montre le morceau qu'elle a mis de côté (s'il y en a)
@@ -175,13 +189,9 @@ internal fun MusicDockRow(hideCover: () -> Boolean = { false }) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         // La pochette reste en place (elle change en fondu) ; seul le titre suit le doigt, et le titre du
-        // morceau voisin arrive à côté dès le début du glissé
-        // (cachée pendant qu'elle « vole » vers la grande pochette de la fenêtre, voir MusicDockWindow)
-        Box(Modifier.size(48.dp).graphicsLayer { alpha = if (hideCover()) 0f else 1f }.clip(RoundedCornerShape(14.dp)).background(Pelage.RouxNuit)) {
-            Crossfade(shownThumbnail, animationSpec = tween(220), label = "pochette") { thumb ->
-                AsyncImage(thumb, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
-            }
-        }
+        // morceau voisin arrive à côté dès le début du glissé. 3.10.1 : un vinyle, la pochette en étiquette,
+        // qui tourne pendant la lecture
+        DockVinyl(shownThumbnail, playing, spinning)
         Box(
             Modifier
                 .weight(1f)
@@ -253,4 +263,133 @@ private fun TrackText(title: String, subtitle: String, modifier: Modifier = Modi
             overflow = TextOverflow.Ellipsis,
         )
     }
+}
+
+/** Un tour de vinyle en 33 ⅓ tours par minute : 200 degrés par seconde. */
+private const val VINYL_DEGREES_PER_SECOND = 200f
+
+/**
+ * La petite pochette de la pilule en vinyle (3.10.1) : un disque noir aux sillons fins, la pochette en
+ * étiquette ronde au centre, et un reflet qui, lui, reste immobile (c'est le disque qui tourne dessous).
+ * L'angle avance avec l'horloge réelle (pas l'horloge des animations, accélérée dans l'appli), seulement
+ * pendant la lecture et quand la pilule se voit ; il n'est lu qu'au dessin.
+ */
+@Composable
+private fun DockVinyl(thumbnail: String?, playing: Boolean, visible: () -> Boolean) {
+    var angle by remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(playing) {
+        if (!playing) return@LaunchedEffect
+        snapshotFlow { visible() }.collectLatest { shown ->
+            if (!shown) return@collectLatest
+            var last = System.nanoTime()
+            while (true) {
+                withFrameNanos { }
+                val now = System.nanoTime()
+                angle = (angle + (now - last) / 1e9f * VINYL_DEGREES_PER_SECOND) % 360f
+                last = now
+            }
+        }
+    }
+    Box(
+        Modifier
+            .size(48.dp)
+            .shadow(6.dp, CircleShape)
+            .clip(CircleShape)
+            .background(VINYL_BLACK)
+            .drawWithContent {
+                val r = size.minDimension / 2f
+                // Les sillons : des cercles fins un peu plus clairs que le disque
+                var g = r * 0.92f
+                while (g > r * 0.6f) {
+                    drawCircle(VINYL_GROOVE, radius = g, style = Stroke(0.6.dp.toPx()))
+                    g -= 1.6.dp.toPx()
+                }
+                drawContent()
+                // Le reflet immobile : deux quartiers de lumière opposés
+                drawCircle(
+                    Brush.sweepGradient(
+                        0f to Color.Transparent,
+                        0.1f to Color.White.copy(alpha = 0.16f),
+                        0.2f to Color.Transparent,
+                        0.6f to Color.Transparent,
+                        0.7f to Color.White.copy(alpha = 0.1f),
+                        0.8f to Color.Transparent,
+                    ),
+                    radius = r,
+                )
+                // Le trou du centre
+                drawCircle(VINYL_BLACK, radius = 2.dp.toPx())
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        // L'étiquette : la pochette, ronde, qui tourne avec le disque
+        Box(Modifier.size(26.dp).graphicsLayer { rotationZ = angle }.clip(CircleShape).background(Pelage.RouxNuit)) {
+            Crossfade(thumbnail, animationSpec = tween(220), label = "pochette") { thumb ->
+                AsyncImage(thumb, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+            }
+        }
+    }
+}
+
+private val VINYL_BLACK = Color(0xFF0E0C0B)
+private val VINYL_GROOVE = Color(0xFF2A2624)
+
+/**
+ * La durée du morceau autour de la pilule (3.10.1) : une bande qui suit son contour, partie du milieu
+ * en haut et qui fait le tour dans le sens des aiguilles d'une montre jusqu'à la fin du morceau, sur une
+ * piste à peine visible. La position est relue 4 fois par seconde pendant la lecture, quand la pilule
+ * se voit ; seul le dessin suit (rien ne se recompose).
+ */
+@Composable
+internal fun DockProgressBand(key: String?, visible: () -> Boolean, modifier: Modifier = Modifier) {
+    val playing = PlayerHolder.isPlaying.collectAsState().value && key != null
+    var fraction by remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(key, playing) {
+        if (key == null) {
+            fraction = 0f
+            return@LaunchedEffect
+        }
+        snapshotFlow { visible() }.collectLatest { shown ->
+            if (!shown) return@collectLatest
+            do {
+                val (p, d) = PlayerHolder.progress()
+                fraction = if (d > 0) (p.toFloat() / d).coerceIn(0f, 1f) else 0f
+                delay(250)
+            } while (playing)
+        }
+    }
+    if (key == null) return
+    Spacer(
+        modifier.drawWithCache {
+            val stroke = 2.5.dp.toPx()
+            val inset = 2.dp.toPx() + stroke / 2f
+            val w = size.width - 2 * inset
+            val h = size.height - 2 * inset
+            val r = (h / 2f).coerceAtMost(w / 2f)
+            val left = inset
+            val top = inset
+            // Le contour, du milieu en haut, dans le sens des aiguilles d'une montre
+            val outline = Path().apply {
+                moveTo(left + w / 2f, top)
+                lineTo(left + w - r, top)
+                arcTo(Rect(left + w - 2 * r, top, left + w, top + 2 * r), -90f, 180f, false)
+                lineTo(left + r, top + h)
+                arcTo(Rect(left, top, left + 2 * r, top + 2 * r), 90f, 180f, false)
+                close()
+            }
+            val measure = PathMeasure().apply { setPath(outline, false) }
+            val length = measure.length
+            val done = Path()
+            val style = Stroke(stroke, cap = StrokeCap.Round)
+            onDrawBehind {
+                drawPath(outline, Color.White.copy(alpha = 0.12f), style = Stroke(stroke))
+                val f = fraction
+                if (f > 0f && length > 0f) {
+                    done.reset()
+                    measure.getSegment(0f, length * f, done, true)
+                    drawPath(done, Pelage.RouxClair, style = style)
+                }
+            }
+        },
+    )
 }
