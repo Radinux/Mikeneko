@@ -111,10 +111,22 @@ internal fun MusicDockRow(
 
     // Pendant le chargement du morceau suivant, on montre déjà son nom et sa pochette
     val pending = if (loading) queue.getOrNull(queueIndex)?.takeIf { it.url != now?.url } else null
+    /**
+     * Glissé vers un suivant encore inconnu (fin de la file en mix : la suite se charge) : le morceau
+     * qu'on quitte, dont le titre reste caché jusqu'à ce que le nouveau soit connu (3.11.0).
+     */
+    var leaving by remember { mutableStateOf<String?>(null) }
+    // 3.11.0 : 2 s → 8 s. Le morceau visé peut mettre plus de 2 s à devenir le morceau en cours (fondu de
+    // sortie, puis la fiche demandée à YouTube) : le titre retombait sur un autre morceau entre-temps
     LaunchedEffect(now?.url, pending?.url, landed) {
         val target = landed ?: return@LaunchedEffect
         if (sameTrack(now?.url, target.url) || sameTrack(pending?.url, target.url)) landed = null
-        else { delay(2_000); landed = null } // au cas où la file ne suivrait pas
+        else { delay(8_000); landed = null } // au cas où la file ne suivrait pas
+    }
+    LaunchedEffect(now?.url, pending?.url, leaving) {
+        val left = leaving ?: return@LaunchedEffect
+        if (pending != null || !sameTrack(now?.url, left)) leaving = null
+        else { delay(8_000); leaving = null }
     }
     val shownTitle = landed?.title ?: pending?.title ?: now?.title ?: parked?.title
     val shownThumbnail = landed?.thumbnail ?: pending?.thumbnail ?: now?.thumbnail ?: parked?.thumbnail
@@ -126,7 +138,10 @@ internal fun MusicDockRow(
     // Vers la droite, c'est toujours le morceau d'avant (3.2.2 : avant, après 3 s de lecture, le glissé
     // remettait seulement le morceau au début, comme le bouton)
     val index = (landed ?: pending)?.let { t -> queue.indexOfFirst { sameTrack(it.url, t.url) } }?.takeIf { it >= 0 } ?: queueIndex
-    val nextItem = if (canSwipe) queue.getOrNull((index + 1) % queue.size) else null
+    // En mix, au bout de la file, le suivant n'est pas le premier de la file (elle va s'allonger) : pas
+    // de voisin à montrer (3.11.0 ; avant, le premier morceau s'affichait, puis le vrai suivant)
+    val mixing by PlayerHolder.autoMix.collectAsState()
+    val nextItem = if (canSwipe && !(mixing && index >= queue.size - 1)) queue.getOrNull((index + 1) % queue.size) else null
     val previousItem = if (canSwipe) queue.getOrNull((index - 1 + queue.size) % queue.size) else null
     val nextLabel = stringResource(R.string.radio_next)
     val previousLabel = stringResource(R.string.radio_previous)
@@ -137,13 +152,23 @@ internal fun MusicDockRow(
         scope.launch {
             val out = if (textWidth > 0f) textWidth + SWIPE_GAP else 400f
             swipe.animateTo(if (forward) -out else out, spring(dampingRatio = 0.9f, stiffness = Spring.StiffnessMediumLow))
-            landed = target
+            if (target != null) landed = target else leaving = now?.url
             swipe.snapTo(0f) // le voisin devient le titre affiché, exactement au même endroit
-            runCatching { if (forward) PlayerHolder.next(context) else PlayerHolder.previous(context, restartFirst = false) }
-                .onFailure {
-                    landed = null
-                    Toast.makeText(context, context.getString(R.string.radio_station_failed), Toast.LENGTH_SHORT).show()
+            // 3.11.0 : on lance le morceau affiché lui-même, pas « celui d'après dans la file » : deux
+            // glissés rapprochés (le premier encore dans son fondu de sortie) montraient un morceau et
+            // en lançaient un autre
+            val at = target?.let { t -> PlayerHolder.queue.value.indexOfFirst { sameTrack(it.url, t.url) } } ?: -1
+            runCatching {
+                when {
+                    at >= 0 -> PlayerHolder.chooseInQueue(context, at)
+                    forward -> PlayerHolder.next(context)
+                    else -> PlayerHolder.previous(context, restartFirst = false)
                 }
+            }.onFailure {
+                landed = null
+                leaving = null
+                Toast.makeText(context, context.getString(R.string.radio_station_failed), Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -201,12 +226,13 @@ internal fun MusicDockRow(
         ) {
             val offset = swipe.value
             val travel = (textWidth + SWIPE_GAP).coerceAtLeast(1f)
+            val hidden = leaving != null && landed == null && pending == null && sameTrack(now?.url, leaving)
             TrackText(
                 shownTitle ?: stringResource(R.string.radio_pick),
                 shownSubtitle ?: stringResource(R.string.radio_tap),
                 Modifier.graphicsLayer {
                     translationX = offset
-                    alpha = 1f - (abs(offset) / travel).coerceIn(0f, 0.9f)
+                    alpha = if (hidden) 0f else 1f - (abs(offset) / travel).coerceIn(0f, 0.9f)
                 },
             )
             val neighbour = when {
