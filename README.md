@@ -64,6 +64,8 @@ Official APKs are signed with the key whose SHA-256 fingerprint is
   as its label, and a **band runs along the capsule's outline** to show how far into the song you are.
 - 3.11.0: the **cover halo** stays close to the cover, without the color split, and no longer covers the
   buttons at the top of the player; the cover no longer flies between the little player and the window.
+- 3.11.0: swiping the little player to change songs no longer shows another song for a moment before the
+  right one.
 
 ### 3.10
 
